@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft shared definition for L1/K1. Research metadata, not runtime candidate context.
+Accepted shared definition for L1/K1 candidate generation. Research metadata, not runtime candidate context.
 
 ## Generic framework vs experimental sample
 

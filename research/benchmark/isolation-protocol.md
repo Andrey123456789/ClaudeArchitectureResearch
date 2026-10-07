@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft for human review. This protocol is a **research-validity requirement**.
+Accepted for the experiment. This protocol is a **research-validity requirement**.
 
 ## Principle
 
