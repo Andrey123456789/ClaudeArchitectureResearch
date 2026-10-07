@@ -1,7 +1,7 @@
 {
-  "manifest_version": "1.0-draft",
+  "manifest_version": "1.1-draft",
   "status": "draft_for_human_review",
-  "purpose": "Canonical versioned standard for run metrics and result-report structure.",
+  "purpose": "Canonical versioned standard for experiment metrics, benchmark validity gates, evidence requirements, evaluation order, and run-result structure.",
   "research_dimensions": {
     "speed": "Elapsed execution time.",
     "autonomy": "How often Claude asks the human and how much corrective supervision is required.",
@@ -26,7 +26,8 @@
       "review"
     ],
     "no_overall_score": true,
-    "raw_evidence_first": true
+    "raw_evidence_first": true,
+    "isolation_evidence": "A benchmark run result must reference the preflight isolation evidence and protocol version/hash."
   },
   "priority": {
     "HIGH": "Can materially change conclusions.",
@@ -41,6 +42,11 @@
     "P4_INFO": "Diagnostic/context only."
   },
   "evaluation_stages": [
+    {
+      "stage": -1,
+      "name": "benchmark_preflight",
+      "purpose": "Verify model-visible workspace isolation and frozen run inputs before Claude starts."
+    },
     {
       "stage": 0,
       "name": "capture_raw_run_facts",
@@ -76,7 +82,8 @@
       "TECHNICAL_UNAVAILABLE",
       "OPTIONAL_NOT_SCHEDULED"
     ],
-    "missing_measurement_is_not_zero": true
+    "missing_measurement_is_not_zero": true,
+    "preflight_failure": "A failed benchmark-isolation preflight invalidates the run before model execution. Do not collect benchmark performance from that run."
   },
   "evidence_schema": {
     "quote_max_chars": 200,
@@ -103,7 +110,7 @@
       "human_annotation",
       "generated_check"
     ],
-    "rule": "Every metric value must have enough evidence to re-check it without trusting the generator."
+    "rule": "Every computed metric value must have enough evidence to re-check it without trusting the generator. Every skipped, not-applicable, or technically unavailable check must also carry evidence for that disposition."
   },
   "human_intervention_weights": {
     "minor_local": 1,
@@ -124,7 +131,7 @@
     "noisy_or_disputed_repetitions": 5,
     "boolean_metrics": "report rate and retain every run",
     "continuous_counts": "report median, IQR, min, max and retain every run",
-    "failed_runs": "never discard or cherry-pick",
+    "failed_runs": "never discard or cherry-pick; invalid isolation runs are preserved but excluded from candidate-quality aggregates",
     "post_hoc_metrics": "label exploratory"
   },
   "metricsdictionary": {
@@ -138,7 +145,7 @@
       "kind": "Top-level research dimension: speed, autonomy, cost, or quality.",
       "group": "More specific family within kind.",
       "priority": "Research importance: HIGH, MEDIUM, LOW.",
-      "criticality": "Severity of a bad result: P0_BLOCKER through P4_INFO.",
+      "criticality": "Severity of a bad Quality/validity result. Null for Speed, Autonomy, and Cost metrics.",
       "evaluation_stage": "Order in the evaluation pipeline; not the same as criticality.",
       "collection_mode": "AUTO, HUMAN, HYBRID, or a derived variant.",
       "unit": "Unit of the per-run value.",
@@ -152,7 +159,10 @@
       "evidence_required": "Whether every per-run value must include evidence.",
       "evidence_requirements": "Minimum evidence contract for auditability.",
       "benefit_for_research": "Why this metric matters.",
-      "notes": "Additional definition notes."
+      "notes": "Additional definition notes.",
+      "measurement_scope": "Lifecycle/protocol surface on which the metric is measured, e.g. benchmark_run, candidate_validation, trigger_probe, replacement_scenario.",
+      "deprecated": "Optional flag indicating a metric retained only for backward traceability.",
+      "replaced_by": "Optional metric IDs that supersede a deprecated metric."
     },
     "enums": {
       "kind": [
@@ -181,9 +191,22 @@
         "true_required",
         "context_dependent",
         "diagnostic_only"
+      ],
+      "measurement_scope": [
+        "benchmark_preflight",
+        "benchmark_preflight_or_postrun",
+        "benchmark_run",
+        "candidate_validation",
+        "candidate_static",
+        "trigger_probe",
+        "benchmark_run_or_trigger_probe",
+        "instruction_maintenance_scenario",
+        "replacement_scenario",
+        "findability_probe",
+        "scenario_specific"
       ]
     },
-    "metric_count": 46,
+    "metric_count": 54,
     "entries": [
       {
         "id": "SPD-001",
@@ -192,7 +215,7 @@
         "kind": "speed",
         "group": "runtime_speed",
         "priority": "HIGH",
-        "criticality": "P2_MAJOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "seconds",
@@ -202,7 +225,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -212,7 +235,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary speed metric. Compares how long each instruction architecture takes to complete an equivalent task.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "SPD-002",
@@ -221,7 +245,7 @@
         "kind": "speed",
         "group": "runtime_speed",
         "priority": "LOW",
-        "criticality": "P4_INFO",
+        "criticality": null,
         "evaluation_stage": 4,
         "collection_mode": "AUTO",
         "unit": "seconds",
@@ -231,7 +255,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Diagnostic/context only; never reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -241,7 +265,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Diagnostic signal for planning/navigation overhead before useful work begins.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-001",
@@ -250,7 +275,7 @@
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "HIGH",
-        "criticality": "P2_MAJOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO_HYBRID",
         "unit": "questions",
@@ -260,7 +285,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median and total across repetitions; retain every per-run value",
         "derived_from": [],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -270,7 +295,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary autonomy metric requested by the researcher: how often Claude interrupts the human.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-002",
@@ -279,7 +305,7 @@
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "MEDIUM",
-        "criticality": "P2_MAJOR",
+        "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "HUMAN",
         "unit": "requests",
@@ -289,7 +315,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median and total across repetitions",
         "derived_from": [],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -299,7 +325,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Prevents correct escalation from being misinterpreted as poor autonomy.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-003",
@@ -308,7 +335,7 @@
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "MEDIUM",
-        "criticality": "P2_MAJOR",
+        "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "HUMAN",
         "unit": "requests",
@@ -318,7 +345,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median and total across repetitions",
         "derived_from": [],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -328,7 +355,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Detects over-cautious candidates that preserve correctness by constantly asking the human.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-004",
@@ -337,7 +365,7 @@
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "HIGH",
-        "criticality": "P1_CRITICAL",
+        "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "HUMAN",
         "unit": "interventions",
@@ -347,7 +375,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median and total across repetitions",
         "derived_from": [],
-        "failure_effect": "Serious negative quality finding; reject or refactor before treating the run as a positive result.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -357,7 +385,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures how much active supervision the candidate needs to reach a correct result.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-005",
@@ -366,7 +395,7 @@
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "HIGH",
-        "criticality": "P1_CRITICAL",
+        "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "AUTO_AFTER_HUMAN_CODING",
         "unit": "points",
@@ -378,7 +407,7 @@
         "derived_from": [
           "AUT-004"
         ],
-        "failure_effect": "Serious negative quality finding; reject or refactor before treating the run as a positive result.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -388,16 +417,17 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Distinguishes minor corrections from architecture-level or restart-level rework.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "AUT-006",
-        "name": "autonomous_success",
-        "description": "Run completed successfully with no corrective interventions and no unrequested architectural decisions.",
+        "name": "corrective_supervision_free_success",
+        "description": "Run succeeds with no corrective human intervention and no unrequested architectural decision; legitimate questions may still have occurred.",
         "kind": "autonomy",
         "group": "human_interaction",
         "priority": "HIGH",
-        "criticality": "P1_CRITICAL",
+        "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "AUTO_DERIVED",
         "unit": "boolean",
@@ -411,7 +441,7 @@
           "AUT-004",
           "QLT-012"
         ],
-        "failure_effect": "Serious negative quality finding; reject or refactor before treating the run as a positive result.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -420,7 +450,71 @@
           "must_include_locator_when_supported": true,
           "recheck_command_preferred": true
         },
-        "benefit_for_research": "Combines correctness with the absence of corrective supervision into one run-level autonomy outcome.",
+        "benefit_for_research": "Separates successful work that required no corrective supervision from truly unattended execution.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
+      },
+      {
+        "id": "AUT-007",
+        "name": "necessary_clarification_question_count",
+        "description": "Questions that were necessary because the task/input was genuinely ambiguous but did not represent a Reserved architectural decision.",
+        "kind": "autonomy",
+        "group": "human_interaction",
+        "priority": "MEDIUM",
+        "criticality": null,
+        "evaluation_stage": 3,
+        "collection_mode": "HUMAN",
+        "unit": "questions",
+        "formula": "count(question classified as necessary_clarification)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "supporting_metric",
+        "applicability": "All benchmark runs.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Does not reject Quality; explains why user_questions_total is non-zero.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "benchmark_run",
+        "benefit_for_research": "Makes the question taxonomy exhaustive enough to reconcile with user_questions_total.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "AUT-008",
+        "name": "fully_unattended_success",
+        "description": "Run succeeds without any user response after the initial benchmark prompt.",
+        "kind": "autonomy",
+        "group": "human_interaction",
+        "priority": "MEDIUM",
+        "criticality": null,
+        "evaluation_stage": 3,
+        "collection_mode": "AUTO_DERIVED",
+        "unit": "boolean",
+        "formula": "task_success && user_questions_total==0",
+        "preferred_direction": "true_is_better",
+        "research_role": "supporting_metric",
+        "applicability": "Benchmark runs intended to permit unattended completion.",
+        "aggregation_across_repetitions": "rate = true/pass runs / all applicable runs",
+        "derived_from": [
+          "QLT-006",
+          "AUT-001"
+        ],
+        "failure_effect": "Does not reject Quality; represents an autonomy trade-off.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "benchmark_run",
+        "benefit_for_research": "Direct measure of literal unattended operation, distinct from correction-free success.",
         "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
       },
       {
@@ -430,7 +524,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "tokens",
@@ -440,7 +534,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -450,7 +544,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "One component of model usage cost and context consumption.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-002",
@@ -459,7 +554,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "tokens",
@@ -469,7 +564,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -479,7 +574,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Captures generated reasoning/action/output volume and contributes to billing.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-003",
@@ -488,7 +584,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "tokens",
@@ -498,7 +594,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -508,7 +604,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Important because large reusable instruction contexts may be cheap to re-read but still affect processed context.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-004",
@@ -517,7 +614,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "tokens",
@@ -527,7 +624,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -537,22 +634,23 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Shows cache population overhead, relevant when candidates differ in static instruction corpus.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-005",
         "name": "total_processed_tokens",
-        "description": "Descriptive sum of all token counters. Not a billing-equivalent token count.",
+        "description": "Descriptive arithmetic sum of runtime token counters. It is not a billing-equivalent token count and is not used as the primary cost outcome.",
         "kind": "cost",
         "group": "resource_usage",
-        "priority": "HIGH",
-        "criticality": "P2_MAJOR",
+        "priority": "MEDIUM",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO_DERIVED",
         "unit": "tokens",
         "formula": "input_tokens + output_tokens + cache_read_input_tokens + cache_creation_input_tokens",
         "preferred_direction": "lower_is_better_given_equal_quality",
-        "research_role": "primary_outcome",
+        "research_role": "supporting_metric",
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [
@@ -561,7 +659,7 @@
           "CST-003",
           "CST-004"
         ],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -570,8 +668,9 @@
           "must_include_locator_when_supported": true,
           "recheck_command_preferred": true
         },
-        "benefit_for_research": "Single descriptive volume metric while preserving raw token categories needed for cost analysis.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "benefit_for_research": "Convenient descriptive volume signal while raw token categories and provider-reported cost remain authoritative.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-006",
@@ -580,7 +679,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "HIGH",
-        "criticality": "P2_MAJOR",
+        "criticality": null,
         "evaluation_stage": 0,
         "collection_mode": "AUTO",
         "unit": "USD",
@@ -590,7 +689,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions; total spend may also be reported",
         "derived_from": [],
-        "failure_effect": "Material degradation that affects comparison but does not automatically invalidate the run.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -600,7 +699,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Most direct monetary efficiency metric when provider telemetry exposes it.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-007",
@@ -609,7 +709,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 4,
         "collection_mode": "AUTO",
         "unit": "calls",
@@ -619,7 +719,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -629,7 +729,8 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Operational-overhead signal; useful for detecting indirection costs in more complex architectures.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "CST-008",
@@ -638,7 +739,7 @@
         "kind": "cost",
         "group": "resource_usage",
         "priority": "MEDIUM",
-        "criticality": "P3_MINOR",
+        "criticality": null,
         "evaluation_stage": 4,
         "collection_mode": "AUTO",
         "unit": "turns",
@@ -648,7 +749,7 @@
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
-        "failure_effect": "Secondary trade-off; retain for comparison but do not reject on this metric alone.",
+        "failure_effect": "Does not reject Quality by itself. Interpret as a trade-off; scenario-specific warning/abort ceilings may stop a run for resource control.",
         "evidence_required": true,
         "evidence_requirements": {
           "minimum_items": 1,
@@ -658,12 +759,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Another operational-overhead signal that is less sensitive to network latency than wall-clock time.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-001",
         "name": "evidence_completeness",
-        "description": null,
+        "description": "Whether all required run/evaluation artifacts are auditable: every computed metric has evidence and every skipped/unavailable check has evidence for its disposition.",
         "kind": "quality",
         "group": "validity",
         "priority": "HIGH",
@@ -671,7 +773,7 @@
         "evaluation_stage": 1,
         "collection_mode": "AUTO",
         "unit": "boolean",
-        "formula": "all mandatory raw artifacts exist and every metric has non-empty evidence",
+        "formula": "all mandatory raw artifacts exist && every computed metric has >=1 evidence item && every skipped/not-applicable/technically-unavailable check has >=1 evidence item explaining disposition",
         "preferred_direction": "true_required",
         "research_role": "validity_gate",
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
@@ -687,12 +789,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Validity gate: without raw evidence the run cannot be independently audited.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-002",
         "name": "candidate_structural_conformance",
-        "description": null,
+        "description": "Whether the generated candidate conforms to the structural predicates that define its intended experimental design.",
         "kind": "quality",
         "group": "validity",
         "priority": "HIGH",
@@ -716,12 +819,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Validity gate: ensures a K1 result actually measures K1 rather than a leaked hybrid.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_validation"
       },
       {
         "id": "QLT-003",
         "name": "build_passed",
-        "description": null,
+        "description": "Whether the externally executed build command completes successfully.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -745,12 +849,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Hard correctness gate. A candidate that produces non-building code should not consume expensive downstream review time.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-004",
         "name": "mandatory_tests_passed",
-        "description": null,
+        "description": "Whether the frozen mandatory automated test suite completes with zero failures.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -774,12 +879,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Hard behavioral gate independent of Claude's own claim that tests pass.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-005",
         "name": "mandatory_acceptance_passed",
-        "description": null,
+        "description": "Whether every frozen mandatory acceptance criterion for the scenario passes.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -803,12 +909,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Ensures the implementation satisfies the frozen task oracle, not merely compilation/tests.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-006",
         "name": "task_success",
-        "description": null,
+        "description": "Binary run-level correctness outcome derived from build, mandatory tests, and mandatory acceptance.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -836,12 +943,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary run-level correctness outcome.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-007",
         "name": "acceptance_pass_rate",
-        "description": null,
+        "description": "Fraction of frozen mandatory acceptance criteria that pass in the run.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -867,12 +975,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "More granular correctness metric than a binary task-success flag.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-008",
         "name": "architecture_violation_count",
-        "description": null,
+        "description": "Count of mechanically detectable violations of the intended application architecture after the task.",
         "kind": "quality",
         "group": "architecture",
         "priority": "HIGH",
@@ -896,12 +1005,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures whether the candidate keeps generated code inside the intended architecture.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-009",
         "name": "missing_policy_owner_count",
-        "description": null,
+        "description": "Count of inventory policies that have no authoritative normative owner in the generated candidate.",
         "kind": "quality",
         "group": "instruction_system",
         "priority": "HIGH",
@@ -925,12 +1035,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Detects V2 policy lost during candidate transformation.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_validation"
       },
       {
         "id": "QLT-010",
         "name": "duplicate_policy_owner_count",
-        "description": null,
+        "description": "Count of inventory policies that have more than one authoritative normative owner in the generated candidate.",
         "kind": "quality",
         "group": "instruction_system",
         "priority": "HIGH",
@@ -954,12 +1065,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Direct SSoT metric; detects compensatory normative duplication and potential drift.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_validation"
       },
       {
         "id": "QLT-011",
         "name": "broken_reference_count",
-        "description": null,
+        "description": "Count of unresolved instruction imports, routing references, manifests, or other candidate-internal references.",
         "kind": "quality",
         "group": "instruction_system",
         "priority": "MEDIUM",
@@ -983,12 +1095,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures internal integrity of the instruction graph and prevents silent missing guidance.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_validation"
       },
       {
         "id": "QLT-012",
         "name": "unrequested_architectural_decision_count",
-        "description": null,
+        "description": "Count of Reserved architectural decisions Claude made without the explicit approval required by the frozen decision policy.",
         "kind": "quality",
         "group": "decision_control",
         "priority": "HIGH",
@@ -1012,12 +1125,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Tests whether the candidate prevents Claude from silently changing high-cost architectural choices.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-013",
         "name": "missed_required_decision_count",
-        "description": null,
+        "description": "Count of decisions for which the policy required user approval but Claude proceeded without requesting it.",
         "kind": "quality",
         "group": "decision_control",
         "priority": "HIGH",
@@ -1041,12 +1155,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Complements unrequested-decision count and catches silent policy bypass.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-014",
         "name": "trigger_success_rate",
-        "description": null,
+        "description": "Fraction of expected instruction-loading triggers that produce the required observable probe behavior.",
         "kind": "quality",
         "group": "loading",
         "priority": "HIGH",
@@ -1070,12 +1185,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Directly tests whether relevant instructions reach Claude at the required moment.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "trigger_probe"
       },
       {
         "id": "QLT-015",
         "name": "unexpected_trigger_count",
-        "description": null,
+        "description": "Count of instruction-loading probes that fire outside their intended scope or trigger.",
         "kind": "quality",
         "group": "loading",
         "priority": "MEDIUM",
@@ -1099,12 +1215,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Prevents 'load everything always' from looking good merely because required rules never miss.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "trigger_probe"
       },
       {
         "id": "QLT-016",
         "name": "placement_accuracy",
-        "description": null,
+        "description": "Accuracy with which Claude places new instruction-system content into the oracle-defined owner/scope/loading role during maintenance scenarios.",
         "kind": "quality",
         "group": "maintainability",
         "priority": "HIGH",
@@ -1128,22 +1245,23 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures whether the architecture helps Claude correctly maintain and extend the instruction system itself.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "instruction_maintenance_scenario"
       },
       {
         "id": "QLT-017",
         "name": "external_capability_replacement_blast_radius",
-        "description": null,
+        "description": "Legacy replacement metric that counts authoritative artifacts changed outside a candidate-specific replacement boundary; retained only for backward traceability.",
         "kind": "quality",
         "group": "flexibility",
-        "priority": "HIGH",
-        "criticality": "P1_CRITICAL",
+        "priority": "LOW",
+        "criticality": "P4_INFO",
         "evaluation_stage": 4,
         "collection_mode": "AUTO",
         "unit": "authoritative_artifacts",
         "formula": "count(changed authoritative artifacts outside replaced module boundary)",
-        "preferred_direction": "lower_is_better",
-        "research_role": "primary_quality_metric",
+        "preferred_direction": "diagnostic_only",
+        "research_role": "deprecated_metric",
         "applicability": "Capability-replacement scenarios; meaningful for all candidates, with module boundary interpreted per candidate definition.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [],
@@ -1157,12 +1275,18 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary flexibility metric: quantifies how far a technology/architecture replacement leaks outside its module.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Deprecated because a generic 'outside module boundary' is not symmetrical for embedded candidates. Use QLT-035 for all candidates and QLT-036 only where a first-class replaceable module boundary exists.",
+        "deprecated": true,
+        "replaced_by": [
+          "QLT-035",
+          "QLT-036"
+        ],
+        "measurement_scope": "replacement_scenario"
       },
       {
         "id": "QLT-018",
         "name": "replacement_succeeded",
-        "description": null,
+        "description": "Whether a capability/technology replacement remains behaviorally and structurally valid after build, tests, stale-reference checks, trigger checks, and smoke verification.",
         "kind": "quality",
         "group": "flexibility",
         "priority": "HIGH",
@@ -1192,12 +1316,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Prevents a candidate from winning blast-radius metrics by making an incomplete or broken replacement.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "replacement_scenario"
       },
       {
         "id": "QLT-019",
         "name": "stale_implementation_reference_count",
-        "description": null,
+        "description": "Count of references to the old implementation that remain outside explicitly allowed historical/research paths after replacement.",
         "kind": "quality",
         "group": "flexibility",
         "priority": "HIGH",
@@ -1221,12 +1346,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Detects hidden coupling after a capability replacement.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "replacement_scenario"
       },
       {
         "id": "QLT-020",
         "name": "contract_revision_count",
-        "description": null,
+        "description": "Count of L1/K1 capability contract files that must change during an implementation replacement.",
         "kind": "quality",
         "group": "flexibility",
         "priority": "MEDIUM",
@@ -1250,12 +1376,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Tests whether the capability abstraction remains stable when implementations change.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "replacement_scenario"
       },
       {
         "id": "QLT-021",
         "name": "total_files_changed",
-        "description": null,
+        "description": "Total number of files changed between frozen start and final state.",
         "kind": "quality",
         "group": "change_cost",
         "priority": "MEDIUM",
@@ -1279,12 +1406,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Secondary measure of maintenance work and comparison with blast radius.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-022",
         "name": "instruction_files_changed",
-        "description": null,
+        "description": "Number of changed files classified as runtime instruction-system artifacts.",
         "kind": "quality",
         "group": "change_cost",
         "priority": "MEDIUM",
@@ -1308,12 +1436,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures direct maintenance cost of the instruction architecture during a change.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-023",
         "name": "unrelated_modules_changed",
-        "description": null,
+        "description": "Count of changed modules outside the scenario's frozen allowed affected set.",
         "kind": "quality",
         "group": "change_cost",
         "priority": "MEDIUM",
@@ -1337,12 +1466,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures cross-cutting coupling and whether changes leak into unrelated concerns.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "replacement_scenario"
       },
       {
         "id": "QLT-024",
         "name": "owner_found",
-        "description": null,
+        "description": "Whether Claude locates and uses the authoritative instruction owner in a findability/maintenance probe.",
         "kind": "quality",
         "group": "findability",
         "priority": "MEDIUM",
@@ -1366,12 +1496,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Objective findability check for the instruction architecture.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "findability_probe"
       },
       {
         "id": "QLT-025",
         "name": "files_inspected_before_owner",
-        "description": null,
+        "description": "Number of unique files inspected before Claude first accesses the authoritative instruction owner.",
         "kind": "quality",
         "group": "findability",
         "priority": "MEDIUM",
@@ -1395,12 +1526,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures navigation overhead more objectively than a subjective readability score.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "findability_probe"
       },
       {
         "id": "QLT-026",
         "name": "loaded_instruction_bytes",
-        "description": null,
+        "description": "Total byte size of instruction artifacts observed as loaded for the run/probe.",
         "kind": "quality",
         "group": "loading",
         "priority": "MEDIUM",
@@ -1424,12 +1556,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Context-footprint measure; helps explain cost and loading precision differences.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run_or_trigger_probe"
       },
       {
         "id": "QLT-027",
         "name": "unrelated_instruction_load_count",
-        "description": null,
+        "description": "Count of loaded instruction artifacts outside the scenario's frozen relevant instruction set.",
         "kind": "quality",
         "group": "loading",
         "priority": "MEDIUM",
@@ -1453,12 +1586,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Measures selective-loading precision and identifies context pollution.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run_or_trigger_probe"
       },
       {
         "id": "QLT-028",
         "name": "failure_taxonomy_counts",
-        "description": null,
+        "description": "Evidence-backed diagnostic classification of already-observed failures into Gap/Adherence/Loading/Conflict/Unclear/Enforcement categories.",
         "kind": "quality",
         "group": "diagnostics",
         "priority": "MEDIUM",
@@ -1482,12 +1616,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Explains why failures happen; diagnostic rather than primary outcome evidence.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
       },
       {
         "id": "QLT-029",
         "name": "runtime_instruction_file_count",
-        "description": null,
+        "description": "Number of runtime-visible instruction files in the frozen candidate.",
         "kind": "quality",
         "group": "static_complexity",
         "priority": "LOW",
@@ -1511,12 +1646,13 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Descriptive structural-complexity metric; useful as context, not as a quality score.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_static"
       },
       {
         "id": "QLT-030",
         "name": "always_loaded_instruction_bytes",
-        "description": null,
+        "description": "Total byte size of instruction content guaranteed to load for every task in the frozen candidate.",
         "kind": "quality",
         "group": "static_complexity",
         "priority": "MEDIUM",
@@ -1540,8 +1676,205 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Static context tax paid by every task; useful when comparing candidate architectures.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "candidate_static"
+      },
+      {
+        "id": "QLT-031",
+        "name": "benchmark_context_isolation_passed",
+        "description": "Whether the model-visible benchmark workspace contains only allowed candidate/project/task inputs and exposes no forbidden research/evaluation artifacts.",
+        "kind": "quality",
+        "group": "validity",
+        "priority": "HIGH",
+        "criticality": "P0_BLOCKER",
+        "evaluation_stage": -1,
+        "collection_mode": "AUTO",
+        "unit": "boolean",
+        "formula": "allowlist_check_pass && forbidden_artifact_exposure_count==0 && git_research_exposure_check_pass",
+        "preferred_direction": "true_required",
+        "research_role": "validity_gate",
+        "applicability": "Every benchmark execution run.",
+        "aggregation_across_repetitions": "rate = true/pass runs / all applicable runs",
+        "derived_from": [],
+        "failure_effect": "Failure invalidates benchmark evidence for this run.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "benchmark_preflight",
+        "benefit_for_research": "Prevents benchmark Claude from adapting to metrics, inventory, V2, other candidates, hidden oracles, or prior results.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-032",
+        "name": "forbidden_artifact_exposure_count",
+        "description": "Count of forbidden research/evaluation artifacts or reachable repository/history surfaces discovered by benchmark isolation checks.",
+        "kind": "quality",
+        "group": "validity",
+        "priority": "HIGH",
+        "criticality": "P0_BLOCKER",
+        "evaluation_stage": -1,
+        "collection_mode": "AUTO",
+        "unit": "artifacts",
+        "formula": "count(forbidden paths/files/remotes/history exposures reachable from benchmark workspace)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "validity_gate",
+        "applicability": "Every benchmark execution run.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Failure invalidates benchmark evidence for this run.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "benchmark_preflight_or_postrun",
+        "benefit_for_research": "Makes any research-context leakage explicit; a non-zero count invalidates the run.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-033",
+        "name": "policy_semantic_drift_count",
+        "description": "Count of inventory policies whose candidate owner materially weakens, strengthens, narrows, broadens, or otherwise changes the frozen normalized policy semantics without an approved permitted delta.",
+        "kind": "quality",
+        "group": "instruction_system",
+        "priority": "HIGH",
+        "criticality": "P1_CRITICAL",
+        "evaluation_stage": 2,
+        "collection_mode": "HYBRID",
+        "unit": "policies",
+        "formula": "count(policy IDs whose candidate semantics != frozen oracle semantics and no permitted_delta applies)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "primary_quality_metric",
+        "applicability": "Candidate-template validation before benchmark freeze.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Serious candidate-quality defect; reject/refactor before positive interpretation.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "candidate_validation",
+        "benefit_for_research": "Closes the gap where a candidate can retain an ID/owner while changing what the rule actually means.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-034",
+        "name": "unapproved_normative_policy_count",
+        "description": "Count of normative candidate rules that materially constrain behavior but do not map to an inventory policy or an explicitly approved candidate-specific structural delta.",
+        "kind": "quality",
+        "group": "instruction_system",
+        "priority": "HIGH",
+        "criticality": "P1_CRITICAL",
+        "evaluation_stage": 2,
+        "collection_mode": "HYBRID",
+        "unit": "policies",
+        "formula": "count(candidate normative statements with no inventory mapping and no approved permitted_delta)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "primary_quality_metric",
+        "applicability": "Candidate-template validation before benchmark freeze.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Serious candidate-quality defect; reject/refactor before positive interpretation.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "candidate_validation",
+        "benefit_for_research": "Prevents one candidate from receiving extra engineering policy that unfairly improves benchmark behavior.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-035",
+        "name": "replacement_change_surface",
+        "description": "Number of authoritative instruction artifacts that must change to complete a frozen technology/capability replacement, regardless of whether the candidate has first-class capability modules.",
+        "kind": "quality",
+        "group": "flexibility",
+        "priority": "HIGH",
+        "criticality": "P1_CRITICAL",
+        "evaluation_stage": 4,
+        "collection_mode": "AUTO",
+        "unit": "authoritative_artifacts",
+        "formula": "count(changed authoritative instruction artifacts required by replacement)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "primary_quality_metric",
+        "applicability": "All replacement scenarios for all candidates.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Serious candidate-quality defect; reject/refactor before positive interpretation.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "replacement_scenario",
+        "benefit_for_research": "Provides a symmetrical replacement-cost metric for embedded and replaceable-module candidates.",
+        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-036",
+        "name": "external_module_blast_radius",
+        "description": "For candidates with first-class replaceable capability modules, count of authoritative artifacts changed outside the selected capability module/contract boundary.",
+        "kind": "quality",
+        "group": "flexibility",
+        "priority": "MEDIUM",
+        "criticality": "P2_MAJOR",
+        "evaluation_stage": 4,
+        "collection_mode": "AUTO",
+        "unit": "authoritative_artifacts",
+        "formula": "count(changed authoritative artifacts outside selected capability module boundary)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "supporting_metric",
+        "applicability": "L1/K1 replacement scenarios, or another candidate only if it explicitly implements an equivalent first-class module boundary.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Material degradation affecting comparison.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "measurement_scope": "replacement_scenario",
+        "benefit_for_research": "Measures leakage outside a genuine module boundary without imposing that boundary concept on embedded candidates.",
         "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
       }
     ]
+  },
+  "criticality_scope": {
+    "rule": "P0-P4 criticality applies to Quality metrics and research-validity gates only.",
+    "non_quality_metrics": "Speed, Autonomy, and Cost use priority, preferred direction, targets/warnings/ceilings where needed, but do not become Quality blockers merely for being slow, expensive, or interactive."
+  },
+  "benchmark_isolation": {
+    "canonical_protocol": "research/benchmark/isolation-protocol.md",
+    "construction_blinding": "Template-construction Claude may use candidate design, shared invariants, V2, inventory, and capability framework, but must not see metrics, benchmark scenarios, TaskBoard, hidden acceptance criteria, or prior results.",
+    "execution_blinding": "Benchmark Claude may see only one frozen runtime candidate, frozen project specification, frozen starting project, and task prompt. Research materials, baselines, other candidates, metrics, inventory, hidden oracle, and previous results must be physically absent or unreachable.",
+    "physical_isolation_required": true
+  },
+  "autonomy_question_taxonomy": {
+    "primary_metric": "AUT-001",
+    "rule": "Every explicit question counted by AUT-001 must be classified exactly once as legitimate_decision_request, necessary_clarification, or invalid_or_unnecessary_question.",
+    "reconciliation_formula": "AUT-001 == AUT-002 + AUT-007 + AUT-003",
+    "corrective_interventions_are_separate": true
   }
 }

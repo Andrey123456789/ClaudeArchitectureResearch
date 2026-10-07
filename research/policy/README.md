@@ -1,38 +1,32 @@
-# Policy Foundation
+# Policy Inventory
 
-This directory is the pre-generation semantic foundation for the six-candidate experiment.
+`inventory.json` is the frozen normative oracle for candidate-template validation.
 
-## Why it exists
+It is prepared **before** candidate generation and used mainly **after** generation to answer:
 
-M, L0, L1, K0 and K1 must differ in instruction architecture, not because one candidate accidentally receives stronger or more complete policy text.
+- did any shared policy disappear?
+- does any policy have more than one normative owner?
+- did a candidate weaken/strengthen/change a policy's meaning?
+- did one candidate gain extra normative engineering policy not shared by the others?
 
-Canonical flow:
+## Single source of truth
 
-```text
-frozen V2
-  -> inventory.json
-  -> grouped content-pool/*
-  -> candidate-specific placement/ownership
-  -> parity / ownership checks
-```
+There is intentionally no committed `content-pool/` copy and no `skill-content-map.json`.
 
-## Files
+`inventory.json` stores each policy exactly once. `policygroups` exist for human navigation only; `related_groups` record cross-topic relevance without copying a policy.
 
-- `inventory.json` — machine-readable stable policy IDs, source traceability, trigger class, scope and normalized semantics.
-- `content-pool/` — the same policy set grouped for human review.
-- `skill-content-map.json` — separates normative policy from reusable workflow/knowledge content.
+The grouping must not determine candidate runtime structure, owner placement, loading, or dependency direction.
 
-The grouped Markdown files are review views, not additional normative owners.
+## What belongs in the inventory
 
-## Candidate-generation rules
+The inventory contains normative requirements/defaults/prohibitions/decisions whose loss or semantic drift would change candidate behavior.
 
-1. Every experimental candidate receives all applicable IDs.
-2. Every policy ID has exactly one runtime normative owner.
-3. Pointers/check-by-reference may repeat an ID, but not its independent wording/conditions.
-4. Candidate-specific neutralization, slot wording, or policy splits must be recorded in a permitted-delta log.
-5. V2 remains frozen.
-6. Workflow/knowledge content is shared across candidates unless the candidate architecture forces a logged representation change.
+Pure examples, explanatory prose, private technique, and non-normative troubleshooting material may remain outside the oracle.
 
-## Status
+Current policy count: **180**.
 
-Draft for human review. Before template generation, review for omissions, accidental strengthening/weakening, and grouping mistakes.
+## Use in the experiment
+
+- Candidate-construction Claude may see the inventory to preserve content parity.
+- Benchmark-execution Claude must **not** see the inventory.
+- Evaluators use it for `QLT-009`, `QLT-010`, `QLT-033`, and `QLT-034`.

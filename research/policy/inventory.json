@@ -1,7 +1,7 @@
 {
-  "schema_version": "0.2-draft",
+  "schema_version": "0.3-draft",
   "status": "draft_for_human_review",
-  "purpose": "Shared semantic inventory for generating M/L0/L1/K0/K1 without candidate-specific policy drift.",
+  "purpose": "Frozen normative oracle for post-generation validation of M/L0/L1/K0/K1. It is prepared before candidate generation so later validation cannot redefine what counts as preserved policy.",
   "baseline_tree_sha": "563f575316fd60997b73a91187868459cdb15630",
   "grouping_policy": {
     "purpose": "Human navigation and inventory review only.",
@@ -23,14 +23,14 @@
     "single_storage": "A policy appears in exactly one policygroups[].policies array. Cross-topic relationships use related_groups rather than duplication."
   },
   "group_count": 10,
-  "policy_count": 132,
+  "policy_count": 180,
   "policygroups": [
     {
       "id": "governance-product",
       "name": "Governance & Product",
       "description": "Operating policy, product authority, approval boundaries, scope discipline, Git safety.",
       "role": "human_navigation_only",
-      "policy_count": 18,
+      "policy_count": 20,
       "policies": [
         {
           "id": "GOV-001",
@@ -290,6 +290,38 @@
           ],
           "normalized_policy": "Before implementing a questionable request, identify concrete concerns such as duplication, cohesion, triggering, context, conflicts, or complexity and propose an alternative.",
           "status": "draft_for_human_review"
+        },
+        {
+          "id": "GOV-019",
+          "name": "Never discard user changes",
+          "related_groups": [
+            "workflows-delivery"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "workflow",
+          "scope": "repo/meta",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Safety"
+          ],
+          "normalized_policy": "Never discard, overwrite, reset, clean, or otherwise destroy user work to make a Git operation easier.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "GOV-020",
+          "name": "Repository-changing Git operations are minimal and state-aware",
+          "related_groups": [
+            "workflows-delivery"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "repo/meta",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Safety"
+          ],
+          "normalized_policy": "Before a repository-changing Git operation, inspect relevant repository state and use the minimum operation required; do not silently clean unrelated working-tree changes.",
+          "status": "draft_for_human_review"
         }
       ]
     },
@@ -298,7 +330,7 @@
       "name": "Architecture",
       "description": "Clean Architecture boundaries, domain/application/API responsibilities, repositories and decision gates.",
       "role": "human_navigation_only",
-      "policy_count": 20,
+      "policy_count": 27,
       "policies": [
         {
           "id": "ARC-001",
@@ -594,6 +626,120 @@
           ],
           "normalized_policy": "Consequential choices such as Rich Domain, CQRS/MediatR/VSA, event sourcing, project-wide Result, new layers/projects, multiple DbContexts, new persistence, messaging/background infrastructure, distributed caching, microservices, auth architecture, or replacement of approved baseline technology require explicit approval.",
           "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-021",
+          "name": "Constructor injection is the default",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/dependency-injection/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Use constructor injection for required dependencies by default; avoid service-locator and property-injection patterns.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-022",
+          "name": "Dependency injection lifetimes must be valid",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/dependency-injection/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Respect dependency lifetimes; do not capture a shorter-lived dependency inside a longer-lived service.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-023",
+          "name": "Registration stays near the owning layer",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/dependency-injection/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Keep registration close to the owning layer: Application registers Application services, Infrastructure registers persistence/adapters, and API remains the composition root.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-024",
+          "name": "Cache infrastructure does not leak inward",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/caching/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Keep cache technology out of Domain and do not leak infrastructure cache APIs into Application without a deliberate boundary abstraction.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-025",
+          "name": "Remote HTTP transport does not leak into Application",
+          "related_groups": [
+            "runtime-code-performance",
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Infrastructure translates remote HTTP responses into Application-facing abstractions; do not leak HttpResponseMessage or remote transport concerns into Application.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-026",
+          "name": "API versioning does not duplicate inner models by default",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Controller Versions"
+          ],
+          "normalized_policy": "Do not create separate Domain or persistence models merely because the external API has multiple versions; isolate version-specific transport contracts at the API boundary when practical.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "ARC-027",
+          "name": "Physical structure follows actual responsibilities",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/SKILL.md#Goals",
+            "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Top-Level Layout"
+          ],
+          "normalized_policy": "Do not create speculative projects, infrastructure, empty directory trees, or generic Common/Helpers/Utils buckets solely to make the repository look architectural.",
+          "status": "draft_for_human_review"
         }
       ]
     },
@@ -729,7 +875,7 @@
       "name": "API, Errors & Validation",
       "description": "HTTP semantics, error contracts, validation ownership, expected outcomes and exception policy.",
       "role": "human_navigation_only",
-      "policy_count": 12,
+      "policy_count": 20,
       "policies": [
         {
           "id": "API-001",
@@ -832,7 +978,8 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Unexpected Exceptions"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Unexpected Exceptions",
+            "templates/v2-baseline/.claude/rules/error-handling.md#Unexpected Exceptions"
           ],
           "normalized_policy": "Unexpected failures normally propagate to centralized IExceptionHandler handling; avoid repetitive catch/log/rethrow blocks.",
           "status": "draft_for_human_review"
@@ -848,7 +995,8 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Global Exception Handler"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Global Exception Handler",
+            "templates/v2-baseline/.claude/rules/error-handling.md#HTTP Errors"
           ],
           "normalized_policy": "Do not expose stack traces, SQL details, connection strings, internal paths, secret values, or sensitive exception details in public API errors.",
           "status": "draft_for_human_review"
@@ -862,7 +1010,8 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Expected Application Outcomes"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Expected Application Outcomes",
+            "templates/v2-baseline/.claude/rules/error-handling.md#Expected Outcomes"
           ],
           "normalized_policy": "Represent common expected outcomes explicitly when useful, but do not force a generic Result<T> pattern or use HTTP-named outcome categories in Application.",
           "status": "draft_for_human_review"
@@ -879,7 +1028,8 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Request Validation"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Request Validation",
+            "templates/v2-baseline/.claude/rules/error-handling.md#Validation Boundaries"
           ],
           "normalized_policy": "Use FluentValidation for explicit request/use-case validation where appropriate; keep transport validation, Application rules and Domain invariants at their owning boundaries.",
           "status": "draft_for_human_review"
@@ -909,9 +1059,139 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Error Logging"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Error Logging",
+            "templates/v2-baseline/.claude/rules/error-handling.md#Logging"
           ],
           "normalized_policy": "Unexpected exceptions should normally be logged once at the boundary that handles them; do not repeatedly log the same exception across repository, application, controller and global handler.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-013",
+          "name": "API versioning is introduced only for a real compatibility need",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Do not introduce API versioning merely because an API exists; add it when published compatibility or coexistence of client generations creates a concrete need.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-014",
+          "name": "Published breaking API changes require compatibility treatment",
+          "related_groups": [
+            "governance-product"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Breaking Changes"
+          ],
+          "normalized_policy": "Once an API version is relied on by external clients, avoid silent breaking changes; a breaking contract change normally requires a new version or another explicitly approved compatibility strategy.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-015",
+          "name": "Use one explicit API versioning strategy consistently",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Strategy"
+          ],
+          "normalized_policy": "When explicit API versioning is required, use one strategy consistently; URL-segment versioning is the default unless project requirements justify another strategy.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-016",
+          "name": "Swagger documentation must match runtime behavior",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/swagger/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Swagger/OpenAPI metadata must describe the API that actually runs, including routes, important response statuses, schemas, and authentication behavior; do not document speculative responses.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-017",
+          "name": "Swagger UI exposure is environment-aware",
+          "related_groups": [
+            "security",
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/swagger/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Enable Swagger UI in Development by default and expose it elsewhere only when deployment requirements explicitly justify it.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-018",
+          "name": "Health checks are cheap and deterministic",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Health checks must remain cheap and deterministic and must not become full business workflows or perform expensive/mutating database work.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-019",
+          "name": "Liveness and readiness have distinct dependency semantics",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Liveness"
+          ],
+          "normalized_policy": "Liveness should normally avoid external dependencies that could cause restart loops; readiness may depend on capabilities required to serve traffic and should reflect startup/dependency availability appropriately.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "API-020",
+          "name": "Public health responses do not expose internals",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Response Body"
+          ],
+          "normalized_policy": "Do not expose secrets, credentials, connection details, stack traces, or unnecessary internal diagnostics through publicly reachable health responses.",
           "status": "draft_for_human_review"
         }
       ]
@@ -1115,7 +1395,7 @@
       "name": "Security",
       "description": "Secrets, trust boundaries, SQL safety, authorization, transport security, CORS and sensitive data.",
       "role": "human_navigation_only",
-      "policy_count": 12,
+      "policy_count": 15,
       "policies": [
         {
           "id": "SEC-001",
@@ -1300,6 +1580,54 @@
           ],
           "normalized_policy": "Do not claim one browser token-storage mechanism is universally secure; choose storage according to the application's threat model and never log tokens.",
           "status": "draft_for_human_review"
+        },
+        {
+          "id": "SEC-013",
+          "name": "Security-sensitive checks fail safely",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Fail-Open Behavior"
+          ],
+          "normalized_policy": "Security-sensitive authorization, permission, or required-control checks should fail safely rather than silently convert lookup/configuration failures into success.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "SEC-014",
+          "name": "Required security configuration fails visibly",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Startup and Configuration Failure"
+          ],
+          "normalized_policy": "When a required security control cannot be configured correctly, prefer visible startup/configuration failure over insecure fallback.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "SEC-015",
+          "name": "Untrusted upload metadata is not authoritative",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#File Uploads"
+          ],
+          "normalized_policy": "Do not trust client-provided file metadata such as MIME type as authoritative when upload handling or security decisions depend on actual content.",
+          "status": "draft_for_human_review"
         }
       ]
     },
@@ -1308,7 +1636,7 @@
       "name": "Runtime, Code & Performance",
       "description": "C# conventions, async/cancellation, time, outbound HTTP, caching and measured optimization.",
       "role": "human_navigation_only",
-      "policy_count": 12,
+      "policy_count": 22,
       "policies": [
         {
           "id": "RUN-001",
@@ -1350,7 +1678,8 @@
           "scope": "backend",
           "source_refs": [
             "templates/v2-baseline/.claude/rules/performance.md#Async and Cancellation",
-            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Cancellation"
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Cancellation",
+            "templates/v2-baseline/.claude/rules/error-handling.md#Cancellation"
           ],
           "normalized_policy": "Propagate CancellationToken through asynchronous operations when cancellation is meaningful; do not add cancellation parameters to purely synchronous code without a use case.",
           "status": "draft_for_human_review"
@@ -1488,6 +1817,169 @@
           ],
           "normalized_policy": "A performance-motivated change identifies the bottleneck, preserves behavior, uses the simplest effective optimization, maintains tests, and benchmarks/profiles non-obvious complex optimizations.",
           "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-013",
+          "name": "Use structured logging with stable properties",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/logging/SKILL.md#Structured Logging"
+          ],
+          "normalized_policy": "Use ILogger<T> with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-014",
+          "name": "Do not log arbitrary payloads by default",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/logging/SKILL.md#Payload Logging"
+          ],
+          "normalized_policy": "Do not serialize arbitrary request bodies, domain objects, or sensitive payloads into logs by default; log the minimum operationally useful non-sensitive context.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-015",
+          "name": "Outbound dependency calls have bounded execution time",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Timeouts",
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Timeouts"
+          ],
+          "normalized_policy": "External I/O calls must have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-016",
+          "name": "Retries require safe repeat semantics",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Unsafe HTTP Methods",
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Retry"
+          ],
+          "normalized_policy": "Retry only when repeating the operation is safe; do not automatically retry state-changing operations without idempotency or another concrete safety mechanism.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-017",
+          "name": "Respect server retry guidance",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#429 and Retry-After",
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Retry-After"
+          ],
+          "normalized_policy": "When a dependency supplies Retry-After or equivalent rate-limit guidance, respect it where appropriate and do not retry indefinitely or aggressively.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-018",
+          "name": "Fallback must preserve acceptable semantics",
+          "related_groups": [
+            "governance-product"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Fallback"
+          ],
+          "normalized_policy": "Use fallback only when the fallback result is semantically acceptable; do not hide correctness failures behind convenient default values.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-019",
+          "name": "Caller cancellation is not a transient failure",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Cancellation"
+          ],
+          "normalized_policy": "Do not classify caller cancellation as a transient dependency failure or convert it into repeated outbound attempts.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-020",
+          "name": "Cache keys identify the cached value safely",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/caching/SKILL.md#Cache Keys"
+          ],
+          "normalized_policy": "Cache keys must uniquely represent the cached value and include relevant user/tenant/context dimensions; avoid global keys for user- or tenant-specific data.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-021",
+          "name": "Cache invalidation follows committed mutation semantics",
+          "related_groups": [
+            "persistence-data"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/caching/SKILL.md#Invalidation"
+          ],
+          "normalized_policy": "Invalidate/update cache entries only in a way consistent with successful underlying mutations; do not make cache state a second source of truth.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "RUN-022",
+          "name": "Structured configuration uses typed options",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/configuration/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Prefer strongly typed options for structured service configuration and validate settings at startup when missing/invalid values prevent correct or secure operation; avoid scattering string-based IConfiguration lookups.",
+          "status": "draft_for_human_review"
         }
       ]
     },
@@ -1496,7 +1988,7 @@
       "name": "Dependencies & Technology Stack",
       "description": "Dependency governance and approved/default technology choices.",
       "role": "human_navigation_only",
-      "policy_count": 16,
+      "policy_count": 24,
       "policies": [
         {
           "id": "DEP-001",
@@ -1749,6 +2241,138 @@
           ],
           "normalized_policy": "Playwright is the approved default when frontend E2E coverage is required, but it is not part of the minimal baseline scaffold.",
           "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-017",
+          "name": "API versioning package is conditional",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Asp.Versioning Setup"
+          ],
+          "normalized_policy": "When Controller API versioning is explicitly adopted, use the Controller integration of Asp.Versioning; do not add the package before the project actually adopts versioning.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-018",
+          "name": "Docker is optional infrastructure",
+          "related_groups": [
+            "workflows-delivery"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "always",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/docker/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Do not introduce Docker merely because the application can be containerized; add container artifacts only when the project or deployment actually needs them.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-019",
+          "name": "Production containers use an appropriate runtime image",
+          "related_groups": [
+            "security",
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/docker/SKILL.md#Runtime Image"
+          ],
+          "normalized_policy": "For production containers, use an appropriate runtime image rather than the SDK image solely for convenience, and avoid switching to root merely to bypass filesystem problems.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-020",
+          "name": "Modern Microsoft resilience integration is the default",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Package Choice"
+          ],
+          "normalized_policy": "When resilience is required, prefer Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for general pipelines; direct Polly integration is an explicit exception rather than the default.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-021",
+          "name": "Modern Serilog integration is the baseline",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/serilog/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "When Serilog is configured, use the modern DI-integrated AddSerilog approach and keep provider configuration in environment-aware configuration; application code continues to depend on ILogger<T>.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-022",
+          "name": "Use current solution format by default",
+          "related_groups": [
+            "architecture"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "always",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Top-Level Layout"
+          ],
+          "normalized_policy": "For the current .NET template use the .slnx solution format by default; use legacy .sln only when an external tool or project requirement requires it.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-023",
+          "name": "Shared .NET build/package configuration is repository-level",
+          "related_groups": [
+            "architecture"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "always",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Shared .NET Build Configuration"
+          ],
+          "normalized_policy": "Use repository-level Directory.Build.props for genuinely shared .NET build settings and Directory.Packages.props for Central Package Management; keep project-specific settings in their owning projects.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "DEP-024",
+          "name": "Default physical solution layout remains explicit",
+          "related_groups": [
+            "architecture",
+            "frontend",
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "always",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/SKILL.md#Default Shape",
+            "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md"
+          ],
+          "normalized_policy": "Keep backend production/test projects, frontend workspace, and documentation clearly separated according to the template's approved layout; do not create a separate top-level tests directory.",
+          "status": "draft_for_human_review"
         }
       ]
     },
@@ -1914,7 +2538,7 @@
       "name": "Workflows & Delivery",
       "description": "Review, verification, completion, reporting and workflow behavior.",
       "role": "human_navigation_only",
-      "policy_count": 12,
+      "policy_count": 22,
       "policies": [
         {
           "id": "WF-001",
@@ -2083,7 +2707,8 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/agents/code-reviewer.md#Review Priorities"
+            "templates/v2-baseline/.claude/agents/code-reviewer.md#Review Priorities",
+            "templates/v2-baseline/.claude/skills/code-review/SKILL.md"
           ],
           "normalized_policy": "Prioritize correctness, security, data integrity, architecture, concurrency/integration, meaningful tests, maintainability and credible performance; do not elevate style preferences above defects.",
           "status": "draft_for_human_review"
@@ -2097,12 +2722,184 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/agents/code-reviewer.md#Output"
+            "templates/v2-baseline/.claude/agents/code-reviewer.md#Output",
+            "templates/v2-baseline/.claude/skills/code-review/SKILL.md"
           ],
           "normalized_policy": "Do not invent findings to populate categories; when no meaningful findings exist, say so and state important unverifiable areas.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-013",
+          "name": "Build-fix starts from reproduction and diagnosis",
+          "related_groups": [
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Principles"
+          ],
+          "normalized_policy": "When repairing a build/test failure, reproduce and diagnose the actual failure before editing; fix root causes before downstream symptoms.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-014",
+          "name": "Build-fix uses focused bounded iteration",
+          "related_groups": [
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Principles"
+          ],
+          "normalized_policy": "Use small bounded repair iterations, rerun the narrowest failing verification after meaningful fixes, and expand verification only after the focused failure is resolved.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-015",
+          "name": "Do not weaken verification to make it pass",
+          "related_groups": [
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Test-Fix Flow"
+          ],
+          "normalized_policy": "Do not weaken, delete, skip, or suppress relevant tests/compiler/analyzer failures merely to make verification pass.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-016",
+          "name": "Fix generated outputs at their source",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Generated Code"
+          ],
+          "normalized_policy": "When generated output is wrong, prefer fixing its source configuration/input and regenerating; do not patch disposable generated output unless the repository intentionally treats it as maintained source.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-017",
+          "name": "CI reproduces supported build/test commands and keeps failures visible",
+          "related_groups": [
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "CI definitions stay in source control, reproduce the repository's supported build/test commands, and must not hide build/test failures.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-018",
+          "name": "CI uses repository-declared frontend commands and lockfile",
+          "related_groups": [
+            "frontend",
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "frontend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Frontend CI"
+          ],
+          "normalized_policy": "In CI, use scripts that actually exist and use npm ci when a maintained lockfile supports it; do not invent npm scripts or reflexively replace lockfile-based installs.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-019",
+          "name": "Production migrations are deliberate deployment work",
+          "related_groups": [
+            "persistence-data",
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Database Migrations",
+            "templates/v2-baseline/.claude/skills/docker/SKILL.md#Database Migrations"
+          ],
+          "normalized_policy": "Do not automatically apply production database migrations from normal application startup by default; treat production migration as an explicit deployment operation using approved credentials and never run Development seeding in Production.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-020",
+          "name": "Security findings require evidence and contextual severity",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/security-scan/SKILL.md#Principles",
+            "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Severity Guidance"
+          ],
+          "normalized_policy": "Security review must distinguish confirmed findings from items needing verification and assign severity from exploitability, reachability, impact, and application context rather than suspicious patterns or raw CVSS alone.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-021",
+          "name": "Security review cannot depend on one scanner",
+          "related_groups": [
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/security-scan/SKILL.md#Principles"
+          ],
+          "normalized_policy": "Do not require a specific MCP server, analyzer, commercial scanner, or external tool for security review to work; use available tooling as evidence, not as the sole authority.",
+          "status": "draft_for_human_review"
+        },
+        {
+          "id": "WF-022",
+          "name": "Git commits and staging remain focused",
+          "related_groups": [
+            "governance-product"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "repo/meta",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Scope"
+          ],
+          "normalized_policy": "Before committing, inspect the staged diff and include only the logical requested change; do not stage or clean unrelated modified files.",
           "status": "draft_for_human_review"
         }
       ]
     }
-  ]
+  ],
+  "coverage_policy": {
+    "inventory_role": "normative_oracle",
+    "includes": "Stable normative statements, defaults, prohibitions, approved technology decisions, approval gates, and workflow obligations whose loss or semantic drift would change candidate behavior.",
+    "excludes": "Pure examples, explanatory prose, code samples, optional technique, troubleshooting detail, and private knowledge that does not itself impose a normative requirement.",
+    "source_file_coverage_rule": "A V2 file may legitimately have zero inventory references when it contains knowledge/examples only. A normative statement must either map to an inventory policy or be intentionally classified as non-oracle material.",
+    "validation_usage": "After candidate generation, compare candidate runtime instructions to this oracle for missing owners, duplicate owners, semantic weakening/strengthening, and unapproved additional normative policy."
+  }
 }

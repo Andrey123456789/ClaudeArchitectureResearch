@@ -3,36 +3,69 @@
 | | |
 |---|---|
 | Status | Draft for human review |
-| Date | 2026-10-05 |
-| Policy IDs | 132 |
-| Metrics | 46 |
+| Policy IDs | 180 |
+| Metrics | 54 |
 | Templates changed | **None** |
 | Project specification | **None**; TaskBoard intentionally deferred |
 
-## Produced artifacts
+## Policy oracle
 
-### Policy foundation
-`research/policy/inventory.json` assigns stable IDs to normalized policy semantics with source traceability to the frozen V2 baseline. The same policies are grouped under `research/policy/content-pool/` for review.
+`research/policy/inventory.json` is the single normative oracle. It stores every policy once inside human-navigation `policygroups`; the group boundaries have no candidate-architecture semantics.
 
-`research/policy/skill-content-map.json` separates normative policy from shared workflow/knowledge material so candidate generators do not independently rewrite the same content.
+The retired `content-pool/` and `skill-content-map.json` are intentionally absent.
 
-This is a first-pass normalization, not a claim that every V2 sentence is perfectly classified. Human review should focus on omissions, over-strengthening/weakening, duplicate semantics, and policies that should be split/merged.
+The inventory is created before candidate generation and used post-generation to test:
 
-### Metrics
-`research/metrics/metrics-manifest.json` is the future canonical standard for run-result JSON. A run result still embeds `metricsdictionary` for self-documentation, but the manifest is versioned and canonical.
+- missing owner;
+- duplicate owner;
+- semantic drift;
+- unapproved extra normative policy.
 
-### Capability model
-`research/capabilities/capability-framework.md` separates the generic capability concept from the four-slot experimental fixture.
+A second audit pass added material normative content that had previously remained only inside V2 skills/references, including DI, caching, HttpClient/resilience, configuration/logging, API versioning, Swagger/health, Docker/solution layout, Git/build-fix/CI/security-scan behavior.
 
-### E0
-`research/e0/README.md` records the minimal probes required before physical template generation. E0 is intentionally marked **NOT EXECUTED**.
+## Metrics
+
+`research/metrics/metrics-manifest.json` is the canonical standard for run-result JSON.
+
+Changes in this revision include:
+
+- P0-P4 criticality restricted to Quality/validity rather than Speed/Autonomy/Cost;
+- measurement scope on every metric;
+- complete descriptions for Quality metrics;
+- exhaustive question taxonomy;
+- separate correction-free vs fully-unattended autonomy outcomes;
+- benchmark isolation validity metrics;
+- semantic-drift and extra-policy metrics;
+- symmetrical `replacement_change_surface` for all candidates;
+- module-external blast radius only where a real module boundary exists;
+- evidence completeness now handles skipped/not-applicable/unavailable checks explicitly;
+- descriptive total-token sum demoted from a primary outcome.
+
+## Benchmark isolation
+
+`research/benchmark/isolation-protocol.md` defines three separate information surfaces:
+
+1. **candidate construction** — may see candidate design, V2, inventory, shared invariants;
+2. **benchmark execution** — sees only one frozen runtime candidate + frozen project/spec/task inputs;
+3. **evaluation** — may see metrics, inventory, hidden oracle, candidate metadata and run evidence.
+
+Research isolation is physical/allowlist-based, not an instruction asking Claude to ignore reachable files.
+
+## Capability model
+
+`research/capabilities/capability-framework.md` continues to define a generic replaceable-capability mechanism with four representative first-experiment slots.
+
+## E0
+
+`research/e0/README.md` remains **NOT EXECUTED** and defines the minimum mechanics probes required before physical template generation.
 
 ## Remaining gate before iteration 004
 
-1. Human-review policy inventory/content pool and metrics manifest.
-2. Execute minimal E0 probes on the exact Claude Code version intended for generation/benchmark.
-3. Resolve any E0 failure consistently across candidate designs.
-4. Freeze/tag the reviewed foundation.
-5. Generate M/L0/L1/K0/K1 from the shared content pool, not by independently reconstructing V2.
+1. Human-review the revised inventory and metrics manifest.
+2. Execute the minimal E0 probes on the exact Claude Code version intended for generation/benchmark.
+3. Resolve E0 failures consistently across candidate designs.
+4. Freeze/tag this foundation.
+5. Generate M/L0/L1/K0/K1 in an isolated construction workspace from candidate design + V2 + inventory, while hiding metrics and future benchmark inputs.
+6. Validate generated candidates against the inventory before freezing them.
 
 TaskBoard remains outside the templates and will later be injected as the same frozen benchmark input for every candidate.
