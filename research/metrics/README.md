@@ -9,32 +9,47 @@
 3. **Cost** — raw token/resource usage and provider-reported monetary cost.
 4. **Quality** — correctness, research validity, architecture/instruction reliability, maintainability and flexibility.
 
+## First pass and recovery
+
+A benchmark run preserves immutable per-attempt records:
+
+- attempt `0` = initial/first-pass execution;
+- attempts `1..N` = standardized corrective attempts.
+
+`QLT-037` records first-pass success. `QLT-006` records final-after-recovery success.
+
+All corrective work remains included in run-level time and cost. Recovery is also exposed separately through `SPD-003`, `CST-009`, and `AUT-009`.
+
+The frozen human/operator burden score is:
+
+```text
+AUT-010 =
+    AUT-001 user_questions_total * 1
+  + AUT-009 corrective_prompt_count * 10
+```
+
+This point score is **not** wall-clock speed. Actual elapsed time, raw usage, monetary cost, and question classification remain separate evidence.
+
+The older `AUT-005` 1/2/3/5 intervention-severity score is supporting diagnostic information only.
+
 ## Criticality vs evaluation stage
 
 These are independent:
 
 - `criticality` applies to **Quality and research-validity** metrics and describes consequence of failure;
-- `evaluation_stage` controls when a check is run to avoid wasting evaluation time.
+- `evaluation_stage` controls when a check is run.
 
-Speed, Autonomy and Cost use priority/direction/targets but do not become Quality blockers solely for being slow, interactive, or expensive.
+Speed, Autonomy and Cost do not become Quality blockers solely for being slow, interactive, or expensive.
 
 ## Measurement scope
 
 Each metric declares where it is measured: benchmark preflight, benchmark run, candidate validation, static candidate analysis, trigger probe, findability probe, instruction-maintenance scenario, or replacement scenario.
 
-This prevents static/template metrics from being confused with per-task benchmark metrics.
-
-## Manifest vs run-result JSON
-
-The manifest is frozen before benchmark runs. Each run result records its version/SHA and may embed `metricsdictionary` for self-documentation.
-
-The result JSON keeps the agreed rich structure: metric values, calculation, status, evidence, evaluation trace, skipped checks, raw artifacts, and final review.
-
 ## Evidence
 
 Every computed metric requires evidence. Every skipped/not-applicable/technically-unavailable check also requires evidence for its disposition.
 
-Evidence quotes are capped at 200 characters and point to a concrete artifact/locator. LLM review may interpret evidence but is never primary ground truth.
+LLM review may interpret evidence but is never primary ground truth.
 
 ## Benchmark blindness
 

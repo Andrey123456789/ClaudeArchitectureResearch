@@ -1,5 +1,5 @@
 {
-  "manifest_version": "1.1",
+  "manifest_version": "1.2",
   "status": "frozen_before_candidate_generation",
   "purpose": "Canonical versioned standard for experiment metrics, benchmark validity gates, evidence requirements, evaluation order, and run-result structure.",
   "research_dimensions": {
@@ -23,11 +23,47 @@
       "evaluation_trace",
       "skipped_checks",
       "raw_artifacts",
-      "review"
+      "review",
+      "attempts"
     ],
     "no_overall_score": true,
     "raw_evidence_first": true,
-    "isolation_evidence": "A benchmark run result must reference the preflight isolation evidence and protocol version/hash."
+    "isolation_evidence": "A benchmark run result must reference the preflight isolation evidence and protocol version/hash.",
+    "attempt_contract": {
+      "purpose": "Preserve immutable first-pass and every corrective attempt so immediate success cannot be conflated with success reached after repair.",
+      "attempt_index": "0 is the initial task attempt; 1..N are corrective attempts.",
+      "attempt_type": [
+        "initial",
+        "corrective"
+      ],
+      "required_conceptual_fields": [
+        "attempt_index",
+        "attempt_type",
+        "prompt_artifact",
+        "started_at",
+        "finished_at",
+        "runtime_usage",
+        "questions",
+        "verification",
+        "raw_artifacts"
+      ],
+      "runtime_usage_fields": [
+        "input_tokens",
+        "output_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "reported_cost_usd",
+        "tool_calls",
+        "assistant_turns"
+      ],
+      "verification_fields": [
+        "build_passed",
+        "mandatory_tests_passed",
+        "mandatory_acceptance_passed",
+        "task_success"
+      ],
+      "immutability_rule": "attempt[0] is frozen when first-pass verification completes. Later corrective attempts must not overwrite first-pass values/evidence."
+    }
   },
   "priority": {
     "HIGH": "Can materially change conclusions.",
@@ -135,7 +171,7 @@
     "post_hoc_metrics": "label exploratory"
   },
   "metricsdictionary": {
-    "version": "0.1",
+    "version": "0.2",
     "purpose": "Self-documenting dictionary for every metric that may appear in this report.",
     "source_of_truth_rule": "Metric definitions are frozen before benchmarking. Per-run values are derived from preserved evidence. LLM judgment is not primary ground truth.",
     "field_dictionary": {
@@ -206,12 +242,12 @@
         "scenario_specific"
       ]
     },
-    "metric_count": 54,
+    "metric_count": 59,
     "entries": [
       {
         "id": "SPD-001",
         "name": "wall_clock_duration_seconds",
-        "description": "Elapsed time from benchmark start timestamp to benchmark finish timestamp.",
+        "description": "Elapsed benchmark execution time from initial task start through final evaluation, including all allowed corrective attempts.",
         "kind": "speed",
         "group": "runtime_speed",
         "priority": "HIGH",
@@ -235,7 +271,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary speed metric. Compares how long each instruction architecture takes to complete an equivalent task.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Includes corrective-attempt execution/evaluation time. SPD-003 reports the corrective-attempt portion separately.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -266,6 +302,36 @@
         },
         "benefit_for_research": "Diagnostic signal for planning/navigation overhead before useful work begins.",
         "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
+      },
+      {
+        "id": "SPD-003",
+        "name": "recovery_duration_seconds",
+        "description": "Total execution/evaluation time spent in corrective attempts after the first-pass snapshot.",
+        "kind": "speed",
+        "group": "runtime_speed",
+        "priority": "HIGH",
+        "criticality": null,
+        "evaluation_stage": 0,
+        "collection_mode": "AUTO_DERIVED",
+        "unit": "seconds",
+        "formula": "sum(attempt.finished_at_monotonic - attempt.started_at_monotonic for corrective attempts)",
+        "preferred_direction": "lower_is_better",
+        "research_role": "supporting_metric",
+        "applicability": "All benchmark runs; zero when no corrective attempt occurs.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [],
+        "failure_effect": "Does not reject Quality; quantifies the time cost of recovery separately from total duration.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "benefit_for_research": "Shows how much of a run's elapsed execution is consumed by repairing an initially incorrect result.",
+        "notes": "Summed per-attempt durations avoid counting arbitrary human idle time between evaluation and the next corrective prompt.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -394,14 +460,14 @@
         "description": "Severity-weighted total of corrective interventions using the frozen 1/2/3/5 rubric.",
         "kind": "autonomy",
         "group": "human_interaction",
-        "priority": "HIGH",
+        "priority": "MEDIUM",
         "criticality": null,
         "evaluation_stage": 3,
         "collection_mode": "AUTO_AFTER_HUMAN_CODING",
         "unit": "points",
         "formula": "sum(corrective_intervention.severity_weight)",
         "preferred_direction": "lower_is_better",
-        "research_role": "primary_or_gate_metric",
+        "research_role": "supporting_metric",
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
         "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
         "derived_from": [
@@ -416,8 +482,8 @@
           "must_include_locator_when_supported": true,
           "recheck_command_preferred": true
         },
-        "benefit_for_research": "Distinguishes minor corrections from architecture-level or restart-level rework.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "benefit_for_research": "Diagnostic severity view of corrective interventions using the older 1/2/3/5 coding rubric. The frozen operator-burden outcome is AUT-010.",
+        "notes": "Do not substitute this score for AUT-010. AUT-005 codes intervention severity after human review; AUT-010 applies the protocol-fixed 1 point per question and 10 points per corrective prompt.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -518,6 +584,69 @@
         "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
       },
       {
+        "id": "AUT-009",
+        "name": "corrective_prompt_count",
+        "description": "Number of standardized corrective prompts submitted after failed first-pass or corrective verification.",
+        "kind": "autonomy",
+        "group": "human_interaction",
+        "priority": "HIGH",
+        "criticality": null,
+        "evaluation_stage": 0,
+        "collection_mode": "AUTO",
+        "unit": "prompts",
+        "formula": "count(attempts where attempt_type='corrective')",
+        "preferred_direction": "lower_is_better",
+        "research_role": "primary_outcome",
+        "applicability": "All benchmark runs; zero when the first pass requires no corrective prompt.",
+        "aggregation_across_repetitions": "median, IQR, min, max and total across repetitions",
+        "derived_from": [],
+        "failure_effect": "Does not reject Quality by itself; it increases operator burden and measured recovery cost/time.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "benefit_for_research": "Directly distinguishes immediate success from solutions that require repeated human-initiated correction rounds.",
+        "notes": "A standardized corrective prompt also remains eligible for AUT-004/AUT-005 intervention coding, but AUT-009 counts rounds without subjective severity weighting.",
+        "measurement_scope": "benchmark_run"
+      },
+      {
+        "id": "AUT-010",
+        "name": "operator_penalty_points",
+        "description": "Protocol-fixed human/operator burden score: one point per Claude question plus ten points per corrective prompt.",
+        "kind": "autonomy",
+        "group": "human_interaction",
+        "priority": "HIGH",
+        "criticality": null,
+        "evaluation_stage": 0,
+        "collection_mode": "AUTO_DERIVED",
+        "unit": "points",
+        "formula": "AUT-001 + 10 * AUT-009",
+        "preferred_direction": "lower_is_better",
+        "research_role": "primary_outcome",
+        "applicability": "All benchmark runs.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [
+          "AUT-001",
+          "AUT-009"
+        ],
+        "failure_effect": "Does not reject Quality; summarizes human attention/repair burden as a frozen derived outcome.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "benefit_for_research": "Implements the pre-candidate protocol penalty without mixing arbitrary points into physical wall-clock time.",
+        "notes": "Weights are frozen at question=1 and corrective_prompt=10 before candidate generation. Actual time, tokens, cost, and question classification remain separately reported.",
+        "measurement_scope": "benchmark_run"
+      },
+      {
         "id": "CST-001",
         "name": "input_tokens",
         "description": "Non-cache input tokens reported by runtime telemetry.",
@@ -544,7 +673,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "One component of model usage cost and context consumption.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -574,7 +703,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Captures generated reasoning/action/output volume and contributes to billing.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -604,7 +733,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Important because large reusable instruction contexts may be cheap to re-read but still affect processed context.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -634,7 +763,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Shows cache population overhead, relevant when candidates differ in static instruction corpus.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -669,7 +798,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Convenient descriptive volume signal while raw token categories and provider-reported cost remain authoritative.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -699,7 +828,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Most direct monetary efficiency metric when provider telemetry exposes it.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -729,7 +858,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Operational-overhead signal; useful for detecting indirection costs in more complex architectures.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -759,7 +888,42 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Another operational-overhead signal that is less sensitive to network latency than wall-clock time.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "Run-level value includes initial plus all allowed corrective attempts. Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "measurement_scope": "benchmark_run"
+      },
+      {
+        "id": "CST-009",
+        "name": "recovery_processed_tokens",
+        "description": "Descriptive token volume consumed by corrective attempts only; not a billing-equivalent token count.",
+        "kind": "cost",
+        "group": "resource_usage",
+        "priority": "HIGH",
+        "criticality": null,
+        "evaluation_stage": 0,
+        "collection_mode": "AUTO_DERIVED",
+        "unit": "tokens",
+        "formula": "sum(input_tokens + output_tokens + cache_read_input_tokens + cache_creation_input_tokens for corrective attempts)",
+        "preferred_direction": "lower_is_better_given_equal_quality",
+        "research_role": "supporting_metric",
+        "applicability": "All benchmark runs; zero when no corrective attempt occurs.",
+        "aggregation_across_repetitions": "median, IQR, min, max across repetitions",
+        "derived_from": [
+          "CST-001",
+          "CST-002",
+          "CST-003",
+          "CST-004"
+        ],
+        "failure_effect": "Does not reject Quality; quantifies recovery resource usage.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "benefit_for_research": "Makes the token cost of fixing an initially wrong result visible while total run cost still includes all attempts.",
+        "notes": "Per-attempt raw token categories remain authoritative. The arithmetic sum is descriptive only.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -914,8 +1078,8 @@
       },
       {
         "id": "QLT-006",
-        "name": "task_success",
-        "description": "Binary run-level correctness outcome derived from build, mandatory tests, and mandatory acceptance.",
+        "name": "final_task_success",
+        "description": "Binary final run-level correctness outcome after the initial attempt and any allowed corrective attempts.",
         "kind": "quality",
         "group": "correctness",
         "priority": "HIGH",
@@ -923,7 +1087,7 @@
         "evaluation_stage": 1,
         "collection_mode": "AUTO_DERIVED",
         "unit": "boolean",
-        "formula": "build_passed && mandatory_tests_passed && mandatory_acceptance_passed",
+        "formula": "final_attempt.build_passed && final_attempt.mandatory_tests_passed && final_attempt.mandatory_acceptance_passed",
         "preferred_direction": "true_is_better",
         "research_role": "primary_outcome",
         "applicability": "All applicable runs unless the scenario protocol explicitly excludes it.",
@@ -943,7 +1107,7 @@
           "recheck_command_preferred": true
         },
         "benefit_for_research": "Primary run-level correctness outcome.",
-        "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy.",
+        "notes": "This is the final-after-recovery outcome. QLT-037 preserves whether the initial attempt already succeeded.",
         "measurement_scope": "benchmark_run"
       },
       {
@@ -1858,6 +2022,36 @@
         "measurement_scope": "replacement_scenario",
         "benefit_for_research": "Measures leakage outside a genuine module boundary without imposing that boundary concept on embedded candidates.",
         "notes": "Thresholds are scenario-specific unless separately frozen as global benchmark policy."
+      },
+      {
+        "id": "QLT-037",
+        "name": "first_pass_task_success",
+        "description": "Whether the initial attempt passes build, mandatory tests, and mandatory acceptance before any corrective prompt.",
+        "kind": "quality",
+        "group": "correctness",
+        "priority": "HIGH",
+        "criticality": "P1_CRITICAL",
+        "evaluation_stage": 1,
+        "collection_mode": "AUTO_DERIVED",
+        "unit": "boolean",
+        "formula": "attempts[0].build_passed && attempts[0].mandatory_tests_passed && attempts[0].mandatory_acceptance_passed",
+        "preferred_direction": "true_is_better",
+        "research_role": "primary_outcome",
+        "applicability": "All benchmark runs.",
+        "aggregation_across_repetitions": "rate = true/pass runs / all applicable runs",
+        "derived_from": [],
+        "failure_effect": "Failure triggers standardized recovery when the scenario permits it; it does not erase the run or prevent final success from being measured.",
+        "evidence_required": true,
+        "evidence_requirements": {
+          "minimum_items": 1,
+          "max_quote_chars": 200,
+          "must_identify_source_artifact": true,
+          "must_include_locator_when_supported": true,
+          "recheck_command_preferred": true
+        },
+        "benefit_for_research": "Prevents a candidate that succeeds immediately from being treated as equivalent to one that requires corrective prompting.",
+        "notes": "The attempt[0] verification snapshot is immutable. QLT-006 reports final-after-recovery success.",
+        "measurement_scope": "benchmark_run"
       }
     ]
   },
@@ -1876,5 +2070,34 @@
     "rule": "Every explicit question counted by AUT-001 must be classified exactly once as legitimate_decision_request, necessary_clarification, or invalid_or_unnecessary_question.",
     "reconciliation_formula": "AUT-001 == AUT-002 + AUT-007 + AUT-003",
     "corrective_interventions_are_separate": true
+  },
+  "amendment_history": [
+    {
+      "version": "1.2",
+      "date": "2026-10-07",
+      "phase": "before_candidate_generation",
+      "reason": "Freeze recovery/first-pass measurement after the benchmark protocol was approved, before any M/L/K candidate generation or benchmark result existed.",
+      "changes": [
+        "Added corrective_prompt_count and operator_penalty_points.",
+        "Added first_pass_task_success.",
+        "Added recovery_duration_seconds and recovery_processed_tokens.",
+        "Added per-attempt run-result contract.",
+        "Clarified that run-level time/cost includes all corrective attempts.",
+        "Demoted legacy severity-weighted intervention score to supporting diagnostic."
+      ]
+    }
+  ],
+  "recovery_measurement": {
+    "first_pass_boundary": "First pass ends when Claude first reports completion and the frozen evaluator finishes the corresponding verification snapshot.",
+    "correction_boundary": "A corrective attempt begins when a standardized corrective prompt is submitted and ends when its verification snapshot finishes.",
+    "total_time_rule": "Run-level wall-clock evidence includes the complete initial execution and every allowed corrective attempt. Recovery duration is also reported separately.",
+    "total_cost_rule": "Run-level token/cost metrics include initial plus corrective attempts. Per-attempt usage is preserved, and recovery token volume is reported separately.",
+    "question_rule": "Questions asked during corrective attempts count in AUT-001 exactly like questions asked during the initial attempt."
+  },
+  "operator_penalty_weights": {
+    "user_question": 1,
+    "corrective_prompt": 10,
+    "status": "frozen_before_candidate_generation",
+    "note": "This is a derived human/operator-burden score, not wall-clock speed. Actual time and resource usage remain separately reported."
   }
 }

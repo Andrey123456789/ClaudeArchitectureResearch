@@ -123,6 +123,20 @@ Precondition checks must prove before every run that:
 - the task has nevertheless disappeared after the failed request;
 - unrelated baseline behavior is still healthy.
 
+Because reproducing this defect intentionally performs a partial commit, the destructive precondition check **must not run against the benchmark instance that Claude will receive**.
+
+For every T06 run:
+
+1. create a disposable clone/database from the frozen T06 starting fixture;
+2. execute the precondition/negative-control oracle against that disposable state;
+3. require the expected defect to reproduce;
+4. destroy/reset the disposable state;
+5. create a new pristine benchmark workspace/database from the same frozen fixture/hash;
+6. verify its non-destructive identity/hash checks;
+7. only then launch benchmark-execution Claude.
+
+A precondition run that mutates the actual Claude-visible starting state invalidates the benchmark run.
+
 Postcondition checks must verify at least:
 
 - normal deletion succeeds;
@@ -161,7 +175,7 @@ Interpretation:
 - every explicit question after the initial task prompt = **1 point**;
 - every additional corrective prompt after a failed verification = **10 points**.
 
-This score does **not** replace wall-clock time, token usage, or question counts. It is a separate derived human/operator-burden measure.
+This score does **not** replace wall-clock time, token usage, or question counts. It is a separate derived human/operator-burden measure and is represented by `AUT-010` in metrics-manifest v1.2.
 
 Question classification is still preserved separately:
 
