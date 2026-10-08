@@ -1,3 +1,5 @@
+Iteration 003 was not executed as a Claude Code session. Its artifacts were prepared through human-directed research work with ChatGPT assistance, reviewed by the researcher, and committed manually. `prompts/003-pre-generation-foundation.md` documents the intended scope of the iteration but is not an executed-prompt record.
+
 # 003 — Pre-generation foundation
 
 | | |

@@ -1,3 +1,6 @@
+Status: NOT EXECUTED
+Role: retrospective specification of Iteration 003 scope
+
 # 003 — Pre-generation foundation
 
 ## Goal

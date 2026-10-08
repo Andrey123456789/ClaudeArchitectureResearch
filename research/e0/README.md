@@ -2,7 +2,24 @@
 
 ## Status
 
-**PLANNED FOR ITERATION 004 — NOT YET EXECUTED.**
+**ITERATION 004 — PARTIALLY EXECUTED. The gate to candidate generation is NOT passed.**
+
+A fresh headless child of the desktop-bundled Claude Code CLI cannot authenticate (`Not logged in`), so no probe that needs model behavior was executed. Loading and discovery were verified with startup-only runs: fresh processes with no model call, using the harness's own context records as evidence. Details, affected assumptions and open decisions: `research/observations/004-e0-mechanics-validation.md`.
+
+| Probe | Status (Claude Code 2.1.293; 2.1.289 identical) | Remaining |
+|---|---|---|
+| E0-R1 | PASS (startup context record) | — |
+| E0-I1 | PASS (startup context record) | — |
+| E0-R2 | INCONCLUSIVE: rules are conditional at startup | Read / Edit / new-file Write behavioral runs |
+| E0-S1 | INCONCLUSIVE: discovery verified, plus the bundled-name collision | description triggering |
+| E0-S2 | INCONCLUSIVE: the reference is not global | reachability via the owning skill |
+| E0-A1 | INCONCLUSIVE: agent and skill discovered | preload into the subagent |
+| E0-T1 | INCONCLUSIVE: static inventory; provider cost `TECHNICAL_UNAVAILABLE` | values and cross-checks |
+| E0-W1 | NOT_EXECUTED (mode configuration verified) | classification per mode |
+
+- Harness and fixtures: `research/e0/probes/` (commands in its README).
+- Machine-readable results: `research/e0/results/win32-cc2.1.293-claude-opus-5-5/summary.json`.
+- Next step: sign in the pinned CLI (`claude auth login`), then `python research/e0/probes/harness/e0.py --expect-version 2.1.293 run all`.
 
 E0 is not a candidate benchmark. It empirically validates Claude Code mechanics on which the candidate layouts, benchmark isolation, and evidence collection depend.
 
