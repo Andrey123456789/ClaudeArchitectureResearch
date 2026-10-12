@@ -14,3 +14,5 @@ instructions using CleanArchitectureTemplate V2 as the baseline.
 - `prompts/` — prompts used to generate and modify V3.
 - `benchmarks/` — behavioral tests.
 - `results/` — experiment results.
+
+- `research/RESEARCH_LOG.md` — concise chronological research diary and reproduction path.
