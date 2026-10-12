@@ -15,4 +15,4 @@ instructions using CleanArchitectureTemplate V2 as the baseline.
 - `benchmarks/` — behavioral tests.
 - `results/` — experiment results.
 
-- `research/RESEARCH_LOG.md` — concise chronological research diary and reproduction path.
+- `research/RESEARCH_COMMON_LOG.md` — concise chronological research diary and reproduction path.

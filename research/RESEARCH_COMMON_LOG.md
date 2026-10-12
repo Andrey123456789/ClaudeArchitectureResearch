@@ -102,6 +102,9 @@ The research scope was intentionally reduced to avoid turning the methodology it
 
 Windows Claude Desktop version recorded as **2.26454.2.0** (`Claude_2.26454.2.0_x64__pzs8sxrjxfjjc`). Auto-update policy was applied and the version remained unchanged immediately after restart/check. Treat the freeze as **pending confirmation** until the same version survives normal 24–48 hour observation; once confirmed, use this as the frozen Desktop environment for the shortened experiment.
 
+### 2026-10-12 — DECISION — Iteration 005 will separate template generation from code generation.
+Five non-baseline candidates will each be generated twice (5×2); V2 remains frozen. The resulting templates will be audited before deciding the next experiment. Further stages remain evidence-driven rather than fixed in advance.
+
 ---
 
 ## Current state
