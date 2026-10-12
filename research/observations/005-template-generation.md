@@ -2,7 +2,8 @@
 
 | | |
 |---|---|
-| Status | **PLANNED / READY TO EXECUTE** |
+| Status | **IN PROGRESS** |
+| Started | 2026-10-12 |
 | Scope | Template generation only; no application/code generation |
 | Subjects | M, L0, L1, K0, K1 |
 | Replicates | 2 independent generation replicates per candidate (5×2 = 10 runs) |
@@ -26,18 +27,18 @@ Template generation and code generation are deliberately separated. The two gene
 
 Use two rounds rather than generating each pair back-to-back.
 
-| Run | Generation replicate | Desktop version after run | Model | Effort | Status / notes |
+| Run | Workspace / replicate | Desktop version after run | Model | Effort | Status / notes |
 |---:|---|---|---|---|---|
-| 01 | M-r1 | | Opus 5.5 | xhigh | |
-| 02 | L0-r1 | | Opus 5.5 | xhigh | |
-| 03 | L1-r1 | | Opus 5.5 | xhigh | |
-| 04 | K0-r1 | | Opus 5.5 | xhigh | |
-| 05 | K1-r1 | | Opus 5.5 | xhigh | |
-| 06 | M-r2 | | Opus 5.5 | xhigh | |
-| 07 | L0-r2 | | Opus 5.5 | xhigh | |
-| 08 | L1-r2 | | Opus 5.5 | xhigh | |
-| 09 | K0-r2 | | Opus 5.5 | xhigh | |
-| 10 | K1-r2 | | Opus 5.5 | xhigh | |
+| 01 | 01-M-R1 | | Opus 5.5 | xhigh | **STARTED** |
+| 02 | 02-L0-R1 | | Opus 5.5 | xhigh | Pending |
+| 03 | 03-L1-R1 | | Opus 5.5 | xhigh | Pending |
+| 04 | 04-K0-R1 | | Opus 5.5 | xhigh | Pending |
+| 05 | 05-K1-R1 | | Opus 5.5 | xhigh | Pending |
+| 06 | 06-M-R2 | | Opus 5.5 | xhigh | Pending |
+| 07 | 07-L0-R2 | | Opus 5.5 | xhigh | Pending |
+| 08 | 08-L1-R2 | | Opus 5.5 | xhigh | Pending |
+| 09 | 09-K0-R2 | | Opus 5.5 | xhigh | Pending |
+| 10 | 10-K1-R2 | | Opus 5.5 | xhigh | Pending |
 
 Do not eliminate a candidate between its first and second replicate merely because the first output looks weak. Iteration 005 is the planned 5×2 generation set. Replicate 1 and replicate 2 use the same candidate specification; neither is a preferred variant. A run may be stopped only for a genuine technical/input failure, which must be recorded.
 
@@ -78,15 +79,32 @@ Avoid corrective/follow-up prompts during construction. If Claude can resolve a 
 
 Iteration 005 uses **controlled workspace isolation**, not a claimed security boundary. E0-W1 did not prove that the Desktop root is a hard sandbox.
 
-Use neutral roots such as:
+The actual execution root is:
 
 ```text
-C:\ResearchRuns\005\run-01\
-...
-C:\ResearchRuns\005\run-10\
+C:\Projects\AI Learning\ClaudeArchitectureResearchRuns\005\
 ```
 
-The Code-tab root for a run is that run directory, not the full research repository.
+with the ten workspaces:
+
+```text
+01-M-R1
+02-L0-R1
+03-L1-R1
+04-K0-R1
+05-K1-R1
+06-M-R2
+07-L0-R2
+08-L1-R2
+09-K0-R2
+10-K1-R2
+```
+
+The Code-tab root for a run is the individual workspace directory, not the research repository and not the shared `005` parent directory.
+
+The workspace names are for the human operator. `ASSIGNED_CANDIDATE.txt` remains the authoritative candidate selector used by the generation prompt.
+
+These execution workspaces are temporary experimental workspaces outside the Git repository. They are not a second research repository. After generation, only the run outputs needed for audit are collected back into `ClaudeArchitectureResearch`.
 
 ### Shared allowlist for every run
 
@@ -140,23 +158,25 @@ The prompt also instructs Claude not to inspect outside the workspace root. This
 
 During the ten runs, keep each run's output only in its own isolated workspace.
 
-After all ten runs are finished, collect for audit under:
+After all ten runs are finished, collect only the generated output for audit under:
 
 ```text
 research/generation/005/runs/
-  M-r1/
+  01-M-R1/
     template/
     GENERATION_REPORT.md
-  L0-r1/
-  L1-r1/
-  K0-r1/
-  K1-r1/
-  M-r2/
-  L0-r2/
-  L1-r2/
-  K0-r2/
-  K1-r2/
+  02-L0-R1/
+  03-L1-R1/
+  04-K0-R1/
+  05-K1-R1/
+  06-M-R2/
+  07-L0-R2/
+  08-L1-R2/
+  09-K0-R2/
+  10-K1-R2/
 ```
+
+Do not copy the full temporary workspace back into the research repository. The input corpus is already represented by the committed research artifacts and frozen baseline.
 
 Only the contents of each `template/` directory are runtime candidate artifacts. `GENERATION_REPORT.md` remains research evidence and must not later be copied into a code-generation benchmark workspace.
 
