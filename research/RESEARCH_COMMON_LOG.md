@@ -98,17 +98,16 @@ During E0, Claude Desktop silently changed its bundled Claude Code from **2.1.28
 
 The research scope was intentionally reduced to avoid turning the methodology itself into the project. The chosen execution surface for the remaining practical experiment is **Claude Desktop / Code tab**, rather than rebuilding the study around authenticated headless CLI runs.
 
-### 2026-10-12 — ENV — Claude Desktop version controlled per experimental run
+### 2026-10-12 — ENV — Claude Desktop version freeze attempted
 
-Windows Claude Desktop version recorded as **2.26454.2.0** (`Claude_2.26454.2.0_x64__pzs8sxrjxfjjc`) and the auto-update policy was applied. The shortened experiment does not wait for a multi-day freeze observation: after every experimental Claude prompt/run, the installed Desktop version is checked with `Get-AppxPackage -Name Claude | Select-Object Name, Version, PackageFullName`. A changed version makes that run suspect until an explicit repeat/accept decision is made.
+Windows Claude Desktop version recorded as **2.26454.2.0** (`Claude_2.26454.2.0_x64__pzs8sxrjxfjjc`). Auto-update policy was applied and the version remained unchanged immediately after restart/check. Treat the freeze as **pending confirmation** until the same version survives normal 24–48 hour observation; once confirmed, use this as the frozen Desktop environment for the shortened experiment.
 
-### 2026-10-12 — DECISION — Iteration 004 closed partial after scope reduction
-
-The full E0 behavioral matrix will not be completed before candidate generation. R1 and I1 remain established results; R2, S1, S2, A1, T1 and W1 remain explicitly deferred and will be revisited only if a later surviving candidate or code-generation decision materially depends on them.
-
-### 2026-10-12 — DECISION — Iteration 005 will separate template generation from code generation
-
+### 2026-10-12 — DECISION — Iteration 005 will separate template generation from code generation.
 Five non-baseline candidates will each be generated twice (5×2); V2 remains frozen. The resulting templates will be audited before deciding the next experiment. Further stages remain evidence-driven rather than fixed in advance.
+
+### 2026-10-12 — MILESTONE — Iteration 005 execution started
+
+The controlled template-generation workspaces were prepared outside the research repository for two independent replicates of each non-baseline candidate: M, L0, L1, K0 and K1. The first experimental generation run, **Run 01 / M-R1**, was started in a fresh Claude Desktop / Code session using `prompts/005-template-generation.md`; no template result is recorded yet.
 
 ---
 
@@ -118,6 +117,8 @@ Five non-baseline candidates will each be generated twice (5×2); V2 remains fro
 - Candidate designs defined: V2 / M / L0 / L1 / K0 / K1.
 - Normative oracle frozen: 180 policies.
 - Metrics manifest frozen: 59 metrics.
-- E0 closed partial: R1 PASS, I1 PASS; R2/S1/S2/A1/T1/W1 remain deferred rather than assumed.
-- Research direction: **simplify**, avoid unnecessary harness/methodology expansion, and use Claude Desktop with version verification after every experimental prompt/run.
-- Next stage: Iteration 005 generates M/L0/L1/K0/K1 twice each, then stops for template audit before any code generation.
+- E0 result so far: R1 PASS, I1 PASS; several behavioral mechanics remain unverified.
+- Research direction: **simplify**, avoid unnecessary harness/methodology expansion, continue through frozen Claude Desktop when the version freeze is confirmed.
+- Next journal entry should record either:
+  - confirmation/failure of the Desktop version freeze; or
+  - the next consciously simplified experimental step.
