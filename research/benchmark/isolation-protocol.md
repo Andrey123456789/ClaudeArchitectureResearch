@@ -32,6 +32,8 @@ Candidate-construction Claude must **not** see:
 
 Run candidate construction in a temporary allowlisted workspace rather than exposing the whole research repository.
 
+**Iteration 005 note (2026-10-12).** This Phase-A rule remains active for the shortened 5×2 template-generation experiment. Because E0-W1 did not prove the Desktop launch root to be a hard sandbox, call this **controlled workspace isolation**, not a verified security boundary. Each run uses a fresh neutral workspace containing only the explicit construction allowlist and no prior generation output.
+
 ## Phase B — Benchmark execution
 
 The benchmark Claude may see only:

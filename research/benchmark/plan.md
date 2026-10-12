@@ -4,8 +4,19 @@
 
 **Protocol accepted at Iteration 003 close.**
 
-This file freezes the benchmark shape before E0 results and before candidate generation.
-Exact task wording, starting fixtures, response scripts, and hidden Scenario Oracles are still to be authored and frozen in a dedicated pre-candidate iteration. Candidate-construction Claude must not see those hidden benchmark materials.
+### Sequencing amendment — 2026-10-12
+
+The scenario definitions below are retained as the original benchmark design and as a menu for later code-generation experiments, but the mandatory sequencing was intentionally shortened before any M/L/K runtime template or benchmark result existed.
+
+Iteration 005 now generates and audits the five non-baseline candidate templates twice each **before** deciding the scope of code-generation benchmarking. Exact TaskBoard scenarios, fixtures, response scripts and hidden oracles therefore no longer have to be frozen before template generation.
+
+The information boundary is unchanged: candidate-construction Claude must not see benchmark tasks, hidden oracles, metrics, prior results or competing-candidate results. Any later code-generation benchmark must freeze its own inputs before those benchmark runs begin.
+
+The next experiment after Iteration 005 is evidence-driven rather than precommitted.
+
+---
+
+This file originally froze the benchmark shape before E0 results and before candidate generation.
 
 ## Experimental subjects
 

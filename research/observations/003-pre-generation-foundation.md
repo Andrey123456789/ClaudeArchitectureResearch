@@ -65,3 +65,11 @@ The legacy 1/2/3/5 intervention-severity score remains only as supporting diagno
 The T06 protocol was also clarified so its destructive defect-precondition check runs on a disposable clone/database and the actual Claude-visible benchmark begins from a new pristine copy of the same frozen fixture.
 
 This amendment is pre-registered before candidate construction; it is not outcome-driven and does not use candidate or benchmark results.
+
+## Adaptive sequencing amendment — 2026-10-12
+
+The pre-candidate ordering above records the protocol as accepted at Iteration 003 close. Before any M/L/K runtime template or benchmark result existed, the project deliberately shortened the research plan.
+
+The revised sequence permits Iteration 005 to generate and audit candidate **templates** before detailed TaskBoard scenarios/oracles are frozen. Template generation remains isolated from metrics, benchmark tasks, hidden oracles and prior results.
+
+This amendment does not alter the frozen 180-policy oracle or the existing metrics definitions. It changes which parts of the methodology are mandatory for the next step. Code-generation experiments are selected and frozen only after the Iteration-005 template audit.

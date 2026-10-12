@@ -2,9 +2,9 @@
 
 ## Status
 
-**ITERATION 004 — PARTIALLY EXECUTED. The gate to candidate generation is NOT passed.**
+**ITERATION 004 — CLOSED PARTIAL AFTER SCOPE REDUCTION.**
 
-A fresh headless child of the desktop-bundled Claude Code CLI cannot authenticate (`Not logged in`), so no probe that needs model behavior was executed. Loading and discovery were verified with startup-only runs: fresh processes with no model call, using the harness's own context records as evidence. Details, affected assumptions and open decisions: `research/observations/004-e0-mechanics-validation.md`.
+R1 and I1 are established results. R2, S1, S2, A1, T1 and W1 remain explicitly unverified/deferred; they are not treated as PASS. The research scope was reduced on 2026-10-12, so completion of the original headless behavioral matrix is no longer a prerequisite for Iteration 005 template generation. Details and historical evidence remain in `research/observations/004-e0-mechanics-validation.md`.
 
 | Probe | Status (Claude Code 2.1.293; 2.1.289 identical) | Remaining |
 |---|---|---|
@@ -19,7 +19,7 @@ A fresh headless child of the desktop-bundled Claude Code CLI cannot authenticat
 
 - Harness and fixtures: `research/e0/probes/` (commands in its README).
 - Machine-readable results: `research/e0/results/win32-cc2.1.293-claude-opus-5-5/summary.json`.
-- Next step: sign in the pinned CLI (`claude auth login`), then `python research/e0/probes/harness/e0.py --expect-version 2.1.293 run all`.
+- Next step: no full E0 rerun before Iteration 005. A deferred probe is revisited only if a later surviving candidate or code-generation decision materially depends on it.
 
 E0 is not a candidate benchmark. It empirically validates Claude Code mechanics on which the candidate layouts, benchmark isolation, and evidence collection depend.
 
@@ -110,13 +110,16 @@ research/e0/
 
 Exact storage may differ if a simpler auditable layout is better.
 
-## Exit criterion
+## Historical exit criterion and 2026-10-12 amendment
 
-Candidate generation is not allowed to rely on an unverified mechanic.
+The original protocol required every listed mechanic to be characterized before candidate generation. That criterion was intentionally superseded when the research was shortened.
 
-Iteration 004 is complete when each required mechanic is:
+Iteration 004 therefore closes **partial**, not PASS:
 
-- empirically `PASS` / supported as expected; or
-- explicitly characterized as unsupported/limited and a consistent candidate-design adaptation is proposed for approval.
+- R1 and I1 remain established evidence;
+- R2, S1, S2, A1, T1 and W1 remain deferred/unverified;
+- raw evidence and harness artifacts are retained;
+- Iteration 005 may generate templates using controlled workspace isolation;
+- no deferred mechanic may later be described as empirically validated unless it is actually tested.
 
-Raw failures are retained.
+Before code generation, revisit only those deferred mechanics that materially affect the candidates and experiment design that survive the Iteration-005 audit.
