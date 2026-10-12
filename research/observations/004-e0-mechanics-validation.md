@@ -195,7 +195,7 @@ If W1 is `REACHABLE` in the benchmark's permission mode, prior transcripts becom
 
 No candidate file was changed.
 
-## 8. Decisions needed before candidate generation
+## 8. Decisions originally required before candidate generation
 
 | ID | Decision | Recommendation |
 |---|---|---|

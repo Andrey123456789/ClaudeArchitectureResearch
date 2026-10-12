@@ -25,7 +25,7 @@ E0 is not a candidate benchmark. It empirically validates Claude Code mechanics 
 
 Use the exact Claude Code build/configuration intended for the experiment.
 
-## Required probes
+## Original required probes
 
 | Probe | Question | Pass/evidence condition | Design affected |
 |---|---|---|---|

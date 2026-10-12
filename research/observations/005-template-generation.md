@@ -5,7 +5,7 @@
 | Status | **PLANNED / READY TO EXECUTE** |
 | Scope | Template generation only; no application/code generation |
 | Subjects | M, L0, L1, K0, K1 |
-| Repetitions | 2 independent generations per candidate (5×2 = 10 runs) |
+| Replicates | 2 independent generation replicates per candidate (5×2 = 10 runs) |
 | Baseline | V2 remains frozen and is **not regenerated** |
 | Prompt | `prompts/005-template-generation.md` |
 | Execution surface | Claude Desktop / Code tab |
@@ -20,26 +20,26 @@ Iteration 005 answers a narrower question than the future code-generation experi
 
 > Given the same frozen V2 policy corpus and one candidate design, what concrete runtime template does Claude construct, and how reproducible is that construction across two independent runs?
 
-Template generation and code generation are deliberately separated. After all ten templates are generated, they are audited before any decision about the next experiment.
+Template generation and code generation are deliberately separated. The two generations of each candidate are **replicates of the same candidate definition, not separate candidate variants**. After all ten raw generation results are audited, at most one canonical runtime template per candidate architecture is carried forward to any later code-generation experiment.
 
 ## Run order
 
 Use two rounds rather than generating each pair back-to-back.
 
-| Run | Candidate instance | Desktop version after run | Model | Effort | Status / notes |
+| Run | Generation replicate | Desktop version after run | Model | Effort | Status / notes |
 |---:|---|---|---|---|---|
-| 01 | M-1 | | Opus 5.5 | xhigh | |
-| 02 | L0-1 | | Opus 5.5 | xhigh | |
-| 03 | L1-1 | | Opus 5.5 | xhigh | |
-| 04 | K0-1 | | Opus 5.5 | xhigh | |
-| 05 | K1-1 | | Opus 5.5 | xhigh | |
-| 06 | M-2 | | Opus 5.5 | xhigh | |
-| 07 | L0-2 | | Opus 5.5 | xhigh | |
-| 08 | L1-2 | | Opus 5.5 | xhigh | |
-| 09 | K0-2 | | Opus 5.5 | xhigh | |
-| 10 | K1-2 | | Opus 5.5 | xhigh | |
+| 01 | M-r1 | | Opus 5.5 | xhigh | |
+| 02 | L0-r1 | | Opus 5.5 | xhigh | |
+| 03 | L1-r1 | | Opus 5.5 | xhigh | |
+| 04 | K0-r1 | | Opus 5.5 | xhigh | |
+| 05 | K1-r1 | | Opus 5.5 | xhigh | |
+| 06 | M-r2 | | Opus 5.5 | xhigh | |
+| 07 | L0-r2 | | Opus 5.5 | xhigh | |
+| 08 | L1-r2 | | Opus 5.5 | xhigh | |
+| 09 | K0-r2 | | Opus 5.5 | xhigh | |
+| 10 | K1-r2 | | Opus 5.5 | xhigh | |
 
-Do not eliminate a candidate between its first and second generation merely because the first output looks weak. Iteration 005 is the planned 5×2 generation set. A run may be stopped only for a genuine technical/input failure, which must be recorded.
+Do not eliminate a candidate between its first and second replicate merely because the first output looks weak. Iteration 005 is the planned 5×2 generation set. Replicate 1 and replicate 2 use the same candidate specification; neither is a preferred variant. A run may be stopped only for a genuine technical/input failure, which must be recorded.
 
 ## Desktop version control
 
@@ -144,18 +144,18 @@ After all ten runs are finished, collect for audit under:
 
 ```text
 research/generation/005/runs/
-  M-1/
+  M-r1/
     template/
     GENERATION_REPORT.md
-  L0-1/
-  L1-1/
-  K0-1/
-  K1-1/
-  M-2/
-  L0-2/
-  L1-2/
-  K0-2/
-  K1-2/
+  L0-r1/
+  L1-r1/
+  K0-r1/
+  K1-r1/
+  M-r2/
+  L0-r2/
+  L1-r2/
+  K0-r2/
+  K1-r2/
 ```
 
 Only the contents of each `template/` directory are runtime candidate artifacts. `GENERATION_REPORT.md` remains research evidence and must not later be copied into a code-generation benchmark workspace.
@@ -170,8 +170,10 @@ The post-generation audit will examine, at minimum:
 2. preservation of the frozen normative policy corpus;
 3. accidental semantic duplication or added policy;
 4. broken references / unusable runtime structure;
-5. within-candidate consistency between run 1 and run 2;
+5. within-candidate consistency between replicate 1 and replicate 2;
 6. meaningful convergence or divergence between candidate architectures.
+
+The replicate outputs remain research evidence. After the audit, at most one canonical runtime template per candidate architecture is selected or derived for any later code-generation stage; the experiment does not carry ten competing runtime candidates forward.
 
 The next experiment is chosen **after** this audit. It is intentionally not fixed in advance.
 
