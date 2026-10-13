@@ -23,7 +23,7 @@ The inventory contains normative requirements/defaults/prohibitions/decisions wh
 
 Pure examples, explanatory prose, private technique, and non-normative troubleshooting material may remain outside the oracle.
 
-Current policy count: **180**.
+Current policy count: **194**.
 
 ## Use in the experiment
 
