@@ -197,7 +197,8 @@ $sharedFiles = @(
     "prompts\005-template-generation.md",
     "research\observations\001-v3-design-proposal.md",
     "research\observations\002-candidate-space-analysis.md",
-    "research\policy\inventory.json"
+    "research\policy\inventory.json",
+    "research\policy\shared-research-invariants.json"
 )
 
 foreach ($file in $sharedFiles) {

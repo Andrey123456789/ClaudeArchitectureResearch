@@ -23,13 +23,22 @@ Iteration 005 answers a narrower question than the future code-generation experi
 
 Template generation and code generation are deliberately separated. The two generations of each candidate are **replicates of the same candidate definition, not separate candidate variants**. After all ten raw generation results are audited, at most one canonical runtime template per candidate architecture is carried forward to any later code-generation experiment.
 
+## Restart provenance
+
+Two earlier Iteration-005 attempts are explicitly annulled and are **not experimental evidence** for this restarted 5×2 series:
+
+- an earlier automated/opaque M generation was completed but annulled before comparative audit because the workflow did not meet the experiment's human-inspectability requirement;
+- a later restarted M generation was stopped after technical Markdown was produced in Russian, violating the English-only technical-artifact requirement.
+
+No output from either attempt may be used as a replicate, baseline, recovery input, candidate-quality result, or comparative evidence for the restarted series.
+
 ## Run order
 
 Use two rounds rather than generating each pair back-to-back.
 
 | Run | Workspace / replicate | Desktop version after run | Model | Effort | Status / notes |
 |---:|---|---|---|---|---|
-| 01 | 01-M-R1 | | Opus 5.5 | xhigh | **STARTED** |
+| 01 | 01-M-R1 | | Opus 5.5 | xhigh | Pending |
 | 02 | 02-L0-R1 | | Opus 5.5 | xhigh | Pending |
 | 03 | 03-L1-R1 | | Opus 5.5 | xhigh | Pending |
 | 04 | 04-K0-R1 | | Opus 5.5 | xhigh | Pending |
@@ -119,6 +128,7 @@ templates/v2-baseline/**
 research/observations/001-v3-design-proposal.md
 research/observations/002-candidate-space-analysis.md
 research/policy/inventory.json
+research/policy/shared-research-invariants.json
 
 research/candidates/<assigned>/DESIGN.md
 research/candidates/<assigned>/CORE_FEATURES.md

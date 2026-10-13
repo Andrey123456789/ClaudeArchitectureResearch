@@ -29,9 +29,10 @@ Shared inputs:
 1. `research/observations/001-v3-design-proposal.md`
 2. `research/observations/002-candidate-space-analysis.md`
 3. `research/policy/inventory.json`
-4. `research/candidates/<assigned>/CORE_FEATURES.md`
-5. `research/candidates/<assigned>/DESIGN.md`
-6. the complete `templates/v2-baseline/` tree
+4. `research/policy/shared-research-invariants.json`
+5. `research/candidates/<assigned>/CORE_FEATURES.md`
+6. `research/candidates/<assigned>/DESIGN.md`
+7. the complete `templates/v2-baseline/` tree
 
 Additional inputs:
 
@@ -42,6 +43,24 @@ Additional inputs:
 The workspace is intentionally allowlisted. Missing benchmark, metrics, other-candidate, TaskBoard, result, or oracle material is intentional.
 
 Do **not** inspect files outside the workspace root. Do not use the network or external repositories to recover excluded material.
+
+## Language requirement
+
+All programming-related and AI-instruction artifacts must be written in English.
+
+This includes:
+
+- all generated Markdown;
+- Claude / AI instruction files;
+- code and code comments;
+- configuration files;
+- scripts;
+- technical documentation;
+- `GENERATION_REPORT.md`.
+
+Do not generate Russian text in technical artifacts.
+
+The only exception is explicit end-user UI text when a product specification requires a non-English UI. This template-generation task has no such requirement.
 
 ## Established E0 mechanics
 
@@ -58,8 +77,9 @@ Do not treat unresolved E0 probes as established facts. Do not redesign the cand
 1. **V2 is the behavioral baseline, not the target layout.**
    Preserve the accepted normative intent represented by `research/policy/inventory.json`.
 
-2. **The inventory is the normative oracle.**
-   Do not independently strengthen, weaken, add, or remove policy. Organizational rewrites and technology-neutral wording are allowed only where the assigned candidate design requires them.
+2. **The V2 inventory is the normative oracle for V2-derived policy.**
+   Do not independently strengthen, weaken, add, or remove V2 policy. Organizational rewrites and technology-neutral wording are allowed only where the assigned candidate design requires them.
+   `research/policy/shared-research-invariants.json` contains experiment-wide construction constraints that apply equally to every candidate. Preserve those constraints without treating them as V2-derived policy.
 
 3. **The assigned design controls structure.**
    Implement the candidate described by its `DESIGN.md`, `CORE_FEATURES.md`, and the shared invariants/predicates in Iteration 002. Do not drift toward another candidate because it seems cleaner.
@@ -121,7 +141,8 @@ Before finishing:
 4. check internal file references/imports for broken paths;
 5. check for accidental normative duplication;
 6. check that no concrete application code or benchmark material was generated;
-7. correct clear construction defects you find;
-8. leave unresolved design ambiguities documented in `GENERATION_REPORT.md` rather than silently inventing a new architecture.
+7. verify that all generated technical/programming artifacts are English-only;
+8. correct clear construction defects you find;
+9. leave unresolved design ambiguities documented in `GENERATION_REPORT.md` rather than silently inventing a new architecture.
 
 If a genuinely required input is missing and the candidate cannot be generated without inventing research material, stop and report the missing input rather than fabricating it.
