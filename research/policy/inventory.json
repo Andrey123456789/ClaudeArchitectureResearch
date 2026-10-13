@@ -1,7 +1,7 @@
 {
-  "schema_version": "0.3",
-  "status": "frozen_for_candidate_generation",
-  "purpose": "Frozen normative oracle for post-generation validation of M/L0/L1/K0/K1. It is prepared before candidate generation so later validation cannot redefine what counts as preserved policy.",
+  "schema_version": "0.4",
+  "status": "frozen_for_candidate_generation_and_validation",
+  "purpose": "Frozen V2-only normative oracle for pre- and post-generation validation of M/L0/L1/K0/K1. Candidate-construction Claude can see this file; generation uses the frozen V2 baseline as the visible source of truth, while this inventory is used as a short-list.",
   "baseline_tree_sha": "563f575316fd60997b73a91187868459cdb15630",
   "grouping_policy": {
     "purpose": "Human navigation and inventory review only.",
@@ -17,20 +17,20 @@
   },
   "principles": {
     "one_normative_owner": "Every policy ID must have exactly one authoritative owner in each experimental candidate.",
-    "content_equivalence": "All experimental candidates start from the same normalized policy semantics. Candidate-specific wording changes require a permitted-delta record.",
-    "source_traceability": "Every V2-derived policy retains source_refs into the frozen baseline.",
-    "research_shared": "origin=research_shared means the policy was introduced by the research design and must be identical across M/L0/L1/K0/K1.",
-    "single_storage": "A policy appears in exactly one policygroups[].policies array. Cross-topic relationships use related_groups rather than duplication."
+    "content_equivalence": "All experimental candidates are evaluated against the same normalized V2 policy semantics. Candidate generation starts from the same frozen V2 baseline, not from this oracle.",
+    "source_traceability": "Every policy in this oracle is V2-derived and retains source_refs into the frozen baseline.",
+    "single_storage": "A policy appears in exactly one policygroups[].policies array. Cross-topic relationships use related_groups rather than duplication.",
+    "v2_only": "Every policy in this oracle has origin=v2. Research-introduced shared requirements are stored separately and are not scored as V2 policy preservation.",
   },
   "group_count": 10,
-  "policy_count": 180,
+  "policy_count": 194,
   "policygroups": [
     {
       "id": "governance-product",
       "name": "Governance & Product",
       "description": "Operating policy, product authority, approval boundaries, scope discipline, Git safety.",
       "role": "human_navigation_only",
-      "policy_count": 20,
+      "policy_count": 19,
       "policies": [
         {
           "id": "GOV-001",
@@ -197,7 +197,8 @@
           "trigger_class": "always",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/CLAUDE.md#Core Defaults"
+            "templates/v2-baseline/CLAUDE.md#Core Defaults",
+            "templates/v2-baseline/.claude/rules/architecture.md#Architectural Simplicity"
           ],
           "normalized_policy": "Prefer simple maintainable solutions; keep architectural complexity proportional to current requirements and avoid speculative abstractions.",
           "status": "accepted_in_frozen_oracle"
@@ -211,7 +212,8 @@
           "trigger_class": "always",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/CLAUDE.md#Core Defaults"
+            "templates/v2-baseline/CLAUDE.md#Core Defaults",
+            "templates/v2-baseline/.claude/rules/architecture.md#Architectural Simplicity"
           ],
           "normalized_policy": "Do not introduce frameworks, libraries, infrastructure, or architectural patterns without a concrete current need.",
           "status": "accepted_in_frozen_oracle"
@@ -259,39 +261,6 @@
           "status": "accepted_in_frozen_oracle"
         },
         {
-          "id": "GOV-017",
-          "name": "Decision control protocol",
-          "related_groups": [
-            "architecture",
-            "workflows-delivery"
-          ],
-          "origin": "research_shared",
-          "normative_strength": "MUST",
-          "trigger_class": "always",
-          "scope": "common",
-          "source_refs": [
-            "research/observations/002-candidate-space-analysis.md#S-06"
-          ],
-          "normalized_policy": "Classify decisions as Decided, Delegated, or Reserved; Reserved changes require explicit approval and headless runs must not silently alter architecture.",
-          "status": "accepted_in_frozen_oracle"
-        },
-        {
-          "id": "GOV-018",
-          "name": "Challenge questionable instructions",
-          "related_groups": [
-            "workflows-delivery"
-          ],
-          "origin": "research_shared",
-          "normative_strength": "MUST",
-          "trigger_class": "always",
-          "scope": "common",
-          "source_refs": [
-            "research/observations/002-candidate-space-analysis.md#S-16"
-          ],
-          "normalized_policy": "Before implementing a questionable request, identify concrete concerns such as duplication, cohesion, triggering, context, conflicts, or complexity and propose an alternative.",
-          "status": "accepted_in_frozen_oracle"
-        },
-        {
           "id": "GOV-019",
           "name": "Never discard user changes",
           "related_groups": [
@@ -322,6 +291,26 @@
           ],
           "normalized_policy": "Before a repository-changing Git operation, inspect relevant repository state and use the minimum operation required; do not silently clean unrelated working-tree changes.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "GOV-021",
+          "name": "Custom settings changes propagate across affected surfaces",
+          "related_groups": [
+            "persistence-data",
+            "frontend",
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "common",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#When Adding a New Setting",
+            "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#When CUSTOM_SETTINGS.md Changes",
+            "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#Verification"
+          ],
+          "normalized_policy": "When an approved CUSTOM_SETTINGS.md value is added, changed, or removed, identify and update every affected implementation, validation, configuration, test, documentation, and mirrored frontend/backend surface; search for stale references and run the normal verification workflow. Changing one literal alone does not establish synchronization.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -330,7 +319,7 @@
       "name": "Architecture",
       "description": "Clean Architecture boundaries, domain/application/API responsibilities, repositories and decision gates.",
       "role": "human_navigation_only",
-      "policy_count": 27,
+      "policy_count": 29,
       "policies": [
         {
           "id": "ARC-001",
@@ -622,7 +611,8 @@
           "trigger_class": "always",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/rules/architecture.md#Consequential Decision Gate"
+            "templates/v2-baseline/.claude/rules/architecture.md#Consequential Decision Gate",
+            "templates/v2-baseline/.claude/rules/architecture.md#Architectural Simplicity"
           ],
           "normalized_policy": "Consequential choices such as Rich Domain, CQRS/MediatR/VSA, event sourcing, project-wide Result, new layers/projects, multiple DbContexts, new persistence, messaging/background infrastructure, distributed caching, microservices, auth architecture, or replacement of approved baseline technology require explicit approval.",
           "status": "accepted_in_frozen_oracle"
@@ -740,6 +730,38 @@
           ],
           "normalized_policy": "Do not create speculative projects, infrastructure, empty directory trees, or generic Common/Helpers/Utils buckets solely to make the repository look architectural.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "ARC-028",
+          "name": "Test-project production references stay narrow",
+          "related_groups": [
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend-tests",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/references/backend-layout.md#Test References"
+          ],
+          "normalized_policy": "Do not give backend test projects broader production-project references than their test scope requires; preserve the same inward dependency discipline used by the production architecture.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "ARC-029",
+          "name": "Transport contracts avoid gratuitous duplication",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/references/backend-layout.md#Contracts"
+          ],
+          "normalized_policy": "Do not duplicate equivalent DTOs across API and Application merely to create layer-shaped types; introduce transport-specific request/response contracts when separation from Application models provides a concrete boundary benefit.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -748,7 +770,7 @@
       "name": "Persistence & Data",
       "description": "EF Core persistence behavior, development seeding, migration/seeding separation, data lifecycle.",
       "role": "human_navigation_only",
-      "policy_count": 8,
+      "policy_count": 10,
       "policies": [
         {
           "id": "PST-001",
@@ -867,6 +889,39 @@
           ],
           "normalized_policy": "Whenever Domain or persistence changes affect seeded entities, update the maintained development seeder in the same change.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "PST-009",
+          "name": "Schema-affecting custom settings co-change with persistence artifacts",
+          "related_groups": [
+            "governance-product",
+            "testing-quality"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#Database Impact"
+          ],
+          "normalized_policy": "When a CUSTOM_SETTINGS.md change affects schema constraints, indexes, column lengths, or other persistence metadata, update EF Core mapping, create the appropriate migration according to the project's migration workflow, verify Development seeding remains valid, and update provider-sensitive persistence or integration tests when needed; do not casually alter existing migrations.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "PST-010",
+          "name": "EF Core migrations are reviewed source code",
+          "related_groups": [
+            "workflows-delivery"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Migrations"
+          ],
+          "normalized_policy": "Treat EF Core migrations as source code and review generated migrations before committing them, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -875,7 +930,7 @@
       "name": "API, Errors & Validation",
       "description": "HTTP semantics, error contracts, validation ownership, expected outcomes and exception policy.",
       "role": "human_navigation_only",
-      "policy_count": 20,
+      "policy_count": 22,
       "policies": [
         {
           "id": "API-001",
@@ -1157,7 +1212,8 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Core Principles"
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Core Principles",
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Database Health"
           ],
           "normalized_policy": "Health checks must remain cheap and deterministic and must not become full business workflows or perform expensive/mutating database work.",
           "status": "accepted_in_frozen_oracle"
@@ -1173,7 +1229,9 @@
           "trigger_class": "path",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Liveness"
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Liveness",
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Readiness",
+            "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Startup Readiness"
           ],
           "normalized_policy": "Liveness should normally avoid external dependencies that could cause restart loops; readiness may depend on capabilities required to serve traffic and should reflect startup/dependency availability appropriately.",
           "status": "accepted_in_frozen_oracle"
@@ -1192,6 +1250,39 @@
             "templates/v2-baseline/.claude/skills/health-check/SKILL.md#Response Body"
           ],
           "normalized_policy": "Do not expose secrets, credentials, connection details, stack traces, or unnecessary internal diagnostics through publicly reachable health responses.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "API-021",
+          "name": "Normal client cancellation is not a server failure",
+          "related_groups": [
+            "runtime-code-performance"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/rules/error-handling.md#Cancellation",
+            "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Cancellation"
+          ],
+          "normalized_policy": "Do not map normal client-request cancellation to a generic 500 response or log it as an unhandled application failure.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "API-022",
+          "name": "API deprecation preserves the promised migration window",
+          "related_groups": [
+            "dependencies-stack"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "workflow",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Deprecation"
+          ],
+          "normalized_policy": "When deprecating an externally consumed API version, mark the deprecation in versioning metadata, document the replacement, communicate a realistic migration/removal timeline, and keep the old version working for the promised support period; do not remove it without considering the published support contract.",
           "status": "accepted_in_frozen_oracle"
         }
       ]
@@ -1306,7 +1397,8 @@
           "trigger_class": "path",
           "scope": "backend-tests",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Database Strategy"
+            "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Database Strategy",
+            "templates/v2-baseline/.claude/rules/testing.md#Database Tests"
           ],
           "normalized_policy": "Use the actual database provider when relational/provider behavior matters; Testcontainers is optional, and do not claim provider fidelity from a different provider.",
           "status": "accepted_in_frozen_oracle"
@@ -1354,7 +1446,7 @@
           "source_refs": [
             "templates/v2-baseline/.claude/rules/testing.md#Behavioral Verification",
             "templates/v2-baseline/.claude/skills/testing/SKILL.md#Verification Performed During Implementation",
-            "templates/v2-baseline/.claude/skills/verify/SKILL.md#Preserve Behavioral Verification"
+            "templates/v2-baseline/.claude/skills/verify/SKILL.md#4. Preserve Behavioral Verification"
           ],
           "normalized_policy": "If an ad-hoc/manual behavioral probe uniquely demonstrates behavior, preserve that behavior in maintained automated coverage before completion unless equivalent coverage already exists.",
           "status": "accepted_in_frozen_oracle"
@@ -1395,7 +1487,7 @@
       "name": "Security",
       "description": "Secrets, trust boundaries, SQL safety, authorization, transport security, CORS and sensitive data.",
       "role": "human_navigation_only",
-      "policy_count": 15,
+      "policy_count": 18,
       "policies": [
         {
           "id": "SEC-001",
@@ -1628,6 +1720,56 @@
           ],
           "normalized_policy": "Do not trust client-provided file metadata such as MIME type as authoritative when upload handling or security decisions depend on actual content.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "SEC-016",
+          "name": "Authentication uses established platform mechanisms",
+          "related_groups": [
+            "architecture"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Core Principles",
+            "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Local User Accounts"
+          ],
+          "normalized_policy": "Do not implement custom token/password security, password hashing, or reset-token cryptography when established ASP.NET Core authentication/Identity facilities cover the requirement.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "SEC-017",
+          "name": "Bearer authentication keeps effective token validation",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Bearer Authentication",
+            "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Authentication Configuration"
+          ],
+          "normalized_policy": "For Bearer/OIDC authentication, validate the properties required by the actual issuer/provider, including issuer, audience where applicable, signature/signing authority, and lifetime; do not disable validation merely to make a token work.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "SEC-018",
+          "name": "Authentication failures avoid account-enumeration leaks",
+          "related_groups": [
+            "api-errors-validation"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Authentication Errors"
+          ],
+          "normalized_policy": "Do not expose authentication-failure detail that unnecessarily reveals secrets or account state; login behavior should avoid account-enumeration leaks where relevant.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -1636,7 +1778,7 @@
       "name": "Runtime, Code & Performance",
       "description": "C# conventions, async/cancellation, time, outbound HTTP, caching and measured optimization.",
       "role": "human_navigation_only",
-      "policy_count": 22,
+      "policy_count": 24,
       "policies": [
         {
           "id": "RUN-001",
@@ -1980,6 +2122,35 @@
           ],
           "normalized_policy": "Prefer strongly typed options for structured service configuration and validate settings at startup when missing/invalid values prevent correct or secure operation; avoid scattering string-based IConfiguration lookups.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "RUN-023",
+          "name": "Cache entries have explicit expiration or invalidation semantics",
+          "related_groups": [],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/caching/SKILL.md#Core Principles"
+          ],
+          "normalized_policy": "Every cache entry must have a lifetime or another explicit invalidation strategy.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "RUN-024",
+          "name": "C# file and async naming conventions remain conventional",
+          "related_groups": [],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/rules/coding-style.md#Files and Namespaces",
+            "templates/v2-baseline/.claude/rules/coding-style.md#Async Naming"
+          ],
+          "normalized_policy": "For new C# code, prefer file-scoped namespaces when consistent with the project, normally keep one primary top-level type per matching file, and use the Async suffix for Task/ValueTask-returning methods unless an existing or framework contract makes that inappropriate.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -1988,7 +2159,7 @@
       "name": "Dependencies & Technology Stack",
       "description": "Dependency governance and approved/default technology choices.",
       "role": "human_navigation_only",
-      "policy_count": 24,
+      "policy_count": 26,
       "policies": [
         {
           "id": "DEP-001",
@@ -2139,7 +2310,8 @@
           "trigger_class": "always",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Validation"
+            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Validation",
+            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Logging"
           ],
           "normalized_policy": "FluentValidation is the standard explicit request/use-case validation library; application logging uses ILogger<T> with Serilog as provider.",
           "status": "accepted_in_frozen_oracle"
@@ -2156,7 +2328,8 @@
           "trigger_class": "always",
           "scope": "backend",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Mapping"
+            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Mapping",
+            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Resilience"
           ],
           "normalized_policy": "Manual mapping is fine for simple cases; Mapster is approved when mapping volume warrants it. Microsoft resilience packages are approved only when real integrations need resilience.",
           "status": "accepted_in_frozen_oracle"
@@ -2373,6 +2546,39 @@
           ],
           "normalized_policy": "Keep backend production/test projects, frontend workspace, and documentation clearly separated according to the template's approved layout; do not create a separate top-level tests directory.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "DEP-025",
+          "name": "npm peer-dependency conflicts are not bypassed by force flags",
+          "related_groups": [
+            "frontend"
+          ],
+          "origin": "v2",
+          "normative_strength": "MUST_NOT",
+          "trigger_class": "workflow",
+          "scope": "frontend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/rules/dependencies.md#npm"
+          ],
+          "normalized_policy": "Do not use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; resolve the actual compatibility problem.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "DEP-026",
+          "name": "Local Development database configuration is usable and non-secret",
+          "related_groups": [
+            "persistence-data",
+            "security"
+          ],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "backend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Development Database Configuration"
+          ],
+          "normalized_policy": "For the SQL Server baseline, appsettings.Development.json should provide a usable local Development connection string when it contains no secret credentials; credential-bearing local values must be supplied through user-secrets or another approved local secret mechanism.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -2381,7 +2587,7 @@
       "name": "Frontend",
       "description": "Angular structure, state, HTTP boundary, routing, forms, frontend security and error handling.",
       "role": "human_navigation_only",
-      "policy_count": 10,
+      "policy_count": 12,
       "policies": [
         {
           "id": "FE-001",
@@ -2530,6 +2736,34 @@
           ],
           "normalized_policy": "Use reactive forms for non-trivial forms when useful; frontend validation improves UX but does not replace backend validation or data-integrity/security enforcement.",
           "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "FE-011",
+          "name": "Avoid nested manual RxJS subscriptions",
+          "related_groups": [],
+          "origin": "v2",
+          "normative_strength": "DEFAULT",
+          "trigger_class": "path",
+          "scope": "frontend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/angular/SKILL.md#RxJS"
+          ],
+          "normalized_policy": "Avoid manual nested RxJS subscriptions and prefer composition operators when stream composition expresses the behavior clearly.",
+          "status": "accepted_in_frozen_oracle"
+        },
+        {
+          "id": "FE-012",
+          "name": "Manual RxJS subscriptions follow framework lifecycle",
+          "related_groups": [],
+          "origin": "v2",
+          "normative_strength": "MUST",
+          "trigger_class": "path",
+          "scope": "frontend",
+          "source_refs": [
+            "templates/v2-baseline/.claude/skills/angular/SKILL.md#RxJS"
+          ],
+          "normalized_policy": "When manually subscribing from Angular framework-managed code, tie the subscription lifetime to the component/service lifecycle using the project's current Angular facilities.",
+          "status": "accepted_in_frozen_oracle"
         }
       ]
     },
@@ -2594,7 +2828,7 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/verify/SKILL.md#Inspect the Change"
+            "templates/v2-baseline/.claude/skills/verify/SKILL.md#1. Inspect the Change"
           ],
           "normalized_policy": "Review the final changed-file set/diff, confirm scope, remove accidental artifacts/secrets, and determine affected repository areas before choosing checks.",
           "status": "accepted_in_frozen_oracle"
@@ -2610,7 +2844,7 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/verify/SKILL.md#Build"
+            "templates/v2-baseline/.claude/skills/verify/SKILL.md#2. Build"
           ],
           "normalized_policy": "Build affected projects and run relevant tests; a build failure means implementation is not complete and new relevant failures must be investigated.",
           "status": "accepted_in_frozen_oracle"
@@ -2644,7 +2878,7 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/verify/SKILL.md#Architecture Check"
+            "templates/v2-baseline/.claude/skills/verify/SKILL.md#5. Architecture Check"
           ],
           "normalized_policy": "Run architecture, formatting/analyzer, dependency and security checks when relevant to the change rather than indiscriminately.",
           "status": "accepted_in_frozen_oracle"
@@ -2787,9 +3021,10 @@
           "trigger_class": "workflow",
           "scope": "common",
           "source_refs": [
-            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Generated Code"
+            "templates/v2-baseline/.claude/skills/build-fix/SKILL.md#Generated Code",
+            "templates/v2-baseline/.claude/skills/angular/SKILL.md#API Client Generation"
           ],
-          "normalized_policy": "When generated output is wrong, prefer fixing its source configuration/input and regenerating; do not patch disposable generated output unless the repository intentionally treats it as maintained source.",
+          "normalized_policy": "When generated output is wrong or its source contract/configuration changes, fix or update the authoritative source and regenerate; do not manually patch disposable generated output unless the repository or generation workflow intentionally treats that output as maintained source.",
           "status": "accepted_in_frozen_oracle"
         },
         {
@@ -2896,10 +3131,164 @@
     }
   ],
   "coverage_policy": {
-    "inventory_role": "normative_oracle",
-    "includes": "Stable normative statements, defaults, prohibitions, approved technology decisions, approval gates, and workflow obligations whose loss or semantic drift would change candidate behavior.",
-    "excludes": "Pure examples, explanatory prose, code samples, optional technique, troubleshooting detail, and private knowledge that does not itself impose a normative requirement.",
-    "source_file_coverage_rule": "A V2 file may legitimately have zero inventory references when it contains knowledge/examples only. A normative statement must either map to an inventory policy or be intentionally classified as non-oracle material.",
-    "validation_usage": "After candidate generation, compare candidate runtime instructions to this oracle for missing owners, duplicate owners, semantic weakening/strengthening, and unapproved additional normative policy."
-  }
+    "inventory_role": "hidden_post_generation_normative_oracle",
+    "includes": "Stable V2-derived normative statements, defaults, prohibitions, approved technology decisions, approval gates, and workflow obligations whose loss or semantic drift would materially change candidate behavior.",
+    "excludes": "Research-introduced requirements, pure examples, explanatory prose, code samples, optional technique, troubleshooting detail, and private knowledge that does not itself impose a material normative requirement.",
+    "source_file_coverage_rule": "A V2 file may legitimately have zero policy references when it contains only product input, examples, or technique. Material normative statements must map to an inventory policy; audited borderline/technique material is recorded in intentional_non_oracle_material.",
+    "validation_usage": "After candidate generation is frozen, compare candidate runtime instructions to this oracle for missing owners, duplicate owners, semantic weakening/strengthening, and unapproved additional normative policy.",
+    "candidate_visibility": "forbidden",
+    "benchmark_execution_visibility": "forbidden",
+    "evaluation_visibility": "required"
+  },
+  "intentional_non_oracle_material": [
+    {
+      "id": "EXC-001",
+      "source_refs": [
+        "templates/v2-baseline/SPECIFICATION.md"
+      ],
+      "classification": "empty_product_input_placeholder",
+      "rationale": "The frozen V2 SPECIFICATION.md is empty. Product-input authority is represented by GOV-001..GOV-007; the empty placeholder contains no additional normative content."
+    },
+    {
+      "id": "EXC-002",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/modern-csharp/SKILL.md"
+      ],
+      "classification": "optional_language_technique",
+      "rationale": "Primary-constructor, required-member, field-keyword, collection-expression, and immutability guidance is context-sensitive technique. Durable behavior is already bounded by RUN-009, RUN-024, and GOV-014."
+    },
+    {
+      "id": "EXC-003",
+      "source_refs": [
+        "templates/v2-baseline/.claude/rules/coding-style.md"
+      ],
+      "classification": "remaining_low_level_style_guidance",
+      "rationale": "Unmapped constructor/record/visibility/type-inference/modern-syntax preferences are low-level style guidance rather than architecture-policy oracle items. Repository conventions remain authoritative through RUN-009; file/async conventions are now captured by RUN-024."
+    },
+    {
+      "id": "EXC-004",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/project-structure/references/backend-layout.md"
+      ],
+      "classification": "remaining_layout_examples_and_naming_heuristics",
+      "rationale": "Illustrative directory trees, type-role suffix suggestions, and local organization examples are implementation/navigation technique. Architectural boundaries, physical layout, narrow test references, and DTO-boundary behavior are represented by existing ARC/DEP policies plus ARC-028 and ARC-029."
+    },
+    {
+      "id": "EXC-005",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/dependency-injection/SKILL.md"
+      ],
+      "classification": "optional_di_technique",
+      "rationale": "Decorator and assembly-scanning examples are optional technique. Core injection, lifetime, ownership, and composition policy is represented by ARC-021..ARC-023."
+    },
+    {
+      "id": "EXC-006",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/docker/SKILL.md"
+      ],
+      "classification": "conditional_container_technique",
+      "rationale": "Dockerfile shape, Compose examples, health-probe mechanics, and image-size options are conditional deployment technique. Docker adoption/runtime-image policy is represented by DEP-018/DEP-019 and health policy by API-018..API-020."
+    },
+    {
+      "id": "EXC-007",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/resilience/SKILL.md"
+      ],
+      "classification": "conditional_resilience_technique",
+      "rationale": "Circuit-breaker, hedging, database-retry, and message-delivery examples are conditional technique. Core timeout/retry/fallback/cancellation semantics are represented by RUN-015..RUN-019 and DEP-020."
+    },
+    {
+      "id": "EXC-008",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/swagger/SKILL.md"
+      ],
+      "classification": "openapi_tooling_technique",
+      "rationale": "Setup snippets, launch-profile examples, metadata syntax, and document partitioning are tooling technique. Runtime/documentation truth and environment exposure are represented by API-016/API-017 and DEP-012."
+    },
+    {
+      "id": "EXC-009",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/http-api/SKILL.md"
+      ],
+      "classification": "detailed_http_reference",
+      "rationale": "Individual less-common status-code examples and detailed controller snippets remain reference material. Core success/error/auth/conflict/versioning semantics are represented by API policies."
+    },
+    {
+      "id": "EXC-010",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/health-check/SKILL.md"
+      ],
+      "classification": "health_check_implementation_technique",
+      "rationale": "Tagging, endpoint, topology, and test examples are implementation technique. Cheap/deterministic checks, liveness/readiness semantics, and safe public output are represented by API-018..API-020."
+    },
+    {
+      "id": "EXC-011",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/ef-core/SKILL.md"
+      ],
+      "classification": "remaining_ef_core_technique",
+      "rationale": "Projection, tracking, include/split-query, interceptor, compiled-query, and raw-SQL examples are implementation technique or are already covered by architecture, performance, and security policies. Migration review is now captured by PST-010."
+    },
+    {
+      "id": "EXC-012",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/testing/SKILL.md",
+        "templates/v2-baseline/.claude/rules/testing.md"
+      ],
+      "classification": "remaining_test_technique",
+      "rationale": "Mock/fake choice, builders/fixtures, snapshot-testing examples, and other local test technique remain outside the oracle. Test level, behavior, isolation, fidelity, regression, probe preservation, coverage, and naming are represented by TST policies."
+    },
+    {
+      "id": "EXC-013",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/logging/SKILL.md",
+        "templates/v2-baseline/.claude/skills/configuration/SKILL.md"
+      ],
+      "classification": "operational_technique",
+      "rationale": "Correlation implementation, source-generated logging, exact provider precedence, and options examples are technique. Structured/sensitive logging and typed/validated configuration are represented by RUN-013/RUN-014/RUN-022 and security policies."
+    },
+    {
+      "id": "EXC-014",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md"
+      ],
+      "classification": "conditional_delivery_technique",
+      "rationale": "Artifact-publishing shape, build-once/promote preference, and platform-specific deployment examples are conditional technique. CI truthfulness, frontend install, and production migration obligations are represented by WF-017..WF-019."
+    },
+    {
+      "id": "EXC-015",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/security-scan/SKILL.md",
+        "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md"
+      ],
+      "classification": "investigation_heuristics",
+      "rationale": "Detailed scan-layer search patterns and false-positive examples are investigative prompts rather than independent runtime policy. Evidence/severity discipline and tool independence are represented by WF-020/WF-021; concrete security invariants are represented by SEC policies."
+    },
+    {
+      "id": "EXC-016",
+      "source_refs": [
+        "templates/v2-baseline/.claude/agents/code-reviewer.md",
+        "templates/v2-baseline/.claude/skills/code-review/SKILL.md"
+      ],
+      "classification": "review_routing_and_examples",
+      "rationale": "Specialized-skill routing and repeated examples are not separate oracle items. Independent read-only review, defect prioritization, no manufactured findings, and risk-scoped verification are represented by WF-010..WF-012 and related policies."
+    },
+    {
+      "id": "EXC-017",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/project-structure/SKILL.md",
+        "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md"
+      ],
+      "classification": "scaffolding_procedure_and_examples",
+      "rationale": "Step-by-step scaffolding commands and illustrative directory trees remain workflow technique. Stack/layout/simplicity/dependency invariants are represented by DEP-022..DEP-024, ARC-001, ARC-027..ARC-029, and governance policies."
+    },
+    {
+      "id": "EXC-018",
+      "source_refs": [
+        "templates/v2-baseline/.claude/skills/angular/SKILL.md"
+      ],
+      "classification": "remaining_frontend_technique",
+      "rationale": "Component snippets, detailed test targeting, and other Angular implementation examples remain technique. Structural/state/HTTP/forms/error/RxJS invariants are represented by FE-001..FE-012 and related security/dependency policies."
+    }
+  ]
 }

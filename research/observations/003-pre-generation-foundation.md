@@ -73,3 +73,5 @@ The pre-candidate ordering above records the protocol as accepted at Iteration 0
 The revised sequence permits Iteration 005 to generate and audit candidate **templates** before detailed TaskBoard scenarios/oracles are frozen. Template generation remains isolated from metrics, benchmark tasks, hidden oracles and prior results.
 
 This amendment does not alter the frozen 180-policy oracle or the existing metrics definitions. It changes which parts of the methodology are mandatory for the next step. Code-generation experiments are selected and frozen only after the Iteration-005 template audit.
+
+Before the restarted Iteration 005 runs, the V2 policy inventory was re-audited against the unchanged frozen V2 baseline. The V2-only oracle increased from 178 V2-derived policies plus 2 research-shared policies to 194 V2-derived policies; the 2 research-shared constraints were moved to a separate artifact.
