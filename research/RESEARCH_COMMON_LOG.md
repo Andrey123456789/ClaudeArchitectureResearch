@@ -80,7 +80,7 @@ Commit: `03243d080ad31b37073db6c4b6ecd5ae177e0d6a`.
 
 ### 2026-10-06…07 — MILESTONE — Iteration 003: methodology/foundation frozen
 
-Iteration 003 was **not executed as a Claude Code run**; it was human-directed methodology work with ChatGPT assistance and manual review/commit. It froze the V2-derived policy oracle (**180 policies**), metric/evidence contract (**59 metrics** after the final pre-candidate amendment), benchmark isolation protocol, benchmark shape, capability framework, recovery accounting, and the E0 mechanics plan.
+Iteration 003 was **not executed as a Claude Code run**; it was human-directed methodology work with ChatGPT assistance and manual review/commit. It froze the V2-derived policy oracle, metric/evidence contract (**59 metrics** after the final pre-candidate amendment), benchmark isolation protocol, benchmark shape, capability framework, recovery accounting, and the E0 mechanics plan.
 Detailed artifact: `research/observations/003-pre-generation-foundation.md`.
 Final foundation commit: `a9e83fec5f462b23863f0e17e86028636040cf81`.
 
@@ -110,19 +110,106 @@ The full E0 behavioral matrix will not be completed before candidate generation.
 
 Five non-baseline candidates will each be generated twice (5×2); V2 remains frozen. The two generations are independent replicates of the same candidate definition, not separate candidate variants. The resulting templates will be audited before deciding the next experiment; further stages remain evidence-driven rather than fixed in advance.
 
-### 2026-10-12 — MILESTONE — Iteration 005 execution started
+### 2026-10-12 — MILESTONE — Initial Iteration 005 execution started
 
-Ten controlled template-generation workspaces were prepared outside the research repository under `C:\Projects\AI Learning\ClaudeArchitectureResearchRuns\005\`: two independent generation replicates for each of **M, L0, L1, K0 and K1**. Workspace names encode both execution order and replicate identity (`01-M-R1` … `10-K1-R2`), and **Run 01 / M-R1** was started in a fresh Claude Desktop / Code session using `prompts/005-template-generation.md`; no generated-template result is recorded yet.
+Ten controlled template-generation workspaces were initially prepared outside the research repository under `C:\Projects\AI Learning\ClaudeArchitectureResearchRuns\005\`, using numbered workspace names such as `01-M-R1` and `06-M-R2`. This execution layout was later superseded by the clean Iteration-005 restart described below.
+
+### 2026-10-13 — CORRECTION — Early Iteration 005 attempts annulled
+
+Two early Iteration-005 attempts were explicitly annulled and are **not experimental evidence** for the final 5×2 series. One M generation used an automated/opaque workflow that did not satisfy the experiment's human-inspectability requirement; a subsequent restarted M attempt was stopped after technical Markdown was generated in Russian, violating the English-only technical-artifact requirement.
+
+Outputs from those attempts must not be used as replicates, recovery inputs, baselines, candidate-quality results, or comparative evidence.
+
+### 2026-10-13 — DECISION — Iteration 005 rebuilt as a clean human-readable 5×2 experiment
+
+The temporary workspace structure was simplified to:
+
+```text
+005/
+├── M/
+│   ├── Run-01/
+│   └── Run-02/
+├── L0/
+│   ├── Run-01/
+│   └── Run-02/
+├── L1/
+│   ├── Run-01/
+│   └── Run-02/
+├── K0/
+│   ├── Run-01/
+│   └── Run-02/
+└── K1/
+    ├── Run-01/
+    └── Run-02/
+```
+
+Each run receives only `TASK.md`, `CANDIDATE.md`, the common `source/` corpus, and an initially empty `output/`. `TASK.md` is identical across all candidates, `CANDIDATE.md` is identical within each candidate pair, and the common source corpus is identical across all ten runs. `ASSIGNED_CANDIDATE.txt` was removed.
+
+### 2026-10-13 — ENV — Clean Iteration 005 package validated
+
+The restarted 5×2 package passed pre-run validation: all ten workspaces were present, outputs were empty, common inputs matched, and the normalized policy inventory contained **194/194 policies**. The common source corpus includes the frozen V2 baseline, `inventory.json`, and the separate `shared-research-invariants.json`.
+
+This supersedes the earlier **180-policy** count recorded during the pre-generation foundation stage; **194 policies** is the current frozen inventory used by Iteration 005.
+
+### 2026-10-13 — DECISION — Shared construction contract separated from candidate design
+
+Iteration 005 now distinguishes three roles explicitly: `inventory.json` defines the accepted V2-derived policy semantics that must survive; shared research constraints apply equally to all candidates through the common construction contract / `shared-research-invariants.json`; and `CANDIDATE.md` controls only the candidate-specific organization, ownership, dependency, loading, and composition model.
+
+This prevents candidate generation from treating research-wide controls as candidate-specific architectural choices.
+
+### 2026-10-14 — RESULT — First clean Iteration 005 generation results produced
+
+Clean raw generations were completed for **M Run-01**, **L0 Run-01**, and **M Run-02**. Each run remained an independent construction replicate and its raw output was preserved without manual repair before audit.
+
+The execution order temporarily deviated from the nominal round-by-round sequence because of available Claude usage quota; the runs remained fresh-session executions with isolated workspaces and identical candidate-independent inputs.
+
+### 2026-10-14 — RESULT — M replicates exposed a shared trigger-preservation defect
+
+Audit of the two clean M generations found that both changed the frozen `trigger_class` assignment of inventory policies: **M Run-01 changed 20 policies and M Run-02 changed 17**. Because `trigger_class` determines when a policy becomes available to the runtime model, this is not merely a file-placement difference: it changes the loading profile being compared across candidate architectures.
+
+The result demonstrated that preserving policy semantics alone is insufficient for this experiment; trigger assignment is part of the controlled input and must remain invariant across candidates.
+
+### 2026-10-14 — RESULT — M audit found additional construction defects
+
+Both M replicates also kept substantial multi-step `Development Workflow` procedure in always-loaded `CLAUDE.md` instead of separating procedure into a workflow skill. Their generated hooks additionally used command forms whose environment-variable expansion is potentially unsafe on the Windows execution platform, so nominal deterministic enforcement may not actually execute as intended.
+
+M Run-01 also violated the intended workspace boundary during construction by writing temporary material outside its allowed output area and observing a sibling run-directory name. No sibling output was established as having been read, but the event confirmed that the workspace rule must be treated as an experimental control rather than assumed filesystem sandboxing.
+
+The approximately **5.3k-token** always-loaded M surface was slightly above the roughly **5k** design target, but this was treated as a secondary optimization issue rather than a validity failure.
+
+### 2026-10-14 — DECISION — Do not advance the current M pair to code generation
+
+Neither current M replicate will be promoted to downstream code-generation testing. **M Run-02 is structurally preferable to M Run-01**, but selecting it would still carry forward a generation that violated the controlled trigger assignment.
+
+The two current M outputs remain useful **diagnostic evidence**, but they are not accepted as the final comparative M replicate pair.
+
+### 2026-10-14 — DECISION — Strengthen the shared task and regenerate M
+
+The corrective action must be made in the **shared Iteration-005 construction contract**, not as an M-specific hint. At minimum, the task must make the following controls unambiguous for every candidate:
+
+- preserve every inventory policy's `trigger_class`;
+- keep normative policy, multi-step procedure, technique, product input, and deterministic enforcement separated by responsibility;
+- use Windows-compatible hook/enforcement invocation;
+- obey the workspace/output boundary strictly and do not inspect sibling runs or parent-workspace material;
+- preserve reliable loading without solving it by moving conditional material into the always-loaded surface.
+
+After the common contract is corrected, **both M Run-01 and M Run-02 are to be regenerated from clean workspaces**. This is cheaper and methodologically safer than carrying the flawed M pair into application/code-generation testing and discovering the comparability problem later.
 
 ---
 
 ## Current state
 
 - Baseline: `templates/v2-baseline/`.
-- Candidate designs defined: V2 / M / L0 / L1 / K0 / K1.
-- Normative oracle frozen: 180 policies.
-- Metrics manifest frozen: 59 metrics.
-- E0 closed partial: R1 PASS, I1 PASS; R2/S1/S2/A1/T1/W1 remain deferred rather than assumed.
-- Research direction: **simplify**, avoid unnecessary harness/methodology expansion, and use Claude Desktop with version verification after every experimental prompt/run.
-- Iteration 005 execution is **in progress**: ten controlled external workspaces are prepared for `01-M-R1` through `10-K1-R2`, and Run 01 / M-R1 has started.
-- Next checkpoint: complete the 5×2 template-generation set, record the Desktop version after every run, then audit the generated templates before any code generation.
+- Candidate designs: **V2 / M / L0 / L1 / K0 / K1**.
+- Current frozen V2-derived policy inventory: **194 policies**.
+- Metrics manifest: **59 metrics**.
+- Shared research-added constraints are separated from the V2-derived policy oracle.
+- E0 is closed partial: **R1 PASS, I1 PASS**; R2/S1/S2/A1/T1/W1 remain deferred rather than assumed.
+- Remaining experimental execution uses **Claude Desktop / Code tab** with version verification after experimental runs.
+- Iteration 005 uses a clean human-readable **5 candidates × 2 independent replicates** structure: `M/L0/L1/K0/K1 × Run-01/Run-02`.
+- Early opaque/Russian-output Iteration-005 attempts are annulled and are not experimental evidence.
+- Clean raw generations have been produced for **M Run-01, L0 Run-01, and M Run-02**.
+- Audit of the current M pair found material construction/control violations, most importantly `trigger_class` drift (**20 policies in Run-01; 17 in Run-02**).
+- The current M pair is retained as diagnostic evidence but **will not advance to code generation or serve as the final comparative M pair**.
+- Immediate next step: strengthen the **shared** `TASK.md` controls, then regenerate **both M replicates** from clean workspaces.
+- After M is clean, continue/complete candidate generation and comparative audit before deciding which architectures, if any, advance to code-generation benchmarks.
