@@ -1,0 +1,899 @@
+{
+  "unit": "P0002-K1-P019",
+  "batch_input_sha256": "7c05a32dd5c6b82c01616e5cc193f5b2d8c3627b947fd611e09110844c8a313d",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-019",
+        "name": "Production containers use an appropriate runtime image",
+        "related_groups": [
+          "security",
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/docker/SKILL.md#Runtime Image"
+        ],
+        "normalized_policy": "For production containers, use an appropriate runtime image rather than the SDK image solely for convenience, and avoid switching to root merely to bypass filesystem problems.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0074",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0075"
+      ],
+      "boundary_analysis": "All build tooling excluded from production image, stronger than avoiding SDK solely for convenience. Named ASP.NET runtime, suitable worker runtime, fitting nonroot app user and writable-directory permissions are covered alongside conditional optimization images.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/operations.md",
+          "sha256": "df64a1b16be637442fe8e95a6821f86224ac0a1d75bfcaf0d5ccd5059d9f4642",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: production containers use an appropriate runtime image, not the SDK image for convenience, and do not switch to root merely to bypass filesystem problems.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "86ecdc73f9bcbe8fd7c25e7a25a4dbe371f87936f88299cd8981dd578d881190",
+          "inspected_ranges": [
+            [
+              12,
+              14
+            ],
+            [
+              45,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\nContainers are optional infrastructure (decision register). Policy: `.claude/rules/backend/operations.md` (runtime image, non-root), `.claude/rules/common/security.md` (secrets). Procedure: `delivery-change`. Keep build tooling out of production images, configuration external, images reproducible, and Docker concerns out of Domain/Application code.\n",
+            "\nCopy only repository-level build files that exist and are needed for restore; never add them just to satisfy the example. Copy project files explicitly — no wildcard tricks that flatten or rearrange the multi-project structure — and update this section when the solution structure changes. Never optimize layer caching at the cost of restoring the wrong project graph.\n\n## Runtime image and user\n\nUse the ASP.NET runtime image (`mcr.microsoft.com/dotnet/aspnet`) for ASP.NET Core and an appropriate .NET runtime image for workers. Use the built-in non-root `app` user of modern .NET images when it fits, and give directories the application writes to the right ownership and permissions.\n\n## Configuration and secrets\n\nPass environment-specific configuration at runtime (`ASPNETCORE_ENVIRONMENT`, `ConnectionStrings__Default`, `Authentication__Authority`) and supply secrets through platform/container secret mechanisms. Surfaces to check for credentials: the Dockerfile, committed Compose files, build arguments (visible in image metadata), and copied appsettings files.\n\n## Compose for local development\n\nUseful for local infrastructure such as a database or cache when the project benefits from it; add only services the project uses, and keep local passwords in an ignored `.env` or similar mechanism.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-020",
+        "name": "Modern Microsoft resilience integration is the default",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Package Choice"
+        ],
+        "normalized_policy": "When resilience is required, prefer Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for general pipelines; direct Polly integration is an explicit exception rather than the default.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-020",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0159",
+        "primary/K1/constraints.jsonl/RULE-K1-0436",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0119"
+      ],
+      "boundary_analysis": "Leaf use of named Microsoft packages is stronger than canonical prefer; direct Polly requires documented exception and still warns centrally. Microsoft resilience APIs are prescribed despite underlying Polly v8. Named deprecated integration bans already registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              23,
+              34
+            ],
+            [
+              89,
+              93
+            ],
+            [
+              115,
+              118
+            ]
+          ],
+          "context_quotes": [
+            "\n// Approved-stack exceptions owned by the add-dependency workflow.\nconst NUGET_DENY = new Map([\n  ['microsoft.extensions.http.polly', 'deprecated resilience integration package'],\n  ['polly.extensions.http', 'deprecated resilience integration package'],\n]);\nconst NUGET_EXCEPTION = new Map([\n  ['polly', 'direct Polly usage is a documented exception'],\n  ['polly.core', 'direct Polly usage is a documented exception'],\n]);\nconst NPM_TOOLING = ['typescript', 'vitest', 'eslint', 'prettier', 'jest', '@playwright/test', 'karma', 'jasmine-core'];\n",
+            "    }\n    const denied = NUGET_DENY.get(pkg.id.toLowerCase());\n    if (denied) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${denied}`, OWNER_WORKFLOW));\n  }\n  for (const facet of Object.values(ctx.facets)) {",
+            "    }\n    if (NUGET_DENY.has(id)) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${NUGET_DENY.get(id)}`, OWNER_WORKFLOW));\n    if (NUGET_EXCEPTION.has(id)) findings.push(lib.finding('warn', rel, `\"${pkg.id}\": ${NUGET_EXCEPTION.get(id)}`, OWNER_WORKFLOW));\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              18,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- [ ] A concrete current requirement exists (common dependency standard).\n- [ ] The choice matches the decision register's approved stack; anything else goes through `architecture-decision` first.\n- Conditional packages are added only when their capability is actually adopted:\n  - Default: API versioning uses the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation) — added only after the project has adopted API versioning, never before.\n  - Default: when resilience is required, `Microsoft.Extensions.Http.Resilience` for `HttpClient` and `Microsoft.Extensions.Resilience` for general pipelines. Direct Polly usage is an explicit, documented exception; never add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`.\n  - Mapping: `Mapster` with `Mapster.DependencyInjection` once mapping volume warrants it (never referenced from Domain); Testcontainers, Playwright, and similar conditional packages: per the decision register.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              220,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "- String comparison in queries follows the column/database collation; SQL Server's default collations are case-insensitive. Choosing case sensitivity or a collation is a product decision when observable — make an approved choice explicit with `UseCollation(...)` or a column-level collation in configuration.\n- Transient faults: prefer provider execution strategies (`options.UseSqlServer(cs, sql => sql.EnableRetryOnFailure())`) over generic application-level retry pipelines; with an execution strategy, wrap explicit transactions in `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`. Do not apply HTTP retry policies to database operations.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "62204b98e58bc367d888490692c58445a26d47cfc7274cbc9cb390ec6cba002b",
+          "inspected_ranges": [
+            [
+              98,
+              99
+            ]
+          ],
+          "context_quotes": [
+            "\nMaking typed/keyed/named clients mandatory universally, infinite or poorly bounded retries, ignoring cancellation, dynamic auth tokens in shared `DefaultRequestHeaders`, mapping every upstream failure to the same status, and adding resilience pipelines without understanding their behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "ae1838108151e5b64897eaef05d02ef6f8b0d282dd8c324007ea9781d3f3c591",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              29,
+              47
+            ],
+            [
+              57,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy: `.claude/rules/backend/runtime.md`. Package defaults (Microsoft resilience integration, direct Polly only as a documented exception): `add-dependency`. Resilience mechanisms are added only when failure and operation semantics justify them, and their behavior is observed when it matters operationally.\n",
+            "\nThe standard handler fits when its behavior matches the remote API; it is not mandatory for every client. Review its retry behavior carefully for state-changing requests, and do not stack resilience handlers with overlapping strategies. The modern Microsoft packages are built on Polly v8, but application code configures them through the Microsoft.Extensions resilience APIs.\n",
+            "\nUse one when repeated calls to a failing dependency would add load or latency; not for a dependency without a meaningful repeated failure pattern. Give it operational visibility when it matters in production.\n\n## Fallback\n\nValid: stale cached read data where staleness is explicitly acceptable; optional enrichment omitted when its service is unavailable. Invalid: \"payment provider unavailable → pretend payment succeeded\".\n\n## Hedging\n\nHedging issues parallel or delayed duplicate attempts — only for operations safe to execute multiple times, typically idempotent reads against interchangeable endpoints; never for state-changing operations by default.\n\n## Database operations\n\nDo not wrap normal database operations in a generic application-level retry pipeline or apply an HTTP retry policy to them; use the persistence technology's provider-level transient-fault handling (persistence knowledge facet named in the decision register).\n\n## Message publishing\n\nRetrying publication may produce duplicate delivery; use idempotent consumers, broker deduplication, an outbox, or similar mechanisms when the business requires them, and never claim exactly-once delivery merely because a retry policy exists.\n",
+            "\n| Scenario | Default consideration |\n|---|---|\n| External I/O | Bound execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Respect `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| Database transient faults | Provider-level strategy (persistence facet) |\n| Incoming request rate limiting | ASP.NET Core rate limiter |"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "- Default mapping: manual mapping for simple cases; Mapster when mapping volume warrants it.\n- Resilience: Microsoft resilience packages only when a real integration needs resilience.\n- Default frontend E2E: Playwright when E2E coverage is required; not part of the baseline scaffold."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-021",
+        "name": "Modern Serilog integration is the baseline",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/serilog/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "When Serilog is configured, use the modern DI-integrated AddSerilog approach and keep provider configuration in environment-aware configuration; application code continues to depend on ILogger<T>.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-021",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0452",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0196",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0197",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0200"
+      ],
+      "boundary_analysis": "Explicit rejection of Host.UseSerilog, conditional bootstrap, baseline integration package and conditional shutdown flush are covered. Optional sinks/numeric examples do not become universal requirements. Existing U0010 enrichment prerequisite remains separately open.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-U0010"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/operations.md",
+          "sha256": "df64a1b16be637442fe8e95a6821f86224ac0a1d75bfcaf0d5ccd5059d9f4642",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ]
+          ],
+          "context_quotes": [
+            "- Default: `ILogger<T>` with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text.\n- Default: when Serilog is configured, use the DI-integrated `AddSerilog` approach and keep provider configuration in environment-aware configuration; application code continues to depend on `ILogger<T>`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "b11e717b5e1fabd883e2866a0940e91532a2c4bbb4ec9051eb161d47cc357fcf",
+          "inspected_ranges": [
+            [
+              68,
+              70
+            ]
+          ],
+          "context_quotes": [
+            "\nString interpolation in log templates, duplicate exception logging, expected business outcomes logged as errors, dumping full objects without review, provider-specific APIs throughout Application code, and using logs as an audit database unless a dedicated audit design was adopted.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              8,
+              14
+            ],
+            [
+              50,
+              52
+            ],
+            [
+              131,
+              133
+            ],
+            [
+              135,
+              143
+            ]
+          ],
+          "context_quotes": [
+            "\nSerilog is the logging provider (decision register); application code keeps using `ILogger<T>`. Policy: `.claude/rules/backend/operations.md`.\n",
+            "\n1. **Two-stage initialization when startup logging matters** — a bootstrap logger captures failures before DI/configuration is available; simpler applications may use host-managed setup without bootstrap logging.\n2. **`builder.Services.AddSerilog()`**, not `builder.Host.UseSerilog()` — integrates with DI via `ReadFrom.Services(services)`.\n3. **Message templates, not interpolation** — `{PropertyName}` creates queryable data; `$\"...\"` breaks structure and allocates even when the level is disabled.\n4. **Configuration in appsettings** — levels, sinks, and overrides change per environment without redeployment.\n5. **Serilog APIs stay at the edges** — `Log.Logger` and `LogContext` belong to composition and provider-specific boundaries.\n",
+            "\nBaseline integration package: `Serilog.AspNetCore`. A Console sink suffices for a simple local Development baseline; File, Seq, OpenTelemetry, Elasticsearch, and enrichers such as `WithMachineName`/`WithEnvironmentName` are optional — add sinks and enrichers only when the project requires them (`add-dependency`). Numeric limits and retention values in examples are illustrative, not approved defaults.\n",
+            "\nWhen the static/bootstrap `Log.Logger` is used, flush it on shutdown (`try { app.Run(); } ... finally { await Log.CloseAndFlushAsync(); }`) so asynchronous sinks do not lose buffered events. Purely host-managed logging follows the provider's lifetime instead.\n",
+            "\n| Scenario | Recommendation |\n|---|---|\n| Provider setup | `AddSerilog()` + configuration |\n| Development log storage | Console; Seq or Aspire Dashboard when useful |\n| Production log storage | Seq, Elasticsearch (Elastic sink), or an OTLP backend |\n| Request logging | `UseSerilogRequestLogging()` |\n| Scoped properties | `LogContext.PushProperty()` in middleware |\n| Level per environment | `MinimumLevel.Override` in appsettings |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-022",
+        "name": "Use current solution format by default",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Top-Level Layout"
+        ],
+        "normalized_policy": "For the current .NET template use the .slnx solution format by default; use legacy .sln only when an external tool or project requirement requires it.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-022",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0276",
+        "primary/K1/constraints.jsonl/RULE-K1-0055"
+      ],
+      "boundary_analysis": "Leaf solution uses slnx while register preserves external-tool/project-need sln exception; replica explicitly integrates that exception. No new absolute sln ban inferred from the isolated imperative.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              33,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\nAll backend .NET projects, including backend test projects, live under `backend/`; their internal layout and references: `backend-layout.md`. The solution file uses `.slnx` (decision register).\n\n## Frontend\n\nThe frontend workspace lives outside the .NET tree in `frontend/ProjectName.Web/` and owns its `package.json`, `package-lock.json`, framework configuration, `tsconfig` files, `src/`, and `public/`. Do not impose an obsolete directory structure when the current framework CLI generates a different supported one. Frontend unit/component tests stay inside the workspace (normally colocated with the code); frontend E2E tests, when introduced, also stay inside it (e.g. `frontend/ProjectName.Web/e2e/`). Never place frontend tests under `backend/`.\n\n## Documentation\n\nUse `docs/` for maintained project documentation; possible subdirectories include `architecture/` (the decision register), `decisions/` (decision records), and `api/`. Create them only when the corresponding documentation exists.\n\n## Shared .NET build configuration\n\n- `Directory.Build.props` — genuinely shared settings such as `TargetFramework`, `Nullable`, `ImplicitUsings`, and analysis/compiler settings; never project-specific settings.\n- `Directory.Packages.props` — NuGet Central Package Management; versions in one place.\n- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy.\n- `.editorconfig` — deterministic repository-wide formatting and code-style configuration; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.\n\n## Git ignore\n\nIgnore normal generated/local artifacts where applicable: `bin/`, `obj/`, `.vs/`, `node_modules/`, `dist/`, `TestResults/`, `coverage/`, local secret/config overrides, and the Claude Code local settings file (`settings.local.json` in `.claude/`). Do not ignore files that are intentionally part of the Development configuration contract.\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- API documentation: Swashbuckle Swagger UI is the default Development interactive API documentation and testing surface (not built-in `AddOpenApi()`/`MapOpenApi()`); expose it outside Development only when requirements justify it.\n- Default solution format: `.slnx`; legacy `.sln` only when an external tool or project requirement needs it.\n- Default shared .NET configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their owning projects."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-023",
+        "name": "Shared .NET build/package configuration is repository-level",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Shared .NET Build Configuration"
+        ],
+        "normalized_policy": "Use repository-level Directory.Build.props for genuinely shared .NET build settings and Directory.Packages.props for Central Package Management; keep project-specific settings in their owning projects.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-023",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0130",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0025",
+        "replica/K1/constraints.jsonl/RULE-K1-0277"
+      ],
+      "boundary_analysis": "Actual shared settings include Nullable and ImplicitUsings, with project-specific settings excluded. Docker copies only existing needed root files and explicit project paths; correct restore graph outranks layer caching. Both behavior and source-scope restrictions already registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "86ecdc73f9bcbe8fd7c25e7a25a4dbe371f87936f88299cd8981dd578d881190",
+          "inspected_ranges": [
+            [
+              45,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "\nCopy only repository-level build files that exist and are needed for restore; never add them just to satisfy the example. Copy project files explicitly — no wildcard tricks that flatten or rearrange the multi-project structure — and update this section when the solution structure changes. Never optimize layer caching at the cost of restoring the wrong project graph.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "3. Add only the minimum required references, preserving dependency direction; each new reference is recorded first (`architecture-decision`).\n4. Update shared build/package configuration when necessary.\n5. Build and test the affected solution."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              33,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\nAll backend .NET projects, including backend test projects, live under `backend/`; their internal layout and references: `backend-layout.md`. The solution file uses `.slnx` (decision register).\n\n## Frontend\n\nThe frontend workspace lives outside the .NET tree in `frontend/ProjectName.Web/` and owns its `package.json`, `package-lock.json`, framework configuration, `tsconfig` files, `src/`, and `public/`. Do not impose an obsolete directory structure when the current framework CLI generates a different supported one. Frontend unit/component tests stay inside the workspace (normally colocated with the code); frontend E2E tests, when introduced, also stay inside it (e.g. `frontend/ProjectName.Web/e2e/`). Never place frontend tests under `backend/`.\n\n## Documentation\n\nUse `docs/` for maintained project documentation; possible subdirectories include `architecture/` (the decision register), `decisions/` (decision records), and `api/`. Create them only when the corresponding documentation exists.\n\n## Shared .NET build configuration\n\n- `Directory.Build.props` — genuinely shared settings such as `TargetFramework`, `Nullable`, `ImplicitUsings`, and analysis/compiler settings; never project-specific settings.\n- `Directory.Packages.props` — NuGet Central Package Management; versions in one place.\n- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy.\n- `.editorconfig` — deterministic repository-wide formatting and code-style configuration; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.\n\n## Git ignore\n\nIgnore normal generated/local artifacts where applicable: `bin/`, `obj/`, `.vs/`, `node_modules/`, `dist/`, `TestResults/`, `coverage/`, local secret/config overrides, and the Claude Code local settings file (`settings.local.json` in `.claude/`). Do not ignore files that are intentionally part of the Development configuration contract.\n"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Build.props",
+          "sha256": "c89b1f606e040670343733aa340350d8ca547399a696f47eb5e27c9217e40fb8",
+          "inspected_ranges": [
+            [
+              2,
+              9
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: docs/architecture/decision-register.md -->\n<!-- Genuinely shared .NET build settings only; project-specific settings stay in their projects. -->\n<Project>\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "- Default solution format: `.slnx`; legacy `.sln` only when an external tool or project requirement needs it.\n- Default shared .NET configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their owning projects.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-024",
+        "name": "Default physical solution layout remains explicit",
+        "related_groups": [
+          "architecture",
+          "frontend",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/SKILL.md#Default Shape",
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md"
+        ],
+        "normalized_policy": "Keep backend production/test projects, frontend workspace, and documentation clearly separated according to the template's approved layout; do not create a separate top-level tests directory.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-024",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0183",
+        "replica/K1/constraints.jsonl/RULE-K1-0275",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0123"
+      ],
+      "boundary_analysis": "Fixed role-named facets and frame contract are invariant across implementation. Physical layout is a target with optional directories only as needed; top-level tests checker is a warning. File-read error behavior seen adjacent is existing CIS-K1-0003, not new.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-0003"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/architecture/CONTRACT.md",
+          "sha256": "cf9bb59bdeb4a7a9ee3177ef85a6175f18b4e2b7a1591b9377cde0bbe3338693",
+          "inspected_ranges": [
+            [
+              15,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|\n| `role-map` | The concrete projects for each backend role under `backend/<Name>.<Layer>/` |\n| `dependency-direction` | Allowed and forbidden references between roles |\n| `domain-modeling` | The default domain modeling style and when richer modeling needs approval |\n| `use-case-orchestration` | The default orchestration mechanism for use cases |\n| `commit-boundary-placement` | Where the commit-boundary contract lives and who decides to commit |\n| `composition-root` | Where dependency registration and composition happen |\n| `transport-contracts` | Where transport-specific contracts live relative to Application models |\n| `test-project-placement` | Test project location and allowed production references |\n| `not-adopted-styles` | Declared styles/patterns that are not adopted (decision register) |\n| `scaffold-layout` | A scaffolding facet for creating the backend projects and references |\n| `reference-check` | A deterministic check of project references |\n\n## Facet roles\n\nRole-named facet locations; every implementation provides exactly these (file names never change with the implementation).\n\n| Kind | Scope | Location |\n|---|---|---|\n| DEC | common | `docs/architecture/decision-register.md` (capability-selection row) |\n| STD | backend | `.claude/rules/backend/architecture-style.md` |\n| STD | backend-tests | `.claude/rules/backend-tests/test-projects.md` |\n| WF | backend | `.claude/skills/project-structure/references/backend-layout.md` |\n| ENF | backend | `.claude/scripts/facets/architecture-style.cjs` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/frontend/CONTRACT.md",
+          "sha256": "fe028befbda3b8f7fd29513c219f00393eab445e8077a953a870d1b9f7672c94",
+          "inspected_ranges": [
+            [
+              4,
+              11
+            ],
+            [
+              15,
+              21
+            ],
+            [
+              33,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot type: optional leaf\n- Cardinality: zero or one implementation; \"none\" means no frontend workspace, no facets, and the register row records `none`\n- Workspace location: `frontend/<Name>.Web/` (shared layout convention)\n- Binds: — (independent leaf)\n\nThe framework-neutral frontend standards (`.claude/rules/frontend/frontend.md`, `.claude/rules/frontend/security.md`, `.claude/rules/frontend/dependencies.md`) stay unchanged when the implementation is replaced.\n",
+            "|---|---|\n| `stack-properties` | Declared stack and libraries not added by default (decision register) |\n| `framework-standard` | Framework-specific frontend standards |\n| `knowledge` | The framework knowledge facet |\n| `workspace-scaffold` | A scaffolding facet for creating the workspace |\n| `library-check` | A deterministic `package.json` check for non-default libraries and misplaced tooling |\n",
+            "\nWith the selection `none`, these locations are absent; pointers to them from neutral artifacts stay valid and dormant."
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/frontend/angular/MODULE.md",
+          "sha256": "959a4bad64808e3dafb14d7336ab0e2b391f7d7876b4889de022a10b226c051e",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              24,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot: frontend\n- Implementation: angular\n- Variant: —\n- Names: Angular, angular\n- Binds: —\n",
+            "|---|---|\n| `stack-properties` | DEC capability selection |\n| `framework-standard` | STD `frontend-framework.md` |\n| `knowledge` | KNW `angular` |\n| `workspace-scaffold` | WF `frontend-setup.md` |\n| `library-check` | ENF `frontend-framework.cjs` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              11,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "\n| Role | Project | Responsibility |\n|---|---|---|\n| Domain | `backend/<Name>.Domain` | Business concepts, independent of infrastructure and transport |\n| Application | `backend/<Name>.Application` | Use-case orchestration; persistence, external-service, and commit-boundary abstractions |\n| Infrastructure | `backend/<Name>.Infrastructure` | Implementations of Application abstractions (persistence, external adapters) |\n| Api | `backend/<Name>.Api` | HTTP entry point and composition root |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              157,
+              186
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction isManifest(rel) {\n  const base = path.posix.basename(rel);\n  return rel.endsWith('.csproj') || base === 'Directory.Packages.props' || base === 'package.json';\n}\n\nfunction checkFile(root, rel, ctx = makeContext(root)) {\n  if (!lib.exists(root, rel)) return [];\n  const base = path.posix.basename(rel);\n  try {\n    if (rel.endsWith('.csproj')) return checkProjectFile(ctx, rel);\n    if (base === 'Directory.Packages.props') return checkPackagesProps(ctx, rel);\n    if (base === 'package.json') return checkPackageJson(ctx, rel);\n  } catch (err) {\n    return [lib.finding('error', rel, `manifest could not be read (${err.message})`, base === 'package.json' ? OWNER_NPM : OWNER_NUGET)];\n  }\n  return [];\n}\n\nfunction checkAll(root) {\n  const ctx = makeContext(root);\n  const findings = [];\n  for (const rel of lib.walk(root, '', isManifest)) findings.push(...checkFile(root, rel, ctx));\n  if (lib.exists(root, 'tests')) {\n    findings.push(lib.finding('warn', 'tests/', 'top-level tests directory; backend tests live beside production projects', OWNER_LAYOUT));\n  }\n  for (const rel of lib.walk(root, 'frontend', r => path.posix.basename(r) === 'package.json')) {\n    const lock = path.posix.join(path.posix.dirname(rel), 'package-lock.json');\n    if (!lib.exists(root, lock)) findings.push(lib.finding('warn', rel, 'no package-lock.json next to package.json', OWNER_NPM));\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/architecture-style.cjs",
+          "sha256": "e1f88a4d7d52b2ff95e064ca3c002363cd55c7d920c9443d8e4573cfaa6cdbe0",
+          "inspected_ranges": [
+            [
+              38,
+              48
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction checkProject(ctx, project) {\n  if (!project.rel.startsWith('backend/')) return [];\n  const findings = [];\n  const role = roleOf(project.name);\n\n  if (role.kind === 'unknown') {\n    findings.push(lib.finding('warn', project.rel, `project \"${project.name}\" matches no frame role (${LAYERS.join(', ')}, tests); a new production project is a Reserved decision`, OWNER_STYLE));\n    return findings;\n  }\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ],
+            [
+              34,
+              39
+            ]
+          ],
+          "context_quotes": [
+            "\nExplicit project boundaries; dependency direction enforced through project references; production projects, test projects, frontend, and documentation organized per the layout default; approved technology only; no speculative projects, abstractions, or directories; an immediately buildable result verified before completion.\n",
+            "2. **Use the approved stack** from the decision register; conditional technologies only when their capability is required. Resolve package versions at install time through `add-dependency`; never copy versions from examples or older template content.\n3. **Repository level** — read `references/solution-layout.md`; create only required top-level directories and shared configuration files.\n4. **Backend projects and references** — read `references/backend-layout.md`; create the four backend projects and only the references it lists. Never add an outward reference to make compilation easier. Projects and project references change the project reference graph (Reserved): first record the requested scaffold through `architecture-decision` — its accepted decision lists each project reference as `From -> To` — because the dependency and reference hook blocks unrecorded `dotnet add/remove … reference` commands and reports unrecorded reference changes after edits.\n5. **Test projects** — read `references/test-setup.md`; create only useful test projects (placement and references per `references/backend-layout.md`).\n6. **Frontend** — when frontend scope exists, read `references/frontend-setup.md` and create the workspace under `frontend/<Name>.Web/`. Frontend architecture belongs to the frontend standards and knowledge facet; do not duplicate it here.\n7. **Minimal internal directories** — only directories the initial implementation needs; no empty trees for hypothetical capabilities."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              72,
+              74
+            ],
+            [
+              82,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nTest projects live beside production projects under `backend/`; create only useful ones:\n",
+            "\nA simple Domain of entities and enums needs no dedicated test project. Integration tests reference Api for `WebApplicationFactory<Program>` and exercise the other layers transitively. Test framework setup is the backend-testing facet's scaffolding step in `project-structure`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/frontend-setup.md",
+          "sha256": "b3c97fa173fc743b53ab230474a71277113ef05e09b9418f7a364bd0fd02ded9",
+          "inspected_ranges": [
+            [
+              7,
+              9
+            ],
+            [
+              19,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "1. Use the latest stable Angular release supported by the selected Node.js environment, through the current Angular CLI. Let the CLI select mutually compatible Angular/TypeScript/RxJS versions; do not upgrade TypeScript beyond Angular's supported range independently.\n2. Create the workspace in the shared frontend location:\n",
+            "\nPlaywright E2E is added only when E2E coverage is required (decision register: Conditional technologies), inside `frontend/ProjectName.Web/e2e/`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              33,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\nDefault physical repository layout (decision register: Project defaults). A target structure — create optional directories or projects only when needed.\n",
+            "\nAll backend .NET projects, including backend test projects, live under `backend/`; their internal layout and references: `backend-layout.md`. The solution file uses `.slnx` (decision register).\n\n## Frontend\n\nThe frontend workspace lives outside the .NET tree in `frontend/ProjectName.Web/` and owns its `package.json`, `package-lock.json`, framework configuration, `tsconfig` files, `src/`, and `public/`. Do not impose an obsolete directory structure when the current framework CLI generates a different supported one. Frontend unit/component tests stay inside the workspace (normally colocated with the code); frontend E2E tests, when introduced, also stay inside it (e.g. `frontend/ProjectName.Web/e2e/`). Never place frontend tests under `backend/`.\n\n## Documentation\n\nUse `docs/` for maintained project documentation; possible subdirectories include `architecture/` (the decision register), `decisions/` (decision records), and `api/`. Create them only when the corresponding documentation exists.\n\n## Shared .NET build configuration\n\n- `Directory.Build.props` — genuinely shared settings such as `TargetFramework`, `Nullable`, `ImplicitUsings`, and analysis/compiler settings; never project-specific settings.\n- `Directory.Packages.props` — NuGet Central Package Management; versions in one place.\n- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy.\n- `.editorconfig` — deterministic repository-wide formatting and code-style configuration; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.\n\n## Git ignore\n\nIgnore normal generated/local artifacts where applicable: `bin/`, `obj/`, `.vs/`, `node_modules/`, `dist/`, `TestResults/`, `coverage/`, local secret/config overrides, and the Claude Code local settings file (`settings.local.json` in `.claude/`). Do not ignore files that are intentionally part of the Development configuration contract.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              6,
+              8
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Create each useful test project from the NUnit template beside the production projects:\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| architecture (required frame) | clean-architecture | — | Backend roles Domain, Application, Infrastructure, Api as `backend/<Name>.<Layer>/`; role rules in the architecture-style standard (loads with backend files). Not adopted: CQRS handlers, MediatR, Kommand, Vertical Slice Architecture, or similar mediator-based organization; introducing any of them requires explicit approval. |\n| persistence (required leaf) | ef-core, provider variant sqlserver | `ef-core` | Default persistence: EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); provider-specific concerns stay out of Application and Domain. Migration mechanism: EF Core migrations. Seeding mechanism: dedicated Development seeder. String comparison follows database collation (SQL Server default collations are case-insensitive); observable semantics remain a product decision. Binds: architecture. |",
+            "\n- Default layout: production and backend test projects in `backend/<Name>.<Layer>/`, the frontend workspace in `frontend/<Name>.Web/`, documentation in `docs/`; no separate top-level `tests/` directory.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-025",
+        "name": "npm peer-dependency conflicts are not bypassed by force flags",
+        "related_groups": [
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "workflow",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#npm"
+        ],
+        "normalized_policy": "Do not use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; resolve the actual compatibility problem.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-025",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0006",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0127"
+      ],
+      "boundary_analysis": "Hook extends beyond npm and beyond intent-based peer bypass to pnpm/yarn and classified restore/remove/update commands, with literal =false exemption but no approval escape. These scope and severity differences are already registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              4,
+              13
+            ],
+            [
+              55,
+              58
+            ],
+            [
+              64,
+              80
+            ],
+            [
+              142,
+              154
+            ]
+          ],
+          "context_quotes": [
+            "\n// Two roots, never mixed:\n// - launcher root: where this file lives (located through ${CLAUDE_PROJECT_DIR}); it only locates the implementation;\n// - active root: the repository/worktree that contains the hook input `cwd`; every inspection, relative path,\n//   and state file uses it, so a linked worktree or nested directory is checked where Claude is working.\n// Exit codes follow the Claude Code hook contract: 0 = continue, 2 = feedback to Claude (PreToolUse: blocks the\n// tool call). PreToolUse guards policy-critical commands and fails closed: any internal error, unreadable or\n// mismatched input exits 2 (settings.json additionally sets onFailure \"block\" for host-level failures).\n// Post and Stop events are advisory: internal errors exit 1 (visible, non-blocking).\n",
+            "      return `\\`${f.segment}\\`: removes ${f.specs.length ? f.specs.join(', ') : 'a dependency'} -> add-dependency workflow (removal)`;\n    case 'peer-bypass':\n      return `\\`${f.segment}\\`: --force/--legacy-peer-deps bypasses peer-dependency resolution -> add-dependency workflow (peer-dependency conflicts)`;\n    case 'reference-change':",
+            "\nfunction preToolUse(input) {\n  if (!SHELL_TOOLS.has(input.tool_name)) return 0;\n  const command = input.tool_input && input.tool_input.command;\n  if (typeof command !== 'string') throw new Error('tool_input.command is missing');\n  const cwd = workingDirectory(input);\n  let findings = require('../scripts/classify-command.cjs').classify(command, { cwd });\n  if (findings.some(f => f.kind === 'reference-change')) {\n    const manifests = require('../scripts/check-manifests.cjs');\n    const approvals = manifests.acceptedDecisionText(lib.activeRoot(cwd));\n    findings = findings.filter(f => f.kind !== 'reference-change' || !f.edges.length || f.edges.some(e => !manifests.isApprovedEdge(approvals, e.from, e.to)));\n  }\n  if (!findings.length) return 0;\n  process.stderr.write(`Blocked before execution (dependency and project-reference guard):\\n- ${findings.map(describe).join('\\n- ')}\\n`);\n  return 2;\n}\n",
+            "\nfunction main(event) {\n  run(event).then(\n    code => {\n      process.exitCode = code;\n    },\n    err => {\n      const critical = CRITICAL.has(event);\n      process.stderr.write(`[hook ${event}] ${critical ? 'blocked (fail closed)' : 'failed'}: ${err && err.message ? err.message : err}\\n`);\n      process.exitCode = critical ? 2 : 1;\n    });\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/classify-command.cjs",
+          "sha256": "c46a12ee7a0187eb5089e2fb81df871d337b557b282052cfd840eb90b7044e85",
+          "inspected_ranges": [
+            [
+              208,
+              210
+            ],
+            [
+              236,
+              252
+            ]
+          ],
+          "context_quotes": [
+            "\nconst PEER_BYPASS = /^(--force|-f|--legacy-peer-deps)(=(?!false$).*)?$/;\n",
+            "  let specs = positional;\n  if (category === 'audit') {\n    category = positional[0] === 'fix' ? 'update' : null;\n    specs = [];\n  }\n  if (!category) return [];\n  const findings = [];\n  if (options.some(o => PEER_BYPASS.test(o))) findings.push({ kind: 'peer-bypass', segment });\n  if (category === 'remove') findings.push({ kind: 'dependency-removal', segment, specs });\n  else if (category === 'update' && !specs.length) findings.push({ kind: 'dependency-update', segment });\n  else if (category === 'install' || category === 'update') {\n    const loose = specs.filter(s => !npmSpecIsExact(s));\n    if (loose.length) findings.push({ kind: 'dependency-version', segment, specs: loose });\n  }\n  return findings;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"PreToolUse\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              71,
+              73
+            ],
+            [
+              83,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "- **npm:** `npm install <name>@<version>` (`--save-dev` for build/test tooling); keep `package-lock.json` consistent and committed.\n- **Peer-dependency conflicts:** resolve the actual compatibility problem; never use `npm --force` or `--legacy-peer-deps` merely to bypass incompatible peer dependencies.\n",
+            "\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P019",
+      "canonical_policy": {
+        "id": "DEP-026",
+        "name": "Local Development database configuration is usable and non-secret",
+        "related_groups": [
+          "persistence-data",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Development Database Configuration"
+        ],
+        "normalized_policy": "For the SQL Server baseline, appsettings.Development.json should provide a usable local Development connection string when it contains no secret credentials; credential-bearing local values must be supplied through user-secrets or another approved local secret mechanism.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-026",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0472",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0047",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0048"
+      ],
+      "boundary_analysis": "Usable local Development string excludes secret credentials. LocalDB adaptation, exact configuration key and initialization sequence are registered. TrustServerCertificate example tension already an independent unresolved baseline claim, not fresh novelty.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              25,
+              27
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: `appsettings.Development.json` provides a usable local Development connection string when it contains no secret credentials; credential-bearing local values come from user-secrets or another approved local secret mechanism.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension.\n3. Register persistence in Infrastructure's `AddInfrastructure(configuration)` using the `DefaultConnection` connection string.\n4. `appsettings.Development.json` connection string per `persistence-technology.md` (Variant: sqlserver). A suitable Windows LocalDB default, adapted to the project's database name:\n\n   ```json\n   {\n     \"ConnectionStrings\": {\n       \"DefaultConnection\": \"Server=(localdb)\\\\MSSQLLocalDB;Database=ProjectName;Trusted_Connection=True;TrustServerCertificate=True;\"\n     }\n   }\n   ```\n5. Create the initial migration (section B), apply it locally, then let Development startup seed the empty database.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              39,
+              41
+            ]
+          ],
+          "context_quotes": [
+            "7. **Minimal internal directories** — only directories the initial implementation needs; no empty trees for hypothetical capabilities.\n8. **Development persistence** — run `persistence-change` (initial setup). Never add Production credentials or Production migration automation.\n9. **Verify** — restore backend dependencies; build the .NET solution; build the frontend when present; run relevant tests when present; inspect project references (`node \"<root>/.claude/scripts/check-manifests.cjs\"`; `<root>`: the active repository root, command form in `verify`); inspect the final repository tree; confirm the Development configuration is valid. Then run `verify`. Never report successful scaffolding when the result does not build."
+          ]
+        }
+      ]
+    }
+  ]
+}

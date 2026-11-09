@@ -1,0 +1,70 @@
+"""The 38 coverage cells with no single FULL direct witness, each read clause by clause against the policy on current source.
+
+CONFIRMED: every clause of the policy has a live named witness at the policy's force. That shows the clauses are present, not that the candidate is equal to another one.
+QUALIFIED: a clause differs from the policy in a way a reader should know.
+"""
+SEMANTICS = 'A conjunction of clause witnesses. This is traceability of each clause, not a single owner line and not a parity claim.'
+READ = {
+    ('M1', 'ARC-020'): ('CONFIRMED', 'The always-loaded Reserved list names each element across six items; each is REQUIRES_APPROVAL, as the policy is.'),
+    ('M1', 'PST-007'): ('CONFIRMED', 'Validity is a MUST in the rule file. The examples clause is "prefer" in the policy too, so its DEFAULT matches.'),
+    ('M1', 'RUN-022'): ('CONFIRMED', 'Typed options and startup validation are both in the composition rule, at DEFAULT, as the policy is.'),
+    ('M1', 'RUN-024'): ('CONFIRMED', 'Three clauses in the coding-style rule, each at DEFAULT.'),
+    ('M1', 'DEP-011'): ('CONFIRMED', 'The stack table holds both clauses, each with its condition.'),
+    ('M1', 'WF-020'): ('CONFIRMED', 'Confirmed versus needing verification, and severity from context, both bind in the security-scan workflow.'),
+    ('L0', 'GOV-007'): ('QUALIFIED', 'One witness states the whole clause and adds "in the same change". Stronger by timing: stored STRONGER, not an equal restatement.'),
+    ('L0', 'ARC-020'): ('CONFIRMED', 'The always-loaded Reserved list names each element across seven items.'),
+    ('L0', 'SEC-008'): ('CONFIRMED', 'Custom cryptography in the core security rule, Data Protection in the technology rule, both marked. Two owners by level, which is L0\'s design.'),
+    ('L0', 'DEP-003'): ('CONFIRMED', 'Latest stable from the registry, plus no prerelease or floating unless explicitly requested, both in add-dependency steps. C01 added the NuGet switch without widening the exception.'),
+    ('L0', 'DEP-011'): ('CONFIRMED', 'The decisions table holds both clauses, each with its condition.'),
+    ('L0', 'FE-010'): ('CONFIRMED', 'Backend stays authoritative at MUST. Reactive forms is "when useful" in the policy too, so its DEFAULT matches.'),
+    ('L0', 'WF-005'): ('CONFIRMED', 'Build, tests, build-failure meaning and new failures are four lines of the verify workflow.'),
+    ('L0', 'WF-019'): ('CONFIRMED', 'Three clauses in delivery-pipeline, including the C03 exception sentence, which leaves the default and the seeding ban in place.'),
+    ('L1', 'ARC-020'): ('CONFIRMED', 'One long always-loaded Reserved line names each element.'),
+    ('L1', 'TST-010'): ('CONFIRMED', 'The verify step states the whole policy, including the equivalent-coverage exception; a second line adds removal timing.'),
+    ('L1', 'DEP-004'): ('CONFIRMED', 'Deprecation, vulnerabilities and exact-version license are three consecutive add-dependency checks, all before install.'),
+    ('L1', 'WF-020'): ('CONFIRMED', 'Both clauses are in the security-scan workflow.'),
+    ('K0', 'GOV-021'): ('CONFIRMED', 'Search, update, verify and "one literal alone" are four lines of the custom-settings workflow.'),
+    ('K0', 'ARC-020'): ('CONFIRMED', 'The always-loaded Reserved list names each element; the messaging and auth witnesses sit in path rules that restate it, and CLAUDE.md lists both too.'),
+    ('K0', 'SEC-007'): ('CONFIRMED', 'TLS and topology, and no disabled certificate validation, are two adjacent lines of the security standard.'),
+    ('K0', 'DEP-003'): ('CONFIRMED', 'Three add-dependency steps; see L0 DEP-003 for the C01 note.'),
+    ('K0', 'DEP-007'): ('CONFIRMED', 'Three lines of the dependency standard. C04 removed the commit imperative from the middle line and kept lockfile consistency, which is what the policy asks.'),
+    ('K0', 'DEP-011'): ('CONFIRMED', 'Two register rows, each with its condition.'),
+    ('K0', 'WF-004'): ('CONFIRMED', 'Three parts of the same verify paragraph.'),
+    ('K0', 'WF-005'): ('CONFIRMED', 'Build with its failure meaning, and tests with new failures, in verify.'),
+    ('K0', 'WF-019'): ('CONFIRMED', 'Two lines in delivery-pipeline, with the C03 exception sentence; the default and the seeding ban stay.'),
+    ('K0', 'WF-020'): ('CONFIRMED', 'Both clauses are in one workflow sentence.'),
+    ('K1', 'GOV-021'): ('CONFIRMED', 'Search and update, then stale references and verification, in the custom-settings workflow.'),
+    ('K1', 'ARC-020'): ('CONFIRMED', 'The always-loaded Reserved list names each element across six items.'),
+    ('K1', 'SEC-007'): ('CONFIRMED', 'Two adjacent lines of the security standard.'),
+    ('K1', 'DEP-003'): ('CONFIRMED', 'Three add-dependency steps; see L0 DEP-003 for the C01 note.'),
+    ('K1', 'DEP-004'): ('CONFIRMED', 'Three consecutive add-dependency checks.'),
+    ('K1', 'DEP-010'): ('CONFIRMED', 'Two register lines, both Decided.'),
+    ('K1', 'DEP-011'): ('CONFIRMED', 'Two register lines, each with its condition.'),
+    ('K1', 'WF-004'): ('CONFIRMED', 'Two verify lines.'),
+    ('K1', 'WF-005'): ('CONFIRMED', 'Three parts of the verify workflow.'),
+    ('K1', 'WF-020'): ('CONFIRMED', 'Both clauses are in one workflow sentence.'),
+}
+assert len(READ) == 38, len(READ)
+# A case that would falsify the reading for each policy: what the text would have to fail to do.
+COUNTEREXAMPLE = {
+    'ARC-020': 'An agent adds MediatR or a second DbContext with no Decision Request. Each named element appears in the Reserved list, so the text forbids it; if one element were missing, that choice would read as Delegated.',
+    'PST-007': 'A seeder with an entity that breaks a Domain invariant: the MUST line refuses it. A large random seed set: the "prefer" clause discourages it and does not forbid it.',
+    'RUN-022': 'A service reads IConfiguration string keys with no reason given: the DEFAULT line asks for a concrete, reported reason.',
+    'RUN-024': 'A Task-returning method with no Async suffix and no framework contract: a deviation that must be reported, not a defect.',
+    'DEP-011': 'Mapster added for three trivial mappings, or a resilience package with no real integration: the condition is unmet, so the text refuses it by default.',
+    'WF-020': 'A scanner hit reported as a critical finding from its CVSS alone: both clauses refuse it.',
+    'GOV-007': 'A new behavioral rule is approved and SPECIFICATION.md is updated in a later change. GOV-007 is met; the L0 line is not, because it asks for the same change. That is why this cell is QUALIFIED.',
+    'SEC-008': 'A home-made cipher when a platform mechanism fits, or Data Protection used as database encryption: each has its own marked line.',
+    'DEP-003': 'A floating version with no recorded request: refused by text and by the checker. A recorded one: accepted for that entry only, and restore needs the NuGet switch.',
+    'FE-010': 'Validation only in Angular with none on the backend: refused by the MUST line. A trivial one-field form with no reactive form: allowed, because the clause says "when useful".',
+    'WF-005': 'Work reported complete with a failing build, or with a new failure dismissed as unrelated: each line refuses it.',
+    'WF-019': 'Database.Migrate at Production startup with no approval, or under a generic workflow approval: refused. An explicit recorded exception: not refused. Development seeding in Production: refused, exception or not.',
+    'TST-010': 'An HTTP probe shows a bug is fixed, then is deleted with no test: the verify step refuses it unless equivalent coverage exists.',
+    'DEP-004': 'A package installed before its license is checked: the three checks come before the install step.',
+    'GOV-021': 'A max-length setting changed in one constant while the validator and the Angular hint keep the old value: the search and "one literal alone" lines refuse it.',
+    'SEC-007': 'ServerCertificateCustomValidationCallback returning true to make an integration pass: a marked ban. In-app HTTPS redirect missing behind a TLS-terminating proxy: allowed.',
+    'DEP-007': 'A build tool under runtime dependencies with no reason: refused. A lockfile out of step with package.json: refused. No commit authorized: both files updated, no Git commit.',
+    'WF-004': 'Checks chosen before looking at the diff, or an accidental artifact left in the change: the verify opening refuses both.',
+    'DEP-010': 'A second validation library added silently, or application code logging straight through Serilog in place of ILogger<T>: the register lines are Decided.',
+}
+assert {k[1] for k in READ} <= set(COUNTEREXAMPLE)

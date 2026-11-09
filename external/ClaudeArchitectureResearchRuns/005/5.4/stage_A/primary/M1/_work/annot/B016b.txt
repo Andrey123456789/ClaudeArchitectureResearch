@@ -1,0 +1,105 @@
+# Batch B016 (part 2) — skills: http-api
+
+@@ output/template/.claude/skills/http-api/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge skill http-api (backend Controllers)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13-14 EX [x.consistent-status] ;; ;; Keep status-code behavior consistent across similar endpoints.
+16 NN ;; Heading.
+18 NN ;; Heading.
+20-22 NN ;; Description of 200 cases.
+24-26 NN ;; Code example.
+28 OL [api004.empty-success] ;; ;; An empty collection is still a successful collection result:
+30-34 NN ;; HTTP example.
+36-37 OL [api004.empty-success]
+39 NN ;; Heading.
+41-42 MX [api003.201-created,x.201-location] ;; 201 for a created API resource is API-003; Location when a stable URI exists is added.
+44-49 NN ;; CreatedAtAction example.
+51-53 OL [api003.201-created]
+55 NN ;; Heading.
+57-60 MX [api003.202-incomplete,x.202-operation] ;; 202 for incomplete processing is API-003; returning an operation id/Location when practical is added.
+62-67 NN ;; AcceptedAtAction example.
+69 NN ;; Heading.
+71-73 OL [api003.204-no-body]
+75-77 NN ;; NoContent example.
+79-81 EX [x.consistent-status]
+83 NN ;; Heading.
+85 NN ;; Heading.
+87-89 EX [x.http-304]
+91 NN ;; Heading.
+93 NN ;; Heading.
+95-99 OL [api005.400-not-auth] ;; ;; Not for authentication failure.
+101 NN ;; Heading.
+103-104 OL [api005.401]
+106 NN ;; Heading.
+108-112 OL [api005.403-and-hiding]
+114 NN ;; Heading.
+116-118 OL [api004.404-vs-empty]
+120 NN ;; Heading.
+122-124 EX [x.http-406-415]
+126 NN ;; Heading.
+128-131 OL [api006.409]
+133-137 NN ;; 409 text example.
+139 OL [api006.409] ;; ;; Not for malformed syntax.
+141 NN ;; Heading.
+143-145 OL [api006.412]
+147 NN ;; Heading.
+149-151 EX [x.http-406-415]
+153 NN ;; Heading.
+155-160 EX [x.http-422]
+162-165 NN ;; 400/422 text block.
+167 NN ;; Heading.
+169-170 EX [x.http-428]
+172-175 NN ;; 428/412 text block.
+177-178 EX [x.http-428]
+180 NN ;; Heading.
+182-184 EX [x.http-429]
+186 NN ;; Heading.
+188 NN ;; Heading.
+190-192 OL [api007.500]
+194 NN ;; Heading.
+196-197 EX [x.http-502-504]
+199 NN ;; Heading.
+201-204 EX [x.http-503]
+206 NN ;; Heading.
+208-212 MX [x.http-502-504,api021.distinguish-cancel] ;; 504 intermediary semantics are added; distinguishing client cancellation is API-021.
+214 NN ;; Heading.
+216-221 OL [run016.no-false-idempotency] ;; ;; Do not claim idempotency
+O 217-220 NN ;; 'consider an Idempotency-Key header' and its 409 reuse convention are advisory technique without a required outcome. ;; ;; consider an `Idempotency-Key` header
+223 NN ;; Heading.
+225-226 OL [api006.conditional-semantics] ;; ;; When HTTP-level optimistic concurrency is part of the contract, prefer standard
+228-234 NN ;; ETag/If-Match flow text.
+236 OL [api006.conditional-semantics] ;; ;; Do not replace well-defined precondition semantics with custom status codes.
+238 NN ;; Heading.
+240 OL [arc010.translate] ;; ;; Controllers translate Application outcomes into HTTP outcomes:
+242-257 NN ;; Controller example.
+259-260 OL [api002.stable-codes]
+262 NN ;; Heading.
+264-286 DU ;; Decision table restating api.md semantics and the status sections above (captured as constraints).
+
+C x.consistent-status EX API-003 MUST ;; Keep status-code behaviour consistent across similar endpoints (e.g. one convention for repeated DELETE of an absent resource: 204 or 404, not mixed). ;; = ;; none ;; Consistency obligation not in the oracle.
+C api004.empty-success OL API-004 DEFAULT ;; An empty collection is a successful result: 200 [] rather than 204 or 404. ;; = ;; none ;;
+C api003.201-created OL API-003 MUST ;; 201 when the request created a new API resource (PUT may create at a new URI); not merely because a row was inserted. ;; = ;; none ;;
+C api003.202-incomplete OL API-003 MUST ;; 202 when processing was accepted but is not complete when the response is sent. ;; = ;; none ;;
+C x.202-operation EX API-003 DEFAULT ;; When practical return an operation identifier or Location to observe 202 progress. ;; = ;; When practical. ;; Not in the oracle.
+C api003.204-no-body OL API-003 MUST ;; 204 when no body is needed; a 204 response must not contain a body. ;; = ;; none ;;
+C x.http-304 EX API-003 MUST ;; 304 only for conditional requests with a still-valid cached representation; never a generic business response. ;; = ;; none ;; Less-common status semantics (EXC-009).
+C api005.400-not-auth OL API-005 MUST_NOT ;; 400 covers invalid HTTP requests, not authentication failures. ;; = ;; none ;;
+C api005.401 OL API-005 MUST ;; 401 when authentication is missing or failed. ;; = ;; none ;;
+C api005.403-and-hiding OL API-005 MUST ;; 403 when authenticated but not allowed; hiding protected resources with 404 must be a deliberate consistent policy. ;; = ;; none ;;
+C api004.404-vs-empty OL API-004,API-005 MUST ;; 404 when the resource does not exist or is deliberately hidden; zero-match collection queries return 200 []. ;; = ;; none ;;
+C x.http-406-415 EX API-003 MUST ;; 406 when no acceptable response representation can be produced; 415 for unsupported request media type; do not confuse them. ;; = ;; none ;; Content-negotiation semantics (EXC-009).
+C api006.409 OL API-006 MUST ;; 409 for valid requests conflicting with current state (uniqueness, transitions, concurrent operations, reused idempotency keys); not for malformed syntax. ;; = ;; none ;;
+C api006.412 OL API-006 MUST ;; A false supplied precondition (stale If-Match) is 412, not a generic 409. ;; = ;; none ;;
+C x.http-422 EX API-003 DEFAULT ;; 422 for structurally valid but semantically invalid requests; follow an established 400-for-both convention; new APIs distinguishing them use 400 for contract errors and 422 for semantics. ;; = ;; Established convention. ;; 400/422 distinction not in the oracle.
+C x.http-428 EX API-006 MUST ;; 428 when a contract-required precondition is absent; for other preconditions only when the contract defines them. ;; = ;; none ;; Not in API-006.
+C x.http-429 EX API-003 MUST ;; 429 for rate-limited requests with Retry-After when known; never represent validation failures as rate limiting. ;; = ;; none ;; Rate-limiting semantics not in the oracle.
+C api007.500 OL API-007,API-002,API-008 MUST ;; 500 for unexpected failures with no more specific outcome, handled centrally with ProblemDetails without internal details. ;; = ;; none ;;
+C x.http-502-504 EX API-003 MUST_NOT ;; 502/504 only when acting as an intermediary (invalid upstream response / upstream timeout); not for every dependency failure or TaskCanceledException; distinguish own timeouts from upstream ones. ;; = ;; none ;; Gateway status semantics (EXC-009).
+C x.http-503 EX API-003 DEFAULT ;; 503 for temporary inability (maintenance, critical dependency unavailable, chosen overload semantics) with Retry-After when meaningful. ;; = ;; none ;; Not in the oracle.
+C api021.distinguish-cancel OL API-021 MUST ;; Distinguish a client that cancelled the incoming request from timeouts when choosing a response. ;; = ;; none ;;
+C run016.no-false-idempotency OL RUN-016 MUST_NOT ;; Do not claim idempotency merely because duplicate requests are unlikely. ;; = ;; none ;;
+C api006.conditional-semantics OL API-006 MUST ;; When HTTP optimistic concurrency is part of the contract prefer standard conditional semantics (ETag/If-Match/412) and do not replace them with custom status codes. ;; = ;; none ;;
+C arc010.translate OL ARC-010 MUST ;; Controllers translate Application outcomes into HTTP outcomes. ;; = ;; none ;;
+C api002.stable-codes OL API-002,FE-009 MUST ;; Machine-readable clients rely on stable error codes/contract fields in ProblemDetails, not human-readable messages. ;; = ;; none ;;

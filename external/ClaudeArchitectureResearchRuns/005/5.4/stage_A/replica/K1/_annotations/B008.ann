@@ -1,0 +1,287 @@
+# K1 / B008 — Run 2 replica annotation (blind).
+
+C R176 OL GOV-017,GOV-005,DEP-002 | MUST | Classify a decision with the Reserved list and five-question test from CLAUDE.md: Delegated proceeds without the decision workflow; Decided follows the existing record, and reopening a Decided decision is itself Reserved. | Any decision during work | none stated
+C R177 OL GOV-017,ARC-020,GOV-018 | MUST (Reserved: stop affected work) | For a Reserved choice present a Decision Request (title, context, 2-3 realistic options with trade-offs/reversibility/cost, recommendation citing the governing policy, Blocked work, Proceeding-with compliant work) and stop the affected work until the user answers; compliant non-Reserved work may continue. | Reserved decisions | Compliant non-Reserved work may proceed meanwhile.
+C R178 OL GOV-017 | MUST | Headless or autonomous runs follow CLAUDE.md decision control and must not silently take Reserved decisions; the Decision Request's Proceeding-with field names the compliant path actually taken. | Headless/autonomous runs | none stated
+C R179 OL GOV-017,GOV-007 | MUST | After approval, record the accepted decision as a row of the decision register's Accepted decisions table (date, decision, scope, record link) and update the affected register section (stack, conditional technology, project default or capability selection). | Approved decisions | none stated
+C X32 EX GOV-017,GOV-007 | MUST (conditional) | For a consequential or non-obvious accepted decision, add a docs/decisions/NNNN-short-title.md record (context, decision, alternatives considered, consequences, date, approver). | Consequential or non-obvious approved decisions | none stated | GOV-017 requires approval of Reserved changes and GOV-007 synchronization of approved product rules, but no oracle policy requires a separate architecture decision record with fixed content. | Approving e.g. a new persistence provider obliges the agent to write a numbered decision record with alternatives and consequences.
+C X33 EX GOV-017,WF-009 | MUST | The architecture-decision workflow reports the decision, its class, the approval source, register/record updates and any request still unresolved. | End of an architecture-decision run | none stated | Reporting duty specific to the decision workflow; WF-009 covers verification reporting only. | The final message after a decision must state its class and approval source.
+C X34 EX DEP-010,DEP-004,API-010 | MUST | Register FluentValidation validators with FluentValidation.DependencyInjectionExtensions and do not add deprecated/legacy ASP.NET automatic-validation integration packages. | Backend validation setup | Follow the project's established invocation pattern instead of adding a competing one. | DEP-010 makes FluentValidation the standard library but prescribes no registration package; no oracle policy forbids the ASP.NET automatic-validation integration packages outright (DEP-004 only requires a deprecation check). | Adding FluentValidation.AspNetCore auto-validation is prohibited; validators are registered through the DI extensions package.
+C X35 EX RUN-021,ARC-017 | MUST NOT | Never cache tracked persistence entities across Unit of Work boundaries. | Caching of persistence data | none stated | RUN-021 governs invalidation consistency and ARC-017 the shared scoped context, but no oracle policy forbids caching tracked entities across Unit of Work scopes. | A cache storing EF-tracked entity instances for reuse by later requests is prohibited.
+C R180 OL API-007,RUN-018 | MUST | Catch exceptions only to recover, translate into a meaningful abstraction-level outcome, perform necessary cleanup, add context while preserving the original, apply a defined fallback or infrastructure retry; otherwise let them propagate; never swallow external-service failures or catch Exception merely to continue. | Backend exception handling | none stated
+C R181 OL ARC-020,API-009 | REQUIRES_APPROVAL | A Result<T> pattern is optional: consider it when an operation has several expected failure modes and it will be used consistently; avoid it where null/bool/simple typed responses suffice; project-wide adoption is a Reserved decision (CLAUDE.md decision control). | Backend outcome modeling | none stated
+C R182 OL SEC-016,GOV-013 | MUST | Choose the authentication scheme by the actual application (Bearer/OIDC for SPA->API, cookies for server-rendered apps, Identity when the app owns local users, external OIDC/OAuth when identity is delegated); a business entity named User or profile management does not justify Identity, and do not issue custom JWTs when an existing identity provider owns token issuance. | Backend authentication design | none stated
+C R183 OL ARC-020 | REQUIRES_APPROVAL | A new authentication/authorization architecture is a Reserved decision. | Backend authentication | none stated
+C R184 OL WF-015,GOV-014 | MUST | Build-fix restores the affected scope to green without hiding failures, weakening behavior or introducing unrelated changes. | Build/test repair | none stated
+C R185 OL WF-013 | MUST | Reproduce and diagnose the actual failure (narrowest reproducing command, complete output, errors grouped by root cause) before editing; never guess at a fix first; fix root causes before downstream symptoms. | Build/test repair | none stated
+C R186 OL WF-014,WF-008 | MUST | Repair in small bounded iterations: smallest correct change, rerun the same narrowest failing check and compare failure sets, expand verification only after the focused failure is resolved; stop and reassess when progress stalls (same root failure survives different fixes, growing unrelated failures, incompatible toolchain, unavailable infrastructure) and never repeat variants of the same failed guess. | Build/test repair | none stated
+C R187 OL WF-015 | MUST NOT | Do not weaken, delete, skip or suppress relevant tests, compiler, TypeScript, lint or analyzer failures merely to pass; understand a diagnostic before changing how it is reported; never turn a strong assertion into a weak one or delete/skip a failing test because fixing it is inconvenient. | Build/test repair | none stated
+C R188 OL GOV-014,RUN-009,ARC-001 | MUST | Preserve architecture and project conventions while fixing; a green build obtained by violating them is not a successful repair. | Build/test repair | none stated
+C R189 OL WF-005,WF-007 | MUST | Determine the affected scope and do not run unrelated build systems merely because they exist (backend-only failure: the affected .NET project; frontend failure: the workspace; API contract consumed by the frontend: both; documentation-only: no application builds without a reason). | Build/test repair | none stated
+C R190 OL WF-018 | MUST | For the frontend, inspect package.json and use scripts that actually exist; never invent script names or assume a test runner. | Frontend build/test commands (local and CI) | Applies the CI-scoped WF-018 rule to local repair as well.
+C R191 OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003,WF-015,DEP-014,DEP-015 | MUST NOT | Do not use invalid repair shortcuts: invalid project references (e.g. Application -> Infrastructure), leaking persistence types into Application, business logic in controllers, frontend-only authorization, scattering HTTP calls into components; frontend: converting to any to silence the compiler, disabling strict mode, suppressing template diagnostics without understanding, replacing framework APIs speculatively, adding another state-management or HTTP library to bypass a local issue. | Build/test repair | none stated
+C R192 OL WF-016,WF-013 | MUST | For full-stack/contract failures determine the authoritative contract; never patch both sides independently into inconsistent shapes; with OpenAPI generation verify the backend contract, regenerate the client through the normal workflow, review generated changes, then fix handwritten frontend code. | Cross-stack contract failures | none stated
+C R193 OL GOV-014,WF-015 | MUST | If expected behavior intentionally changed, update the test to express the new contract and confirm the change was actually requested. | Test failures during repair | none stated
+C R194 OL DEP-002,DEP-006,DEP-007 | MUST NOT | Never replace a package or add another merely to get a green build; never duplicate conflicting versions in .csproj files (Central Package Management); never delete package-lock.json reflexively. | Dependency-related build failures | none stated
+C R195 OL GOV-014,DEP-008,WF-009,WF-013 | MUST | For upgrade fallout update obsolete APIs deliberately from verified documentation (never fabricate replacement APIs from memory) without unrelated upgrades; never change the declared SDK, Node, framework or language version merely because the local machine differs, and report an unavailable toolchain as a limitation instead of editing source to compensate. | Framework/toolchain failures | none stated
+C R196 OL WF-016 | DEFAULT | When generated output is wrong or its source contract/configuration changed, identify the generator and input, fix the authoritative source and regenerate (OpenAPI clients, source generators, persistence migrations, frontend build output); do not manually patch disposable generated output unless the repository or generation workflow treats it as maintained source. | Generated outputs | Output intentionally maintained as source.
+C R197 OL GOV-014,WF-008 | MUST | If a fix introduces new failures, determine whether they are a legitimate dependency of the change or revert/correct the fix; never leave the repository knowingly worse than where the repair started; do not clean up unrelated pre-existing failures unless they block verification or the user asks. | Build/test repair | Blocking or user-requested cleanup.
+C R198 OL TST-010 | MUST | A behavioral test or probe used to establish correct behavior during diagnosis is preserved in maintained tests (verify step 4) before temporary diagnostics are removed. | Build/test repair | Equivalent coverage exists (per verify).
+C R199 OL WF-005,WF-007,WF-003 | MUST | A repair is complete when the affected scope is green (relevant builds and affected tests pass, cross-stack contracts consistent, no known new regression, no accidental workaround in the diff), without requiring unrelated builds; then run verify for the final completion pass when appropriate. | Build/test repair completion | none stated
+C R200 OL WF-009 | MUST | Report repairs with backend build, frontend build and tests as PASS / NOT RUN / NOT APPLICABLE plus root cause, changes and remaining issues; never claim the problem is fixed while a known relevant failure remains. | Build/test repair report | none stated
+C R201 OL ARC-020,RUN-007 | REQUIRES_APPROVAL | Adding a distributed cache (multi-instance shared cache, HybridCache L2, Redis) is a Reserved infrastructure decision, added only when deployment requirements justify it. | Backend caching | none stated
+C R202 OL ARC-016,ARC-024,RUN-018 | MUST | With caching, Application Services keep their normal repository/Unit of Work workflow and coordinate required invalidation through an abstraction rather than bypassing repositories or IUnitOfWork; decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data. | Backend caching | none stated
+C R203 OL WF-018 | MUST | Add frontend unit-test and lint CI steps only when the workspace's package.json defines those scripts. | Frontend CI | none stated
+C R204 OL TST-004,GOV-013 | MUST | Provide CI integration-test services (database, cache, broker) only when tests require them, isolated from Development and Production data; do not hardcode a database provider into a generic pipeline. | CI test infrastructure | none stated
+C R205 OL DEP-018 | MUST NOT | Build and publish container images in CI only when container deployment is part of the project; do not assume container deployment. | CI artifacts | none stated
+C R206 OL WF-019 | MUST | Generate database migration scripts/artifacts in CI and execute them at a controlled deployment step with approved credentials, failing visibly on error. | Deployment of database migrations | none stated
+C R207 OL WF-010 | MUST | The review is independent and read-only: it reports findings and does not edit files or rewrite working code unless asked; this workflow is the canonical review procedure; verify, not code review, performs the final build/test/diff verification. | Code review | Edits when explicitly asked.
+C R208 OL WF-011 | MUST | Prioritize findings: correctness; security and authorization; data integrity and persistence; architectural boundary violations; concurrency and integration; missing meaningful tests; maintainability; credible performance; never elevate style above behavioral defects and do not report formatting owned by tooling. | Code review | none stated
+C R209 OL WF-001,WF-010 | MUST | Establish the review scope and read enough surrounding code (callers, contracts, dependencies) and the governing standards and relevant knowledge to understand changed behavior; never review isolated lines; check architecture against the loaded owners rather than a private checklist. | Code review | none stated
+C R210 OL WF-012,WF-011 | MUST NOT | Do not introduce or enforce patterns the repository has not adopted (differing from an unadopted pattern is not a finding); report only correctness failures with a plausible execution path. | Code review | none stated
+C R211 OL GOV-003,GOV-006,GOV-001,GOV-005 | MUST | Review specification conformance in both directions: required behavior is not missing or weakened and no unapproved behavior is introduced (new lengths/limits, reserved names/values, observable string-comparison semantics incl. database configuration or framework defaults, new required fields, extra workflow restrictions, additional user-visible validation); approved synchronized details are not drift; internal implementation details are not product behavior. | Code review with non-empty SPECIFICATION.md / CUSTOM_SETTINGS.md | Approved and synchronized details.
+C R212 OL WF-011,GOV-012,PST-008,GOV-017 | MUST | Architecture review checks role/dependency rules, repository/persistence boundary, proportionality (consequential patterns only with approved need) and, when the persistence model changed, that persistence-change steps including the development seeder were followed; frontend code is checked against frontend rules without mechanically applying backend project-boundary rules. | Code review | none stated
+C R213 OL WF-007,WF-011 | MUST | Review data and security aspects (commit behavior, destructive changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive logging, concurrency, migrations, cache consistency); run the full security-scan only when an audit was requested, the change is materially security-sensitive, or a concrete finding justifies it. | Code review | none stated
+C R214 OL RUN-016,WF-011 | MUST | Review external calls for cancellation, timeouts, idempotency, retry safety, failure translation and lifetime; never demand retries for operations that are not safe to retry. | Code review | none stated
+C R215 OL TST-009,TST-010,TST-011,WF-011 | MUST | Check that changed behavior has useful maintained coverage; for bug fixes look for a regression test when recurrence is plausible; behavioral probes must be preserved as maintained tests; do not request duplicate tests when equivalent coverage exists. | Code review | Equivalent coverage exists.
+C R216 OL WF-011,RUN-008 | MUST | Report performance only for credible reasons (N+1, unbounded materialization, blocking async I/O, repeated expensive remote calls, demonstrated hot paths); do not recommend speculative optimizations. | Code review | none stated
+C R217 OL WF-021,WF-020 | MUST NOT | Review must not require an MCP server or specific analyzer; tool output is evidence, not authority — read the code before turning a warning into a finding. | Code review (applies the security-review tool-independence rule to review) | none stated
+C R218 OL WF-011 | MUST | Report findings ordered by severity (Critical, High, Medium, Low) with location, what is wrong, why it matters and the smallest reasonable fix. | Code review output | none stated
+C R219 OL WF-012 | MUST NOT | Never invent findings to populate a category; when there are no meaningful findings say so and name important areas that could not be verified; no filler praise. | Code review output | none stated
+
+FILE .claude/skills/architecture-decision/SKILL.md | On-demand workflow.
+1-9 NN | skill front matter: name and trigger description (routing metadata)
+11 NN | header metadata
+13 NN | heading
+15 NN | pointer to the governing policy in CLAUDE.md and statement of what this workflow owns
+17 NN | section heading
+19 OL R176 |
+21 NN | section heading
+23-32 OL R177 | Present the request and stop the affected work until the user answers:
+34 OL R178 |
+36-38 NN | section heading and lead-in
+40 MX R179,X9 | list every affected reference as `From -> To` ⟫ recording accepted decisions in the register (oracle GOV-017/GOV-007) combined with the edge-by-edge From -> To recording that the reference hook requires (EXTRA X9)
+41 EX X32 |
+42 EX X15 | ask the user to run the user-invoked `template-maintenance` workflow
+43 NN | routing pointer to the normal implementation workflows
+45 NN | section heading
+47 MX X1,R10 | a selection change is Reserved ⟫ static slot composition (EXTRA X1) and Reserved selection changes (oracle GOV-017/ARC-020)
+49 EX X2 |
+50 EX X7 |
+51 EX X5,X1,X15 | role-based facet file names stay the same
+52 NN | routing pointer: migrate product code through normal workflows
+54 MX X7,R10 | is a Reserved persistence-technology change but not a new slot ⟫ variant-vs-implementation rule (EXTRA X7) and Reserved provider change (oracle)
+56 NN | section heading
+58 EX X33 |
+
+FILE .claude/skills/aspnet-error-handling/SKILL.md | On-demand knowledge.
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 NN | policy/technique pointers
+15 NN | section heading
+17 OL R23,R26 |
+19-52 NN | global exception handler and Program.cs code example (technique)
+54 OL R24 |
+56 NN | section heading
+58 OL R27 |
+60-62 NN | code example of a nullable query result
+64 OL R27,R17 |
+66 NN | section heading
+68-86 NN | controller mapping code example
+88 NN | section heading
+90 OL R22 |
+92 NN | section heading
+94 OL R28 |
+96-100 DU R28 | text diagram restating validation placement by boundary (captured in R28)
+102 MX R28,X34,R51 | do not add deprecated/legacy ASP.NET automatic-validation integration packages ⟫ validation placement/no duplication (oracle API-010), extra validator-registration and package prohibition (X34), follow established invocation pattern (oracle RUN-009)
+104 NN | section heading
+106 OL R29 | only as a consistent project-level decision
+108 NN | section heading
+110 OL R180 |
+112 NN | section heading
+114 OL R180 |
+116-125 NN | anti-pattern code example (swallowed failure, catch/log/rethrow)
+127 OL R27 | Expected outcomes (not found, validation failures, rejected business operations) are normally not logged as application errors.
+129 NN | section heading
+131 OL R181 |
+133-135 NN | typed error record example
+137 NN | section heading
+139 DU R24,R28,R22 | anti-pattern list restating no raw exception messages, consistent error contracts and validation placement
+141 NN | section heading
+143-154 DU R22,R23,R27,R28,R26 | decision-guide table restating error-handling defaults captured above
+
+FILE .claude/skills/authentication/SKILL.md | On-demand knowledge.
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 OL R183,R33 | A new authentication/authorization architecture is Reserved
+15 NN | section heading
+17 OL R182 |
+19 NN | section heading
+21 OL R94,R114 |
+23 NN | section heading
+25 OL R95 |
+27 NN | section heading
+29-36 NN | [Authorize] controller code example
+38 OL R93 |
+40 NN | section heading
+42 NN | soft technique preference (policies with stable constant names)
+44-53 NN | authorization policy code example
+55 NN | technique preference on roles vs policies and avoiding compound role strings
+57 NN | section heading
+59 OL R117 |
+61 NN | section heading
+63-66 DU R20 | text block restating 401 vs 403 semantics (R20)
+68 NN | descriptive technique note on middleware producing 401/403
+70 NN | section heading
+72 NN | permissive technique note (controllers may read User for HTTP-specific information)
+74-79 NN | current-user controller code example
+81 OL R39,R38 |
+83-89 NN | ICurrentUser interface example
+91 NN | section heading
+93 OL R138 |
+95 NN | section heading
+97 OL R104 | Verify observable behavior, not merely the presence of `[Authorize]`.
+99 NN | section heading
+101 DU R114,R117,R39,R20,R182 | anti-pattern list restating secrets, server-side authorization, Application/HttpContext boundary, 401/403 and need-based auth infrastructure rules
+
+FILE .claude/skills/build-fix/SKILL.md | On-demand workflow.
+1-8 NN | skill front matter: name and trigger description (routing metadata)
+10 NN | header metadata
+12-14 NN | headings
+16 OL R184 |
+18 NN | section heading
+20-21 OL R185 |
+22 OL R186 |
+23 OL R187 |
+24 OL R188 |
+25 OL R186 | Stop when progress has clearly stalled instead of making speculative edits.
+27 NN | section heading
+29 OL R189 |
+31 NN | section heading
+33 OL R185,R190 |
+35 OL R185 | Read the complete relevant output, not only the first line, and group errors by likely root cause.
+37-39 NN | section heading and lead-in
+41-46 OL R185,R186 |
+48 OL R191 |
+50 NN | section heading
+52 OL R192 |
+54 NN | section heading
+56 OL R187,R193 |
+58 NN | section heading
+60 OL R113,R194 |
+62 NN | section heading
+64 OL R195 |
+66 NN | section heading
+68 OL R196 |
+70 NN | section heading
+72 OL R186,R197 |
+74 NN | section heading
+76 OL R198 |
+78 NN | section heading
+80 OL R199 |
+82-90 OL R200 | Backend build: PASS / NOT RUN / NOT APPLICABLE
+92 OL R200 |
+
+FILE .claude/skills/caching/SKILL.md | On-demand knowledge.
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 OL R201,R89 |
+15 NN | section heading
+17 NN | technique option: output caching for wholly reusable responses in the Api layer
+18 OL R49 |
+19 NN | technique permission: infrastructure adapters may cache while preserving the Application contract
+21 NN | section heading
+23 OL R89,R201 | Add a distributed backend such as Redis only when deployment requirements justify it.
+25-31 NN | AddHybridCache code example
+33 NN | section heading
+35 OL R49 | keep `HybridCache` itself out of Application contracts
+37-44 NN | cache abstraction code example
+46 NN | section heading
+48 OL R90 |
+50 NN | section heading
+52 OL R91 |
+54 NN | section heading
+56 OL R92 |
+58 NN | section heading
+60-67 NN | output cache code example
+69 OL R90 | Never cache authenticated or user-specific responses unless the key and policy isolate users and authorization context.
+71 NN | section heading
+73 MX R202,X35 | Never cache tracked persistence entities across Unit of Work boundaries. ⟫ Unit-of-Work/abstraction and failure-semantics guidance (oracle) plus the extra prohibition on caching tracked entities (X35)
+75 NN | section heading
+77 OL R104 | Do not unit-test framework cache internals.
+79 NN | section heading
+81-88 DU R201,R89,R49 | decision-guide table restating caching defaults (distributed cache Reserved, measure first, Application abstraction)
+
+FILE .claude/skills/ci-cd/SKILL.md | On-demand knowledge (delivery).
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 NN | pointer to delivery-change plus artifact-reproducibility technique ('where practical'; conditional delivery technique)
+15 NN | section heading
+17-22 NN | backend CI command example (format gate only when adopted)
+24 NN | section heading
+26-29 NN | frontend CI command example
+31 OL R203 |
+33 NN | section heading
+35-70 NN | GitHub Actions workflow example
+72 NN | technique note: adapt action/runtime versions to the repository
+74 NN | section heading
+76 OL R204 |
+78 NN | section heading
+80 NN | dependency-security scan commands (technique; findings per project policy)
+82 NN | section heading
+84-87 NN | publish command example
+89 OL R205 | Build and publish container images only when container deployment is part of the project
+91 NN | section heading
+93 NN | build-once/promote preference where the deployment model supports it (conditional delivery technique)
+95 NN | section heading
+97 OL R115 |
+99 NN | section heading
+101 OL R206 |
+103 NN | section heading
+105 NN | technique note on separate CI/CD workflows and environment protection
+107 NN | section heading
+109 DU R204,R205 | anti-pattern list and pointer restating generic-pipeline and container-deployment rules; pipeline obligations owned by delivery-change
+
+FILE .claude/skills/code-review/SKILL.md | On-demand workflow; preloaded by the code-reviewer agent.
+1-8 NN | skill front matter: name and trigger description (routing metadata)
+10 NN | header metadata
+12-14 NN | headings
+16 OL R207,R2 |
+18 NN | section heading
+20 OL R208 |
+22 NN | section heading
+24 OL R209 |
+26 NN | section heading
+28 OL R209 |
+30-41 NN | routing table from changed area to knowledge skills (routing pointers)
+43 OL R210 |
+45 NN | section heading
+47 OL R211 |
+49 NN | section heading
+51 OL R210 | Report only failures with a plausible execution path.
+53 NN | section heading
+55-60 OL R212 |
+62 OL R212 |
+64 NN | section heading
+66 OL R213 |
+68 NN | section heading
+70 OL R214 |
+72 NN | section heading
+74 OL R215 |
+76 NN | section heading
+78 OL R216 |
+80 NN | section heading
+82 OL R217 |
+84 NN | section heading
+86-91 OL R218 |
+93 OL R219 |
+
+O .claude/skills/aspnet-error-handling/SKILL.md 106-106 PL R29 API-011 | only as a consistent project-level decision | Suspected relaxation/condition EXTRA. Kept oracle-linked: API-011 forbids establishing business exceptions as the default architecture; permitting typed exceptions only as a deliberate, consistent project decision keeps that boundary. | Ad-hoc typed business exceptions are not used; a project-wide decision may adopt them for selected cases.
+O .claude/skills/aspnet-error-handling/SKILL.md 131-131 NN - API-009 | If adopted, use typed errors rather than string arrays | Considered as an extra mandatory pattern. Rejected as technique: it only shapes the representation inside an already approved Result model and restricts no outcome the oracle governs. | none
+O .claude/skills/ci-cd/SKILL.md 13-13 NN - WF-017 | keep deployment/environment configuration outside compiled artifacts where practical | Considered as an extra delivery requirement. Rejected as conditional delivery technique ('where practical'), the class the oracle itself excludes (EXC-014). | none
+O .claude/skills/build-fix/SKILL.md 64-64 PL R195 GOV-014,DEP-008 | Never change the repository's declared SDK, Node, framework, or language version merely because the local machine differs | Suspected EXTRA. Kept oracle-linked: changing declared platform versions to suit a local machine is an out-of-scope behavior change (GOV-014) and DEP-008 fixes the platform baseline; reporting the limitation is WF-009. | Toolchain mismatch is reported, not patched by editing versions.
+DONE

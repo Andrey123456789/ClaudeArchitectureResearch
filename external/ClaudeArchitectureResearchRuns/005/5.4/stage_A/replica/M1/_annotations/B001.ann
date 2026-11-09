@@ -1,0 +1,131 @@
+# M1 / B001 — Run 2 replica annotation (blind). Paths are relative to output/template/.
+
+C R1 OL WF-010 | MUST (tool-enforced: disallowedTools) | The code-reviewer agent performs an independent read-only review and does not edit files; Write, Edit, MultiEdit and NotebookEdit are disallowed tools. | code-reviewer agent (PR review, diff review, pre-merge or second-pass review) | Bash is not tool-disallowed; the no-edit duty for shell use rests on the text.
+C R2 OL WF-010 | MUST | The code-reviewer uses the code-review workflow (preloaded skill; read SKILL.md if not in context) as the canonical procedure and does not redefine review policy or criteria. | code-reviewer agent | none stated
+C R3 OL WF-012 | MUST | The code-reviewer returns the findings in the code-review workflow's output shape. | code-reviewer agent | none stated
+C R4 OL ARC-009,ARC-020 | REQUIRES_APPROVAL (manifest check warning) | MediatR and Kommand introduce a pattern listed as not adopted; adding them is a Reserved decision and the manifest check flags them. | NuGet manifests | Approved Reserved decision.
+C R5 OL ARC-001 | MUST (architecture check) | Production project references point inward: core model (Domain) references no application project; use-case layer (Application) references the core model; adapter layer (Infrastructure) references the use-case layer and core model; entry point (Api) references the use-case layer, adapter layer and core model. | backend projects identified by layer suffix | Entry point -> core model is allowed by the check.
+C R6 OL ARC-028 | MUST NOT (architecture check) | Backend test projects reference only their test scope: Domain.Tests -> core model; Application.Tests -> use-case layer and core model; Infrastructure.Tests -> adapter, use-case and core model; IntegrationTests -> entry point. | backend test projects | none stated
+C R7 OL ARC-002,ARC-008,ARC-019 | MUST (architecture check) | The core model and use-case layer must not use web-framework namespaces (Microsoft.AspNetCore) or the persistence technology's namespaces (Microsoft.EntityFrameworkCore). | Domain and Application code | none stated
+C R8 OL TST-001 | DEFAULT (manifest check warning) | A test project referencing a second test framework (xunit, xunit.v3, MSTest, TUnit packages) needs a concrete reason. | backend test projects | Concrete reason.
+C R9 OL DEP-015 | MUST NOT (by default; manifest check warning) | NgRx, Axios, Lodash, Bootstrap and Tailwind are not part of the frontend baseline and are added only for a concrete requirement. | frontend package.json | Concrete requirement.
+C R10 OL DEP-007 | MUST (manifest check warning) | Build and test tooling (TypeScript, ESLint, Prettier, Playwright test, Jest, Karma, Angular CLI/build/compiler, Vitest) belongs in devDependencies unless there is a reason. | frontend package.json | Reason given.
+C X1 EX ARC-020,DEP-009 | MUST | Static capability composition: exactly the four slots architecture (required frame), persistence and backend-testing (required leaves) and frontend (optional leaf); each required slot has exactly one selected implementation and the optional slot zero or one; only selected implementations have runtime facets; contracts and manifests are maintainer metadata, not auto-loaded. | template capability structure and selection record | none stated | No oracle policy defines capability slots, their cardinality or a selection record; ARC-020/DEP-009 only fix the approved stack and require approval to change it. | A maintainer may not add a fifth slot, keep two persistence implementations or let an unselected module contribute runtime facets.
+C X2 EX - | MUST (checker-enforced) | Slot contract completeness: a slot implementation supplies every required facet (planning, rules, workflow/placement, knowledge), required property, required enforcement data and role mapping listed in its slot contract; a missing required facet or property is a conformance failure that requires a Decision Request. | creating or replacing a slot implementation | none stated | Template capability-contract structure; no oracle policy requires implementations to ship particular facets, properties or enforcement data. | A replacement test-framework module without competingFrameworkPackages data or a filter command property is non-conformant.
+C X3 EX - | MUST (checker-enforced) | Role vocabulary and leak rule: other instructions use the slot contracts' stable role vocabulary (core model, use-case layer, use-case unit, persistence-access contract, commit boundary, adapter layer, entry point, composition root, test projects, persistence session, test framework, feature data-access service, ...) instead of implementation names; implementation leak tokens appear only in the module's facets, manifest and the selection metadata; a leaf that must name frame-specific projects or directories declares a binds entry. | authoring or changing instruction artifacts | Module-owned facets, manifests, the selection record and declared properties. | Instruction-authoring vocabulary rule of the M1 capability design; no oracle policy restricts which technology names may appear in which instruction files. | Writing 'run the NUnit tests' in a workflow outside the backend-testing module is a leak flagged by the checker.
+C X4 EX - | MUST | Content ownership in the capability model: placement belongs to the architecture frame and technique to the leaf; implementation-independent policy (framework-independent testing rules, framework-independent frontend rules) stays outside the modules; test-project placement and the frontend workspace location belong to the frame; the persistence leaf binds to frame roles and does not decide placement. | template content placement | none stated | Template-structure ownership rule; the oracle prescribes no ownership location for instruction content. | Putting test-project placement into the backend-testing module, or NUnit specifics into testing.md, violates the ownership rule.
+C X5 EX - | MUST | Replacement and removal procedure: replacing a leaf replaces its facets (planning, rule facet, knowledge content, adapter data) without touching the framework-independent rules; clearing the optional frontend removes its facets and planning import with nothing else to change; a persistence provider change edits only the declared provider-variant sections, the provider property and the declared string-comparison property; a frame replacement supplies every role mapping and facet and reviews embedded rules that use the frame's layer names. | capability replacement and removal | none stated | Template maintenance procedure; no oracle policy governs how instruction files change when a technology is replaced. | Replacing NUnit by editing testing.md, or changing the provider outside the declared sections, is non-conformant.
+C X6 EX DEP-009,ARC-020,GOV-006 | MUST | Persistence semantics on change: the persistence implementation declares commit binding, migration mechanism, seeding mechanism, provider variant, observable string-comparison semantics and relational-testing expectations; replacing the technology (e.g. with a micro-ORM) must not silently lose migration or seeding semantics; a provider change is a provider-variant change inside the slot, not a new slot. | persistence implementation or provider changes | none stated | ARC-020 requires approval for new persistence technology and GOV-006 for observable string semantics, but no oracle policy requires declared persistence properties or preservation of migration/seeding mechanisms on replacement. | A proposal to replace EF Core that omits the migration and seeding mechanisms is non-conformant even if approved.
+
+FILE .claude/agents/code-reviewer.md
+1-2 NN | YAML front-matter delimiter and agent name
+3-6 NN | agent description (routing text)
+7 OL R1 | disallowedTools: Write, Edit, MultiEdit, NotebookEdit
+8-9 OL R2 | - code-review
+10 NN | front-matter closing delimiter
+12 NN | header metadata
+14 NN | document heading
+16 OL R1 | Do not edit files.
+18-20 OL R2 | redefine review policy or criteria here
+22 OL R3 |
+
+FILE .claude/capabilities/architecture/clean-architecture/MODULE.md | Module manifest; maintainer metadata, not auto-loaded.
+1 NN | header metadata
+3 NN | document heading
+5-8 NN | module description
+10-11 NN | note on facet locations
+13 NN | section heading
+15-33 IM | manifest data (slot, facets, properties, binds, leak and detail tokens) consumed by the checker
+34 OL R4 | "reservedPackages": ["MediatR", "Kommand"],
+35-37 IM | architecture-check specification header
+38-42 OL R5 | "mayReference": ["core model"]
+43-48 OL R6 | "mayReference": ["entry point"]
+49-52 OL R7 | "Microsoft.AspNetCore", "{persistence.technologyNamespaces}"
+53-57 IM | owner reference and JSON closing
+
+FILE .claude/capabilities/architecture/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-11 EX X4,X3 | placement belongs to the frame; technique belongs
+13 NN | section heading
+15-25 NN | stable role vocabulary definitions (terminology)
+27-28 EX X3 | declares a `binds` entry in its manifest
+30 NN | section heading
+32-37 EX X2 | layer and boundary rules
+39 NN | section heading
+41-44 EX X2,X5 | A replacement frame must supply every role mapping and facet above.
+46-60 EX X2,X1 | "requiredProperties": ["adoptedStyle", "roleMap", "patternsNotAdopted", "repositoryLayout"],
+
+FILE .claude/capabilities/backend-testing/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-13 EX X4 | Framework-independent test policy
+15 NN | section heading
+17-21 EX X3 | the selected framework and its conventions
+23 NN | section heading
+25-29 EX X2 | a knowledge skill of the implementation, including § Test Project Setup
+31 NN | section heading
+33-34 EX X2 | Framework name, framework/adapter packages
+36-50 EX X2,X1 | "requiredEnforcement": ["testFrameworkPackages", "competingFrameworkPackages"],
+
+FILE .claude/capabilities/backend-testing/nunit/MODULE.md | Module manifest; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5-8 EX X5 | without touching the framework-independent testing rule
+10-11 EX X3 | test-project placement is taken from the frame's placement
+13 NN | section heading
+15-34 IM | manifest data (facets, properties, binds, leak tokens, test-framework packages)
+35 OL R8 | "competingFrameworkPackages"
+36-38 IM | JSON closing
+
+FILE .claude/capabilities/frontend/angular/MODULE.md | Module manifest; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5-9 NN | module description
+11 NN | section heading
+13-30 IM | manifest data (facets, properties, binds, leak tokens)
+31 OL R9 | "notByDefaultPackages"
+32 OL R10 | "devOnlyPackages"
+33-35 IM | JSON closing
+
+FILE .claude/capabilities/frontend/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-12 EX X4 | Framework-independent frontend
+14-15 EX X5 | Clearing the selection removes the module's facets and its planning import
+17 NN | section heading
+19-24 EX X3 | the framework's explicit HTTP boundary for a feature
+26 NN | section heading
+28-32 EX X2 | including the bindings table
+34 NN | section heading
+36-37 EX X2 | Test runner, E2E tool, scaffold command
+39-53 EX X2,X1 | "requiredEnforcement": ["notByDefaultPackages", "devOnlyPackages"],
+
+FILE .claude/capabilities/persistence/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-9 EX X4 | does not decide placement
+11-15 EX X2,X6 | must not silently lose the migration or seeding semantics
+17 NN | section heading
+19-24 EX X3 | the scoped unit shared by the repositories and the commit boundary of one use case
+26 NN | section heading
+28-33 EX X2 | workflow (routed from `CLAUDE.md`)
+35 NN | section heading
+37-40 EX X6 | observable string-comparison semantics (also
+42-57 EX X2,X1 | "requiredEnforcement": ["technologyNamespaces", "coChange"],
+
+FILE .claude/capabilities/persistence/ef-core/MODULE.md | Module manifest; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5-9 NN | module description
+11-14 EX X5 | a provider change edits only those sections
+16-19 EX X3 | only executable guidance names
+21 NN | section heading
+23-52 IM | manifest data (facets, declared properties, provider-variant sections, binds, leak tokens)
+53 OL R7 | "technologyNamespaces": ["Microsoft.EntityFrameworkCore"],
+54-64 IM | co-change patterns consumed by the Stop hook and JSON closing
+DONE

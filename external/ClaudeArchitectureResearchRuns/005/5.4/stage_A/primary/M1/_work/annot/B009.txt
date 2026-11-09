@@ -1,0 +1,57 @@
+# Batch B009 — scripts/lib/dependency-commands.js, scripts/lib/hook-output.js, settings.json
+
+@@ output/template/.claude/scripts/lib/dependency-commands.js ;; Executable command classifier used by the PreToolUse gate and PostToolUse re-checks.
+@scope executable PreToolUse gate on Bash/PowerShell command text
+1-11 IM ;; Header documenting the parse and the trailing-comment approval-marker convention (markers defined on lines 15-17).
+13-14 IM ;; Workflow paths used in messages.
+15 EX [x.dep-checked-marker] ;; ;; const CHECKED = /#\s*add-dependency:\s*checked\b/i;
+16 EX [x.peer-override-approval] ;; ;; const PEER_OVERRIDE = /#\s*peer-override:\s*approved-by-user\b/i;
+17 EX [x.ref-checked-marker] ;; ;; const REFERENCE_CHECKED = /#\s*project-reference:\s*checked\b/i;
+19-116 IM ;; Lexer: heredoc stripping, continuations, quoting, comments, separators and redirections into simple commands with their trailing comment.
+118-174 IM ;; Command model: wrappers, nested shells, option parsing helpers.
+176-193 IM ;; npm verb classification (install with packages = change; ci/install without packages = restore; audit fix = change).
+195-222 IM ;; pnpm, yarn and ng verb tables.
+224-255 IM ;; Node package-manager classification.
+257-289 IM ;; dotnet add/remove package|reference, dotnet package/reference subcommands, dotnet new/sln scaffolds.
+291-299 IM ;; ng new/add/update classification.
+301-344 IM ;; Dispatch per executable incl. npx/pnpx/corepack, nuget CLI and Install/Update/Uninstall-Package.
+346-355 IM ;; classifyCommand: all operations with their line's trailing comment.
+357-363 OL [dep025.force-detect]
+365-373 OL [dep003.version-notes]
+375-379 IM ;; Operation description for messages.
+381-395 MX [dep025.force-block,x.peer-override-approval] ;; Force flags are denied (DEP-025) unless the line carries the user-approval marker (added exception).
+396-406 MX [arc001.reference-gate,x.ref-checked-marker,x.reserved-refgraph-route] ;; Reference changes are denied until project-structure was applied (ARC-001 routing) and the checked marker is present; Reserved reference-graph routing is added.
+407-418 MX [dep.dependency-gate,x.dep-checked-marker] ;; Package changes are denied until add-dependency was applied (DEP-003/004/005) and the checked marker is present.
+419 IM ;; Function close.
+421-426 IM ;; changesManifests helper and exports.
+
+C x.dep-checked-marker EX DEP-003,DEP-004 ENFORCED ;; Every NuGet/npm package addition, update or removal command (dotnet add/remove package, npm/pnpm/yarn install <pkg>/remove/update, audit fix, ng add/update, nuget, Install-Package) is denied unless its line carries the trailing comment '# add-dependency: checked' after the add-dependency workflow. ;; = ;; Restore commands (npm ci, install without packages) are not gated. ;; Executable pre-approval protocol for dependency commands; the oracle requires due diligence but no command gate or marker.
+C x.peer-override-approval EX DEP-025 ENFORCED ;; npm/pnpm/yarn force or legacy-peer-deps flags are allowed when the line carries '# peer-override: approved-by-user' after explicit user approval. ;; = ;; User approval marker. ;; Adds a user-approval exception to DEP-025, which forbids the flags merely to bypass peer conflicts without an approval path.
+C x.ref-checked-marker EX ARC-001,ARC-028 ENFORCED ;; dotnet add/remove reference (and reference add/remove) commands are denied unless the line carries '# project-reference: checked' after the project-structure workflow. ;; = ;; none ;; Executable gate for project-reference changes not in the oracle.
+C dep025.force-detect OL DEP-025 ENFORCED ;; Detects --force, -f (npm) and --legacy-peer-deps on npm/pnpm/yarn package operations. ;; = ;; none ;;
+C dep003.version-notes OL DEP-003 ENFORCED_ADVISORY ;; Denial messages note when a command requests a prerelease (--prerelease, @next/canary/beta/alpha/rc) or floating/unresolved version (*, @latest). ;; = ;; none ;;
+C dep025.force-block OL DEP-025 ENFORCED ;; Peer-dependency override flags are denied with an instruction to resolve the actual compatibility problem. ;; = ;; User-approval marker (see x.peer-override-approval). ;;
+C arc001.reference-gate OL ARC-001,ARC-028 ENFORCED ;; Project-reference changes are routed through the project-structure workflow (dependency direction and frame reference layout) before running; the post-command architecture check validates the result. ;; = ;; none ;;
+C x.reserved-refgraph-route EX ARC-020 ENFORCED_ADVISORY ;; Reference-graph changes that are Reserved are routed to architecture-decision. ;; = ;; none ;; Reference-graph changes as Reserved decisions are an added gate.
+C dep.dependency-gate OL DEP-003,DEP-004,DEP-005 ENFORCED ;; Dependency changes are routed through the add-dependency workflow (need/approval, package choice, latest stable compatible version, deprecation, vulnerability, license) before running. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/lib/hook-output.js ;; Shared hook result helpers.
+@scope executable helper for hooks
+1-7 IM ;; Header: JSON decisions with exit 0; PreToolUse fails closed, others fail visibly.
+9-20 IM ;; ASCII escaping, emission and error text helpers.
+22-25 IM ;; denyToolUse: PreToolUse permissionDecision deny.
+27-33 EX [x.pre-fail-closed] ;; Internal failure denies the tool call and asks to report it to the user and repair via template-maintenance.
+35-43 IM ;; block (decision:block) and addContext helpers.
+45-54 IM ;; allow/fail helpers and exports.
+
+@@ output/template/.claude/settings.json ;; Claude Code hook registrations (exec form).
+@scope Claude Code hook registration
+1-6 IM ;; JSON structure: PreToolUse matcher Bash|PowerShell.
+7-12 MX [dep.pre-gate-registration,x.pre-fail-closed] ;; Registers pre-tool-use.js with onFailure block (fail closed).
+13-15 IM ;; JSON closing.
+16-27 IM ;; PostToolUse registration of post-tool-use.js for Write|Edit|MultiEdit|Bash|PowerShell (behaviour captured in that hook).
+28-39 IM ;; PostToolUseFailure registration for Bash|PowerShell.
+40-50 IM ;; Stop registration of stop.js.
+51-52 IM ;; JSON closing.
+
+C dep.pre-gate-registration OL DEP-025,DEP-003 ENFORCED ;; pre-tool-use.js runs before every Bash/PowerShell call to gate dependency, project-reference and peer-override commands. ;; = ;; none ;;

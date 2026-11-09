@@ -1,0 +1,84 @@
+# M1 B008 — scripts/lib/common.js, dependency-commands.js, hook-output.js, settings.json, skills/add-dependency
+1 NN c=M rel=WF-007 | Fact about checker coverage: skipped directories.
+2 NN c=M rel=WF-001 | Fact about how the active instruction root is found.
+3 NN c=M rel=DEP-006,ARC-001 | Fact about checker coverage: a custom XML reader without MSBuild semantics.
+4 NN c=M rel=WF-003,PST-008 | Fact about Stop scope: only uncommitted files.
+5 XW m=M rel=DEP-003,GOV-017 | Marker protocol across the three gates. No policy uses shell comments as permission tokens. Static reading (C10).
+  t: shell dependency and project-reference commands
+  e: the markers are self-attested
+  s: The agent finishes due diligence and runs `npm install x`: the oracle allows it; M1 denies until the same command carries the marker.
+6 XW m=MN rel=DEP-003,DEP-004,DEP-001 | Deny gate with a marker, including removal commands. Static reading (C10).
+  s: `dotnet remove package X` during a cleanup: no policy gates it; M1 denies until the marker re-run.
+7 XW m=Y c=M rel=DEP-025 | The marker route that lets approved force flags through. DEP-025 forbids the flags 'merely to bypass' peers and has no marker or approval route.
+  s: The user approves `npm install --force`: M1's route is the marker re-run; the oracle sets no such step.
+8 XW m=MN rel=ARC-001,ARC-028 | Deny gate with a marker for reference commands. Static reading (C10).
+  s: `dotnet add reference` for an allowed inward reference: the oracle allows it; M1 denies until the marker re-run.
+9 NN c=M rel=DEP-003 | Fact about parser coverage: heredocs stripped, indirect installs missed.
+10 CO DEP-025~ m=MN d=WF c=M | Flag detection for the DEP-025 gate. Its stronger effect is classified at FG-M1-159a4ef4c3.
+11 CD DEP-025 m=MN k=W st=S c=M | Gate applies by flag syntax, whatever the value or purpose. DEP-025 forbids the flags 'merely to bypass' peer dependencies.
+  t: npm, pnpm or yarn package operations with an override flag
+  e: the user-approval marker
+  x: the override check also covers pnpm and yarn, and flag syntax regardless of value (--force=false)
+  s: `npm install x --force=false` bypasses nothing: DEP-025 is satisfied; M1's gate denies it.
+12 CO DEP-003~ m=S st=W sr=AM d=WF | Notes in denial messages: advisory mechanism of DEP-003.
+13 CD DEP-025 m=MN k=W st=S | Same reading as M: PreToolUse denial regardless of purpose. The instruction to resolve the problem restates DEP-025.
+  x: the flags are denied whatever the purpose, unless the marker is present
+  s: `npm install --force` to refresh a corrupted cache: DEP-025 does not apply; M1's gate denies it.
+14 XW m=MN c=M rel=DEP-003,ARC-028 | Removals and reference operations also need markers; no policy gates those commands.
+  t: shell dependency removal and project-reference commands
+  e: the markers are self-certified
+  s: `npm uninstall lodash`: the oracle allows it; M1 denies until the marker re-run.
+15 XP m=RA c=M rel=ARC-020,ARC-001 | Reserved reference-graph changes, as at FG-M1-e3684cb036. ARC-020 lists new projects and layers, not references.
+  s: As for FG-M1-e3684cb036.
+16 CO ARC-001~ ARC-028~ m=M d=WF c=M | Checking reference changes against the dependency direction and validating the result is the mechanism of the cited rules (C3). The marker gate is classified at FG-M1-65a26a7288.
+17 CO DEP-001~ DEP-003 DEP-004 DEP-005~ m=M d=WF c=M | Routing to the workflow that holds the canonical checks (C3). The marker gate is classified at FG-M1-6651b461d5.
+18 XW m=M c=M rel=WF-009 | The denial message tells Claude to report a hook failure and names the repair route. WF-009 covers verification state, not hook failures.
+  t: a PreToolUse hook failure
+  e: NONE
+  s: A hook fails and the agent then uses another route without telling the user: no policy requires a report; M1's message does.
+19 NN c=M rel=WF-001 | Fact about the operational prerequisite. The fail-closed effect is classified at FG-M1-30119e9885.
+20 MX | Same reading as calibration: settings.json:7-12 registers pre-tool-use.js for every Bash/PowerShell call (onFailure block). The gate bundles enforcement of a canonical prohibition with candidate-specific gating.
+  - CO DEP-025 m=MN d=WF | Gating peer-override commands (npm --force/--legacy-peer-deps) is the mechanism of DEP-025 (C3).
+  - XW m=MN | Every Bash/PowerShell call passes through a pre-execution gate for dependency and project-reference commands (denied/asked per the gate's own rules; onFailure block = fail closed when the hook cannot run).
+    s: Node.js is unavailable or the hook crashes: canonical policies allow running a plain `dotnet add package` after due diligence; M1's registration blocks the call (declared intent; host support for onFailure not executed).
+    r: host support for exec-form args and onFailure:block not verified (C10)
+21 CO DEP-002 m=M | Use the approved technology when one exists (DEP-002).
+22 CO DEP-017 | add-dependency SKILL.md:25-28 restates DEP-017.
+23 CD DEP-020 m=D k=P st=S | SKILL.md:33-35 limits the exception; DEP-020 calls direct Polly an explicit exception with no admissible-reason test.
+  x: direct Polly only when a concrete requirement cannot be expressed through the Microsoft resilience APIs
+  s: A team picks direct Polly for a simpler configuration: DEP-020's explicit exception can cover it; M1's test does not.
+24 XW m=M c=M rel=DEP-020 | Documentation duty for the deviation, not entailed by DEP-020's DEFAULT (C7).
+  s: Direct Polly used with no written reason: DEP-020 is satisfied by an explicit exception; M1's skill is not.
+25 CD DEP-020~ DEP-004~ m=MN k=P st=S | Same pattern as FG-M1-490b1991d7: a named deny list. DEP-004 requires a deprecation check, not a ban.
+  x: never add the named deprecated integrations
+  s: A legacy project deliberately keeps Polly.Extensions.Http after the check: the oracle does not forbid it; M1's skill does.
+26 CD DEP-020 m=D k=P c=M | Narrowed admissible reason plus documentation duty (C7).
+  t: direct Polly usage
+  e: NONE
+  x: only when a concrete requirement cannot be expressed through the Microsoft APIs, with the reason documented
+  s: As for FG-M1-22e9697cff.
+27 CD DEP-010~ m=MN k=P st=S c=M | DEP-010 fixes the validation library and does not address integration packages.
+  x: no deprecated or legacy automatic-validation integration packages merely to connect FluentValidation
+  s: A project adds FluentValidation.AspNetCore for pipeline validation: DEP-010 is satisfied; M1's skill is not.
+28 CO DEP-003 | SKILL.md:41-48 restates DEP-003.
+29 CD DEP-003 m=MN k=P st=S c=M | SKILL.md:49 has no explicit-request branch, unlike the prerelease line above it. DEP-003 allows both on explicit request.
+  t: NuGet or npm addition or update
+  e: NONE
+  x: no floating versions, with no explicit-request exception
+  s: The user explicitly requests "*": DEP-003 allows it; M1's skill line does not.
+30 CO DEP-004 | SKILL.md:56-64 restates DEP-004.
+31 CO DEP-004 | Same statement.
+32 CO DEP-005~ m=Y st=W sr=PM | 'May be accepted' for permissive licenses is a permission inside DEP-005.
+33 CO DEP-005 | SKILL.md:71-77 restates DEP-005.
+34 XW m=MN c=M rel=DEP-005 | The oracle requires license checks and approval for unclear licenses, not this limit on conclusions.
+  s: The agent states that an MIT dependency is legally safe for every jurisdiction: DEP-004 and DEP-005 are satisfied; M1's limit is not.
+35 CO DEP-006~ | SKILL.md:96-98 restates DEP-006.
+36 CO DEP-025 | SKILL.md:100-102 restates DEP-025.
+37 CO DEP-007~ | SKILL.md:99-100 restates DEP-007.
+38 CD WF-007~ DEP-004~ m=M k=W | The vulnerability step restates the checks. Running this specific script is the discriminating step.
+  x: run check-manifests.js as a step
+  s: An agent verifies CPM by inspection and a build: WF-007 and DEP-006 are satisfied; M1's step is not.
+39 CO WF-020~ GOV-014~ m=MN c=M | Contextual reading of scanner output and scope discipline.
+40 CO GOV-014~ m=MN | No unrelated cleanup during a narrow task.
+41 XP m=M c=M rel=DEP-001,GOV-014 | DEP-001 governs additions; no policy requires removing dead references.
+  s: A change stops using a package and leaves the reference in place: DEP-001 and GOV-014 are satisfied; M1's skill is not.

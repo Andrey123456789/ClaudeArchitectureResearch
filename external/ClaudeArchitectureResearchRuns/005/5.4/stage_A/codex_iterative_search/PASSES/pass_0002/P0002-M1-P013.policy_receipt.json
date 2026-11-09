@@ -1,0 +1,689 @@
+{
+  "unit": "P0002-M1-P013",
+  "batch_input_sha256": "5b22d1d613e7ebde50d24fad6975b78115573640af74f86149af352caec8575f",
+  "reviews": [
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-010",
+        "name": "Do not log sensitive secrets",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Logging and Sensitive Data"
+        ],
+        "normalized_policy": "Never log passwords, tokens, private keys, auth secrets or full payment credentials; avoid PII without a concrete permitted operational need.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-010",
+      "status": "BOUNDARY_REVIEWED_NEW_UNRESOLVED",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0241"
+      ],
+      "boundary_analysis": "Secret/PII and log-level safety covered, but stable technical identifier preference not explicit in either bundled action. New U0014 preserves uncertain independent selection preference against minimum useful non-sensitive context0242/replica0125 and independent correlationBF0111; exact98..105 source verified.",
+      "new_finding_ids": [
+        "CIS-M1-U0014"
+      ],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              97,
+              103
+            ]
+          ],
+          "context_quotes": [
+            "\n- Never log passwords, access or refresh tokens, private keys, authentication\n  secrets, or full payment credentials. Avoid logging PII unless there is a\n  concrete operational requirement and the project's privacy/security policy\n  permits it; prefer stable technical identifiers. Changing the log level does\n  not make sensitive data safe.\n- Do not serialize arbitrary request bodies, domain objects, or sensitive"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              158,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck-by-reference against `security.md` § Authentication and Authorization:\ncustom password hashing; disabled token validation; hardcoded signing keys;\nauthorization only in the frontend; Application depending on `HttpContext`;\n`401` for an authenticated-but-forbidden user or `403` for missing\nauthentication; logged tokens; scattered role/permission magic strings;\nIdentity, JWT issuance, or OIDC infrastructure added without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "99d4a418e4be517c87940745cc3287bad6bd3f2634c23fd4570886f4c6a78dcd",
+          "inspected_ranges": [
+            [
+              104,
+              110
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck, when relevant: commit and transaction behavior, destructive data\nchanges, raw SQL parameterization, authorization, input trust boundaries,\nsecrets, sensitive logging, concurrency, migrations, cache consistency\n(`security.md`, `performance.md`), and — when a migration or model change\naffects seeded entities — whether `persistence-change` § Seed Data was applied.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "fd04a4772e3a8b7d3f261a9151a510200a1a4368cd4640b9d8c54b409f17937b",
+          "inspected_ranges": [
+            [
+              33,
+              45
+            ],
+            [
+              80,
+              86
+            ],
+            [
+              94,
+              100
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Trace / Debug** — detailed diagnostics for troubleshooting (sensitive-data\n  rules apply at every level: `security.md`).\n- **Information** — normal meaningful events: a background job completed, an\n  important business operation completed, a runtime lifecycle event. Avoid\n  logging every internal method call.\n- **Warning** — an unexpected or degraded condition the application recovered\n  from: fallback used, retry sequence exhausted but another path succeeded,\n  optional dependency unavailable, unusual but handled state.\n- **Error** — an operation failed and needs investigation (which outcomes are\n  not errors: `error-handling.md` § Exception Logging).\n- **Critical** — the application or a major subsystem cannot continue safely.\n",
+            "\nBeyond the never-log list in `security.md`, avoid logging authorization headers\nand full request/response bodies that contain sensitive data. Log the specific\nproperties needed for operation and diagnosis; this reduces accidental\nsecret/PII exposure, huge log events, serialization cost, and fragile log\nschemas.\n",
+            "\nCheck-by-reference against the policy owners above: string interpolation in\nstructured logs; duplicate exception logging; expected business outcomes logged\nas errors; credentials or secrets logged; full objects dumped without review;\nprovider-specific APIs spread through Application code; logs used as an audit\ndatabase without a dedicated audit design.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "e2ec57d45a57a084ad57ff99d5a104f25e76266c2fcbeeda92845bee28615194",
+          "inspected_ranges": [
+            [
+              243,
+              253
+            ]
+          ],
+          "context_quotes": [
+            "\n```csharp\n// BAD — password in logs\nlogger.LogInformation(\"Login: {Email} with password {Password}\", email, password);\n\n// GOOD — non-sensitive technical identifier\nlogger.LogInformation(\n    \"Login completed for user {UserId}\",\n    userId);\n```\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "afb8e9da26a75dc921bbc7481aabd33022a999a8ec4a87b74b26b13972fcc653",
+          "inspected_ranges": [
+            [
+              136,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not automatically treat as safe: secrets in `appsettings.Development.json`;\nsensitive values logged only at Debug level; client-side route guards; hidden\nUI buttons; CORS configuration used as a substitute for authorization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              221,
+              226
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck logs against `security.md` § Logging and Sensitive Data. Review PII\naccording to project requirements, and do not consider Debug/Trace level a\nsecurity boundary. Review duplicate or missing security-relevant logging in\ncontext; do not demand logs for every successful request.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-011",
+        "name": "Cookie auth requires CSRF consideration",
+        "related_groups": [
+          "frontend",
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Cookie Authentication and CSRF"
+        ],
+        "normalized_policy": "When browser cookies automatically carry authentication credentials, include CSRF protection in the design; do not assume an Angular frontend removes the risk.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0236"
+      ],
+      "boundary_analysis": "Automatic cookie CSRF scope matches; state-changing-operation review0622 and explicit bearer-header distinction prior. No universal cookie-vs-token recommendation inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              65,
+              69
+            ]
+          ],
+          "context_quotes": [
+            "  where relevant.\n- When browser cookies carry authentication credentials automatically, include\n  CSRF protection in the design; do not assume the frontend framework removes\n  that risk.\n- Do not claim that one browser token-storage mechanism is universally secure;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              144,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\nBearer tokens sent explicitly through the `Authorization` header have different\nCSRF characteristics from cookies sent automatically by the browser. Never\ncommit signing secrets.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              190,
+              195
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen browser credentials are sent automatically (especially cookies), review\nCSRF protection for state-changing operations. Bearer tokens attached\nexplicitly through the `Authorization` header have different CSRF\ncharacteristics.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-012",
+        "name": "Token storage is threat-model dependent",
+        "related_groups": [
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Token Storage"
+        ],
+        "normalized_policy": "Do not claim one browser token-storage mechanism is universally secure; choose storage according to the application's threat model and never log tokens.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0237"
+      ],
+      "boundary_analysis": "Threat-model storage choice and no universal secure mechanism explicit0237; never-log token0241 separately prior.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              68,
+              71
+            ],
+            [
+              97,
+              103
+            ]
+          ],
+          "context_quotes": [
+            "  that risk.\n- Do not claim that one browser token-storage mechanism is universally secure;\n  choose token storage according to the application's threat model.\n",
+            "\n- Never log passwords, access or refresh tokens, private keys, authentication\n  secrets, or full payment credentials. Avoid logging PII unless there is a\n  concrete operational requirement and the project's privacy/security policy\n  permits it; prefer stable technical identifiers. Changing the log level does\n  not make sensitive data safe.\n- Do not serialize arbitrary request bodies, domain objects, or sensitive"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              158,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck-by-reference against `security.md` § Authentication and Authorization:\ncustom password hashing; disabled token validation; hardcoded signing keys;\nauthorization only in the frontend; Application depending on `HttpContext`;\n`401` for an authenticated-but-forbidden user or `403` for missing\nauthentication; logged tokens; scattered role/permission magic strings;\nIdentity, JWT issuance, or OIDC infrastructure added without an actual need."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-013",
+        "name": "Security-sensitive checks fail safely",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Fail-Open Behavior"
+        ],
+        "normalized_policy": "Security-sensitive authorization, permission, or required-control checks should fail safely rather than silently convert lookup/configuration failures into success.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-013",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0243"
+      ],
+      "boundary_analysis": "Default safe failure matches; uncertain strength alreadyBF0035, fail-open investigation0627/0628 prior. Not generalized to all recoverable errors.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              108,
+              112
+            ]
+          ],
+          "context_quotes": [
+            "\n- By default, security-sensitive authorization, permission, or required-control\n  checks fail safely; they do not silently convert lookup or configuration\n  failures into success.\n- When a required security control cannot be configured correctly, prefer a"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              253,
+              258
+            ],
+            [
+              260,
+              264
+            ]
+          ],
+          "context_quotes": [
+            "\nInvestigate code that catches an exception and then lets a privileged operation\ncontinue — authorization service failed → allow; token validation failed →\ncontinue as anonymous but perform a privileged action; permission lookup failed\n→ permitted. Compare with `security.md` § Failure Handling.\n",
+            "\nReview empty `catch (Exception) { }` blocks and broad catches that continue\nwithout a deliberate fallback. Not every swallowed exception is a\nvulnerability, but security-relevant failures must not silently become success.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-014",
+        "name": "Required security configuration fails visibly",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Startup and Configuration Failure"
+        ],
+        "normalized_policy": "When a required security control cannot be configured correctly, prefer visible startup/configuration failure over insecure fallback.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-014",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0244"
+      ],
+      "boundary_analysis": "Required-control visible startup failure preference and review for auth/plaintext/allow-all fallback0630 prior; no mandatory crash for optional subsystem.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              111,
+              114
+            ]
+          ],
+          "context_quotes": [
+            "  failures into success.\n- When a required security control cannot be configured correctly, prefer a\n  visible startup or configuration failure over an insecure fallback.\n- Do not trust client-provided file metadata such as MIME type as authoritative"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              279,
+              284
+            ]
+          ],
+          "context_quotes": [
+            "\nReview security-sensitive startup configuration for dangerous fallback —\ninvalid auth configuration → authentication silently disabled; missing\nencryption key → plaintext mode; failed authorization provider → allow-all.\nCompare with `security.md` § Failure Handling.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-015",
+        "name": "Untrusted upload metadata is not authoritative",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#File Uploads"
+        ],
+        "normalized_policy": "Do not trust client-provided file metadata such as MIME type as authoritative when upload handling or security decisions depend on actual content.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-015",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0245"
+      ],
+      "boundary_analysis": "Client metadata nonauthority when content matters explicitreplica0128; upload path/control review and containmentEXTRA0213 prior.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              113,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "  visible startup or configuration failure over an insecure fallback.\n- Do not trust client-provided file metadata such as MIME type as authoritative\n  when upload handling or security decisions depend on actual content.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              92,
+              97
+            ],
+            [
+              204,
+              208
+            ]
+          ],
+          "context_quotes": [
+            "\nReview user-controlled file names, paths, archive extraction, download paths,\nand upload destinations for `../`, absolute-path injection, escape from the\nintended root, and unsafe archive extraction. Normalize and verify that paths\nremain within the intended storage boundary.\n",
+            "\nWhen uploads exist, inspect size limits, storage path safety, file-name\nhandling, content/type assumptions (`security.md` § Failure Handling),\nexecution or public-serving risks, and authorization.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-016",
+        "name": "Authentication uses established platform mechanisms",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Core Principles",
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Local User Accounts"
+        ],
+        "normalized_policy": "Do not implement custom token/password security, password hashing, or reset-token cryptography when established ASP.NET Core authentication/Identity facilities cover the requirement.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-016",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0233"
+      ],
+      "boundary_analysis": "Established facilities scope matches; custom JWT issuance prohibition0312/BF0082 and local-account feature selection0311/0313 prior.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              55,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "  global policy already expresses the intent.\n- Do not implement custom token or password security, password hashing, or\n  reset-token cryptography when established ASP.NET Core authentication or\n  Identity facilities cover the requirement.\n- For Bearer/OIDC authentication, validate the properties required by the"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              19,
+              30
+            ],
+            [
+              32,
+              36
+            ],
+            [
+              158,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nChoose the scheme according to the actual application: Bearer/OIDC for an SPA\ncalling an API, cookies for server-rendered interactive web applications,\nASP.NET Core Identity when the application owns local users and passwords, an\nexternal OpenID Connect/OAuth provider when identity is delegated.\n\nDo not add ASP.NET Core Identity merely because the application has a business\nentity named `User` or supports profile management; use it when the\napplication owns local identity accounts and credentials and needs Identity's\naccount-management capabilities. Do not issue custom JWTs when an existing\nidentity provider already owns token issuance.\n",
+            "\nWhen the application owns passwords, use the framework's password hashing,\nlockout, reset-token, and related features (ASP.NET Core Identity). Never store\nplaintext passwords or authentication secrets in application source.\n",
+            "\nCheck-by-reference against `security.md` § Authentication and Authorization:\ncustom password hashing; disabled token validation; hardcoded signing keys;\nauthorization only in the frontend; Application depending on `HttpContext`;\n`401` for an authenticated-but-forbidden user or `403` for missing\nauthentication; logged tokens; scattered role/permission magic strings;\nIdentity, JWT issuance, or OIDC infrastructure added without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "afb8e9da26a75dc921bbc7481aabd33022a999a8ec4a87b74b26b13972fcc653",
+          "inspected_ranges": [
+            [
+              200,
+              206
+            ]
+          ],
+          "context_quotes": [
+            "\nPrefer the smallest secure change consistent with project architecture. Do not\nrecommend a new authentication system unnecessarily, custom cryptography,\nblanket encryption of all database fields, `[Authorize]` on every action when a\nglobal policy already protects them, security libraries merely to satisfy the\nscan, or disabling functionality because a static scanner cannot understand it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              121,
+              127
+            ],
+            [
+              164,
+              169
+            ],
+            [
+              241,
+              247
+            ]
+          ],
+          "context_quotes": [
+            "\nFlag security-sensitive uses of MD5, SHA1, ECB mode, hardcoded encryption keys,\ncustom password hashing, or home-grown encryption protocols. Do not flag\nMD5/SHA1 used as a non-security checksum where collision resistance is\nirrelevant. For passwords, expect established password-hashing facilities such\nas ASP.NET Core Identity password hashers rather than reversible encryption.\n",
+            "\nWhen the application owns local accounts, review password hashing, password\nreset behavior, lockout/brute-force controls where appropriate,\naccount-enumeration behavior, and credential storage. Do not recommend custom\npassword hashing.\n",
+            "\nChoose protection by requirement: passwords → one-way password hashing;\nverification-only tokens → often hashing rather than reversible encryption;\nretrievable application secrets → protected/encrypted storage;\ndatabase/storage encryption → platform or database mechanism when suitable;\ntemporary application payloads → ASP.NET Core Data Protection may be suitable.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-017",
+        "name": "Bearer authentication keeps effective token validation",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Bearer Authentication",
+          "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Authentication Configuration"
+        ],
+        "normalized_policy": "For Bearer/OIDC authentication, validate the properties required by the actual issuer/provider, including issuer, audience where applicable, signature/signing authority, and lifetime; do not disable validation merely to make a token work.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0234"
+      ],
+      "boundary_analysis": "Issuer-required validation scope/where-applicable audience explicit. No every-manual-property or arbitrary ClockSkew requirement0618 independently prior.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              58,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "  Identity facilities cover the requirement.\n- For Bearer/OIDC authentication, validate the properties required by the\n  actual issuer or provider — issuer, audience where applicable, signature or\n  signing authority, and lifetime. Do not disable validation merely to make a\n  token work.\n- Do not expose authentication-failure detail that unnecessarily reveals"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              38,
+              43
+            ],
+            [
+              158,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nA Controller API used by an SPA commonly authenticates access tokens through\nBearer authentication; configure validation according to the issuer that\nactually issues the tokens. Signing keys, certificates, and credentials follow\nthe project's configuration and security rules.\n",
+            "\nCheck-by-reference against `security.md` § Authentication and Authorization:\ncustom password hashing; disabled token validation; hardcoded signing keys;\nauthorization only in the frontend; Application depending on `HttpContext`;\n`401` for an authenticated-but-forbidden user or `403` for missing\nauthentication; logged tokens; scattered role/permission magic strings;\nIdentity, JWT issuance, or OIDC infrastructure added without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              154,
+              162
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen Bearer/OIDC authentication is used, check the token-validation\nrequirement in `security.md` § Authentication and Authorization. Do not require\nmanually setting every `TokenValidationParameters` property when the\nprovider's authority/metadata configuration already establishes secure\nvalidation, and do not impose an arbitrary universal `ClockSkew` value. Flag\nintentionally disabled validation that weakens the authentication contract\nwithout a valid reason.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P013",
+      "canonical_policy": {
+        "id": "SEC-018",
+        "name": "Authentication failures avoid account-enumeration leaks",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#Authentication Errors"
+        ],
+        "normalized_policy": "Do not expose authentication-failure detail that unnecessarily reveals secrets or account state; login behavior should avoid account-enumeration leaks where relevant.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-018",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0235"
+      ],
+      "boundary_analysis": "Avoid account disclosure where relevant matchesreplica0118 and local account review0619. No stricter universal response-equivalence rule inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "03ea47da1500b73da0b4052096015b375e560b21ec2d1196ac809d1c504b4f68",
+          "inspected_ranges": [
+            [
+              62,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "  token work.\n- Do not expose authentication-failure detail that unnecessarily reveals\n  secrets or account state; login behavior avoids account-enumeration leaks\n  where relevant.\n- When browser cookies carry authentication credentials automatically, include"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              164,
+              169
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the application owns local accounts, review password hashing, password\nreset behavior, lockout/brute-force controls where appropriate,\naccount-enumeration behavior, and credential storage. Do not recommend custom\npassword hashing.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,148 @@
+# M1 / B020 — security-scan, swagger, template-maintenance, verify.
+
+C R197 OL WF-021 | MUST NOT | Security review does not require a specific MCP server, agent, analyzer, commercial scanner or external tool; available tooling is evidence, not the sole authority, and a scanner-reported issue is reported only after inspecting the actual code and its reachability. | security review | none stated
+C R198 OL WF-004 | MUST | Verification starts with the final changed-file set and diff: the change matches the requested scope without unrelated refactoring, temporary diagnostics and probes are removed only after preservation, no generated/build artifacts or secrets were added; the final diff is reviewed after all fixes for unrelated edits, commented-out code, temporary logging, unintended TODO/FIXME, stale temporary tests or scripts, architecture drift, unapproved drift from the product sources and stale surfaces after a settings change. | verification | none stated
+C R199 OL WF-006 | DEFAULT | For a new runnable application or substantial startup, composition, configuration, persistence or full-stack changes verify the intended Development startup and key composition surfaces (API host starts, endpoint reachable, Swagger UI reachable when expected, configuration binds, database connectivity and initialization, frontend dev server, API base URL and CORS compatibility); a successful build alone does not prove runtime composition. | runtime smoke verification | none stated
+C R200 OL RUN-010 | MUST | For every C# file created or modified by the task remove unused or redundant using directives (including those already provided by implicit/global usings unless needed for clarity or disambiguation), verified on the changed files; no unrelated repository-wide using cleanup. | changed C# files | Needed for clarity or disambiguation.
+C R201 OL DEP-012 | DECIDED | Swashbuckle Swagger UI is the developer-facing interactive API documentation surface (rather than a standalone raw OpenAPI endpoint); no second competing documentation stack without a concrete need. | API documentation | none stated
+C X31 EX WF-020,WF-009 | MUST | The security scan report contains Scope, a Limitations statement (static analysis only), a severity Summary table, Findings and Layer Results for the seven layers with PASS / FINDINGS / NOT APPLICABLE / NOT CHECKED, using the fixed severity scale Critical / High / Medium / Low / Info with defined meanings. | security scan output | none stated | WF-020/WF-009 require contextual severity and truthful status reporting; the oracle does not prescribe report sections, layer tables or a severity scale. | A scan report without the limitations statement or layer results table does not follow the workflow.
+C X32 EX - | MUST | Template maintenance procedure: read .claude/MAP.md first; place new content by kind (planning-time governance in the compact CLAUDE.md, stack in technology-stack, capability decisions in docs/capabilities, path rules in flat .claude/rules with paths, procedures in workflow skills, technique in knowledge skills or references, mechanical checks in hooks/scripts wired in settings.json, slot metadata in CONTRACT.md/MODULE.md); keep each policy's trigger role; never hide a must/must-not rule only inside a knowledge skill or private reference; keep the always-loaded surface compact; update MAP.md. | instruction-system maintenance | none stated | Instruction-system maintenance rule; the oracle does not regulate where instruction content lives. | Adding a binding rule only to a knowledge skill violates the maintenance procedure.
+
+FILE .claude/skills/security-scan/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-20 MX R196,X31 | State that limitation in the report. ⟫ Not claiming the static review proves security is R196; stating the limitation in the report is X31.
+22 NN | section heading
+24-29 OL R196 | Distinguish confirmed findings from items that need verification.
+30-31 OL R110,R196 | Do not suppress a real secret merely because it appears in a Development
+32 OL R166 |
+33-34 OL R115 | Evaluate effective authorization behavior, including global/fallback
+35-36 NN | pointer to project rules and skills
+37-38 OL R197 | Do not require a specific MCP server, agent, analyzer, commercial scanner, or
+40 NN | section heading
+42 NN | taxonomy usage note
+44-55 NN | OWASP category list
+57 OL R196 |
+59 NN | section heading
+61-65 OL R175,R196 | logging, caching, background processing. Skip irrelevant checks rather than
+67 NN | section heading
+69 NN | pointer to layer reference
+71-79 NN | layer table
+81 NN | section heading
+83-85 OL R175 | layers. For targeted changes, start with the affected layers and expand when the
+87-97 NN | change-to-layer priority table (EXC-015)
+99 NN | section heading
+101-104 OL R197,R196 | inspect the actual code, determine whether the pattern is reachable and
+106 NN | section heading
+108-110 OL R196 | Consider exploitability, external exposure, required privileges, affected data
+112-122 EX X31 | use sparingly for immediately exploitable, high-impact
+124-125 OL R196 | Do not convert advisory CVSS scores directly into application severity without
+127 NN | section heading
+129-135 OL R196,R115 | Do not automatically report: an endpoint without `[Authorize]` protected by a
+137-139 OL R110,R124,R114,R123 | Do not automatically treat as safe: secrets in `appsettings.Development.json`;
+141 NN | section heading
+143-146 MX X30,R196 | and the OWASP category when applicable. Label uncertain findings ⟫ The per-finding field set is X30; labeling uncertain findings rather than presenting them as confirmed is R196.
+148-194 EX X31,X30 | # Security Scan Report
+196-197 MX R164,X31 | never mark an ⟫ Never marking an uninspected layer as passed is R164; the PASS/FINDINGS/NOT APPLICABLE/NOT CHECKED vocabulary is X31.
+199 NN | section heading
+201-205 OL R147,R116,R122,R115,R166 | Prefer the smallest secure change consistent with project architecture.
+207 NN | section heading
+209-211 DU R175,R196,R164,X31 | completion criteria restating scan rules
+
+FILE .claude/skills/swagger/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-16 OL R201 | the developer-facing surface is the interactive Swagger UI rather than a
+18 NN | section heading
+20-33 NN | setup code example
+35-36 OL R48,R11 | Keep Swagger configuration in the API/composition layer.
+38 NN | section heading
+40-41 NN | launch profile technique (EXC-008)
+43-48 NN | launch profile example
+50-51 NN | launch URL technique (EXC-008)
+53 NN | section heading
+55-65 NN | response metadata code example
+67-71 OL R26 | Determine possible responses from the complete HTTP pipeline, not only the
+73 NN | section heading
+75-76 OL R26,R18 | Document `201 Created` when that is the runtime contract, and prefer
+78 NN | section heading
+80-82 OL R26,R68 | Swagger examples and descriptions never show internal
+84 NN | section heading
+86-90 OL R26,R115 | merely because an authentication package is installed, and do not apply
+92 NN | section heading
+94-96 NN | description guidance (EXC-008 metadata)
+98 NN | section heading
+100-101 NN | XML documentation guidance (EXC-008)
+103 NN | section heading
+105-106 NN | document partitioning (EXC-008)
+108 NN | section heading
+110-113 OL R26,R23,R149 | If the contract feeds frontend or other client generation: treat breaking
+115 NN | section heading
+117-122 OL R199,R165 | open the Development Swagger UI and confirm it loads, exercise representative
+124 NN | section heading
+126-129 DU R26,R27,R132,R201 | review checklist restating Swagger rules
+
+FILE .claude/skills/template-maintenance/SKILL.md | Workflow skill (user-invoked only).
+1-6 NN | front matter (name, description)
+7 EX X14 |
+8 NN | front matter delimiter
+10 NN | header metadata
+12 NN | document heading
+14-15 EX X32 | Read `.claude/MAP.md` first;
+17 NN | section heading
+19-28 EX X32 | | governance needed at planning time | `CLAUDE.md` (keep it compact) |
+30 NN | section heading
+32-33 EX X11 | never restate a rule in a second place.
+34-38 EX X32 | Do not hide a must/must-not rule only inside a knowledge skill or a private
+39-40 EX X3 | not to the selected implementation's name.
+41-43 EX X32 | Update `.claude/MAP.md`.
+44-46 EX X9 | (from any directory of the repository or worktree being changed) and fix
+48 NN | section heading
+50-51 EX X18 | Use after an ADR approved the change
+53-67 EX X5,X2 | Create `.claude/capabilities/<slot>/<new-implementation>/MODULE.md` with a
+69 NN | subsection heading
+71-73 EX X5,X17 | declared string-comparison property; record the ADR.
+75 NN | subsection heading
+77-84 EX X5 | Set the frontend row to status `disabled` with implementation `—`; delete the
+
+FILE .claude/skills/verify/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-17 OL R184,R175 | Before declaring implementation work complete, run this workflow at a depth
+19 NN | section heading
+21-29 OL R198,R165,R110 | Review the final changed-file set and diff before choosing checks.
+31-33 OL R175,R195 | both; documentation-only → no unrelated builds without a reason.
+35 NN | section heading
+37-40 OL R195 | `--no-restore` unless restore is known to be complete. A build failure means
+42 NN | section heading
+44-49 OL R195,R152 | do not dismiss a failure as unrelated without checking it.
+51 NN | section heading
+53-60 OL R199 | API base URL and backend CORS configuration are compatible. A successful build
+62 NN | section heading
+64-71 OL R165 | demonstrated that the implementation works, preserve that behavior in
+73-74 OL R175 | Steps 5–8 are risk-scoped:
+76 NN | section heading
+78-84 OL R175,R5 | When the change touches architectural boundaries, verify the relevant rules in
+86-88 NN | checker command example
+90-92 OL R192,R175 | `persistence-change` workflow § Seed Data was applied. Skip the architecture
+94 NN | section heading
+96-99 OL R175,R166 | Do not add a formatter or analyzer
+101 NN | section heading
+103-109 OL R175,R144 | A full `security-scan` is not required for every small
+111 NN | section heading
+113-123 OL R167,R152,R169 | CI definitions stay in source control, reproduce the repository's supported
+125 NN | section heading
+127-132 OL R198,R177,R165 | Review the final diff after all fixes for: accidental unrelated edits;
+134-138 OL R200 | For every C# file created or modified by the task, remove unused or redundant
+140-141 EX X9 | When instruction files changed, run
+143 NN | section heading
+145-150 OL R163 | repeat until green or until genuine user input is required.
+152 OL R163 |
+154 NN | section heading
+156-157 OL R164 | never imply that an unchecked area passed.
+159-168 OL R164,R155 | Unresolved Decision Requests: none / <list>
+DONE

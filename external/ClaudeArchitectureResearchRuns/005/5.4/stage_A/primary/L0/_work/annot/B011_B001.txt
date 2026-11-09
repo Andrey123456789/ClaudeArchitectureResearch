@@ -1,0 +1,88 @@
+# L0 — B011: tools/check-instructions.mjs, .editorconfig, .gitignore; B001: agents/code-reviewer.md
+
+@@ output/template/.claude/tools/check-instructions.mjs ;; Instruction-structure checker; run by template-maintenance and automatically by the post-edit hook after instruction edits (read as code only).
+@scope instruction-system files (CLAUDE.md, .claude/**) when the checker runs (post-edit hook or manual)
+1-7 IM ;; Header comment: usage, exit codes and list of validations.
+8-10 IM ;; Imports.
+12-16 IM ;; Level directory constants, product-input names, map path and the always-loaded token budget used at 405-414.
+18-27 EX [x.ci-required-skills]
+29-42 EX [x.ci-hook-registration]
+44-53 EX [x.level-neutrality]
+55-118 IM ;; File listing (skips nested repositories), frontmatter/header parsing and code-fence stripping helpers.
+120-140 IM ;; Function preamble, template-root check and artifact collection.
+141-157 EX [x.tm-headers-paths]
+159-171 EX [x.ci-level-layout,x.tm-headers-paths]
+173-186 EX [x.ci-imports]
+188-209 EX [x.ci-required-skills]
+210-213 EX [x.tm-user-only]
+214-220 IM ;; Agent frontmatter completeness and name collection.
+221-227 OL [wf010.ci-reviewer-readonly]
+229-236 EX [x.level-neutrality]
+238-277 EX [x.level-dependency,x.product-inputs-not-policy]
+279-325 EX [x.ci-references]
+327-332 EX [x.ci-no-other-models]
+334-388 EX [x.ci-hook-registration]
+390-403 EX [x.tm-update-map]
+405-414 EX [x.ci-always-loaded-budget]
+416-428 IM ;; Return value and command-line entry (exit 0 valid, 1 structural errors).
+
+C x.ci-required-skills EX - ENFORCED ;; The checker requires every listed workflow skill (project-structure, verify, code-review, build-fix, custom-settings, git-workflow, security-scan, add-dependency, architecture-decision, template-maintenance) and knowledge skill to exist with matching frontmatter name and a description, and forbids standalone serilog/resilience skills. ;; = ;; none ;; Instruction-system invariant (repo/meta).
+C x.ci-hook-registration EX DEP-025 ENFORCED ;; Hook registrations must use exec form (command node, args [launcher placeholder, event]), a positive timeout and known handled events; PreToolUse/PostToolUse/PostToolUseFailure/Stop registrations are required; only the PreToolUse guard may (and must) set onFailure block. ;; = ;; none ;; Enforcement-configuration invariant (repo/meta).
+C x.ci-level-layout EX - ENFORCED ;; Rule files must live in .claude/rules/{0-core,1-architecture,2-technology,3-project}/ with a header level matching the directory. ;; = ;; none ;; Repo/meta invariant.
+C x.ci-imports EX - ENFORCED ;; CLAUDE.md must be Level 0, its imports must resolve and it must import overview.md and decisions.md; additional imports raise a warning. ;; = ;; none ;; Repo/meta invariant.
+C wf010.ci-reviewer-readonly OL WF-010 ENFORCED ;; The code-reviewer agent must exist, disallow Write and Edit, and delegate to code-review/SKILL.md. ;; = ;; none ;;
+C x.ci-references EX - ENFORCED ;; Internal references (backticked files, .claude paths, Depends on) must resolve; skill-private references may be used only by their owning skill (or the map); named skills/agents, routed workflows and CLAUDE.md routing targets must exist. ;; = ;; none ;; Repo/meta invariant.
+C x.ci-no-other-models EX - ENFORCED ;; Files named like manifests, contracts, slots or capabilities under .claude/ are errors (not part of this instruction model). ;; = ;; none ;; Repo/meta invariant.
+C x.ci-always-loaded-budget EX - ENFORCED_ADVISORY ;; The always-loaded surface (CLAUDE.md, imports, model-invocable skill and agent listings) is estimated and warned above 5500 tokens. ;; = ;; none ;; Repo/meta threshold.
+
+@@ output/template/.editorconfig ;; Root formatting/code-style asset (applied by editors and, for IDE0005, by the build).
+@scope all repository files (editor/analyzer configuration)
+1-3 IM ;; Header comment and root marker.
+5-19 EX [x.ec-base]
+21-22 IM ;; Section header and comment.
+23 OL [run024.ec-file-scoped]
+24-25 EX [x.ec-using-order]
+26-27 OL [run010.ide0005-build]
+29 IM ;; Comment.
+30-32 EX [x.ec-var-style]
+34-38 OL [run009.ec-suggestions-only]
+40-42 EX [x.ec-braces]
+44-62 EX [x.ec-naming]
+64-70 OL [run024.ec-async-suffix]
+71 NN ;; Comment: private-field naming follows the repository convention and is not enforced here.
+
+C x.ec-base EX RUN-009 ENFORCED_DEFAULT ;; UTF-8, final newline, trimmed trailing whitespace (not for Markdown), space indentation 4 by default and 2 for JSON/YAML/TS/HTML/CSS/JS and MSBuild/XML files. ;; = ;; none ;; Concrete formatting settings beyond RUN-009.
+C run024.ec-file-scoped OL RUN-024 ENFORCED_ADVISORY ;; File-scoped namespaces reported as a suggestion. ;; = ;; none ;;
+C x.ec-using-order EX RUN-009 ENFORCED_ADVISORY ;; System directives sorted first; usings outside the namespace (suggestion). ;; = ;; none ;; Not in the oracle.
+C x.ec-var-style EX RUN-009 ENFORCED_ADVISORY ;; var when the type is apparent; explicit types for built-in types and elsewhere (suggestions). ;; = ;; none ;; Not in the oracle.
+C run009.ec-suggestions-only OL RUN-009 ENFORCED_ADVISORY ;; Modern syntax preferences (pattern matching, switch expressions, collection expressions, primary constructors) are suggestions/silent only — no mechanical modernization. ;; = ;; none ;;
+C x.ec-braces EX RUN-009 ENFORCED_ADVISORY ;; Braces when multiline (suggestion); expression-bodied methods on single lines (silent). ;; = ;; none ;; Not in the oracle.
+C x.ec-naming EX RUN-024 ENFORCED_ADVISORY ;; PascalCase types and members, I-prefixed interfaces, camelCase parameters and locals (suggestions). ;; = ;; none ;; Naming rules beyond RUN-024.
+C run024.ec-async-suffix OL RUN-024 ENFORCED_ADVISORY ;; Async methods require the Async suffix (suggestion). ;; = ;; none ;;
+
+@@ output/template/.gitignore ;; Root ignore file (scaffold asset).
+@scope repository version control
+1 IM ;; Header comment.
+2-11 EX [x.gitignore]
+13-17 OL [sec001.gi-local-secrets]
+19 IM ;; Comment.
+20 EX [x.gitignore]
+
+C sec001.gi-local-secrets OL SEC-001,SEC-002 ENFORCED_DEFAULT ;; Local secret/configuration overrides (.env, .env.* except .env.example, appsettings.*.local.json) are ignored by version control. ;; = ;; none ;;
+
+@@ output/template/.claude/agents/code-reviewer.md ;; Agent definition (delegated reviewer).
+@scope code-reviewer agent (on delegation)
+1-5 IM ;; Frontmatter name and delegation description.
+6 OL [wf010.reviewer-readonly]
+7 IM ;; Frontmatter end.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 OL [wf010.reviewer-readonly]
+15 OL [wf010.reviewer-canonical]
+16 OL [wf001.reviewer-read-owners]
+17 OL [wf012.reviewer-output]
+
+C wf010.reviewer-readonly OL WF-010 MUST_NOT ;; The code-reviewer performs an independent read-only review and does not edit files; Write, Edit and NotebookEdit are disallowed (MultiEdit and shell tools are not listed). ;; = ;; none ;;
+C wf010.reviewer-canonical OL WF-010 MUST ;; Read code-review/SKILL.md first and follow it as the canonical procedure; do not redefine review criteria in the agent. ;; = ;; none ;;
+C wf001.reviewer-read-owners OL WF-001 MUST ;; Read CLAUDE.md and the governing rule files for the changed area; as a subagent do not assume they were loaded. ;; = ;; none ;;
+C wf012.reviewer-output OL WF-012,WF-010 MUST ;; Return findings in the code-review output format including important areas that could not be verified. ;; = ;; none ;;

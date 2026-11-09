@@ -1,0 +1,69 @@
+# M B003 — rules/architecture.md (rest), coding-style.md, dependencies.md, error-handling.md
+1 CO ARC-015 ARC-019~ m=MN | Restates ARC-015; not expanding the generic base into a replacement for EF Core queries and keeping use-case queries in concrete repositories follows ARC-019 (EF Core used normally inside Infrastructure).
+2 CO ARC-015 m=MN | Restates ARC-015 (replica wording).
+3 CO ARC-016 m=D | Restates ARC-016 (repositories stage, Application Services commit; Infrastructure implements IUnitOfWork with the DbContext).
+4 CO ARC-017 | Restates ARC-017.
+5 CO ARC-018 m=D | Restates ARC-018.
+6 CO ARC-019 | Restates ARC-019 (incl. not crippling repository implementations).
+7 CO ARC-021 m=D | Restates ARC-021.
+8 CO ARC-022 | Restates ARC-022.
+9 CO ARC-023 m=D | Restates ARC-023.
+10 CD RUN-022 m=D k=P st=S c=M | architecture.md:144-148 parenthetical: direct IConfiguration access belongs to composition and registration code. RUN-022 only says avoid scattering string-based lookups; confining direct access to composition code is narrower.
+  x: direct IConfiguration access confined to composition/registration code
+  s: One service reads a single feature flag via IConfiguration (not scattered): compatible with RUN-022; M places direct IConfiguration access in composition/registration only.
+11 CD RUN-022 m=D k=P st=S c=M | Primary wording including the composition/registration parenthetical (same remainder as FG-M-1fe20a0d8a).
+  x: direct IConfiguration access confined to composition/registration code
+  s: As for FG-M-1fe20a0d8a.
+12 CO RUN-022 m=D | Replica wording without the confinement clause: restates RUN-022.
+13 CO DEP-021 m=D | Restates DEP-021 (AddSerilog rather than UseSerilog is the 'modern DI-integrated approach').
+14 CO ARC-024 | Restates ARC-024.
+15 CO ARC-025 | Restates ARC-025.
+16 CO ARC-026 m=MN | Restates ARC-026.
+17 CO ARC-029 m=MN | Restates ARC-029.
+18 CO RUN-009 m=D | Restates RUN-009.
+19 CO RUN-024 m=D | Restates RUN-024 (incl. supporting-type and contract exceptions).
+20 CO RUN-011~ GOV-014~ m=SN st=W c=M | coding-style.md:62-64 'avoid mixing large formatting or modernization changes with functional work': unrequested formatting work is outside the requested scope (GOV-014) and a style rewrite (RUN-011); 'avoid' is weaker than both MUST/MUST_NOT policies.
+21 CO RUN-011 m=MN c=M | The group text 'Do not reorganize existing files' over-generalizes the source; coding-style.md:27-28 says do not reorganize an existing file merely to satisfy a preferred member ordering, i.e. a style-only rewrite (RUN-011).
+  sc: existing files reorganized merely for preferred member ordering (coding-style.md:27-28)
+22 CO RUN-024 m=D | Restates RUN-024 (replica wording incl. not renaming established APIs for the suffix).
+23 CO RUN-011 RUN-024~ m=MN | Not renaming established APIs solely to add Async and not reorganizing files for member ordering are style-only rewrites (RUN-011) and the RUN-024 contract exception.
+24 XP m=D c=M rel=RUN-009 | Primary-constructor criteria (fit for DI/simple initialization; regular constructor when validation is non-trivial, explicit fields read better, the codebase uses that style, or capture hurts understanding). RUN-009 leaves feature use to a clarity judgment; these criteria fix the choice (oracle EXC-003 lineage).
+  s: A service with non-trivial constructor validation written with a primary constructor and an init-time guard that the author judges clear: allowed by RUN-009; M's default asks for a regular constructor.
+25 CO RUN-009~ m=MN | 'Do not convert constructors mechanically' is RUN-009's 'do not mechanically modernize working code'.
+26 XP m=D c=M rel=RUN-009 | Records for value semantics/immutability (many DTOs, genuine Value Objects), classes for identity/mutable lifecycle/inheritance/framework behavior; not every DTO or Domain type becomes a record (EXC-003 lineage).
+  s: Making every DTO and entity a record is permitted by all 196 policies; M's default rejects it.
+27 XP m=D c=M rel=RUN-009,RUN-001 | Keep implementation details non-public unless part of the public API; use sealed to communicate deliberate non-inheritance, not as a speculative JIT optimization (EXC-003 lineage).
+  s: Making all helper classes public in an application project is allowed by the oracle; M's default keeps them non-public.
+28 CO RUN-009 m=D | Modern features (collection expressions, pattern matching, ...) only when they make code easier to read: RUN-009's 'use modern C# when it improves clarity'.
+29 XP m=D c=M rel=RUN-009 | 'var' when the type is obvious or unimportant, explicit type when clearer (EXC-003 lineage; also encoded in .editorconfig).
+  s: Using explicit types everywhere in a project without a convention: allowed by RUN-009; M's default prefers var where the type is obvious.
+30 XP m=M c=M rel=RUN-009 | Standard .NET naming (PascalCase types/methods/properties/public members, camelCase parameters/locals, meaningful names); private fields follow the repository convention. RUN-009 defers to existing repository conventions, which may differ for public members.
+  e: private-field naming follows the repository's established convention
+  s: An existing codebase names public constants in UPPER_SNAKE_CASE: RUN-009 says follow that convention; M's rule requires PascalCase public members.
+31 CO RUN-013 m=D | Restates RUN-013.
+32 CO RUN-011~ GOV-014~ m=SN st=W c=M | Same sentence as FG-M-5a0ce09c73 (primary wording, AVOID).
+33 CO RUN-011 m=MN | Restates RUN-011.
+34 CD DEP-003 DEP-004 DEP-005 m=M k=W c=M | dependencies.md:13-14: dependency changes follow add-dependency (version selection, due diligence, license approval) = DEP-003/004/005 for additions and updates; the remainder is that removals also follow the add-dependency workflow.
+  x: dependency removals also follow the add-dependency workflow
+  s: Removing an npm package by deleting the package.json line and leaving package-lock.json stale vs running the workflow's removal steps: no policy prescribes a removal procedure beyond lockfile consistency (DEP-007).
+35 CO DEP-001 | Restates DEP-001 ('approved does not mean install by default').
+36 CO DEP-006 | Restates DEP-006 (versionless references, no duplicated versions, narrow scope).
+37 CO DEP-007 | Restates DEP-007.
+38 CO DEP-007~ c=M | Maintaining package.json and package-lock.json as committed repository files is part of DEP-007's 'keep package-lock consistent' (it is not a Git-operation instruction).
+39 CO API-002 m=D | Restates API-002.
+40 CO API-007 m=D | Restates API-007.
+41 CO API-007 API-011~ RUN-018~ m=D c=M | Exhaustive list of catch purposes (recover, translate, defined fallback, add context preserving the exception, cleanup) elaborates API-007's 'normally propagate' with the standard exceptions; no plausible behavior allowed by API-007/API-011/RUN-018 but excluded here was found (C14).
+42 CO API-007 m=D c=M | Same list (replica wording, DEFAULT).
+43 CO API-008 m=MN | Restates API-008.
+44 CO API-009 m=D | Restates API-009.
+45 CO API-009 API-012~ m=D c=M | Restates API-009; not logging expected outcomes as application errors by default follows from expected outcomes not being system failures.
+46 CO API-011 m=MN | Restates API-011.
+47 CO API-010 SEC-003~ | Restates API-010; Infrastructure validating assumptions about external systems is SEC-003's owning-layer validation.
+48 CO API-009~ m=D c=M | Expected outcomes are not logged as application errors by default: consequence of API-009 (expected outcomes are not system failures).
+49 CO API-012 | Restates API-012.
+50 CO API-021 m=MN | Restates API-021.
+51 CO RUN-015 c=M | Restates RUN-015; distinguishing per-attempt from total-operation timeouts is how the combined timeout behaviour is kept clear.
+52 CO RUN-016 | Restates RUN-016.
+53 CO RUN-017 m=D | Restates RUN-017.
+54 CO RUN-018 | Restates RUN-018.
+55 CO RUN-019 m=MN | Restates RUN-019.

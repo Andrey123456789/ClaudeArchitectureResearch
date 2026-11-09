@@ -1,0 +1,77 @@
+# K0 batch 8: regions r360-r393 (protocol v1.2.1)
+# r360-r371 .claude/skills/http-api/SKILL.md
+RD OVERLAP R:RULE-K0-0015#a P:RULE-K0-0414 | P (DEFINITION): when 200 applies.
+RD DETAIL_DIFFERENCE R:RULE-K0-0016 P:RULE-K0-0415 | same empty-collection rule; R contrasts it with 404, P with 204.
+RD OVERLAP R:RULE-K0-0015#a P:RULE-K0-0416 | P (DEFINITION): when 201 applies.
+RD OVERLAP R:RULE-K0-0015#a P:RULE-K0-0417 | P (DEFINITION): when 202 applies.
+RD OVERLAP R:RULE-K0-0015#a P:RULE-K0-0418 | P (DEFINITION): when 204 applies.
+SPLIT X:BF-K0-0035 | a@22-22: For 201 Created include Location when a stable resource URI exists. | b@31-31: A 202 response returns an operation identifier or a Location where progress can be observed. | c@46-46: Repeated DELETE of an absent resource returns 204 or 404 by one convention applied consistently across equivalent resources.
+RD COMPOUND_PART P:RULE-K0-0416 X:BF-K0-0035#a | P adds when 201 applies and that an internal insert alone is not creation.
+SD P:EXTRA-K0-0167 X:BF-K0-0035#b | S: 202 responses M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-K0-0168 X:BF-K0-0035#c | S: repeated DELETE M: P MUST, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0015#b P:EXTRA-K0-0168 | P: the repeated-DELETE convention.
+RD OVERLAP R:RULE-K0-0017 P:EXTRA-K0-0170 | P (DEFINITION): 400 is not for authentication failures.
+RD COMPOUND_PART R:RULE-K0-0017 P:RULE-K0-0419 | P (DEFINITION): the 401 element.
+RD COMPOUND_PART R:RULE-K0-0017 P:RULE-K0-0420 | P (DEFINITION): the 403 and deliberate-404 element.
+RD OVERLAP R:RULE-K0-0017 P:RULE-K0-0421 | P (DEFINITION): 404 for absent or deliberately hidden resources.
+RD OVERLAP R:RULE-K0-0016 P:RULE-K0-0421 | P: zero-match collection queries follow the empty-collection rule.
+CX X:BF-K0-0036@62-82 | Additional status mappings: 406/415 for negotiation and media types, 409, 412, 422, 428, 429 with Retry-After when known, 500, 502, 503 with Retry-After when meaningful, and 504, each with stated limits.
+RD OVERLAP X:BF-K0-0036 P:EXTRA-K0-0170 | P (DEFINITION): status semantics beyond the oracle.
+RD OVERLAP X:BF-K0-0036 P:EXTRA-K0-0171 | P: 422 and the established-convention allowance.
+RD OVERLAP X:BF-K0-0036 P:EXTRA-K0-0172 | P (DEFINITION): 428.
+RD COMPOUND_PART R:RULE-K0-0018 P:RULE-K0-0422 | P (DEFINITION): the 409 element.
+RD COMPOUND_PART R:RULE-K0-0018 P:RULE-K0-0423 | P (DEFINITION): the 412 element.
+RD OVERLAP R:RULE-K0-0062 P:RULE-K0-0424 | P (DEFINITION): 500 through centralized handling.
+RD OVERLAP R:RULE-K0-0063 P:RULE-K0-0424 | P: 500 responses without internal details.
+CX X:BF-K0-0037@90-99 | When HTTP optimistic concurrency is part of the contract use standard conditional requests (ETag/If-Match) instead of custom status codes.
+SD P:RULE-K0-0426 X:BF-K0-0037 | S: HTTP optimistic concurrency M: P MUST, X no modality E: none in either T: when concurrency is part of the contract
+RD OVERLAP R:RULE-K0-0018 P:RULE-K0-0426 | P: standard conditional requests for HTTP optimistic concurrency.
+RD COMPOUND_PART R:RULE-K0-0034 P:RULE-K0-0427 | P (DEFINITION): the outcome-translation element.
+RD OVERLAP R:RULE-K0-0014 P:RULE-K0-0428 | P: machine-readable clients rely on stable error codes, not messages.
+# r372-r380 .claude/skills/httpclient-factory/SKILL.md
+RD OVERLAP R:RULE-K0-0078 P:RULE-K0-0429 | P: an Application abstraction implemented with HttpClient in Infrastructure.
+RD EXAMPLE_GENERAL R:RULE-K0-0046 P:RULE-K0-0430 | P: typed clients captured in singletons.
+SD P:EXTRA-K0-0175 R:RULE-K0-0257 | S: delegating handlers M: MUST_NOT both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED
+RD EXAMPLE_GENERAL R:RULE-K0-0058 P:RULE-K0-0431 | P: pass the request token; CancellationToken.None only when outliving the request.
+RD OVERLAP R:RULE-K0-0079 P:RULE-K0-0432 | P: timeouts from the latency budget; per-attempt vs total.
+RD OVERLAP R:RULE-K0-0078 P:RULE-K0-0433 | P: translate richer failure semantics instead of exposing upstream statuses.
+RD EXAMPLE_GENERAL R:RULE-K0-0081 P:RULE-K0-0434 | P: honor Retry-After from a remote 429.
+RD OVERLAP R:RULE-K0-0079 P:RULE-K0-0435 | P: bounded time for every external call; retry/circuit breakers not mandatory.
+RD OVERLAP R:RULE-K0-0080 P:RULE-K0-0435 | P: retry-safety checks.
+SPLIT P:EXTRA-K0-0177 | a: Stable headers on the client, per-request values (dynamic tokens) on the request or via a handler, never by concurrently mutating shared DefaultRequestHeaders. | b: Prefer System.Net.Http.Json/System.Text.Json with explicit options when the remote contract differs.
+SD P:EXTRA-K0-0177#a R:EXTRA-K0-0033 | S: outbound HttpClient headers M: MUST both E: stable headers on the client (both) T: none
+SPLIT X:BF-K0-0040 | a@115-115: Prefer System.Net.Http.Json/System.Text.Json with explicit options when the remote contract differs. | b@115-115: Internal Domain entities are not remote API contracts.
+SD P:EXTRA-K0-0177#b X:BF-K0-0040#a | S: outbound serialization M: P record MUST, X no modality E: none in either T: none
+SD P:RULE-K0-0436 X:BF-K0-0040#b | S: remote contracts M: P MUST_NOT, X no modality E: none in either T: none
+# r381-r387 .claude/skills/httpclient-factory/references/resilience.md
+SPLIT R:RULE-K0-0256 | a: Resilience policies match failure and operation semantics; add a mechanism only for an identified failure scenario. | b: Configure resilience through the Microsoft.Extensions resilience APIs. | c: The standard handler is not mandatory for every client. | d: Handlers with overlapping strategies are not stacked.
+RD DIFFERENT_STRENGTH R:RULE-K0-0256#a P:EXTRA-K0-0178 | same resilience guidance; R DEFAULT, P MUST (P adds observing retries, timeouts and circuit state).
+CX X:BF-K0-0038@7-7 | The Microsoft resilience packages build on Polly v8, but application code uses the Microsoft.Extensions resilience APIs (reported as omitting the direct-Polly exception).
+SD P:RULE-K0-0437 R:RULE-K0-0256#b X:BF-K0-0038 | S: resilience APIs M: DEFAULT (P, R), X no modality E: none in any T: none
+RD COMPOUND_PART P:EXTRA-K0-0179 R:RULE-K0-0256#c | P adds using the handler when it fits and reviewing its retries for state-changing requests.
+RD DIFFERENT_STRENGTH R:RULE-K0-0256#d P:RULE-K0-0438 | same statement; R record DEFAULT, P AVOID.
+RD OVERLAP R:RULE-K0-0079 P:RULE-K0-0438 | P (AVOID): stacked handlers with overlapping strategies.
+RD EXAMPLE_GENERAL R:RULE-K0-0079 P:RULE-K0-0439 | P: attempt vs total operation timeout.
+RD OVERLAP R:RULE-K0-0080 P:RULE-K0-0440 | P (DEFINITION): transient vs non-retried failures.
+SPLIT X:BF-K0-0039 | a@27-27: Do not retry validation, authentication/authorization, permanent 404 or deterministic business-rejection failures. | b@45-45: Hedging only for operations safe to execute multiple times, never writes. | c@49-49: Do not wrap normal EF Core operations in a generic application-level retry pipeline; prefer the provider's EF Core execution strategy and transaction-retry guidance; HTTP retry policies are not database policies.
+RD COMPOUND_PART P:RULE-K0-0440 X:BF-K0-0039#a | P adds what counts as plausibly transient.
+SD P:RULE-K0-0444 X:BF-K0-0039#b | S: hedging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K0-0181 R:EXTRA-K0-0032 X:BF-K0-0039#c | S: EF Core retry pipelines M: MUST_NOT (P, R), X no modality E: none in any T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0080 P:RULE-K0-0441 | P: ask what a retried write does after a remote success.
+RD OVERLAP R:RULE-K0-0081 P:RULE-K0-0442 | P (PREFER): the server's retry guidance (R DEFAULT).
+RD EXAMPLE_GENERAL R:RULE-K0-0082 P:RULE-K0-0443 | P: acceptable and unacceptable fallbacks.
+RD EXAMPLE_GENERAL R:RULE-K0-0080 P:RULE-K0-0444 | P: hedging only for repeat-safe operations.
+RD OVERLAP R:RULE-K0-0083 P:RULE-K0-0445 | P: propagate caller cancellation through resilience pipelines.
+RD EXAMPLE_GENERAL R:RULE-K0-0114 P:EXTRA-K0-0184 | P: resilience handlers do not justify adding OpenTelemetry.
+# r388-r393 .claude/skills/logging/SKILL.md
+RD COMPOUND_PART R:RULE-K0-0071 P:RULE-K0-0446 | R adds ILogger<T>.
+SPLIT X:BF-K0-0043 | a@37-38: Expected outcomes (not found, validation failures, rejected business operations) are not logged as Error (reported as categorical). | b@61-61: Validate or normalize a correlation identifier accepted from an external client before propagating it. | c@65-65: Keep authorization headers and full request/response bodies out of logs (reported as excluded in practice rather than by default).
+SD P:EXTRA-K0-0076 X:BF-K0-0043#a | S: expected-outcome logging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:RULE-K0-0447 X:BF-K0-0043#b | S: correlation identifiers M: P MUST, X no modality E: none in either T: before propagating
+SD P:RULE-K0-0448 X:BF-K0-0043#c | S: log payloads M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0122 P:RULE-K0-0447 | P: client-supplied correlation identifiers.
+RD OVERLAP R:RULE-K0-0127 P:RULE-K0-0448 | P: authorization headers and full bodies stay out of logs.
+RD OVERLAP R:RULE-K0-0126 P:EXTRA-K0-0185 | P (DEFINITION): Trace/Debug are not safe for sensitive data.
+RD EXAMPLE_GENERAL R:RULE-K0-0061 P:RULE-K0-0449 | P: source-generated LoggerMessage only for measured hot paths.
+RD OVERLAP R:RULE-K0-0072 P:RULE-K0-0046 | P (DECIDED): Serilog as the provider behind ILogger<T>.
+REVIEWED r360-r393

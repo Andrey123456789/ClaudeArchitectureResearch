@@ -1,0 +1,84 @@
+# M B007 — skills api-versioning, architecture-decision, aspnet-error-handling, authentication
+1 CO API-014~ API-013~ m=D c=M | Compatible additions normally stay in the current version: only breaking changes need a new version (API-014) and versioning needs a concrete need (API-013).
+2 CO ARC-026 | Versioning belongs to the API contract, not Domain or Application (ARC-026).
+3 CO API-013 m=MN | Restates API-013 (listed conditions are the 'concrete need'; no automatic v1).
+4 CO API-022~ c=M | Deprecation as a migration process with metadata marking (API-022); the attribute and ReportApiVersions are example technique.
+5 CO API-022 | Deprecating a published version is a migration process (metadata plus the deprecation obligations) (API-022).
+6 CO API-016~ API-003~ c=M | Per-version OpenAPI descriptions when clients need them, matching runtime routing and metadata (API-016); versioning does not override HTTP semantics (API-003).
+7 CO API-016~ m=M c=M | Same sentence (Codex wording).
+8 XP m=D c=M rel=TST-002,TST-011,API-022 | Test checklist for coexisting versions (version routing, version-specific shapes, deprecated version still operational during its support period, unsupported-version behavior, shared behavior consistency) without duplicating identical tests; no policy prescribes these test cases.
+  e: only when versions coexist
+  s: v1 and v2 coexist and only v2 has tests: no policy requires a test that deprecated v1 still works; M's guidance asks for it.
+9 CO DEP-008~ ARC-010~ m=SN st=W c=M | Avoid Minimal API version-group examples in a Controller-based project (Controllers are the decided entry point).
+10 CO API-013~ m=SN st=W | Avoid a new API version for every implementation change (API-013).
+11 CO API-015 m=SN | Avoid mixing URL, header and query versioning without a concrete reason (API-015 one strategy consistently).
+12 CO GOV-017 c=M | Decision Control application: Delegated proceeds, Decided is followed, reopening Decided is Reserved (changing a decided item requires approval under GOV-017/DEP-002).
+13 CD GOV-017 GOV-005~ m=M k=W st=S c=M | Classification Decided/Delegated/Reserved restates GOV-017; M defines Delegated narrowly (local, reversible, no boundary, dependency, convention, contract or observable-behavior change), narrower than GOV-005's routine internal choices that do not change observable behavior.
+  x: a choice that changes a boundary, dependency, convention or contract is not Delegated even without observable-behavior change
+  s: Introducing a new internal naming convention for repository classes: GOV-005 delegates it (no observable change); M does not treat it as Delegated.
+14 XW m=M rel=GOV-017,GOV-004 | Decision Request format: title, Context, Options incl. staying within current decisions with trade-offs and reversal cost, Recommendation, Blocked, Proceeding with. GOV-017 requires approval, not a request format.
+  s: Agent asks 'May I add MediatR?' and waits: GOV-017 satisfied; M requires the structured Decision Request.
+15 CD GOV-017 m=M k=W c=M | Stop the Reserved part and ask for approval (GOV-017), continuing only compliant non-Reserved work; an explicit instruction counts as approval. Remainder: the request is issued through architecture-decision in its format.
+  x: Reserved decisions are requested with the architecture-decision Decision Request
+  s: As for FG-M-14ef56a2e6: a one-line approval question satisfies GOV-017 but not M's workflow.
+16 XW m=M c=M rel=GOV-017,GOV-007 | An explicit approval (incl. an explicit instruction in the original request) is recorded before the Reserved part is implemented. GOV-007 covers approved behavioral rules in durable product sources, not recording architecture approvals.
+  s: User approves adding a second DbContext in chat; agent implements without writing a decision record: GOV-017 satisfied; M requires the record first.
+17 XW m=S c=M rel=GOV-017 | Rejected or deferred decisions are recorded with that status when the discussion is worth keeping (source: 'When the discussion is worth keeping'), i.e. a judgment-conditioned SHOULD, not MUST.
+  t: when the discussion is worth keeping (agent judgment)
+  s: Agent drops a rejected Decision Request without any record: allowed by all policies; M's workflow suggests recording it.
+18 XW m=M rel=GOV-017,GOV-007 | Accepted decision recorded as docs/decisions/<NNNN>-<short-title>.md (directory created with the first record) with Status, Date, Context, Decision, Alternatives, Consequences.
+  s: Approval noted only in the PR description: allowed canonically; M requires the decision-record file.
+19 CO GOV-007 GOV-021~ | Approved behavioral rule or product value updates SPECIFICATION.md or CUSTOM_SETTINGS.md (through custom-settings) in the same change (GOV-007; GOV-021 synchronization).
+20 CO GOV-007 GOV-021~ | Same obligation (primary wording).
+21 IA m=M | After an approved architecture or technology decision update CLAUDE.md Architecture Defaults or docs/technology-stack.md: keeps the instruction system's planning-time owners current (instruction maintenance).
+22 IA m=M | New path-scoped constraints from a decision are edited into the owning rule file in place (one owner, no copies).
+23 XW m=S c=M rel=GOV-017 | When worth keeping, record a rejected/deferred decision with that status and continue with the compliant alternative (discretionary recording).
+  t: when the discussion is worth keeping
+  s: As for FG-M-06d24235cc.
+24 XW m=M c=M rel=GOV-017,WF-009 | Workflow output: the Decision Request (or the recorded decision and files updated) and the work that proceeded meanwhile.
+  s: Agent reports only 'waiting for approval': consistent with GOV-017; M's output format requires the request and the work that proceeded.
+25 CO API-007 m=D | Unhandled defects and unexpected failures propagate to the global handler (API-007).
+26 CO API-008 m=MN | Development tooling may show more diagnostics while public API contracts stay safe (API-008).
+27 XP m=D c=M rel=API-009 | If a Result pattern is adopted, use it consistently with typed errors rather than arbitrary strings passed through every layer: API-009 does not constrain an adopted Result's error representation.
+  t: a Result pattern has been deliberately adopted
+  s: An approved Result<T> carrying string error messages through all layers: allowed by API-009; M's guidance asks for typed errors.
+28 CO API-009 ARC-020~ m=RA c=M | Explicit typed outcome where clearer (API-009); a project-wide Result pattern is a Reserved choice (ARC-020 lists project-wide Result) used consistently once adopted.
+29 XP m=D c=M rel=API-009 | Same Result typed-errors guidance (Codex wording).
+  t: a Result pattern has been deliberately adopted
+  s: As for FG-M-62e293db3b.
+30 CD API-010 DEP-010~ m=D k=P c=M | FluentValidation for explicit validation (API-010/DEP-010); the skill names registration through FluentValidation.DependencyInjectionExtensions (AddValidatorsFromAssemblyContaining) and following the established invocation pattern.
+  x: validators registered by assembly scanning via FluentValidation.DependencyInjectionExtensions
+  s: Registering each validator individually with AddScoped<IValidator<T>, TValidator>() satisfies API-010/DEP-010; M's technique names assembly-scanning registration.
+31 CO RUN-009~ GOV-012~ m=D c=M | Follow the project's established validation invocation pattern rather than a second competing mechanism (repository conventions, simplicity).
+32 CO DEP-010~ API-010~ DEP-004~ m=MN c=M | Do not add the deprecated automatic-validation integration (FluentValidation.AspNetCore): DEP-010/API-010 make FluentValidation the explicit validation mechanism; deprecation is part of DEP-004 diligence.
+33 CO API-010 ARC-003~ | API validation does not replace business rules; CRUD/workflow rules stay in Application unless an approved richer Domain design (API-010, ARC-003).
+34 CD API-011 m=D k=P st=S c=M | API-011 forbids business exceptions as default architecture; the skill additionally makes typed exceptions for selected cases a consistent project-level decision rather than a per-feature habit.
+  x: typed exceptions for selected cases only as a consistent project-level decision
+  s: One feature throws a custom NotFoundException mapped by the handler while others return explicit outcomes: not a default architecture (API-011 satisfied); M wants a project-level decision.
+35 CO API-007~ RUN-018~ m=MN | Do not catch Exception simply to continue execution (propagation default, no hiding failures).
+36 CO API-012 API-007~ m=MN | No catch/log/rethrow boilerplate at every layer when the global handler owns it.
+37 CO DEP-008~ ARC-010~ m=SN st=W c=M | Avoid coupling validation to Minimal API endpoint filters in a Controller-based project.
+38 CO API-010~ m=SN st=W | Avoid putting business rules only in request validators (API-010 owning boundaries).
+39 CO API-002 m=SN | Avoid inconsistent anonymous error objects (API-002 structured, stable error contracts).
+40 XP m=D c=M rel=SEC-005 | Prefer policy-based authorization when logic is more than a trivial role check: SEC-005 only requires server-side enforcement.
+  s: Multi-condition authorization implemented with role attributes plus inline checks in controllers: allowed by SEC-005; M prefers a policy.
+41 XP m=D c=M rel=SEC-016,SEC-011,ARC-020 | Scheme selection heuristics: Bearer/OIDC for SPA to API, cookies for server-rendered apps, Identity when owning local users/passwords, external OIDC/OAuth when identity is delegated. No policy fixes the scheme mapping (auth architecture itself is Reserved by ARC-020).
+  s: An approved SPA design using cookie authentication with CSRF protection (SEC-011): allowed by the oracle; M's default maps SPA-to-API to Bearer/OIDC.
+42 CO GOV-013 DEP-001~ m=MN | No Identity/JWT issuance/OIDC infrastructure without actual need, not merely because a User entity exists (GOV-013, DEP-001).
+43 CO SEC-016~ m=MN c=M | Do not issue custom JWTs when an existing identity provider owns token issuance (no custom token security where established facilities cover it).
+44 CO SEC-016 SEC-001~ | Framework password hashing/lockout/reset tokens; no plaintext passwords or auth secrets in source.
+45 CO SEC-017 | Configure Bearer validation for the actual issuer (SEC-017).
+46 CO SEC-006~ c=M | Securing endpoints via global/fallback policy, attributes or endpoint configuration with the approach explicit and reviewable (deliberate, visible access rules of SEC-006).
+47 XP m=D c=M rel=SEC-005 | Stable constants for repeated policy names; no scattered role/permission magic strings (code-organization guidance not in the oracle).
+  s: [Authorize(Policy = "CanEditOrders")] string literals repeated across controllers: allowed canonically; M's default asks for constants.
+48 XP m=D c=M rel=SEC-005 | Stable constants for repeated policy names (Codex wording).
+  s: As for FG-M-148f0182b3.
+49 XP m=D c=M rel=SEC-005 | Roles only for genuinely role-oriented models; avoid compound role strings; prefer a policy when several roles/claims represent one capability.
+  s: [Authorize(Roles = "Admin,Manager,Owner")] repeated for one capability: allowed by SEC-005; M prefers a policy.
+50 CO SEC-005~ c=M | Resource-dependent permissions via ASP.NET Core resource authorization or explicit Application authorization logic (server-side enforcement, SEC-005).
+51 CO ARC-008 ARC-007~ | Caller identity via a small Application abstraction with an outer adapter; Application never depends on HttpContext/ClaimsPrincipal/IHttpContextAccessor (ARC-008, ARC-007).
+52 CO GOV-012 m=D | Do not create ICurrentUser when passing an explicit user identifier is simpler (GOV-012 simplicity).
+53 XP m=D c=M rel=TST-003,SEC-005,API-005 | Authorization test checklist (401, 403, permitted success, ownership rules, intended anonymous access) for important protected operations; policies do not prescribe these cases.
+  s: Protected endpoints covered only by success-path tests: no policy requires the 401/403/ownership cases; M's guidance does.
+54 CO TST-003 c=M | Verify observable authorization behavior, not merely the presence of [Authorize] (TST-003).
+55 CO SEC-001~ m=SN st=W | Avoid hardcoded signing keys (SEC-001 forbids hardcoding secrets/private keys).

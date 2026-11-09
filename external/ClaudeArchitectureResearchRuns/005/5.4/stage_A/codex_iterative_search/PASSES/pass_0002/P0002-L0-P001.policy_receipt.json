@@ -1,0 +1,539 @@
+{
+  "unit": "P0002-L0-P001",
+  "batch_input_sha256": "c091d92bc7d543fe76c6bb2e175a16efd1fd9e8d7a738a2828c35a4350ca55d3",
+  "reviews": [
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-001",
+        "name": "Specification is authoritative",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "When SPECIFICATION.md is non-empty, treat it as the authoritative source for project-specific functional requirements and observable product behavior.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0001",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0002"
+      ],
+      "boundary_analysis": "Nonempty specification authority and empty-template condition match. Engineering hierarchy/contradiction reporting BF0001 is already separately preserved, not treated as canonical equivalence.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck both directions against the product inputs (CLAUDE.md → Product governance): required behavior must not be missing or weakened, and the implementation must not silently add unapproved behavior — new limits, reserved values, newly required fields, extra workflow restrictions, additional user-visible validation, or new observable string-comparison semantics (case sensitivity, collation, culture/ordinal, normalization, trimming), even when expressed through database configuration or framework defaults. A detail the user explicitly approved and that was synchronized into the durable sources is not a defect. Do not confuse internal implementation details with product behavior.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/tools/check-instructions.mjs",
+          "sha256": "c0a5dc2f8ca7c2927002517bc397275627ddd719c2506058a5eb99a32efbe8b5",
+          "inspected_ranges": [
+            [
+              237,
+              278
+            ]
+          ],
+          "context_quotes": [
+            "\n  // ---- dependency direction and acyclicity ----\n  const graph = new Map();\n  for (const [file, entry] of meta) {\n    const targets = [];\n    for (const dep of entry.header.dependsOn) {\n      if (PRODUCT_INPUTS.includes(dep)) {\n        errors.push(`${file}: engineering policy must not depend on product input ${dep}`);\n        continue;\n      }\n      if (dep.endsWith('/**')) {\n        const prefix = dep.slice(0, -2);\n        targets.push(...[...meta.keys()].filter(other => other.startsWith(prefix) && other !== file));\n        continue;\n      }\n      if (!meta.has(dep)) {\n        errors.push(`${file}: 'Depends on' target ${dep} is not an instruction artifact`);\n        continue;\n      }\n      targets.push(dep);\n    }\n    for (const target of targets) {\n      const targetLevel = meta.get(target).header.level;\n      if (targetLevel > entry.header.level) {\n        errors.push(`${file}: Level ${entry.header.level} must not depend on more volatile Level ${targetLevel} (${target})`);\n      }\n    }\n    graph.set(file, targets);\n  }\n  const state = new Map();\n  const visit = (node, trail) => {\n    if (state.get(node) === 'done') return;\n    if (state.get(node) === 'active') {\n      errors.push(`dependency cycle: ${[...trail, node].join(' → ')}`);\n      return;\n    }\n    state.set(node, 'active');\n    for (const next of graph.get(node) ?? []) visit(next, [...trail, node]);\n    state.set(node, 'done');\n  };\n  for (const node of graph.keys()) visit(node, []);\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              13,
+              17
+            ],
+            [
+              23,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Engineering policy lives in this instruction system. A more volatile level may refine a more stable level but must not contradict it; report a contradiction instead of choosing a side.\n- `SPECIFICATION.md` and `CUSTOM_SETTINGS.md` are product inputs, as are feature specifications and task prompts. They define product behavior and approved values; they are not instruction layers. They may request an engineering decision change, but they never silently override engineering policy.\n- An explicit user instruction may approve a Reserved decision; record the accepted decision with `architecture-decision`.\n",
+            "\n- When `SPECIFICATION.md` is non-empty, it is authoritative for project-specific functional requirements and observable product behavior. An empty file in the template is intentional.\n- Do not silently weaken, contradict, or materially extend approved behavior. Do not invent user-visible behavior, limits, defaults, restrictions, or workflows — also not merely because the specification does not forbid them."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-002",
+        "name": "Read specification before substantial work",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "Before planning or implementing a new application or substantial feature, read SPECIFICATION.md.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0379"
+      ],
+      "boundary_analysis": "Before planning/implementing new app or substantial feature read specification and feature specification; conditional custom-settings read explicit. No broader always-read requirement inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "81740b792987f91db4121a6d5e675d5e6d800b9cbe77a4a3e1619b641e26dfeb",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "1. Determine the requested scope and which areas it touches (backend, frontend, tests, delivery, documentation).\n2. For a new application or a substantial feature, read `SPECIFICATION.md` (and any feature specification) before planning or implementing, and read `CUSTOM_SETTINGS.md` when tunable values are involved.\n3. Check the request against CLAUDE.md → Challenge questionable requests and → Decision control. Raise concerns and Decision Requests now, before writing code (headless runs: CLAUDE.md → Decision control)."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-003",
+        "name": "Do not invent product behavior",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "Do not silently weaken, contradict, materially extend, or invent user-visible behavior, limits, defaults, restrictions, or workflows.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0002",
+        "primary/L0/constraints.jsonl/RULE-L0-0338",
+        "primary/L0/constraints.jsonl/RULE-L0-0592"
+      ],
+      "boundary_analysis": "Bidirectional behavior preservation covers implicit database/framework choices. Precision/index example BF0078 and property validation example BF0095 already preserve example ambiguity.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck both directions against the product inputs (CLAUDE.md → Product governance): required behavior must not be missing or weakened, and the implementation must not silently add unapproved behavior — new limits, reserved values, newly required fields, extra workflow restrictions, additional user-visible validation, or new observable string-comparison semantics (case sensitivity, collation, culture/ordinal, normalization, trimming), even when expressed through database configuration or framework defaults. A detail the user explicitly approved and that was synchronized into the durable sources is not a defect. Do not confuse internal implementation details with product behavior.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "989bd9a518542dcf32d9210eba887fd4edb1c4a2bb4c032dd0d58d62a2769dc8",
+          "inspected_ranges": [
+            [
+              34,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "    {\n        builder.HasKey(x => x.Id);\n        builder.Property(x => x.Total).HasPrecision(18, 2);\n        builder.HasIndex(x => x.CreatedAt);\n    }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter all fixes, review the final diff again for: accidental unrelated edits; commented-out code; temporary logging; unintended TODO/FIXME markers; stale temporary tests or scripts; architecture drift; unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`; stale code, tests, docs, or configuration after a `CUSTOM_SETTINGS.md` change; behavior verified manually but never preserved as a test.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ],
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- When `SPECIFICATION.md` is non-empty, it is authoritative for project-specific functional requirements and observable product behavior. An empty file in the template is intentional.\n- Do not silently weaken, contradict, or materially extend approved behavior. Do not invent user-visible behavior, limits, defaults, restrictions, or workflows — also not merely because the specification does not forbid them.\n- If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval. Routine internal implementation choices that do not change observable behavior do not require approval (default).",
+            "  9. making a breaking public API change or adopting API versioning;\n  10. defining product behavior or tunable values that the product sources do not define (Product governance above).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-004",
+        "name": "Material product ambiguity requires approval",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0003",
+        "primary/L0/constraints.jsonl/RULE-L0-0024",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0104"
+      ],
+      "boundary_analysis": "Smallest-option material behavior approval matches. Complex dataset question BF0082 already captures broader procedural trigger.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "989bd9a518542dcf32d9210eba887fd4edb1c4a2bb4c032dd0d58d62a2769dc8",
+          "inspected_ranges": [
+            [
+              215,
+              217
+            ]
+          ],
+          "context_quotes": [
+            "\nA representative dataset typically includes, where applicable: newly created, active/in-progress, completed, inactive/archived entities; entities with and without optional values and relationships; representative status values; meaningful boundary states. When the required graph is complex, ask the task to describe the dataset instead of inventing a large generic graph. Which model changes require a seeder update: `development-workflow` → Co-changes. Migrating an existing Development database does not require the seeder to patch rows already seeded.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              25,
+              27
+            ],
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- Do not silently weaken, contradict, or materially extend approved behavior. Do not invent user-visible behavior, limits, defaults, restrictions, or workflows — also not merely because the specification does not forbid them.\n- If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval. Routine internal implementation choices that do not change observable behavior do not require approval (default).\n- String semantics are product behavior when observable: case sensitivity, collation, culture vs. ordinal comparison, normalization/canonicalization, trimming, uniqueness, and lookup. When the product sources do not define them and the choice affects equality, uniqueness, lookup, or accepted input, do not choose silently — ask for approval.",
+            "  9. making a breaking public API change or adopting API versioning;\n  10. defining product behavior or tunable values that the product sources do not define (Product governance above).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-005",
+        "name": "Internal implementation details are delegated",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "Routine internal implementation choices that do not change observable behavior do not require approval.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0004",
+        "primary/L0/constraints.jsonl/RULE-L0-0013"
+      ],
+      "boundary_analysis": "Routine choice no-approval default and Delegated boundary explicitly represented. BF0002/0003/0004 preserve default-deviation and broad unclear-case approval issues.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ],
+            [
+              25,
+              27
+            ],
+            [
+              36,
+              52
+            ]
+          ],
+          "context_quotes": [
+            "\n**must / must not** — violation is a defect. **default** — deviation needs a concrete reason and must be reported. **prefer / avoid** — guidance. **requires approval** — Reserved decision.\n",
+            "- Do not silently weaken, contradict, or materially extend approved behavior. Do not invent user-visible behavior, limits, defaults, restrictions, or workflows — also not merely because the specification does not forbid them.\n- If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval. Routine internal implementation choices that do not change observable behavior do not require approval (default).\n- String semantics are product behavior when observable: case sensitivity, collation, culture vs. ordinal comparison, normalization/canonicalization, trimming, uniqueness, and lookup. When the product sources do not define them and the choice affects equality, uniqueness, lookup, or accepted input, do not choose silently — ask for approval.",
+            "\n- **Decided** — settled by this instruction system, the product inputs, or a recorded decision. Follow it; do not reopen it without approval. A choice already required by the specification or by the established project structure is Decided.\n- **Delegated** — local, reversible, and changes no boundary, dependency, accepted convention, public contract, or observable behavior. Decide and proceed; do not ask approval for routine decisions already constrained by product sources, the approved stack, existing code, or these rules.\n- **Reserved** — requires explicit approval before it is implemented. Reserved includes at least:\n  1. changing an accepted project or architecture decision;\n  2. adopting a new architectural style or pattern, for example CQRS, a mediator, Vertical Slice Architecture, event sourcing, microservices, a Rich Domain Model or DDD tactical patterns;\n  3. adding a production project/layer/assembly or changing the project reference graph;\n  4. changing persistence boundaries (including multiple persistence contexts) or persistence technology;\n  5. adding an infrastructure category: messaging, background processing, distributed cache, search, external storage, external identity;\n  6. adding a major library/framework or replacing an approved baseline technology;\n  7. introducing a project-wide convention or abstraction that other code is expected to follow, for example a project-wide Result model;\n  8. changing the authentication/authorization architecture;\n  9. making a breaking public API change or adopting API versioning;\n  10. defining product behavior or tunable values that the product sources do not define (Product governance above).\n\nUnclear case — any **yes** makes it Reserved: (1) Does it add, remove, or replace a dependency, framework, or infrastructure capability? (2) Does it change a project/layer/reference boundary? (3) Does it establish a convention other code is expected to follow? (4) Does it change observable behavior or a public contract? (5) Would it be expensive to reverse once other code depends on it?\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-006",
+        "name": "String semantics are product behavior",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "Case sensitivity, collation, culture/ordinal comparison, normalization, trimming, uniqueness and lookup semantics are product behavior when observable; do not silently choose them when unspecified.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0005",
+        "primary/L0/constraints.jsonl/RULE-L0-0338"
+      ],
+      "boundary_analysis": "Observable equality/uniqueness/lookup/accepted-input condition, culture and normalization scope and database defaults match. BF0095 already retains trim/validation example.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck both directions against the product inputs (CLAUDE.md → Product governance): required behavior must not be missing or weakened, and the implementation must not silently add unapproved behavior — new limits, reserved values, newly required fields, extra workflow restrictions, additional user-visible validation, or new observable string-comparison semantics (case sensitivity, collation, culture/ordinal, normalization, trimming), even when expressed through database configuration or framework defaults. A detail the user explicitly approved and that was synchronized into the durable sources is not a defect. Do not confuse internal implementation details with product behavior.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "e4c92d9afe8cd8d9dcf3b9ce631a94e756acffac17b3c06f6f4fecd54f6554ad",
+          "inspected_ranges": [
+            [
+              63,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "    get;\n    set => field = string.IsNullOrWhiteSpace(value)\n        ? throw new ArgumentException(\"Name is required.\")\n        : value.Trim();\n}"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "- If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval. Routine internal implementation choices that do not change observable behavior do not require approval (default).\n- String semantics are product behavior when observable: case sensitivity, collation, culture vs. ordinal comparison, normalization/canonicalization, trimming, uniqueness, and lookup. When the product sources do not define them and the choice affects equality, uniqueness, lookup, or accepted input, do not choose silently — ask for approval.\n- `CUSTOM_SETTINGS.md` holds approved project-level tunable limits and defaults (for example maximum lengths, page-size defaults and maximums, retention periods, numeric thresholds); `SPECIFICATION.md` owns behavioral intent."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P001",
+      "canonical_policy": {
+        "id": "GOV-007",
+        "name": "Synchronize durable product sources",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Product Specification"
+        ],
+        "normalized_policy": "When a new behavioral rule is approved, update the durable source of truth, including SPECIFICATION.md when appropriate.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0257",
+        "primary/L0/constraints.jsonl/RULE-L0-0386",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0003"
+      ],
+      "boundary_analysis": "Same-change durable synchronization and explicit-user approval recording match. BF0061 already captures named summaries and rejected-request handling; hook consistency reminder represented in replica0008.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/INSTRUCTION_MAP.md",
+          "sha256": "f9d3c6fce26cba3e21211cba468677347fee34156bba8b6e1a10b50731959a10",
+          "inspected_ranges": [
+            [
+              96,
+              98
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/settings.json` | registers the hooks in exec form — `\"command\": \"node\"`, `\"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/claude-hook.mjs\", \"<event>\"]` — so each hook starts from any working directory without shell expansion: PreToolUse `Bash\\|PowerShell` → `pre-bash` with `\"onFailure\": \"block\"`; PostToolUse and PostToolUseFailure `Bash\\|PowerShell` → `post-bash`; PostToolUse `Edit\\|MultiEdit\\|Write` → `post-edit`; Stop → `stop` |\n| `.claude/hooks/claude-hook.mjs` | `pre-bash` (fails closed): blocks npm/pnpm/yarn force/legacy-peer flags and `dotnet add/remove … reference` / `dotnet reference add/remove` before they run, also behind global options such as `--prefix`, `--dir`, `--cwd` · `post-bash`, after successful and failed shell calls: compares the active worktree's manifests (tracked and untracked, not ignored) with a per-worktree snapshot kept in the Git directory, validates added and changed manifests, reports removals and moves, routes dependency and project-reference changes; the first observation of a worktree validates every manifest · `post-edit`: manifest checks, dependency and reference-change routing, product-input reminder, structure check after instruction edits · `stop`: co-change reminders (seed, migrations, tests, custom settings) repeated only when the changed files or their content differ, never loops |\n| `.claude/hooks/manifest-checks.mjs` | central versions, `VersionOverride`, floating/prerelease versions, deny/review package lists (approved exceptions are read from the \"Accepted\" sections of the decision summaries), npm tooling category, `.npmrc` bypass, outward project references; reads UTF-8, UTF-8 with BOM, and BOM-tagged UTF-16 files and reports undecodable ones |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/claude-hook.mjs",
+          "sha256": "aba46da946b8025641cf6b493dd3dda6df5f571359c909465e71cbf8e67ff2e7",
+          "inspected_ranges": [
+            [
+              557,
+              564
+            ],
+            [
+              675,
+              679
+            ]
+          ],
+          "context_quotes": [
+            "\n  if (relative === 'SPECIFICATION.md' || relative === 'CUSTOM_SETTINGS.md') {\n    feedback([\n      `${relative} changed (product input).`,\n      `Keep SPECIFICATION.md and CUSTOM_SETTINGS.md consistent (CLAUDE.md → Product governance). CUSTOM_SETTINGS.md changes run ${CUSTOM_SETTINGS}; approved behavior changes follow ${DEVELOPMENT} (Implement → approved product decisions).`,\n    ]);\n  }\n",
+            "  }\n  if (paths.includes('CUSTOM_SETTINGS.md')) {\n    reminders.push(`CUSTOM_SETTINGS.md changed: run ${CUSTOM_SETTINGS} to synchronize every affected surface.`);\n  }\n  if (reminders.length === 0) return;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/1-architecture/overview.md",
+          "sha256": "d8965b54613833d28f6776d682d493182d23935240d06e5c830e89b3363977e3",
+          "inspected_ranges": [
+            [
+              46,
+              48
+            ]
+          ],
+          "context_quotes": [
+            "\nApproved architecture changes are recorded here by `architecture-decision` (date · decision · scope · consequences · owning rule updated).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              52,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\nApproved stack or default changes are recorded here by `architecture-decision` (date · decision · scope · consequences · modules/workflows updated).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "f24304c911ad0daed5f9deb6c2bc438f5d8850d149bd3047a084fc1df9efc9b2",
+          "inspected_ranges": [
+            [
+              32,
+              40
+            ]
+          ],
+          "context_quotes": [
+            "\nAn explicit user instruction counts as approval. After approval, in the same change:\n\n1. Add an entry to the matching decision summary — architecture-level decisions (styles, patterns, layers, boundaries) in `.claude/rules/1-architecture/overview.md` → Accepted architecture decisions; stack, conditional technology, and project-default decisions in `.claude/rules/3-project/decisions.md` → Accepted project decisions. Entry: date · decision · scope · consequences · files updated.\n2. Update the owning rule module at the right level when the decision changes a rule (for example a technology replacement edits the Level 2 module, the Level 3 decisions, and any workflow or asset where the technology is embedded), so that no rule contradicts the decision.\n3. If the decision changes product behavior, synchronize the product inputs (`development-workflow` → Implement, approved product decisions).\n\nA rejected request is not recorded as a decision; mention it in the report.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck both directions against the product inputs (CLAUDE.md → Product governance): required behavior must not be missing or weakened, and the implementation must not silently add unapproved behavior — new limits, reserved values, newly required fields, extra workflow restrictions, additional user-visible validation, or new observable string-comparison semantics (case sensitivity, collation, culture/ordinal, normalization, trimming), even when expressed through database configuration or framework defaults. A detail the user explicitly approved and that was synchronized into the durable sources is not a defect. Do not confuse internal implementation details with product behavior.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "81740b792987f91db4121a6d5e675d5e6d800b9cbe77a4a3e1619b641e26dfeb",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "- **Performance-motivated changes:** identify the actual bottleneck or cost, preserve observable behavior, use the simplest effective optimization, keep or add tests for the affected behavior, and benchmark or profile when the optimization is non-obvious or complex.\n- **Approved product decisions:** when a new behavioral rule is approved, update the durable source of truth in the same change — `SPECIFICATION.md` when appropriate; tunable values go through `custom-settings`.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              29,
+              31
+            ]
+          ],
+          "context_quotes": [
+            "- `SPECIFICATION.md` and `CUSTOM_SETTINGS.md` are product inputs, as are feature specifications and task prompts. They define product behavior and approved values; they are not instruction layers. They may request an engineering decision change, but they never silently override engineering policy.\n- An explicit user instruction may approve a Reserved decision; record the accepted decision with `architecture-decision`.\n",
+            "- The two files must not contradict each other. If they conflict, stop and resolve which source must be corrected before continuing.\n- Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with the reason, ask for approval, record it in `CUSTOM_SETTINGS.md`, and synchronize every affected surface (`custom-settings`).\n- Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers, or incidental implementation constants in `CUSTOM_SETTINGS.md`."
+          ]
+        }
+      ]
+    }
+  ]
+}

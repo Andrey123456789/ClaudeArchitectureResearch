@@ -1,0 +1,874 @@
+{
+  "unit": "P0002-K1-P015",
+  "batch_input_sha256": "0cb0a158d7b29e41de08f7fe9eeecdabea149a291c9376ec1c52c37318132469",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-009",
+        "name": "Follow existing C# conventions",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/coding-style.md#General Principle"
+        ],
+        "normalized_policy": "Follow repository conventions and .editorconfig; use modern C# when it improves clarity, but do not mechanically modernize working code.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0044",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0019",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0211"
+      ],
+      "boundary_analysis": "Readability and substantive-logic boundaries for field/extension modernization are registered. Editor severity and exact scope are covered, except root=true inheritance termination already found in pass1 CIS-K1-0001; do not rediscover it. Deliberate sealed and nonpublic internals are registered independently of syntax choice.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-0001"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/coding-style.md",
+          "sha256": "ab3fb616843394de10f9ec5d642cc6c2206484f6081a96d7963a9ff3f9ed60ec",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: follow the repository's existing conventions and `.editorconfig`; use modern C# features when they improve clarity, but do not rewrite working code solely to use newer syntax.\n- Default for new C# code: file-scoped namespaces when consistent with the project; one primary top-level type per file with a matching file name (small private or nested supporting types may stay with their owner); the `Async` suffix on `Task`/`ValueTask`-returning methods unless an existing or framework contract makes it inappropriate."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "99734c4095dac007d827ef805a23ccc8550931cbaee9acb4f8c4a31eebfa9a97",
+          "inspected_ranges": [
+            [
+              101,
+              103
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not move Domain invariants into FluentValidation merely because the library is available, and do not duplicate one rule in several layers unless each has a distinct reason. Register validators with `FluentValidation.DependencyInjectionExtensions`; do not add deprecated/legacy ASP.NET automatic-validation integration packages, and follow the project's established invocation pattern instead of adding a competing one. A syntactically valid request can still violate an Application or Domain rule.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "- Must not weaken, delete, skip, or suppress relevant tests, compiler, TypeScript, lint, or analyzer failures merely to make verification pass; understand a diagnostic before changing how it is reported.\n- Preserve architecture and project conventions while fixing; a green build obtained by violating them is not a successful repair.\n- Stop when progress has clearly stalled instead of making speculative edits."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "d30ebb31c297c9e90ba278783e161107f1776823f38b61b1b84bfc1b2c0c47cb",
+          "inspected_ranges": [
+            [
+              12,
+              14
+            ],
+            [
+              24,
+              47
+            ],
+            [
+              58,
+              88
+            ],
+            [
+              102,
+              120
+            ],
+            [
+              122,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy: `.claude/rules/backend/coding-style.md` (conventions, no mechanical modernization, no unrelated style rewrites), `.claude/rules/backend/runtime.md` (allocation-oriented techniques need evidence). Use modern features when they make code clearer, safer, or simpler; consistency and readability matter more than maximizing language features.\n",
+            "\nPrefer a regular constructor when validation or initialization is non-trivial, explicit fields improve readability, the codebase consistently uses that style, or parameter capture would obscure the class. Never convert constructors mechanically.\n\n## Collection expressions\n\n```csharp\nstring[] names = [\"Alice\", \"Bob\"];\nList<int> ids = [1, 2, 3];\n```\n\nUse them when the target type is clear; do not replace existing initializers solely to modernize.\n\n## Records and classes\n\nRecords fit intentional value semantics: immutable transport DTOs, genuine Value Objects, immutable messages. Classes fit identity, mutable lifecycle, inheritance, or framework behavior; entities with identity normally stay classes. Do not turn every DTO or Domain type into a record.\n\n## Required members\n\n```csharp\npublic required string Name { get; init; }\n```\n\nUse `required` when initialization is part of the type's valid construction contract — not as a substitute for constructor/domain validation that protects invariants.\n",
+            "\nAvoid deeply nested patterns that are harder to read than plain conditions.\n\n## `field` keyword\n\n```csharp\npublic string Name\n{\n    get;\n    set => field = string.IsNullOrWhiteSpace(value)\n        ? throw new ArgumentException(\"Name is required.\")\n        : value.Trim();\n}\n```\n\nUse it to remove an otherwise trivial backing field; do not rewrite backing fields that already contain clear or substantial logic.\n\n## Extension members\n\n```csharp\npublic static class OrderExtensions\n{\n    extension(Order order)\n    {\n        public bool IsFinished => order.Status == OrderStatus.Completed;\n    }\n}\n```\n\nUseful when extension properties or grouped extension behavior genuinely improve an API; traditional extension methods remain valid and need no conversion.\n",
+            "\n- `var` when the type is obvious or unimportant; an explicit type when it improves clarity; follow the project's convention.\n- Standard .NET naming: PascalCase for types, methods, properties, and public members; camelCase for parameters and locals; meaningful names over abbreviations; private-field naming per the repository's convention.\n- Keep implementation details non-public when they are not part of the project's public API; use `sealed` to communicate a deliberate \"not for inheritance\" design, not as a speculative JIT optimization.\n- Do not reorganize an existing file merely to satisfy a preferred member ordering.\n- Immutability where it represents the model naturally; controlled mutation where framework models or workflows are simpler with it.\n\n## Span and allocation-oriented APIs\n\n`Span<T>`, `ReadOnlySpan<T>`, stack allocation, pooling, and source-generated serialization are performance tools for demonstrated hot paths; ordinary arrays, strings, and collections are the default. Verify that an optimization materially improves the workload.\n\n## Compatibility\n\nConfirm the configured language version supports a feature before using it; never silently change `LangVersion` or the target framework to use newer syntax (a platform change is Reserved).\n\n## Modernization tasks\n\nWhen explicitly asked to modernize: preserve behavior, keep the change focused, prefer readability improvements, build and test afterwards, and do not mix architecture refactoring into syntax modernization.\n",
+            "\nNewest syntax for its own sake, every class as a record, `record struct` merely to avoid allocations, `Span<T>` without a performance reason, mass constructor conversion."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              54,
+              62
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior; move code in small reviewable steps.\n4. Update namespaces and references consistently; avoid unrelated feature work.\n5. Verify after restructuring.\n\nDo not force an established project to match this template when doing so provides no concrete value.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy.\n- `.editorconfig` — deterministic repository-wide formatting and code-style configuration; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.\n"
+          ]
+        },
+        {
+          "path": "output/template/.editorconfig",
+          "sha256": "1d44e455282293d11830f344a5d5a4f44777aefac160b19733a953118df1aedc",
+          "inspected_ranges": [
+            [
+              4,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "\nroot = true\n\n[*]\ncharset = utf-8\nindent_style = space\nindent_size = 4\ninsert_final_newline = true\ntrim_trailing_whitespace = true\n\n[*.{json,yml,yaml,props,targets,csproj,slnx,xml}]\nindent_size = 2\n\n[*.{ts,js,cjs,mjs,html,scss,css}]\nindent_size = 2\n\n[*.md]\ntrim_trailing_whitespace = false\n\n[*.cs]\n# Namespaces and usings\ncsharp_style_namespace_declarations = file_scoped:suggestion\ndotnet_sort_system_directives_first = true\ndotnet_separate_import_directive_groups = false\ndotnet_diagnostic.IDE0005.severity = suggestion\n\n# var preferences: use var when the type is apparent\ncsharp_style_var_for_built_in_types = false:suggestion\ncsharp_style_var_when_type_is_apparent = true:suggestion\ncsharp_style_var_elsewhere = false:silent\n\n# Modern language features where they improve clarity\ncsharp_style_prefer_primary_constructors = true:silent\ndotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion\ncsharp_style_prefer_switch_expression = true:suggestion\ncsharp_style_prefer_pattern_matching = true:silent\n\n# Braces and expression bodies\ncsharp_prefer_braces = when_multiline:suggestion\ncsharp_style_expression_bodied_methods = when_on_single_line:silent\ncsharp_style_expression_bodied_properties = true:silent\n\n# Naming: PascalCase for types and members, I-prefix for interfaces, Async suffix for async methods\ndotnet_naming_rule.interfaces_should_begin_with_i.symbols = interface_symbols\ndotnet_naming_rule.interfaces_should_begin_with_i.style = prefix_i_style\ndotnet_naming_rule.interfaces_should_begin_with_i.severity = suggestion\ndotnet_naming_symbols.interface_symbols.applicable_kinds = interface\ndotnet_naming_style.prefix_i_style.required_prefix = I\ndotnet_naming_style.prefix_i_style.capitalization = pascal_case\n\ndotnet_naming_rule.types_and_members_should_be_pascal_case.symbols = types_and_members\ndotnet_naming_rule.types_and_members_should_be_pascal_case.style = pascal_case_style\ndotnet_naming_rule.types_and_members_should_be_pascal_case.severity = suggestion\ndotnet_naming_symbols.types_and_members.applicable_kinds = class, struct, enum, delegate, method, property, event\ndotnet_naming_style.pascal_case_style.capitalization = pascal_case\n\ndotnet_naming_rule.async_methods_end_in_async.symbols = async_methods\ndotnet_naming_rule.async_methods_end_in_async.style = async_suffix_style\ndotnet_naming_rule.async_methods_end_in_async.severity = silent\ndotnet_naming_symbols.async_methods.applicable_kinds = method\ndotnet_naming_symbols.async_methods.required_modifiers = async\ndotnet_naming_style.async_suffix_style.required_suffix = Async\ndotnet_naming_style.async_suffix_style.capitalization = pascal_case"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Build.props",
+          "sha256": "c89b1f606e040670343733aa340350d8ca547399a696f47eb5e27c9217e40fb8",
+          "inspected_ranges": [
+            [
+              6,
+              9
+            ]
+          ],
+          "context_quotes": [
+            "    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-010",
+        "name": "Changed C# files have clean imports",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/coding-style.md#Using Directives"
+        ],
+        "normalized_policy": "For C# files created or modified by the task, remove unused/redundant usings while avoiding unrelated repository-wide cleanup.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0329",
+        "primary/K1/constraints.jsonl/RULE-K1-0598"
+      ],
+      "boundary_analysis": "Every created/modified C# file requires actual import verification, including global/implicit redundancy with clarity/disambiguation exception. Baseline captures both workflow must and suggestion-level IDE0005; advisory analyzer severity does not replace workflow obligation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              48,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nChecker commands work from any directory of the active repository or worktree: run them by absolute path, `node \"<root>/.claude/scripts/<checker>.cjs\"`, where `<root>` is the output of `git rev-parse --show-toplevel` (outside Git: the directory that holds `CLAUDE.md` and `.claude/`). Each checker inspects the repository or worktree that contains the current directory and prints the root it checked.\n\n\n- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context.\n- **Dependencies and security:** for dependency changes or security-sensitive work, inspect vulnerabilities (`dotnet package list --vulnerable --include-transitive`, `npm audit`) and changed secrets, authorization, raw SQL, CORS/TLS, sensitive logging, and certificate validation. A full `security-scan` is not required for every small change.\n- **Instruction system:** when `.claude/`, `CLAUDE.md`, or the decision register changed, run `node \"<root>/.claude/scripts/check-instructions.cjs\"`.\n\n## 6. Final diff review\n\nReview the final diff after all fixes. Check for accidental unrelated edits, commented-out code, temporary logging, unintended TODO/FIXME markers, stale temporary tests or scripts, architecture drift, unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`, stale code/tests/docs/config after a settings change, and behavior verified manually but never preserved as a test.\n\nFor every C# file created or modified by the task, remove unused or redundant `using` directives (including imports already provided by implicit/global usings, unless needed for clarity or disambiguation) without performing an unrelated repository-wide cleanup. Verify the changed files rather than assuming tooling removed every redundant import.\n"
+          ]
+        },
+        {
+          "path": "output/template/.editorconfig",
+          "sha256": "1d44e455282293d11830f344a5d5a4f44777aefac160b19733a953118df1aedc",
+          "inspected_ranges": [
+            [
+              6,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "\n[*]\ncharset = utf-8\nindent_style = space\nindent_size = 4\ninsert_final_newline = true\ntrim_trailing_whitespace = true\n\n[*.{json,yml,yaml,props,targets,csproj,slnx,xml}]\nindent_size = 2\n\n[*.{ts,js,cjs,mjs,html,scss,css}]\nindent_size = 2\n\n[*.md]\ntrim_trailing_whitespace = false\n\n[*.cs]\n# Namespaces and usings\ncsharp_style_namespace_declarations = file_scoped:suggestion\ndotnet_sort_system_directives_first = true\ndotnet_separate_import_directive_groups = false\ndotnet_diagnostic.IDE0005.severity = suggestion\n\n# var preferences: use var when the type is apparent\ncsharp_style_var_for_built_in_types = false:suggestion\ncsharp_style_var_when_type_is_apparent = true:suggestion\ncsharp_style_var_elsewhere = false:silent\n\n# Modern language features where they improve clarity\ncsharp_style_prefer_primary_constructors = true:silent\ndotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion\ncsharp_style_prefer_switch_expression = true:suggestion\ncsharp_style_prefer_pattern_matching = true:silent\n\n# Braces and expression bodies\ncsharp_prefer_braces = when_multiline:suggestion\ncsharp_style_expression_bodied_methods = when_on_single_line:silent\ncsharp_style_expression_bodied_properties = true:silent\n\n# Naming: PascalCase for types and members, I-prefix for interfaces, Async suffix for async methods\ndotnet_naming_rule.interfaces_should_begin_with_i.symbols = interface_symbols\ndotnet_naming_rule.interfaces_should_begin_with_i.style = prefix_i_style\ndotnet_naming_rule.interfaces_should_begin_with_i.severity = suggestion\ndotnet_naming_symbols.interface_symbols.applicable_kinds = interface\ndotnet_naming_style.prefix_i_style.required_prefix = I\ndotnet_naming_style.prefix_i_style.capitalization = pascal_case\n\ndotnet_naming_rule.types_and_members_should_be_pascal_case.symbols = types_and_members\ndotnet_naming_rule.types_and_members_should_be_pascal_case.style = pascal_case_style\ndotnet_naming_rule.types_and_members_should_be_pascal_case.severity = suggestion\ndotnet_naming_symbols.types_and_members.applicable_kinds = class, struct, enum, delegate, method, property, event\ndotnet_naming_style.pascal_case_style.capitalization = pascal_case\n\ndotnet_naming_rule.async_methods_end_in_async.symbols = async_methods\ndotnet_naming_rule.async_methods_end_in_async.style = async_suffix_style\ndotnet_naming_rule.async_methods_end_in_async.severity = silent\ndotnet_naming_symbols.async_methods.applicable_kinds = method\ndotnet_naming_symbols.async_methods.required_modifiers = async\ndotnet_naming_style.async_suffix_style.required_suffix = Async\ndotnet_naming_style.async_suffix_style.capitalization = pascal_case"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-011",
+        "name": "No unrelated style rewrites",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/coding-style.md#Scope Discipline"
+        ],
+        "normalized_policy": "Do not perform style-only rewrites outside the requested change unless explicitly asked.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0265",
+        "primary/K1/constraints.jsonl/RULE-K1-0466"
+      ],
+      "boundary_analysis": "Explicit modernization permission still preserves behavior, focused scope, post-build/test and no architecture mixing. No member-order reshuffling and small-step structural reorganization are separately recorded; absence of an explicit rewrite request is not treated as approval.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/coding-style.md",
+          "sha256": "ab3fb616843394de10f9ec5d642cc6c2206484f6081a96d7963a9ff3f9ed60ec",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "- Default for new C# code: file-scoped namespaces when consistent with the project; one primary top-level type per file with a matching file name (small private or nested supporting types may stay with their owner); the `Async` suffix on `Task`/`ValueTask`-returning methods unless an existing or framework contract makes it inappropriate.\n- Must not perform style-only rewrites outside the requested change unless explicitly asked; avoid mixing large formatting or modernization changes with functional work.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "d30ebb31c297c9e90ba278783e161107f1776823f38b61b1b84bfc1b2c0c47cb",
+          "inspected_ranges": [
+            [
+              58,
+              88
+            ],
+            [
+              105,
+              107
+            ],
+            [
+              118,
+              120
+            ]
+          ],
+          "context_quotes": [
+            "\nAvoid deeply nested patterns that are harder to read than plain conditions.\n\n## `field` keyword\n\n```csharp\npublic string Name\n{\n    get;\n    set => field = string.IsNullOrWhiteSpace(value)\n        ? throw new ArgumentException(\"Name is required.\")\n        : value.Trim();\n}\n```\n\nUse it to remove an otherwise trivial backing field; do not rewrite backing fields that already contain clear or substantial logic.\n\n## Extension members\n\n```csharp\npublic static class OrderExtensions\n{\n    extension(Order order)\n    {\n        public bool IsFinished => order.Status == OrderStatus.Completed;\n    }\n}\n```\n\nUseful when extension properties or grouped extension behavior genuinely improve an API; traditional extension methods remain valid and need no conversion.\n",
+            "- Keep implementation details non-public when they are not part of the project's public API; use `sealed` to communicate a deliberate \"not for inheritance\" design, not as a speculative JIT optimization.\n- Do not reorganize an existing file merely to satisfy a preferred member ordering.\n- Immutability where it represents the model naturally; controlled mutation where framework models or workflows are simpler with it.",
+            "\nWhen explicitly asked to modernize: preserve behavior, keep the change focused, prefer readability improvements, build and test afterwards, and do not mix architecture refactoring into syntax modernization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              54,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior; move code in small reviewable steps.\n4. Update namespaces and references consistently; avoid unrelated feature work.\n5. Verify after restructuring.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-012",
+        "name": "Performance changes preserve behavior",
+        "related_groups": [
+          "testing-quality",
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/performance.md#Performance Changes"
+        ],
+        "normalized_policy": "A performance-motivated change identifies the bottleneck, preserves behavior, uses the simplest effective optimization, maintains tests, and benchmarks/profiles non-obvious complex optimizations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0243",
+        "primary/K1/constraints.jsonl/RULE-K1-0467"
+      ],
+      "boundary_analysis": "Source benchmark/profile gate is non-obvious OR complex, stronger than a conjunctive reading of canonical wording; replica0243 explicitly preserves the disjunction. Verified material workload improvement for allocation tools also registered, not merely intent to benchmark.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              42,
+              44
+            ]
+          ],
+          "context_quotes": [
+            "- **Bug fix:** default — for a meaningful bug whose recurrence is plausible, add a regression test that fails before the fix and passes after it, unless equivalent coverage already exists.\n- **Performance-motivated change:** identify the actual bottleneck or cost, preserve observable behavior, use the simplest effective optimization, add or maintain tests for affected behavior, and benchmark or profile when the optimization is non-obvious or complex.\n- **Deprecating an externally consumed API version:** mark the deprecation in versioning metadata, document the replacement version, communicate a realistic migration period and removal timeline, and keep the old version working for the promised support period; never remove it without considering its published support contract. Breaking changes and adopting versioning are Reserved (`architecture-decision`)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              127,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "\nEF Core already caches query compilation by query shape. `EF.CompileQuery`/`EF.CompileAsyncQuery` fit only a measured hot path where compilation/cache lookup overhead is material. Before specialized optimization inspect round trips, selected columns, N+1 behavior, indexes, generated SQL, the query plan where necessary, materialized data volume, and tracking overhead.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "d30ebb31c297c9e90ba278783e161107f1776823f38b61b1b84bfc1b2c0c47cb",
+          "inspected_ranges": [
+            [
+              110,
+              112
+            ],
+            [
+              122,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\n`Span<T>`, `ReadOnlySpan<T>`, stack allocation, pooling, and source-generated serialization are performance tools for demonstrated hot paths; ordinary arrays, strings, and collections are the default. Verify that an optimization materially improves the workload.\n",
+            "\nNewest syntax for its own sake, every class as a record, `record struct` merely to avoid allocations, `Span<T>` without a performance reason, mass constructor conversion."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-013",
+        "name": "Use structured logging with stable properties",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/logging/SKILL.md#Structured Logging"
+        ],
+        "normalized_policy": "Use ILogger<T> with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-013",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0453",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0201",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0202",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0038"
+      ],
+      "boundary_analysis": "Provider leaf requires templates rather than interpolation and restricts provider APIs to edges. Operational log-level meanings, existing trace-ID preference and conditional new correlation IDs are explicit prior claims. DI integration and bootstrap conditions are also registered rather than inferred from canonical ILogger default.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/operations.md",
+          "sha256": "df64a1b16be637442fe8e95a6821f86224ac0a1d75bfcaf0d5ccd5059d9f4642",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: `ILogger<T>` with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text.\n- Default: when Serilog is configured, use the DI-integrated `AddSerilog` approach and keep provider configuration in environment-aware configuration; application code continues to depend on `ILogger<T>`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "99734c4095dac007d827ef805a23ccc8550931cbaee9acb4f8c4a31eebfa9a97",
+          "inspected_ranges": [
+            [
+              126,
+              128
+            ]
+          ],
+          "context_quotes": [
+            "\nExpected outcomes (not found, validation failures, rejected business operations) are normally not logged as application errors. Logging technique: `logging`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "e4706562d402c140de7a7d23fa223bb8cf5a835c80ee5c6753af0f17e08577fc",
+          "inspected_ranges": [
+            [
+              53,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nHealthy → success, unhealthy → non-success per the configured probe policy (`HealthCheckOptions.ResultStatusCodes` maps statuses); do not reuse business API status semantics mechanically for probes. Keep probe responses small; protect operator-facing detailed diagnostics with network or authorization controls instead of exposing connection strings, credentials, raw exceptions, or infrastructure topology.\n\n## Exposure\n\nProbes often must be reachable by infrastructure without user authentication. Choose exposure by topology: private network access, a dedicated management port, host restrictions, or authorization the probe infrastructure supports.\n\n## Performance\n\nProbes run frequently: avoid expensive queries, long external timeouts, large allocations, full workflows, and Error-level logs for every normal failed probe.\n\n## Testing\n\nTest health configuration the deployment relies on: live endpoint responds when healthy, readiness follows a required dependency, responses do not leak sensitive details, optional-dependency behavior matches the intended semantics. Do not test framework behavior the application does not customize.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "ae1838108151e5b64897eaef05d02ef6f8b0d282dd8c324007ea9781d3f3c591",
+          "inspected_ranges": [
+            [
+              49,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nASP.NET Core rate limiting protects this API from excessive incoming traffic and is conceptually separate from outbound resilience; a rejected request returns `429` with `Retry-After` when a useful delay is known (`http-api`).\n\n## Cancellation and telemetry\n\nPropagate caller cancellation through pipelines. Observe retry counts, timeout frequency, circuit state, rate-limit rejections, and dependency latency when they matter, using the telemetry stack the project adopted; OpenTelemetry is not required merely because pipelines exist.\n\n## Decision guide\n\n| Scenario | Default consideration |\n|---|---|\n| External I/O | Bound execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Respect `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| Database transient faults | Provider-level strategy (persistence facet) |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "b11e717b5e1fabd883e2866a0940e91532a2c4bbb4ec9051eb161d47cc357fcf",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ],
+            [
+              25,
+              48
+            ],
+            [
+              68,
+              70
+            ],
+            [
+              72,
+              80
+            ]
+          ],
+          "context_quotes": [
+            "\nStable property names keep logs queryable. Log information that helps diagnose or operate the system.\n",
+            "\n- **Trace/Debug** — detailed troubleshooting diagnostics; never assume sensitive data is safe at these levels.\n- **Information** — meaningful application events (a background job completed, an important business operation completed, a lifecycle event); not every internal method call.\n- **Warning** — an unexpected or degraded condition the application recovered from (fallback used, retries exhausted but another path succeeded, optional dependency unavailable, unusual handled state).\n- **Error** — an operation failed and needs investigation. Expected negative outcomes such as `NotFound` or validation rejection are normally not errors.\n- **Critical** — the application or a major subsystem cannot continue safely.\n\nChoose levels by operational meaning, not by how unusual an event feels.\n\n## Exception logging\n\nLog an exception at the boundary that actually handles or terminates the failure; when rethrowing without meaningful handling, normally add no duplicate log. Exception flow: `aspnet-error-handling`.\n\n## Scopes and correlation\n\n```csharp\nusing (logger.BeginScope(new Dictionary<string, object?> { [\"OrderId\"] = orderId }))\n{\n    await ProcessOrderAsync(orderId, cancellationToken);\n}\n```\n\nProviders enrich scopes differently; provider-specific mechanisms such as Serilog `LogContext` are in the reference. Prefer platform trace identifiers when they already correlate requests; add an explicit correlation identifier only for an integration or operational requirement, validate or normalize one accepted from an external client, and propagate tracing context across outbound calls with the project's tracing or HTTP infrastructure.\n",
+            "\nString interpolation in log templates, duplicate exception logging, expected business outcomes logged as errors, dumping full objects without review, provider-specific APIs throughout Application code, and using logs as an audit database unless a dedicated audit design was adopted.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Application logging API | `ILogger<T>` |\n| Context shared across entries | `BeginScope` |\n| Unexpected handled exception | Log once at the handling boundary |\n| Expected business rejection | Usually no Error log |\n| Serilog provider setup | `references/serilog.md` |\n| Measured high-volume hot path | `LoggerMessage` source generator |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              8,
+              14
+            ]
+          ],
+          "context_quotes": [
+            "\nSerilog is the logging provider (decision register); application code keeps using `ILogger<T>`. Policy: `.claude/rules/backend/operations.md`.\n",
+            "\n1. **Two-stage initialization when startup logging matters** — a bootstrap logger captures failures before DI/configuration is available; simpler applications may use host-managed setup without bootstrap logging.\n2. **`builder.Services.AddSerilog()`**, not `builder.Host.UseSerilog()` — integrates with DI via `ReadFrom.Services(services)`.\n3. **Message templates, not interpolation** — `{PropertyName}` creates queryable data; `$\"...\"` breaks structure and allocates even when the level is disabled.\n4. **Configuration in appsettings** — levels, sinks, and overrides change per environment without redeployment.\n5. **Serilog APIs stay at the edges** — `Log.Logger` and `LogContext` belong to composition and provider-specific boundaries.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-014",
+        "name": "Do not log arbitrary payloads by default",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/logging/SKILL.md#Payload Logging"
+        ],
+        "normalized_policy": "Do not serialize arbitrary request bodies, domain objects, or sensitive payloads into logs by default; log the minimum operationally useful non-sensitive context.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-014",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0198",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0203",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0040"
+      ],
+      "boundary_analysis": "Large-graph limits/transforms, dedicated audit design and conditional shutdown flush are registered leaf obligations. U0010 remains the distinct LogContext enrichment prerequisite at line121: operation of optional example versus normative configuration remains unsettled by canonical minimal-logging wording. No new duplicate.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-U0010"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/common/security.md",
+          "sha256": "4918a6023126242d929e270643a38611a0c0137442272130e5a61c8b955caac4",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Never log passwords, access or refresh tokens, private keys, authentication secrets, or full payment credentials. Avoid logging PII unless a concrete operational requirement exists and the project's privacy/security policy permits it. A lower log level does not make sensitive data safe; prefer stable technical identifiers.\n- Do not serialize arbitrary request bodies, domain objects, or sensitive payloads into logs by default; log the minimum operationally useful, non-sensitive context.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "b11e717b5e1fabd883e2866a0940e91532a2c4bbb4ec9051eb161d47cc357fcf",
+          "inspected_ranges": [
+            [
+              50,
+              52
+            ],
+            [
+              54,
+              70
+            ]
+          ],
+          "context_quotes": [
+            "\nAvoid logging authorization headers and full request/response bodies that contain sensitive data; log the specific properties needed for operation and diagnosis. This reduces accidental secret/PII exposure, huge events, serialization cost, and fragile log schemas. Do not rely on log level as a privacy control; prefer stable technical identifiers over personal information.\n",
+            "\nNormal structured `ILogger` calls suffice for most code. For measured high-volume hot paths consider source-generated `LoggerMessage`:\n\n```csharp\npublic static partial class OrderLogs\n{\n    [LoggerMessage(Level = LogLevel.Information, Message = \"Order {OrderId} created for {CustomerId}\")]\n    public static partial void OrderCreated(this ILogger logger, Guid orderId, Guid customerId);\n}\n```\n\nDo not add source-generated logging everywhere to avoid theoretical allocations.\n\n## Anti-patterns\n\nString interpolation in log templates, duplicate exception logging, expected business outcomes logged as errors, dumping full objects without review, provider-specific APIs throughout Application code, and using logs as an audit database unless a dedicated audit design was adopted.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              99,
+              101
+            ],
+            [
+              108,
+              133
+            ]
+          ],
+          "context_quotes": [
+            "\nEnrich only with non-sensitive values (`.claude/rules/common/security.md`).\n",
+            "\nNever destructure large graphs such as `HttpRequest` without limits; configure `Destructure.ToMaximumDepth/StringLength/CollectionCount` or transform to specific properties (`Destructure.ByTransforming<HttpRequest>(r => new { r.Method, r.Path })`).\n\n## LogContext\n\n```csharp\nusing (LogContext.PushProperty(\"CorrelationId\", correlationId))\nusing (LogContext.PushProperty(\"TenantId\", tenantId))\n{\n    logger.LogInformation(\"Processing order {OrderId}\", orderId);\n}\n```\n\nRequires `.Enrich.FromLogContext()`.\n\n## Optional integrations\n\n- OTLP export without the OpenTelemetry SDK: `Serilog.Sinks.OpenTelemetry` (`.WriteTo.OpenTelemetry(o => { o.Endpoint = \"http://localhost:4317\"; o.Protocol = OtlpProtocol.Grpc; })`).\n- Expression filtering (`Serilog.Expressions`): `.Filter.ByExcluding(\"RequestPath like '/health%'\")`, `.WriteTo.Conditional(\"@l = 'Error'\", wt => wt.File(\"logs/errors-.log\", rollingInterval: RollingInterval.Day))`.\n- Elasticsearch: the `Serilog.Sinks.Elasticsearch` package is deprecated; use `Elastic.Serilog.Sinks` (`.WriteTo.Elasticsearch([new Uri(\"https://elastic.example.com:9200\")], opts => opts.DataStream = new DataStreamName(\"logs\", \"myapp\"))`).\n- Audit trails: `AuditTo` (synchronous; exceptions propagate) — only with an adopted audit design.\n\n## Shutdown flush\n\nWhen the static/bootstrap `Log.Logger` is used, flush it on shutdown (`try { app.Run(); } ... finally { await Log.CloseAndFlushAsync(); }`) so asynchronous sinks do not lose buffered events. Purely host-managed logging follows the provider's lifetime instead.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "e43b42b6459244caef00f781f7f4ae1c2abd0b5b54c2a881a2124fa2be468204",
+          "inspected_ranges": [
+            [
+              128,
+              130
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck for passwords, access/refresh tokens, private keys, authentication secrets, and full payment credentials in logs; review PII against project requirements; prefer technical identifiers over identity data. Debug/Trace level is not a security boundary. Review duplicate or missing security-relevant logging in context; do not demand logs for every successful request.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-015",
+        "name": "Outbound dependency calls have bounded execution time",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Timeouts",
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Timeouts"
+        ],
+        "normalized_policy": "External I/O calls must have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-015",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0115",
+        "primary/K1/constraints.jsonl/RULE-K1-0435",
+        "primary/K1/constraints.jsonl/RULE-K1-0437",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0187"
+      ],
+      "boundary_analysis": "Numeric examples are not approved timeouts; actual integration/latency budget governs. Overlap prohibition, total-versus-attempt distinction, repeated-failure circuit breaker gating and operational visibility all registered independently. No universal standard-handler requirement inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/runtime.md",
+          "sha256": "aaf983b678b1e7c88dab5eac278e1047bc22818b79ddd696ec69694e16fe9a68",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Never create and dispose a new `HttpClient` per request; use `IHttpClientFactory` or another appropriate long-lived client strategy.\n- External I/O calls must have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear.\n- Retry only when repeating the operation is safe; never automatically retry state-changing operations without idempotency or another concrete safety mechanism."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nFor external calls check cancellation propagation, timeout strategy, idempotency, retry safety, failure translation, and disposal/lifetime behavior. Never demand retries for operations that are not safe to retry.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "9e76fee882da3f35b08bc184e82332fe637ba44fe85673af5922800e8ca5d447",
+          "inspected_ranges": [
+            [
+              42,
+              44
+            ]
+          ],
+          "context_quotes": [
+            "\nNumeric values in examples are illustrative, not approved defaults; choose retry counts, timeouts, and limits from the actual integration and deployment requirements. Complex rules use a validation delegate:\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "62204b98e58bc367d888490692c58445a26d47cfc7274cbc9cb390ec6cba002b",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ],
+            [
+              80,
+              82
+            ]
+          ],
+          "context_quotes": [
+            "\nPass the caller's token (`await httpClient.SendAsync(request, cancellationToken)`); use `CancellationToken.None` only when the operation intentionally must outlive the incoming request. Choose time limits from the remote operation and the application's latency budget; with resilience pipelines distinguish per-attempt timeout from total-operation timeout.\n",
+            "\nBefore enabling retry determine whether the failure is transient, whether the operation is safe to repeat, whether the remote API supports idempotency, and whether retry may duplicate side effects. POST/PATCH and other state-changing operations need API-defined idempotency keys, naturally idempotent semantics, or explicit deduplication; do not assume a PUT or DELETE implementation is operationally safe merely because the method is defined as idempotent. A timeout is normally required; retry and circuit breaker are not mandatory for every call.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "ae1838108151e5b64897eaef05d02ef6f8b0d282dd8c324007ea9781d3f3c591",
+          "inspected_ranges": [
+            [
+              13,
+              23
+            ],
+            [
+              29,
+              31
+            ],
+            [
+              57,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nThe standard handler fits when its behavior matches the remote API; it is not mandatory for every client. Review its retry behavior carefully for state-changing requests, and do not stack resilience handlers with overlapping strategies. The modern Microsoft packages are built on Polly v8, but application code configures them through the Microsoft.Extensions resilience APIs.\n\n## Timeouts\n\nDistinguish attempt timeout from total operation timeout, especially with retries enabled, and choose values from actual latency requirements rather than copying example numbers.\n\n## Retry\n\nRetry only plausibly transient failures: selected network failures, temporary unavailability, rate limiting when retry is allowed. Never retry validation errors, authentication/authorization failures, permanent `404` outcomes, deterministic business rejections, or non-idempotent operations without duplicate prevention. Before retrying a write ask: *if the first attempt succeeded remotely but the response was lost, what happens when we send it again?* A duplicate side effect means automatic retry is unsafe; use an API-supported idempotency mechanism, and never invent a client-side `Idempotency-Key` the remote service does not support.\n",
+            "\nUse one when repeated calls to a failing dependency would add load or latency; not for a dependency without a meaningful repeated failure pattern. Give it operational visibility when it matters in production.\n",
+            "\n| Scenario | Default consideration |\n|---|---|\n| External I/O | Bound execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Respect `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| Database transient faults | Provider-level strategy (persistence facet) |\n| Incoming request rate limiting | ASP.NET Core rate limiter |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              50,
+              52
+            ]
+          ],
+          "context_quotes": [
+            "\nBaseline integration package: `Serilog.AspNetCore`. A Console sink suffices for a simple local Development baseline; File, Seq, OpenTelemetry, Elasticsearch, and enrichers such as `WithMachineName`/`WithEnvironmentName` are optional — add sinks and enrichers only when the project requires them (`add-dependency`). Numeric limits and retention values in examples are illustrative, not approved defaults.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P015",
+      "canonical_policy": {
+        "id": "RUN-016",
+        "name": "Retries require safe repeat semantics",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Unsafe HTTP Methods",
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Retry"
+        ],
+        "normalized_policy": "Retry only when repeating the operation is safe; do not automatically retry state-changing operations without idempotency or another concrete safety mechanism.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-016",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0438",
+        "primary/K1/constraints.jsonl/RULE-K1-0441",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0189",
+        "primary/K1/constraints.jsonl/RULE-K1-0449",
+        "replica/K1/constraints.jsonl/EXTRA-K1-0039"
+      ],
+      "boundary_analysis": "Union explicitly covers plausibly-transient categories, unsupported idempotency keys, lost-response counterfactual, method-semantics insufficiency, duplicate-safe hedging with default no writes, provider database strategies with wrapped transactions, and business-conditioned publication deduplication/no exactly-once inference. No new retry atom found.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/runtime.md",
+          "sha256": "aaf983b678b1e7c88dab5eac278e1047bc22818b79ddd696ec69694e16fe9a68",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "- External I/O calls must have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear.\n- Retry only when repeating the operation is safe; never automatically retry state-changing operations without idempotency or another concrete safety mechanism.\n- Default: respect `Retry-After` or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nFor external calls check cancellation propagation, timeout strategy, idempotency, retry safety, failure translation, and disposal/lifetime behavior. Never demand retries for operations that are not safe to retry.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              204,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nCreate migrations from the Infrastructure project with the Api project as startup project:\n\n```bash\ndotnet ef migrations add AddOrderIndex --project backend/MyApp.Infrastructure --startup-project backend/MyApp.Api\ndotnet ef migrations script --idempotent --project backend/MyApp.Infrastructure --startup-project backend/MyApp.Api\n```\n\nFor controlled production deployment, generated (idempotent) migration scripts are often preferable; production migration is an explicit deployment step (`delivery-change`).\n\n## Raw SQL\n\nUse raw SQL only when EF Core cannot express the query effectively or measured performance justifies it, and keep values parameterized: `FromSql`/`FromSqlInterpolated` and `ExecuteSql`/`ExecuteSqlInterpolated` parameterize interpolated values, whereas `FromSqlRaw`/`ExecuteSqlRaw` with concatenated input do not.\n\n## SQL Server provider (variant: sqlserver)\n\n- String comparison in queries follows the column/database collation; SQL Server's default collations are case-insensitive. Choosing case sensitivity or a collation is a product decision when observable — make an approved choice explicit with `UseCollation(...)` or a column-level collation in configuration.\n- Transient faults: prefer provider execution strategies (`options.UseSqlServer(cs, sql => sql.EnableRetryOnFailure())`) over generic application-level retry pipelines; with an execution strategy, wrap explicit transactions in `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`. Do not apply HTTP retry policies to database operations.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "fa5bf4fdcb5453aba3fd1952ccec215637dce6ce16251a1ec062b9b03072561c",
+          "inspected_ranges": [
+            [
+              47,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "- **500 Internal Server Error** — unexpected failure without a more specific controlled outcome; centralized exception handling and `ProblemDetails`, without stack traces, SQL, internal paths, credentials, or exception details.\n- **502 Bad Gateway** — acting as an intermediary and receiving an invalid or unusable upstream response; do not map every dependency failure to `502`.\n- **503 Service Unavailable** — temporarily unable to handle the request (maintenance, a critical dependency the operation needs is down, chosen overload semantics); include `Retry-After` when meaningful.\n- **504 Gateway Timeout** — acting as an intermediary and an upstream did not respond in time. Distinguish client cancellation of the incoming request, our own operation timing out, and an upstream timeout; not every `TaskCanceledException` is a `504`.\n\n## Idempotency\n\n`GET` is safe and idempotent, `PUT` idempotent, `DELETE` idempotent in intended state, `POST` generally not. For a `POST` that must not duplicate effects, consider an `Idempotency-Key` header associated with the request/result per the API contract; reuse with a materially different payload → `409`. Do not claim idempotency because duplicates are merely unlikely.\n\n## Optimistic concurrency\n\nWhen HTTP-level optimistic concurrency is part of the contract, use standard conditional semantics: `GET` → `ETag: \"v7\"`; `PUT`/`PATCH` with `If-Match: \"v7\"`; still v7 → success; changed to v8 → `412`; required `If-Match` absent → `428`. Do not replace these with custom status codes.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "62204b98e58bc367d888490692c58445a26d47cfc7274cbc9cb390ec6cba002b",
+          "inspected_ranges": [
+            [
+              61,
+              82
+            ],
+            [
+              98,
+              99
+            ]
+          ],
+          "context_quotes": [
+            "\nPass the caller's token (`await httpClient.SendAsync(request, cancellationToken)`); use `CancellationToken.None` only when the operation intentionally must outlive the incoming request. Choose time limits from the remote operation and the application's latency budget; with resilience pipelines distinguish per-attempt timeout from total-operation timeout.\n\n## Response mapping\n\nTranslate remote responses into the abstraction Application consumes. Do not blindly call `EnsureSuccessStatusCode()` when specific statuses carry contract meaning:\n\n```csharp\nif (response.StatusCode == HttpStatusCode.NotFound)\n{\n    return null;\n}\n\nresponse.EnsureSuccessStatusCode();\n```\n\nTranslate richer failures into explicit Infrastructure/Application outcomes, and do not expose every upstream status code through your own API; the outbound retry behavior and the inbound response your API returns are separate decisions.\n\n## Retry safety\n\nBefore enabling retry determine whether the failure is transient, whether the operation is safe to repeat, whether the remote API supports idempotency, and whether retry may duplicate side effects. POST/PATCH and other state-changing operations need API-defined idempotency keys, naturally idempotent semantics, or explicit deduplication; do not assume a PUT or DELETE implementation is operationally safe merely because the method is defined as idempotent. A timeout is normally required; retry and circuit breaker are not mandatory for every call.\n",
+            "\nMaking typed/keyed/named clients mandatory universally, infinite or poorly bounded retries, ignoring cancellation, dynamic auth tokens in shared `DefaultRequestHeaders`, mapping every upstream failure to the same status, and adding resilience pipelines without understanding their behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "ae1838108151e5b64897eaef05d02ef6f8b0d282dd8c324007ea9781d3f3c591",
+          "inspected_ranges": [
+            [
+              13,
+              23
+            ],
+            [
+              29,
+              47
+            ],
+            [
+              57,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nThe standard handler fits when its behavior matches the remote API; it is not mandatory for every client. Review its retry behavior carefully for state-changing requests, and do not stack resilience handlers with overlapping strategies. The modern Microsoft packages are built on Polly v8, but application code configures them through the Microsoft.Extensions resilience APIs.\n\n## Timeouts\n\nDistinguish attempt timeout from total operation timeout, especially with retries enabled, and choose values from actual latency requirements rather than copying example numbers.\n\n## Retry\n\nRetry only plausibly transient failures: selected network failures, temporary unavailability, rate limiting when retry is allowed. Never retry validation errors, authentication/authorization failures, permanent `404` outcomes, deterministic business rejections, or non-idempotent operations without duplicate prevention. Before retrying a write ask: *if the first attempt succeeded remotely but the response was lost, what happens when we send it again?* A duplicate side effect means automatic retry is unsafe; use an API-supported idempotency mechanism, and never invent a client-side `Idempotency-Key` the remote service does not support.\n",
+            "\nUse one when repeated calls to a failing dependency would add load or latency; not for a dependency without a meaningful repeated failure pattern. Give it operational visibility when it matters in production.\n\n## Fallback\n\nValid: stale cached read data where staleness is explicitly acceptable; optional enrichment omitted when its service is unavailable. Invalid: \"payment provider unavailable → pretend payment succeeded\".\n\n## Hedging\n\nHedging issues parallel or delayed duplicate attempts — only for operations safe to execute multiple times, typically idempotent reads against interchangeable endpoints; never for state-changing operations by default.\n\n## Database operations\n\nDo not wrap normal database operations in a generic application-level retry pipeline or apply an HTTP retry policy to them; use the persistence technology's provider-level transient-fault handling (persistence knowledge facet named in the decision register).\n\n## Message publishing\n\nRetrying publication may produce duplicate delivery; use idempotent consumers, broker deduplication, an outbox, or similar mechanisms when the business requires them, and never claim exactly-once delivery merely because a retry policy exists.\n",
+            "\n| Scenario | Default consideration |\n|---|---|\n| External I/O | Bound execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Respect `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| Database transient faults | Provider-level strategy (persistence facet) |\n| Incoming request rate limiting | ASP.NET Core rate limiter |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "e43b42b6459244caef00f781f7f4ae1c2abd0b5b54c2a881a2124fa2be468204",
+          "inspected_ranges": [
+            [
+              154,
+              156
+            ]
+          ],
+          "context_quotes": [
+            "\nReview retries of state-changing operations: a lost response followed by a retry can duplicate effects; check that caller cancellation is never retried (`.claude/rules/backend/runtime.md`). Technique: `httpclient-factory` (including its resilience reference).\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

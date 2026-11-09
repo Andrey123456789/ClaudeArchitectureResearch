@@ -1,0 +1,53 @@
+# K0 — check-instructions.cjs (instruction-structure checker; run by /template-maintenance and the post-change hook)
+
+@@ output/template/.claude/scripts/check-instructions.cjs ;; Instruction-structure checker (repo/meta).
+@scope repo/meta: check-instructions.cjs (run by /template-maintenance and after instruction edits by the post-change hook)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+2-24 IM ;; Usage comment, strict mode, imports and tables (Kinds, Scopes, rule scopes, required workflows/knowledge, user-only workflows, retired names, root files, header patterns, forbidden level/capability fields) consumed by the checks below.
+26-29 DU [x.ci-conformance-direction] ;; Comment describing the conformance direction enforced at 411-465. ;; Conformance direction WF → KNW → STD → DEC → OP
+30-55 IM ;; Conformance table, routing-pointer patterns, required hook registrations and command patterns consumed by the checks below.
+57-130 IM ;; Fence/frontmatter parsing (malformed fences reported), shingles, scope-glob territory helper, check entry and directory walk.
+131 EX [x.ci-no-empty-dirs]
+132-141 IM ;; Directory walk continued.
+143-145 NN ;; Section comment.
+147-162 IM ;; File collection and location-to-Kind mapping.
+163-186 EX [x.ci-kind-location]
+188-193 IM ;; Lookup tables (artifacts, skill directories, agents).
+194-209 EX [x.ci-kind-location]
+211-223 EX [x.ci-std-rules]
+225-241 EX [x.ci-skills]
+243-247 EX [x.ci-references-private]
+249-255 EX [x.ci-knw-no-normative]
+257-261 OL [wf010.ci-agent]
+262 IM ;; Closing brace.
+264-265 EX [x.ci-skills]
+266-267 OL [wf010.ci-agent]
+269-271 NN ;; Section comment.
+273-284 IM ;; Register path/Kind helpers.
+285-314 EX [x.ci-register]
+316-335 EX [x.ci-cite-affects]
+337-339 NN ;; Section comment.
+341-410 IM ;; Reference resolution, target Kinds, headings and section lookup, per-line reference extraction and section-reference checker (applied at 449).
+411-465 EX [x.ci-conformance-direction]
+467-472 EX [x.ci-root-aware-commands]
+474-476 NN ;; Section comment.
+478-514 EX [x.ci-hook-config]
+516-518 NN ;; Section comment.
+520-534 EX [x.ci-map]
+536-538 NN ;; Section comment.
+540-549 IM ;; Informational always-loaded size estimate (no error); return value.
+551-567 IM ;; CLI (root resolution, output, exit 1 on errors) and export.
+
+C x.ci-no-empty-dirs EX ARC-027 ENFORCED_ADVISORY ;; An empty directory inside .claude/ or docs/ is an error: create directories only for real content. ;; = ;; none ;; Instruction-tree directory rule (repo/meta).
+C x.ci-kind-location EX - ENFORCED_ADVISORY ;; Instruction files are classified by location: no numbered/level-ordered directories, no capability contracts/manifests/slots/facets, rule files inside a scope directory, no unclassified files under .claude/ or docs/architecture/; every artifact carries the first-line 'Kind | Scope | Owner | Loading' header with known Kind/Scope, no level/capability fields, Kind matching location; OP/DEC load always; IN is read as input. ;; = ;; Project-owned root build files without a header are skipped. ;; Instruction-system structure invariants.
+C x.ci-std-rules EX - ENFORCED_ADVISORY ;; Standards live directly in .claude/rules/<scope>/<topic>.md with matching Scope, are path-scoped with non-empty paths inside the scope territory, and contain no numbered procedures or Step/Procedure headings. ;; = ;; none ;; Standard-placement invariants.
+C x.ci-skills EX - ENFORCED_ADVISORY ;; Skills: frontmatter name equals the directory, concrete description (20+ characters), KNW loads on demand and stays model-invocable, WF loads as a workflow, required workflows and knowledge skills exist with the right Kind, template-maintenance sets disable-model-invocation: true. ;; = ;; none ;; Skill-structure invariants.
+C x.ci-references-private EX - ENFORCED_ADVISORY ;; A skill's references/ files share its Kind, state that only the skill reads them, and are referenced only from that skill. ;; = ;; none ;; Private-reference invariant.
+C x.ci-knw-no-normative EX - ENFORCED_ADVISORY ;; A knowledge-skill or knowledge-reference line using must/never/requires approval without an owner reference (rules/, CLAUDE.md or a D-xx ID) is an error: move the rule to its standard and point to it. ;; = ;; Lines citing an owner. ;; Knowledge-normativity invariant.
+C wf010.ci-agent OL WF-010 ENFORCED_ADVISORY ;; The code-reviewer agent must exist, carry a matching frontmatter name, load as a delegated agent and delegate to the code-review workflow. ;; = ;; none ;;
+C x.ci-register EX - ENFORCED_ADVISORY ;; Exactly one Kind DEC register (docs/architecture/decision-register.md); CLAUDE.md imports exactly that register; rows are 'ID | Decision | Details in | Affects' with unique D-xx IDs and non-empty summaries; Affects targets exist, are not duplicated and are STD/KNW/WF/ENF; Details-in targets exist and are listed in Affects; the Decision cell does not depend on rules/skills/scripts. ;; = ;; none ;; Decision-register invariants.
+C x.ci-cite-affects EX - ENFORCED_ADVISORY ;; An artifact citing D-xx must be listed in that decision's Affects; decision rows exist only in the register; artifacts must not restate a decision (8-word overlap) but cite its ID. ;; = ;; none ;; Decision-citation invariants.
+C x.ci-conformance-direction EX - ENFORCED_ADVISORY ;; References must resolve (no retired or unknown skill names; section references must exist; private references stay private); non-routing references follow the conformance direction WF → KNW → STD → DEC → OP, ENF → STD/DEC, and the dependency graph is acyclic. ;; = ;; Routing pointers (See also/Workflow/Technique/Procedure/Enforced by/Loading labels, invocations, routing sections, imports, register Details in/Affects cells, enforcement messages) may point anywhere. ;; Conformance-direction invariant.
+C x.ci-root-aware-commands EX - ENFORCED_ADVISORY ;; Manual tool invocations in instruction files and the map must not be relative to the current directory; use node "$(git rev-parse --show-toplevel)/.claude/…". ;; = ;; none ;; Command-form invariant.
+C x.ci-hook-config EX - ENFORCED_ADVISORY ;; settings.json hooks are exec-form command hooks (executable-only command, args [${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>, <event>], existing script handling the event, no variable expansion in further args, positive timeout); onFailure only as block on PreToolUse; the four required registrations exist with matchers covering their tools and the PreToolUse policy hook fails closed. ;; = ;; none ;; Hook-configuration invariants.
+C x.ci-map EX - ENFORCED_ADVISORY ;; .claude/MAP.md exists, states it is not loaded, lists every artifact plus SPECIFICATION.md and settings.json, and its Decision → Affects view matches the register. ;; = ;; none ;; Map-maintenance invariant.

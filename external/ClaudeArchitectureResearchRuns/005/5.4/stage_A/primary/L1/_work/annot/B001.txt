@@ -1,0 +1,271 @@
+# L1 — B001: capability contracts, module manifests, workflow-read facets, code-reviewer agent
+
+@@ output/template/.claude/agents/code-reviewer.md ;; Agent definition (delegated reviewer; preloads code-review).
+@scope code-reviewer agent (on delegation)
+1-4 IM ;; Frontmatter (name, description, preloaded code-review skill).
+5 OL [wf010.reviewer-readonly]
+6 IM ;; Frontmatter end.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 OL [wf010.reviewer-readonly,wf010.reviewer-canonical]
+14 OL [wf001.reviewer-read-rules,wf007.reviewer-scan-when]
+16 OL [wf012.reviewer-output]
+
+C wf010.reviewer-readonly OL WF-010 MUST_NOT ;; Independent read-only review: never edit files; Write, Edit, MultiEdit and NotebookEdit are disallowed (shell tools are not). ;; = ;; none ;;
+C wf010.reviewer-canonical OL WF-010 MUST ;; Use the code-review skill as the canonical procedure (load it first) and follow its scope, priorities and output instead of redefining criteria. ;; = ;; none ;;
+C wf001.reviewer-read-rules OL WF-001 MUST ;; Read the rule files governing the changed paths before judging; the subagent context does not inherit loaded rules. ;; = ;; none ;;
+C wf007.reviewer-scan-when OL WF-007,WF-020 MUST ;; Run the full security-scan only on request, for materially security-sensitive changes or when a concrete finding justifies it. ;; = ;; none ;;
+C wf012.reviewer-output OL WF-012,WF-010 MUST ;; Return findings ordered by severity, or an explicit no-findings statement plus areas that could not be verified. ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/architecture/CONTRACT.md ;; Slot contract (maintainer metadata, never auto-loaded).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 EX [x.cap-frame-placement]
+7 NN ;; Heading.
+9-10 NN ;; Table header.
+11-14 EX [x.cap-required-facets]
+16 NN ;; Heading.
+18-20 EX [x.cap-frame-obligations]
+22 NN ;; Heading.
+24 EX [x.reserved-selection-adr,x.cap-replacement-complete]
+
+C x.cap-frame-placement EX - MUST ;; The frame maps the role vocabulary to projects and owns placement; leaf slots depend on roles, not frame terms; placement belongs to the frame, technique to the leaf. ;; = ;; none ;; Capability-system rule (repo/meta).
+C x.cap-required-facets EX - ENFORCED ;; Each slot contract lists required facets (form, level, loading, content) that the selected module must provide; checked by check-instructions.mjs. ;; = ;; none ;; Capability-system invariant (repo/meta).
+C x.cap-frame-obligations EX - MUST ;; The frame expresses every role in roles.md without contradicting role-level rules, keeps leaf technology out of frame facets, and leaf bindings not expressible through roles are declared as binds in the leaf manifest. ;; = ;; none ;; Capability-system rule (repo/meta).
+C x.cap-replacement-complete EX ARC-020 MUST ;; A replacement module supplies every required facet, updates the selection record (and the CLAUDE.md import of a style/stack facet) and passes check-instructions.mjs; workflows refer only to slot facets. ;; = ;; Module replacement. ;; Capability replacement procedure (repo/meta).
+
+@@ output/template/.claude/capabilities/architecture/clean-architecture/MODULE.md ;; Module manifest (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Descriptive module summary.
+7-10 IM ;; Manifest data (binds, leak tokens, frame terms, placement examples) consumed by check-instructions.mjs.
+12 NN ;; Heading.
+14-15 NN ;; Table header.
+16-19 IM ;; Facet manifest table.
+21 NN ;; Heading.
+23 EX [x.cap-replacement-complete]
+
+@@ output/template/.claude/capabilities/architecture/clean-architecture/layout.md ;; Workflow-read facet architecture.layout (read by project-structure and other workflows).
+@scope workflow-read facet architecture.layout (scaffolding and placement)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [arc027.layout-real-code]
+7 NN ;; Heading.
+9-17 NN ;; Project tree (target, not checklist).
+19 NN ;; Heading.
+21-25 NN ;; Domain tree.
+27 OL [arc005.layout-ddd-dirs]
+29 NN ;; Heading.
+31-40 MX [x.layout-folder-roles,arc023.layout-app-di] ;; Application folder roles with their comments are added layout conventions; AddApplication registering only Application services and validation restates ARC-023.
+42 MX [x.layout-type-roles,arc027.layout-no-buckets] ;; Type-role suffix heuristics and subdirectories only when needed are added; avoiding generic Models/Helpers/Common/Utils buckets is ARC-027.
+44 NN ;; Heading.
+46-56 MX [x.layout-folder-roles,arc023.layout-infra-di] ;; Infrastructure folder roles are added conventions; AddInfrastructure registering persistence, repositories, commit boundary and adapters restates ARC-023.
+58 EX [x.layout-services-subdirs]
+60 NN ;; Heading.
+62-73 MX [x.layout-folder-roles,x.layout-program-extensions,arc027.layout-real-code] ;; Api folder roles and Extensions not merely to shorten Program.cs are added; Middleware only when custom middleware exists restates ARC-027.
+75 OL [arc012.layout-composition]
+77 IM ;; Technique pointer.
+79 NN ;; Heading.
+81-86 OL [arc001.layout-ref-graph]
+88 OL [arc001.layout-ref-graph]
+90 NN ;; Heading.
+92-93 NN ;; Table header.
+94-97 OL [arc028.layout-test-projects]
+99 OL [arc027.layout-no-domain-tests,dep024.layout-frontend-tests]
+
+C arc027.layout-real-code OL ARC-027 MUST_NOT ;; Create only directories that contain real code (e.g. Middleware only when custom middleware exists); trees are targets, not checklists. ;; = ;; none ;;
+C arc005.layout-ddd-dirs OL ARC-005,ARC-004 MUST_NOT ;; ValueObjects/DomainServices/Events/Exceptions only when an approved design needs them; business rules alone do not justify DDD directories. ;; = ;; Approved design. ;;
+C x.layout-folder-roles EX ARC-027,DEP-024 DEFAULT ;; Folder roles: Application Abstractions/Persistence (no persistence-implementation types), Abstractions/ExternalServices (only once dependencies exist), Services, DTOs (not a dumping ground), Validation; Infrastructure Persistence/{Configurations,Repositories,Migrations,Seeding}, Services; Api entry-point folder, Contracts/Requests|Responses, Middleware, Extensions. ;; = ;; Only when needed. ;; Layout convention not in the oracle.
+C arc023.layout-app-di OL ARC-023 DEFAULT ;; AddApplication() registers Application services and validation only. ;; = ;; none ;;
+C x.layout-type-roles EX RUN-009 DEFAULT ;; Supporting-type roles clear from name/directory using suffixes (Service, Dto, Request/Response — HTTP contracts in Api, Result/Outcome, Validator, Rules/Policy, Factory, Mapper, Adapter); prefer unambiguous names; responsibility subdirectories only for many heterogeneous types. ;; = ;; none ;; Naming heuristics not in the oracle.
+C arc027.layout-no-buckets OL ARC-027 AVOID ;; Avoid generic Models/Helpers/Common/Utils buckets. ;; = ;; none ;;
+C arc023.layout-infra-di OL ARC-023 DEFAULT ;; AddInfrastructure(configuration) registers persistence, repositories, the commit boundary, adapters, outbound HTTP integrations and resilience handlers when used. ;; = ;; none ;;
+C x.layout-services-subdirs EX ARC-027 DEFAULT ;; Create capability-specific subdirectories under Infrastructure Services/ when they improve cohesion. ;; = ;; none ;; Not in the oracle.
+C x.layout-program-extensions EX ARC-012 MUST_NOT ;; Extensions/ holds cohesive composition extensions, not code moved merely to shorten Program.cs. ;; = ;; none ;; Not in the oracle.
+C arc012.layout-composition OL ARC-012,ARC-023 DEFAULT ;; Program.cs calls AddApplication() and AddInfrastructure(configuration). ;; = ;; none ;;
+C arc001.layout-ref-graph OL ARC-001 MUST ;; Reference graph: Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application, Infrastructure; never Domain→Application/Infrastructure or Application→Infrastructure. ;; = ;; none ;;
+C arc028.layout-test-projects OL ARC-028,ARC-027 DEFAULT ;; Test projects and typical references: Application.Tests (use-case behaviour; Application + Domain), IntegrationTests (through the host; Api), optional Domain.Tests (non-trivial Domain; Domain), optional Infrastructure.Tests (non-trivial Infrastructure; narrower as required). ;; = ;; none ;;
+C arc027.layout-no-domain-tests OL ARC-027 MUST_NOT ;; A simple Domain of entities and enums needs no dedicated test project. ;; = ;; none ;;
+C dep024.layout-frontend-tests OL DEP-024 DEFAULT ;; Frontend tests stay inside the frontend workspace. ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/persistence/CONTRACT.md ;; Slot contract (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 EX [x.cap-frame-placement]
+7 NN ;; Heading.
+9-10 NN ;; Table header.
+11-17 EX [x.cap-required-facets]
+19 NN ;; Heading.
+21 EX [x.cap-declared-properties]
+23 NN ;; Heading.
+25 EX [x.cap-binds-required]
+26 EX [x.cap-conformance-decision]
+27 EX [x.cap-replacement-semantics]
+28 MX [x.cap-provider-variant,gov006.provider-collation] ;; Provider change as an in-slot, Reserved variation with listed updates is added; observable string-comparison changes needing approval restates GOV-006.
+
+C x.cap-declared-properties EX GOV-006,PST-010 MUST ;; The selection record declares provider variant, default string-comparison/case-sensitivity semantics, migration mechanism and seeding mechanism for the persistence slot. ;; = ;; none ;; Capability-system rule (repo/meta).
+C x.cap-binds-required EX - MUST ;; The selected persistence module declares binds to the selected frame because its commands name frame projects. ;; = ;; none ;; Capability-system rule (repo/meta).
+C x.cap-conformance-decision EX GOV-017 MUST ;; A missing required facet is a conformance failure: raise a Decision Request instead of shipping the module. ;; = ;; none ;; Not in the oracle.
+C x.cap-replacement-semantics EX PST-005,PST-006,PST-010 MUST_NOT ;; Replacing the persistence implementation must not silently lose migration or seeding semantics; the new module states its mechanisms explicitly. ;; = ;; Implementation replacement. ;; Not in the oracle.
+C x.cap-provider-variant EX DEP-009,ARC-020 REQUIRES_APPROVAL ;; A database-provider change is a Reserved variation inside the persistence slot requiring updates to declared properties, dev-config, relational-fidelity binding and commands. ;; = ;; none ;; Not in the oracle.
+C gov006.provider-collation OL GOV-006 REQUIRES_APPROVAL ;; Observable string-comparison changes from a provider change need approval. ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/persistence/ef-core/MODULE.md ;; Module manifest (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Descriptive module summary.
+7-8 IM ;; Manifest data (binds, leak tokens) consumed by check-instructions.mjs.
+10 NN ;; Heading.
+12-13 NN ;; Table header.
+14-20 IM ;; Facet manifest table.
+22 NN ;; Heading.
+24 DU ;; Declared properties restated from the decisions.md selection record (captured there as DEP-009/GOV-006 constraints).
+
+@@ output/template/.claude/capabilities/persistence/ef-core/commands.md ;; Workflow-read facet persistence.commands.
+@scope workflow-read facet persistence.commands (scaffolding, migrations, verification)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep006.cmd-via-add-dependency]
+7 NN ;; Heading.
+9-10 NN ;; Table header.
+11-13 EX [x.ef-scaffold-packages]
+14 OL [tst007.cmd-testcontainers]
+16 EX [x.ef-registration]
+18 NN ;; Heading.
+20-22 NN ;; Migration commands.
+23 OL [pst009.cmd-remove-uncommitted]
+24-25 NN ;; Script command and fence.
+27 NN ;; Heading.
+29-32 NN ;; Local database commands (comments restate the Development-only scope captured at line 34).
+34 OL [wf019.cmd-no-prod]
+
+C dep006.cmd-via-add-dependency OL DEP-003,DEP-004,DEP-006 MUST ;; Install packages only through add-dependency (latest stable compatible version; NuGet versions in Directory.Packages.props). ;; = ;; none ;;
+C x.ef-scaffold-packages EX DEP-009,DEP-006 DEFAULT ;; Scaffold package placement: Microsoft.EntityFrameworkCore.SqlServer in Infrastructure, Microsoft.EntityFrameworkCore.Design in the Api startup project, dotnet-ef via a tool manifest. ;; = ;; none ;; Package placement not in the oracle.
+C tst007.cmd-testcontainers OL TST-007,DEP-013 DEFAULT ;; Testcontainers.MsSql only when isolated real-provider tests justify it. ;; = ;; none ;;
+C x.ef-registration EX ARC-023 DEFAULT ;; Register the context in AddInfrastructure with UseSqlServer(GetConnectionString("DefaultConnection")); the Development string follows persistence.dev-config. ;; = ;; none ;; Registration technique not in the oracle.
+C pst009.cmd-remove-uncommitted OL PST-009 MUST ;; Remove a migration only when it is unapplied and uncommitted. ;; = ;; none ;;
+C wf019.cmd-no-prod OL WF-019 MUST_NOT ;; Never point database update/drop commands at Production; production migration is a deployment step. ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/persistence/ef-core/workflow.md ;; Workflow-read facet persistence.workflow (read by development-workflow, custom-settings, verify, code-review).
+@scope workflow-read facet persistence.workflow (model/persistence changes, schema-affecting settings)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [wf001.pw-read-rules]
+7 NN ;; Heading.
+9 EX [x.pw-update-configs]
+10 OL [pst008.pw-seed-cochange]
+11 EX [x.pw-migration-project]
+12 OL [pst010.pw-review]
+13 OL [pst008.pw-seed-with-migration,pst006.pw-no-patch]
+15 NN ;; Heading.
+17-22 OL [pst009.pw-schema-settings]
+24 NN ;; Heading.
+26 EX [x.pw-verify-migrations]
+27 EX [x.pw-verify-seed]
+28 OL [wf019.pw-explicit-deploy]
+30 NN ;; Heading.
+32 EX [x.pw-report]
+
+C wf001.pw-read-rules OL WF-001 MUST ;; Read persistence access and seeding rules first when they have not loaded. ;; = ;; none ;;
+C x.pw-update-configs EX ARC-019 MUST ;; Update affected entity configurations (IEntityTypeConfiguration<T>) and repository implementations for a model change. ;; = ;; none ;; Not in the oracle.
+C pst008.pw-seed-cochange OL PST-008 MUST ;; Whenever model/persistence changes affect seeded entities (properties, relationships, required related entities, enum/status values, states, invariants) update DbSeeder in the same change. ;; = ;; none ;;
+C x.pw-migration-project EX ARC-019 DEFAULT ;; When the schema changes add a migration from the implementation-layer project with the entry-point project as startup project. ;; = ;; Schema changes. ;; Migration command technique not in the oracle.
+C pst010.pw-review OL PST-010 MUST ;; Review every generated migration before committing (destructive changes, column recreation, data migrations, indexes, FKs, delete behaviour). ;; = ;; none ;;
+C pst008.pw-seed-with-migration OL PST-008,PST-001 MUST ;; Review DbSeeder with migrations changing seeded entities; recreating an empty Development database must yield valid seed data. ;; = ;; none ;;
+C pst006.pw-no-patch OL PST-006 MUST_NOT ;; Migrating an existing Development database does not require the seeder to patch existing rows. ;; = ;; none ;;
+C pst009.pw-schema-settings OL PST-009 MUST ;; For schema-affecting settings update the mapping, create a migration when needed (edit uncommitted ones only per the normal workflow; do not casually alter existing migrations), verify seeding, update provider-sensitive tests. ;; = ;; none ;;
+C x.pw-verify-migrations EX WF-005 MUST ;; Build the affected projects and list or script pending migrations to confirm the expected schema change. ;; = ;; none ;; Not in the oracle.
+C x.pw-verify-seed EX PST-005,WF-006 MUST ;; Apply migrations to a local Development database explicitly, start the API in Development and confirm the seeder populates an empty database or leaves an existing one unchanged. ;; = ;; none ;; Not in the oracle.
+C wf019.pw-explicit-deploy OL WF-019 MUST ;; Production schema changes stay an explicit deployment step (an idempotent script is often the better artifact). ;; = ;; none ;;
+C x.pw-report EX WF-009 MUST ;; Report model changes, migration names with review notes (destructive operations called out), whether DbSeeder was updated, and tests added/updated. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/capabilities/backend-testing/CONTRACT.md ;; Slot contract (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 EX [x.cap-leaf-boundary]
+7 NN ;; Heading.
+9-10 NN ;; Table header.
+11-14 EX [x.cap-required-facets]
+16 NN ;; Heading.
+18 EX [x.cap-replacement-complete,x.reserved-selection-adr]
+
+C x.cap-leaf-boundary EX - MUST ;; Implementation-independent policy stays in neutral rule files outside leaf modules; placement and references belong to the frame. ;; = ;; none ;; Capability-system rule (repo/meta).
+
+@@ output/template/.claude/capabilities/backend-testing/nunit/MODULE.md ;; Module manifest (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Descriptive module summary.
+7-8 IM ;; Manifest data (binds, leak tokens).
+10 NN ;; Heading.
+12-13 NN ;; Table header.
+14-17 IM ;; Facet manifest table.
+
+@@ output/template/.claude/capabilities/backend-testing/nunit/commands.md ;; Workflow-read facet backend-testing.commands.
+@scope workflow-read facet backend-testing.commands
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep006.cmd-via-add-dependency]
+7 NN ;; Heading.
+9-13 NN ;; Scaffold commands.
+15 OL [dep006.cmd-move-versions]
+17-18 NN ;; Table header.
+19-22 MX [dep013.cmd-packages,x.nunit-scaffold-packages] ;; NUnit, adapter, test SDK and Mvc.Testing restate DEP-013; NUnit.Analyzers and TimeProvider.Testing are added package conventions.
+24 NN ;; Heading.
+26-32 NN ;; Test run commands.
+
+C dep006.cmd-move-versions OL DEP-006 MUST ;; Move versions written by dotnet new nunit into Directory.Packages.props and keep PackageReference entries versionless. ;; = ;; none ;;
+C dep013.cmd-packages OL DEP-013,TST-006 DECIDED ;; Test packages: NUnit, NUnit3TestAdapter, Microsoft.NET.Test.Sdk; Microsoft.AspNetCore.Mvc.Testing for WebApplicationFactory integration tests. ;; = ;; none ;;
+C x.nunit-scaffold-packages EX DEP-013 DEFAULT ;; NUnit.Analyzers (template default) and Microsoft.Extensions.TimeProvider.Testing when time control is useful. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/capabilities/frontend/CONTRACT.md ;; Slot contract (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 EX [x.cap-leaf-boundary]
+7 NN ;; Heading.
+9-10 NN ;; Table header.
+11-15 EX [x.cap-required-facets]
+17 NN ;; Heading.
+19 EX [x.cap-optional-clear,x.reserved-selection-adr]
+
+C x.cap-optional-clear EX - MUST ;; Clearing the optional frontend slot: set the selection to none, delete the manifest-listed files, remove the frontend-stack import and map rows, run the checker; neutral rules stay and load only for frontend paths. ;; = ;; Frontend removal. ;; Capability-system procedure (repo/meta).
+
+@@ output/template/.claude/capabilities/frontend/angular/MODULE.md ;; Module manifest (maintainer metadata).
+@scope repo/meta (capability maintenance)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Descriptive module summary.
+7-8 IM ;; Manifest data (binds, leak tokens).
+10 NN ;; Heading.
+12-13 NN ;; Table header.
+14-18 IM ;; Facet manifest table.
+20 NN ;; Heading.
+22 EX [x.cap-optional-clear]
+
+@@ output/template/.claude/capabilities/frontend/angular/commands.md ;; Workflow-read facet frontend.commands.
+@scope workflow-read facet frontend.commands
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep006.cmd-via-add-dependency]
+7 NN ;; Heading.
+9 MX [dep014.cmd-scaffold,x.ng-confirm-cli-flags] ;; Creating the workspace with the current CLI per the stack baseline is DEP-014; confirming flags with ng new --help rather than memory is added.
+11-14 NN ;; Scaffold commands.
+16 OL [dep014.cmd-cli-versions]
+18 NN ;; Heading.
+20-27 NN ;; Command reference table (conditions restate DEP-016 and the script rule at line 29).
+29 OL [wf018.cmd-existing-scripts]
+31 NN ;; Heading.
+33 NN ;; Reference list of common failure categories.
+35 OL [wf015.cmd-invalid-shortcuts]
+
+C dep014.cmd-scaffold OL DEP-014,DEP-024 MUST ;; Create the workspace at frontend/<Name>.Web/ with the current Angular CLI using the stack baseline (standalone, routing, SCSS, strict, zoneless when supported). ;; = ;; none ;;
+C x.ng-confirm-cli-flags EX DEP-014 MUST ;; Confirm the exact flags of the installed CLI with ng new --help rather than from memory. ;; = ;; none ;; Not in the oracle.
+C dep014.cmd-cli-versions OL DEP-014,DEP-003 MUST_NOT ;; Let the CLI choose compatible TypeScript and RxJS versions; do not upgrade TypeScript beyond Angular's supported range independently. ;; = ;; none ;;
+C wf018.cmd-existing-scripts OL WF-018,WF-013 MUST_NOT ;; Inspect package.json before running anything; use scripts that exist and never invent script names. ;; = ;; none ;;
+C wf015.cmd-invalid-shortcuts OL WF-015,FE-001,DEP-015 MUST_NOT ;; Invalid repair shortcuts: converting to any, disabling strict mode, suppressing template diagnostics, adding NgModules for standalone problems, speculative API replacement, adding another state/HTTP library. ;; = ;; none ;;

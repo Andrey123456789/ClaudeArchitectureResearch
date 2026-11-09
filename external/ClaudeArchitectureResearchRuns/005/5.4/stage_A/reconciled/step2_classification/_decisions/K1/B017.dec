@@ -1,0 +1,75 @@
+# K1 B017 — skills/httpclient-factory references, skills/logging and references/serilog
+1 CO RUN-015~ m=MN c=M | RUN-015's 'avoid overlapping timeout mechanisms'; this source says 'do not stack', so MUST NOT stands.
+2 XP m=D rel=RUN-015 | Same reading as M1, L0, L1 and K0: operational visibility (EXC-007); the reported MUST is not accepted (A1).
+  s: Bounded, safe retries with no signal on retry counts or circuit state: RUN-015 and RUN-016 are satisfied; K1's guidance is not.
+3 CO DEP-020~ m=D | Restates its package clause.
+4 CO DEP-011~ GOV-013~ RUN-016~ m=D sr=SL c=M | Same family as M1 and K0: a mechanism only for justified semantics. The DEFAULT link supplies the strength.
+5 CO DEP-011~ GOV-013~ RUN-016~ m=D sr=SL c=M | Same clause; the reported MUST is not accepted (A1).
+6 CO DEP-020~ m=D | Same reading as M, M1, L0, L1 and K0: Microsoft.Extensions APIs rather than direct Polly.
+7 CO RUN-015~ m=MN c=M | Same clause as FG-K1-3a6179f04e.
+8 CO RUN-016~ m=D st=W sr=GR rel=DEP-020 | Same reading as M1, L0, L1 and K0: 'review its retry behavior' is guidance.
+9 CO RUN-015~ m=MN c=M rel=RUN-016 | Same clause.
+  t: composing resilience handlers
+  e: NONE
+10 CO RUN-015~ m=D st=W sr=GR | Same reading as M1, L0 and K0.
+11 CO RUN-016~ m=MN | Same reading as M, M1, L0 and L1: an invented key gives no real safety mechanism.
+  t: making retries safe
+  e: NONE
+12 XP m=MN rel=RUN-016 | Same reading as L0, L1 and K0: RUN-016 limits retries by repeat safety; repeating a futile but safe call is not forbidden.
+  t: choosing which failures to retry
+  e: NONE
+  s: A rejected validation request is retried twice with no side effect: RUN-016 is satisfied; K1's rule is not.
+13 MX c=M | A limit beyond repeat safety, plus RUN-016 itself.
+  - XP m=MN rel=RUN-016,RUN-019 | Retry only plausibly transient failures; never validation, authentication/authorization, permanent 404 or deterministic rejections.
+    s: As for FG-K1-6ee32b45c6.
+  - CO RUN-016~ m=MN | Never non-idempotent operations without duplicate prevention; ask what a resend does after a lost response; never invent an unsupported Idempotency-Key.
+14 CO RUN-017~ m=D c=M | Same clause; 'never hammer' is RUN-017's 'do not retry aggressively'.
+15 XP m=D rel=RUN-015,DEP-011 | Same reading as M1, L0, L1 and K0: circuit-breaker conditions (EXC-007).
+  s: A circuit breaker on a repeatedly failing dependency with no production visibility: RUN-015 and DEP-011 are satisfied; K1's guidance is not.
+16 CO RUN-018~ c=M | Valid and invalid fallbacks; 'invalid' keeps the strength.
+17 CO RUN-016~ m=MN c=M | Same reading as M, M1, L0, L1 and K0: hedging issues duplicate attempts, so RUN-016's safety test applies.
+18 XP m=MN c=M rel=RUN-016,ARC-019 | Same family as M1, L0, L1 and K0: database retry technique (EXC-007).
+  s: A generic retry pipeline around database reads that are safe to repeat: RUN-016 is satisfied; K1's rule is not.
+19 XP m=D rel=RUN-016 | Same reading as M1, L0, L1 and K0: message delivery technique (EXC-007).
+  s: A retried publish made safe by a sequence check, with delivery described as exactly-once: RUN-016 is satisfied; K1's guidance is not.
+20 XP m=D c=M rel=RUN-017 | Same reading as M, L0 and K0: inbound rate limiting is outside the outbound policy.
+  s: An inbound 429 with no Retry-After although a delay is known: RUN-017 covers outbound guidance and is satisfied; K1's guidance is not.
+21 MX c=M | Same split as M, M1, L0 and L1 records read apart.
+  - XP m=D rel=RUN-015 | Observe retries, timeouts, circuit state, rate-limit rejections and latency when they matter.
+    s: As for FG-K1-4e86dd3e09.
+  - CO GOV-013~ DEP-002~ m=MN | The adopted telemetry stack; OpenTelemetry is not required merely because pipelines exist.
+22 CO RUN-019~ RUN-003~ m=D st=W sr=GR | Same reading as M1 and K0.
+23 NN c=M rel=RUN-001,RUN-016 | A table row: 'consider hedging after measurement' lists an option with no direction (A1).
+24 CO RUN-013~ m=D | Stable properties; the rest is explanation.
+25 XP m=D rel=RUN-013,SEC-010,API-009 | Same reading as M, M1, L0, L1 and K0: log-level meaning (EXC-013).
+  s: A completed background job logged at Debug: RUN-013 is satisfied; K1's guidance is not.
+26 CO API-012~ m=D st=W sr=GR c=M | Knowledge-skill form with its 'normally'; the MUST owner is api.md.
+27 XP m=D rel=RUN-013 | Correlation technique (EXC-013).
+  t: outbound calls
+  e: NONE
+  s: An outbound call with no propagated trace context: RUN-013 is satisfied; K1's guidance is not.
+28 XP m=D rel=RUN-013 | Same reading as L0 and K0: correlation technique (EXC-013).
+  s: An explicit correlation identifier with no integration requirement: RUN-013 is satisfied; K1's preference is not.
+29 CO SEC-003~ m=D st=W sr=GR | Same reading as M1 and K0 under A1.
+30 CO RUN-014~ SEC-010~ m=SN st=W sr=GR c=M | Same reading as M1: 'avoid' wording; the reported MUST NOT is not accepted.
+31 CO RUN-008~ m=D | Same reading as M, M1 and K0.
+32 CO DEP-021~ DEP-010~ m=D sr=SL | Application code on ILogger<T>; the DECIDED link is secondary.
+33 XP m=D rel=DEP-021 | Same reading as L0 and K0: bootstrap logging is provider technique (EXC-013).
+  s: An application that needs startup failures captured uses only host-managed logging: DEP-021 is satisfied; K1's guidance is not.
+34 CO DEP-021~ m=D | AddSerilog as the DI-integrated form.
+35 CO RUN-013~ m=D | Message templates.
+36 CO DEP-021~ m=D | Environment-aware provider configuration.
+37 CO DEP-021~ DEP-010~ m=D sr=SL c=M | Same reading as L0, L1 and K0; the reported MUST is not accepted (A1).
+38 NN c=M rel=DEP-021,GOV-010 | Factual note qualifying an example, as at FG-K1-9ff8bfade7.
+39 CO DEP-001~ m=M | Same reading as M1: sinks only when required.
+40 CO DEP-001~ m=D st=W sr=GR c=M rel=DEP-021 | Same reading as M1, L0, L1 and K0.
+41 CO DEP-010~ DEP-021~ m=D sr=SL | The provider's integration package; the DECIDED link is secondary.
+42 CO SEC-010~ RUN-014~ m=D st=W sr=GR c=M | Knowledge-reference form; the MUST NOT owner is rules/common/security.md.
+43 CO RUN-014~ m=MN c=M | 'Never' keeps the strength here, unlike the 'avoid' of L0's source.
+44 CD DEP-004~ m=D k=P st=X c=M rel=DEP-001 | Same reading as L0, L1 and K0: the deprecation fact is DEP-004's check; the named replacement is the remainder.
+  x: use the official Elastic.Serilog.Sinks package
+  s: Elasticsearch reached through another maintained sink after due diligence: DEP-004 is satisfied; K1's guidance is not.
+45 XP m=SN rel=RUN-014 | Same reading as M1, L0, L1 and K0: an avoid-list item.
+  s: Logs used as the audit record with sensitive data excluded and no audit design: RUN-014 is satisfied; K1's list flags it.
+46 XP m=D rel=DEP-021 | Same reading as L1 and K0: flushing is provider technique (EXC-013); the reported MUST is not accepted (A1).
+  s: A static bootstrap logger with no flush on shutdown: DEP-021 is satisfied; K1's guidance is not.

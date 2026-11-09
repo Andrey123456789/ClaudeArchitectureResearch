@@ -1,0 +1,50 @@
+// Git: table-driven read-only vs repository-changing classification, after global options such as -C <path>.
+const GIT_GLOBAL_VALUE_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env', '--exec-path']);
+const GIT_READ_ONLY = new Set([
+  'status', 'diff', 'log', 'show', 'blame', 'annotate', 'grep', 'ls-files', 'ls-tree', 'ls-remote', 'rev-parse', 'rev-list',
+  'describe', 'shortlog', 'cat-file', 'show-ref', 'for-each-ref', 'merge-base', 'name-rev', 'help', 'version', 'var',
+  'check-ignore', 'check-attr', 'check-ref-format', 'check-mailmap', 'count-objects', 'fsck', 'whatchanged', 'range-diff',
+  'difftool', 'format-patch', 'archive', 'verify-commit', 'verify-tag', 'cherry', 'show-branch', 'diff-tree', 'diff-files',
+  'diff-index', 'request-pull', 'patch-id',
+]);
+// Commands whose effect depends on their arguments: read-only only in the listed forms.
+const GIT_CONDITIONAL = {
+  branch: (args) => !hasAny(args, ['-d', '-D', '--delete', '-m', '-M', '--move', '-c', '-C', '--copy', '-u', '--set-upstream-to', '--unset-upstream', '--edit-description', '-f', '--force', '-t', '--track', '--no-track'])
+    && (hasAny(args, ['-l', '--list', '-a', '--all', '-r', '--remotes', '--contains', '--no-contains', '--merged', '--no-merged', '--points-at', '--show-current', '-v', '-vv', '--verbose', '--format', '--sort'])
+      || positionalsOf(args, new Set()).length === 0),
+  tag: (args) => !hasAny(args, ['-d', '--delete', '-a', '--annotate', '-s', '--sign', '-u', '--local-user', '-f', '--force', '-m', '--message', '-F', '--file'])
+    && (hasAny(args, ['-l', '--list', '-n', '--contains', '--no-contains', '--merged', '--no-merged', '--points-at', '--sort', '--format', '-v', '--verify'])
+      || positionalsOf(args, new Set()).length === 0),
+  stash: (args) => ['list', 'show'].includes(positionalsOf(args, new Set())[0]),
+  worktree: (args) => positionalsOf(args, new Set())[0] === 'list',
+  remote: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['show', 'get-url'].includes(sub); },
+  config: (args) => hasAny(args, ['--get', '--get-all', '--get-regexp', '--get-urlmatch', '--list', '-l'])
+    || (['get', 'list'].includes(positionalsOf(args, new Set())[0]))
+    || (!hasAny(args, ['--unset', '--unset-all', '--add', '--replace-all', '--rename-section', '--remove-section', '-e', '--edit'])
+      && positionalsOf(args, new Set(['--file', '-f', '--type', '--default'])).length === 1),
+  notes: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['list', 'show'].includes(sub); },
+  reflog: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || !['expire', 'delete'].includes(sub); },
+  submodule: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['status', 'summary'].includes(sub); },
+  'symbolic-ref': (args) => !hasAny(args, ['-d', '--delete']) && positionalsOf(args, new Set(['-m'])).length <= 1,
+  bisect: (args) => ['log', 'visualize', 'view', 'terms'].includes(positionalsOf(args, new Set())[0]),
+  'sparse-checkout': (args) => positionalsOf(args, new Set())[0] === 'list',
+  apply: (args) => hasAny(args, ['--check', '--stat', '--numstat', '--summary']) && !hasAny(args, ['--index', '--cached', '--apply', '-3', '--3way']),
+  checkout: (args) => args.length === 0,
+  'hash-object': (args) => !hasAny(args, ['-w']),
+};
+
+function hasAny(args, flags) {
+  return args.some((a) => flags.includes(a) || flags.some((f) => f.startsWith('--') && a.startsWith(`${f}=`)));
+}
+
+function classifyGit(args) {
+  let i = 0;
+  while (i < args.length && args[i].startsWith('-')) {
+    if (['--version', '--help', '-h', '--html-path', '--man-path', '--info-path'].includes(args[i])) return null;
+    i += GIT_GLOBAL_VALUE_OPTIONS.has(args[i]) ? 2 : 1;
+  }
+  const sub = (args[i] ?? '').toLowerCase();
+  if (!sub || GIT_READ_ONLY.has(sub)) return null;
+  const rest = args.slice(i + 1);
+  if (GIT_CONDITIONAL[sub] && GIT_CONDITIONAL[sub](rest)) return null;
+  return sub;

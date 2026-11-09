@@ -1,0 +1,1709 @@
+{
+  "unit": "P0002-M-P012",
+  "batch_input_sha256": "e907b48b1742464fe4f532ca0f29cc001bb327e885facdac5e355a9ff13e81e3",
+  "reviews": [
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "PST-009",
+        "name": "Schema-affecting custom settings co-change with persistence artifacts",
+        "related_groups": [
+          "governance-product",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#Database Impact"
+        ],
+        "normalized_policy": "When a CUSTOM_SETTINGS.md change affects schema constraints, indexes, column lengths, or other persistence metadata, update EF Core mapping, create the appropriate migration according to the project's migration workflow, verify Development seeding remains valid, and update provider-sensitive persistence or integration tests when needed; do not casually alter existing migrations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0368"
+      ],
+      "boundary_analysis": "Mapping/migration/seed/tests conjunction and uncommitted-normal-workflow qualification explicit.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "cb637ceaa146dc6d13788a8f97bb8e7485f347ab828af4055af7847f9edb9f78",
+          "inspected_ranges": [
+            [
+              53,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the change affects schema constraints, indexes, column lengths, or other\npersistence metadata:\n\n- update the EF Core mapping;\n- create the appropriate migration according to the project's migration\n  workflow — regenerate or edit an uncommitted migration only when that matches\n  the normal workflow, and do not casually alter existing migrations;\n- verify that Development seeding remains valid;\n- add or update provider-sensitive persistence or integration tests when\n  provider behavior matters.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "PST-010",
+        "name": "EF Core migrations are reviewed source code",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Migrations"
+        ],
+        "normalized_policy": "Treat EF Core migrations as source code and review generated migrations before committing them, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0217",
+        "primary/M/constraints.jsonl/RULE-M-0385"
+      ],
+      "boundary_analysis": "Review-before-commit and detailed migration hazards covered; hook reminder independent BF0020.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "19dc1d9dd1c0f237497df61f33eb100c3f8bb8a04199ec624a6214fe87d32203",
+          "inspected_ranges": [
+            [
+              114,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/file-change.mjs` | Settings/specification sync reminders; manifest checks after editing `.csproj`, `Directory.Packages.props`, `package.json` | PostToolUse on Edit/Write/MultiEdit |\n| `.claude/hooks/stop-co-change.mjs` | Reminders once per change-set state (paths and relevant file content): seeder co-change, migration review, tests for changed production code | Stop |\n| `.claude/scripts/repo-root.mjs` | Resolves the active checkout or worktree root from a start directory (hook `cwd` or edited file, or the current directory for checkers); the installed location only finds the scripts | Imported by hooks and checkers |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/stop-co-change.mjs",
+          "sha256": "b13b675caeafff5863bafb23033d07ed4270c0dea3c4f48b92c54180b5bac04c",
+          "inspected_ranges": [
+            [
+              1,
+              6
+            ],
+            [
+              64,
+              108
+            ]
+          ],
+          "context_quotes": [
+            "#!/usr/bin/env node\n// Claude Code Stop hook: co-change reminders based on the Git working tree.\n//   - Domain/persistence model changed but the development seeder did not;\n//   - EF Core migration files changed (review before committing);\n//   - production code changed without any test change.\n// Each distinct state - reminders, changed paths, and the content of the",
+            "\nconst reminders = [];\nif (changed.some(isModel) && !changed.some(isSeeder) && seederExists()) {\n  reminders.push('Domain or persistence model files changed but the development seeder did not: confirm the seeded ' +\n    'entities are unaffected or update DbSeeder (development-workflow, Persistence model and migrations).');\n}\nif (changed.some(isMigration)) {\n  reminders.push('EF Core migration files changed: review them before committing (development-workflow, Persistence model and migrations).');\n}\nconst backendGap = changed.some(isBackendProduction) && !changed.some(isBackendTest);\nconst frontendGap = changed.some(isFrontendProduction) && !changed.some(isFrontendTest);\nif (backendGap || frontendGap) {\n  reminders.push('Production code changed without test changes: confirm regression coverage for bug fixes and that ' +\n    'behavioral probes are preserved as maintained tests (development-workflow, Bug fixes; verify, step 4).');\n}\nif (reminders.length === 0) done();\n\n// The fingerprint covers the current content of the relevant changed files\n// (bounded: at most 200 files, each by contentId), so the same paths changed\n// again remind again while an unchanged state stays silent.\nconst relevant = [...changed].sort().filter((p) => isModel(p) || isSeeder(p) || isMigration(p) ||\n  isBackendProduction(p) || isBackendTest(p) || isFrontendProduction(p) || isFrontendTest(p)).slice(0, 200);\nconst fingerprint = createHash('sha256')\n  .update(JSON.stringify({ reminders, changed: [...changed].sort(), content: relevant.map((p) => [p, contentId(resolve(root, p))]) }))\n  .digest('hex');\nconst stateDir = (process.env.CLAUDE_HOOK_STATE_DIR ?? '').trim() || gitDir;\nconst statePath = join(stateDir, STATE_FILE);\ntry {\n  if (existsSync(statePath) && JSON.parse(readFileSync(statePath, 'utf8')).fingerprint === fingerprint) done();\n} catch {\n  // Unreadable state: fall through and remind again.\n}\ntry {\n  mkdirSync(stateDir, { recursive: true });\n  writeFileSync(statePath, JSON.stringify({ fingerprint }), 'utf8');\n} catch {\n  // Without writable state the reminder may repeat on a later stop; it is still shown now.\n}\n\nrespond({\n  decision: 'block',\n  reason: 'Co-change check (shown once for this set of changes):\\n- ' + reminders.join('\\n- ') +\n    '\\nAddress each item or state briefly why it does not apply, then finish.',\n});\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              130,
+              137
+            ]
+          ],
+          "context_quotes": [
+            "\nReview changed data-access and security-sensitive code carefully. When\nrelevant, check transaction and commit behavior, destructive data changes, raw\nSQL parameterization, authorization, input trust boundaries, secrets, sensitive\nlogging, concurrency, migrations, cache consistency, and — when a migration or\nDomain change affects seeded entities — whether `DbSeeder` was reviewed and\nupdated.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              52,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "  seeded.\n- Treat EF Core migrations as source code: review every generated migration\n  before committing it, paying particular attention to destructive schema\n  changes, unexpected column recreation, data migrations, indexes, foreign keys,\n  and delete behavior. When a migration changes entities represented in the\n  seed graph, review `DbSeeder` together with it. Command technique: `ef-core`\n  skill.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "330080f3e286dc07c593cd1d02add2d53e7a3980a026a7bd907590ac82ea7008",
+          "inspected_ranges": [
+            [
+              415,
+              428
+            ]
+          ],
+          "context_quotes": [
+            "\n| Scenario | Default technique |\n|---|---|\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Normal query | Ordinary LINQ |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction |\n| Production schema change | Reviewed migration script, controlled deployment |\n| Empty Development database | Run the maintained development seeder |\n| Need a fresh local seed dataset | Recreate the local database explicitly |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "TST-009",
+        "name": "Meaningful bugs get regression coverage",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Regression Tests"
+        ],
+        "normalized_policy": "For a meaningful bug with plausible recurrence, add a regression test unless equivalent coverage already exists.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0386",
+        "primary/M/constraints.jsonl/RULE-M-0413",
+        "primary/M/constraints.jsonl/RULE-M-0355"
+      ],
+      "boundary_analysis": "Plausible recurrence, red-before/green-after and equivalent-coverage exception covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "19dc1d9dd1c0f237497df61f33eb100c3f8bb8a04199ec624a6214fe87d32203",
+          "inspected_ranges": [
+            [
+              114,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/file-change.mjs` | Settings/specification sync reminders; manifest checks after editing `.csproj`, `Directory.Packages.props`, `package.json` | PostToolUse on Edit/Write/MultiEdit |\n| `.claude/hooks/stop-co-change.mjs` | Reminders once per change-set state (paths and relevant file content): seeder co-change, migration review, tests for changed production code | Stop |\n| `.claude/scripts/repo-root.mjs` | Resolves the active checkout or worktree root from a start directory (hook `cwd` or edited file, or the current directory for checkers); the installed location only finds the scripts | Imported by hooks and checkers |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/stop-co-change.mjs",
+          "sha256": "b13b675caeafff5863bafb23033d07ed4270c0dea3c4f48b92c54180b5bac04c",
+          "inspected_ranges": [
+            [
+              1,
+              6
+            ],
+            [
+              64,
+              108
+            ]
+          ],
+          "context_quotes": [
+            "#!/usr/bin/env node\n// Claude Code Stop hook: co-change reminders based on the Git working tree.\n//   - Domain/persistence model changed but the development seeder did not;\n//   - EF Core migration files changed (review before committing);\n//   - production code changed without any test change.\n// Each distinct state - reminders, changed paths, and the content of the",
+            "\nconst reminders = [];\nif (changed.some(isModel) && !changed.some(isSeeder) && seederExists()) {\n  reminders.push('Domain or persistence model files changed but the development seeder did not: confirm the seeded ' +\n    'entities are unaffected or update DbSeeder (development-workflow, Persistence model and migrations).');\n}\nif (changed.some(isMigration)) {\n  reminders.push('EF Core migration files changed: review them before committing (development-workflow, Persistence model and migrations).');\n}\nconst backendGap = changed.some(isBackendProduction) && !changed.some(isBackendTest);\nconst frontendGap = changed.some(isFrontendProduction) && !changed.some(isFrontendTest);\nif (backendGap || frontendGap) {\n  reminders.push('Production code changed without test changes: confirm regression coverage for bug fixes and that ' +\n    'behavioral probes are preserved as maintained tests (development-workflow, Bug fixes; verify, step 4).');\n}\nif (reminders.length === 0) done();\n\n// The fingerprint covers the current content of the relevant changed files\n// (bounded: at most 200 files, each by contentId), so the same paths changed\n// again remind again while an unchanged state stays silent.\nconst relevant = [...changed].sort().filter((p) => isModel(p) || isSeeder(p) || isMigration(p) ||\n  isBackendProduction(p) || isBackendTest(p) || isFrontendProduction(p) || isFrontendTest(p)).slice(0, 200);\nconst fingerprint = createHash('sha256')\n  .update(JSON.stringify({ reminders, changed: [...changed].sort(), content: relevant.map((p) => [p, contentId(resolve(root, p))]) }))\n  .digest('hex');\nconst stateDir = (process.env.CLAUDE_HOOK_STATE_DIR ?? '').trim() || gitDir;\nconst statePath = join(stateDir, STATE_FILE);\ntry {\n  if (existsSync(statePath) && JSON.parse(readFileSync(statePath, 'utf8')).fingerprint === fingerprint) done();\n} catch {\n  // Unreadable state: fall through and remind again.\n}\ntry {\n  mkdirSync(stateDir, { recursive: true });\n  writeFileSync(statePath, JSON.stringify({ fingerprint }), 'utf8');\n} catch {\n  // Without writable state the reminder may repeat on a later stop; it is still shown now.\n}\n\nrespond({\n  decision: 'block',\n  reason: 'Co-change check (shown once for this set of changes):\\n- ' + reminders.join('\\n- ') +\n    '\\nAddress each item or state briefly why it does not apply, then finish.',\n});\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              151,
+              157
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine whether changed behavior has useful maintained automated coverage,\nfocusing on behavior rather than line count. For bug fixes, look for a\nregression test when recurrence is plausible; behavioral probes used during\nimplementation must be preserved per `verify` step 4. Do not request duplicate\ntests when equivalent coverage already exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              61,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "\n- For a meaningful bug with plausible recurrence, add by default a regression\n  test that reproduces the failure before the fix and passes after it, unless\n  equivalent coverage already exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "8e4bd9abd8c16b89df2209a1fd9b2058016ec48aa18d1ab66f4b309619f63f5a",
+          "inspected_ranges": [
+            [
+              215,
+              219
+            ],
+            [
+              254,
+              266
+            ]
+          ],
+          "context_quotes": [
+            "\nA regression test reproduces the failure before the fix and passes after it. Do\nnot add one for a problem that cannot realistically recur or that existing tests\nalready cover.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important EF/provider behavior | Integration test using the actual provider |\n| Simple API integration, provider specifics irrelevant | Lightweight isolated relational test database may be enough |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral probe | Convert to maintained coverage or confirm existing coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "TST-010",
+        "name": "Behavioral probes become maintained tests",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Behavioral Verification",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Verification Performed During Implementation",
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#4. Preserve Behavioral Verification"
+        ],
+        "normalized_policy": "If an ad-hoc/manual behavioral probe uniquely demonstrates behavior, preserve that behavior in maintained automated coverage before completion unless equivalent coverage already exists.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0315",
+        "primary/M/constraints.jsonl/RULE-M-0414",
+        "primary/M/constraints.jsonl/RULE-M-0606",
+        "primary/M/constraints.jsonl/RULE-M-0608",
+        "primary/M/constraints.jsonl/RULE-M-0614"
+      ],
+      "boundary_analysis": "Before-completion maintained behavior, equivalent coverage confirmation and build/static-check exceptions covered; EXTRA0119 preserves review before retaining probe.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "19dc1d9dd1c0f237497df61f33eb100c3f8bb8a04199ec624a6214fe87d32203",
+          "inspected_ranges": [
+            [
+              114,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/file-change.mjs` | Settings/specification sync reminders; manifest checks after editing `.csproj`, `Directory.Packages.props`, `package.json` | PostToolUse on Edit/Write/MultiEdit |\n| `.claude/hooks/stop-co-change.mjs` | Reminders once per change-set state (paths and relevant file content): seeder co-change, migration review, tests for changed production code | Stop |\n| `.claude/scripts/repo-root.mjs` | Resolves the active checkout or worktree root from a start directory (hook `cwd` or edited file, or the current directory for checkers); the installed location only finds the scripts | Imported by hooks and checkers |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/stop-co-change.mjs",
+          "sha256": "b13b675caeafff5863bafb23033d07ed4270c0dea3c4f48b92c54180b5bac04c",
+          "inspected_ranges": [
+            [
+              1,
+              6
+            ],
+            [
+              64,
+              108
+            ]
+          ],
+          "context_quotes": [
+            "#!/usr/bin/env node\n// Claude Code Stop hook: co-change reminders based on the Git working tree.\n//   - Domain/persistence model changed but the development seeder did not;\n//   - EF Core migration files changed (review before committing);\n//   - production code changed without any test change.\n// Each distinct state - reminders, changed paths, and the content of the",
+            "\nconst reminders = [];\nif (changed.some(isModel) && !changed.some(isSeeder) && seederExists()) {\n  reminders.push('Domain or persistence model files changed but the development seeder did not: confirm the seeded ' +\n    'entities are unaffected or update DbSeeder (development-workflow, Persistence model and migrations).');\n}\nif (changed.some(isMigration)) {\n  reminders.push('EF Core migration files changed: review them before committing (development-workflow, Persistence model and migrations).');\n}\nconst backendGap = changed.some(isBackendProduction) && !changed.some(isBackendTest);\nconst frontendGap = changed.some(isFrontendProduction) && !changed.some(isFrontendTest);\nif (backendGap || frontendGap) {\n  reminders.push('Production code changed without test changes: confirm regression coverage for bug fixes and that ' +\n    'behavioral probes are preserved as maintained tests (development-workflow, Bug fixes; verify, step 4).');\n}\nif (reminders.length === 0) done();\n\n// The fingerprint covers the current content of the relevant changed files\n// (bounded: at most 200 files, each by contentId), so the same paths changed\n// again remind again while an unchanged state stays silent.\nconst relevant = [...changed].sort().filter((p) => isModel(p) || isSeeder(p) || isMigration(p) ||\n  isBackendProduction(p) || isBackendTest(p) || isFrontendProduction(p) || isFrontendTest(p)).slice(0, 200);\nconst fingerprint = createHash('sha256')\n  .update(JSON.stringify({ reminders, changed: [...changed].sort(), content: relevant.map((p) => [p, contentId(resolve(root, p))]) }))\n  .digest('hex');\nconst stateDir = (process.env.CLAUDE_HOOK_STATE_DIR ?? '').trim() || gitDir;\nconst statePath = join(stateDir, STATE_FILE);\ntry {\n  if (existsSync(statePath) && JSON.parse(readFileSync(statePath, 'utf8')).fingerprint === fingerprint) done();\n} catch {\n  // Unreadable state: fall through and remind again.\n}\ntry {\n  mkdirSync(stateDir, { recursive: true });\n  writeFileSync(statePath, JSON.stringify({ fingerprint }), 'utf8');\n} catch {\n  // Without writable state the reminder may repeat on a later stop; it is still shown now.\n}\n\nrespond({\n  decision: 'block',\n  reason: 'Co-change check (shown once for this set of changes):\\n- ' + reminders.join('\\n- ') +\n    '\\nAddress each item or state briefly why it does not apply, then finish.',\n});\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              225,
+              230
+            ]
+          ],
+          "context_quotes": [
+            "\nA temporary probe or new behavioral test used to establish correct behavior is\nhandled by `verify` step 4: the behavior stays covered by maintained automated\ntests before the probe is removed. Build, compiler, and static-analysis\ncommands do not themselves require new tests.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              151,
+              157
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine whether changed behavior has useful maintained automated coverage,\nfocusing on behavior rather than line count. For bug fixes, look for a\nregression test when recurrence is plausible; behavioral probes used during\nimplementation must be preserved per `verify` step 4. Do not request duplicate\ntests when equivalent coverage already exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "8e4bd9abd8c16b89df2209a1fd9b2058016ec48aa18d1ab66f4b309619f63f5a",
+          "inspected_ranges": [
+            [
+              221,
+              228
+            ],
+            [
+              254,
+              266
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen a probe must become maintained coverage (`verify` step 4): replay an ad-hoc\nHTTP request as a `WebApplicationFactory` test that sends the same request and\nasserts the observed response; replace a manual database check with an\nintegration test that asserts the persisted state; turn a temporary regression\nprobe into a focused regression test. Review a temporary probe before keeping\nit as a permanent test rather than committing it as-is.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important EF/provider behavior | Integration test using the actual provider |\n| Simple API integration, provider specifics irrelevant | Lightweight isolated relational test database may be enough |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral probe | Convert to maintained coverage or confirm existing coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "83da7161fd1f99c2972edae3c23c88d6001075960b5aa1db8ad2346fd2220cef",
+          "inspected_ranges": [
+            [
+              131,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen API behavior changes:\n\n1. verify Controller behavior and relevant integration tests;\n2. verify response metadata;\n3. start the API when the change affects startup/composition;\n4. open the Development Swagger UI and confirm it loads;\n5. exercise representative endpoints through Swagger when that is a meaningful\n   behavioral check;\n6. preserve newly verified behavior in maintained tests (`verify` step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              23,
+              31
+            ],
+            [
+              84,
+              96
+            ],
+            [
+              142,
+              151
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing any checks. Confirm:\n\n- changes match the requested scope and no unrelated refactoring slipped in;\n- no generated or build artifacts were added accidentally;\n- no secrets or environment-specific credentials were introduced;\n- temporary diagnostics and probes are removed only after step 4 preserved any\n  behavior they uniquely verified.\n",
+            "\nIf an ad-hoc or manual behavioral probe uniquely demonstrated that the\nimplementation works — a temporary curl/PowerShell/HTTP request, a temporary\nscript, an ad-hoc test method, a manual database check, a temporary regression\nprobe — represent that behavior in maintained automated test coverage before\ncompletion, unless equivalent coverage already exists (confirm that the\nexisting test really exercises the behavior). The probe mechanism itself does\nnot need to remain; an ad-hoc request can become an NUnit\n`WebApplicationFactory` test.\n\nBuilds, compiler, formatter, and static-analysis runs, and runs of the existing\ntest suite, do not by themselves require new tests.\n",
+            "\nReview the final diff after all fixes. Check for:\n\n- accidental unrelated edits, commented-out code, temporary logging,\n  unintentional TODO/FIXME markers, stale temporary tests or scripts;\n- architecture drift;\n- unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`, and stale\n  code, tests, docs, or configuration after a `CUSTOM_SETTINGS.md` change;\n- behavior that was verified manually but never preserved as a test.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "TST-011",
+        "name": "Do not chase coverage percentage",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Coverage"
+        ],
+        "normalized_policy": "Do not generate low-value tests merely to increase coverage percentage.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0136",
+        "primary/M/constraints.jsonl/RULE-M-0410",
+        "primary/M/constraints.jsonl/RULE-M-0415"
+      ],
+      "boundary_analysis": "No percentage-driven tests or trivial per-method repository tests; meaningful edges/integrations covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/testing.md",
+          "sha256": "2284090651fcb0012b518d3ae68bd98869fc8c60550abf6f927aa822894ef8e0",
+          "inspected_ranges": [
+            [
+              67,
+              69
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not generate low-value tests merely to increase a coverage percentage.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "30b07da5e929551fbe240b04fcf8be3756dc440ed9662a22cb41673c56c5d49c",
+          "inspected_ranges": [
+            [
+              181,
+              188
+            ]
+          ],
+          "context_quotes": [
+            "\nTest frontend behavior at the appropriate level: meaningful component behavior,\nvalidation, data-access request mapping, important route/auth behavior, complex\nreactive state. Do not test Angular framework internals. E2E tests focus on a\nsmall number of important user workflows unless the project requires broader\nE2E coverage, and the same behavior is not duplicated at every test level. Use\nthe test runner configured in `package.json`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "bd3fe7bb3a6fdac944e0c893706e4c38346c1c6b23068ded540f777f228412b3",
+          "inspected_ranges": [
+            [
+              134,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen versions coexist, test meaningful differences: version routing,\nversion-specific response shape, a deprecated version still operational during\nits support period, unsupported-version behavior, and shared Application\nbehavior staying consistent where intended. Do not duplicate identical tests\nbecause two versions share Application behavior.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              151,
+              157
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine whether changed behavior has useful maintained automated coverage,\nfocusing on behavior rather than line count. For bug fixes, look for a\nregression test when recurrence is plausible; behavioral probes used during\nimplementation must be preserved per `verify` step 4. Do not request duplicate\ntests when equivalent coverage already exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "8e4bd9abd8c16b89df2209a1fd9b2058016ec48aa18d1ab66f4b309619f63f5a",
+          "inspected_ranges": [
+            [
+              172,
+              177
+            ],
+            [
+              236,
+              239
+            ]
+          ],
+          "context_quotes": [
+            "\nTest repository implementations or EF mappings when there is meaningful\npersistence behavior to verify — custom mappings, query filters, projections,\nnon-trivial queries, relationships, concurrency, provider-specific behavior —\nnot one test per trivial `Add`/`Get` method.\n",
+            "\nCoverage is diagnostic information, not a quality target by itself. Prioritize\nmeaningful behavior, important edge cases, and risky integrations.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-001",
+        "name": "Never commit real secrets",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Secrets"
+        ],
+        "normalized_policy": "Never hardcode or commit real secrets, credentials, private keys, access/refresh tokens, or production connection strings.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0107",
+        "primary/M/constraints.jsonl/RULE-M-0279",
+        "primary/M/constraints.jsonl/RULE-M-0287",
+        "primary/M/constraints.jsonl/RULE-M-0399",
+        "primary/M/constraints.jsonl/RULE-M-0526",
+        "primary/M/constraints.jsonl/RULE-M-0560"
+      ],
+      "boundary_analysis": "Real secrets including Development/examples/images explicitly forbidden; fake values and metadata are assessed contextually. No new atom.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              30,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n- Never hardcode or commit real secrets, credentials, private keys, access or\n  refresh tokens, or production connection strings in source-controlled files,\n  including example configuration files.\n- Use an appropriate local secret mechanism such as `dotnet user-secrets` for"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "562880403dc3ab4b94155f46c588f57a078109e3133609dc75dfb74b8478c3a5",
+          "inspected_ranges": [
+            [
+              39,
+              43
+            ],
+            [
+              167,
+              170
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the application owns passwords, use the framework's password hashing,\nlockout, reset-token, and related features; never store plaintext passwords or\nauthentication secrets in application source.\n",
+            "\nAvoid hardcoded signing keys, role/permission magic strings scattered through the\ncodebase, and adding Identity, JWT issuance, or OIDC infrastructure without an\nactual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "f610882412dcdd0a6bbb229c2999cba1b68d3c7ab56e5d16c08775dd908fe297",
+          "inspected_ranges": [
+            [
+              153,
+              157
+            ],
+            [
+              172,
+              177
+            ]
+          ],
+          "context_quotes": [
+            "\nUse the CI platform's secret/identity mechanism instead of values in pipeline\nYAML, and prefer workload/federated identity over long-lived deployment\ncredentials when the platform supports it.\n",
+            "\nBefore considering a pipeline complete, verify that it restores from a clean\nenvironment, builds the backend, builds the frontend when present, runs the\nconfigured tests, does not depend on developer-machine state, does not expose\nsecrets, and produces the expected artifacts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              130,
+              137
+            ]
+          ],
+          "context_quotes": [
+            "\nReview changed data-access and security-sensitive code carefully. When\nrelevant, check transaction and commit behavior, destructive data changes, raw\nSQL parameterization, authorization, input trust boundaries, secrets, sensitive\nlogging, concurrency, migrations, cache consistency, and — when a migration or\nDomain change affects seeded entities — whether `DbSeeder` was reviewed and\nupdated.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "a97b130e4215ef94ca65e68ad66ce5ad400a81c4b6bcb20c468485aedb91ca22",
+          "inspected_ranges": [
+            [
+              171,
+              187
+            ]
+          ],
+          "context_quotes": [
+            "\n```json\n// BAD - secrets committed to source control\n{\n  \"Jwt\": { \"Key\": \"super-secret-key\" },\n  \"Database\": { \"ConnectionString\": \"Server=prod;Password=secret\" }\n}\n\n// GOOD - appsettings.json holds defaults and structure only\n{\n  \"Jwt\": { \"Key\": \"\", \"Issuer\": \"myapp\", \"Audience\": \"myapp\" },\n  \"Database\": { \"ConnectionString\": \"\" }\n}\n// Secrets come from user-secrets (development) or environment\n// variables / a managed secret store (deployed environments).\n```\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "56369fcfc34f4b94ab2c53882767670f3eef293f803843610b01e4da2b0c4479",
+          "inspected_ranges": [
+            [
+              89,
+              96
+            ],
+            [
+              162,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\nPass environment-specific configuration at runtime, for example\n`ASPNETCORE_ENVIRONMENT`, `ConnectionStrings__Default`,\n`Authentication__Authority`. Places where real credentials must never go: the\nDockerfile, committed Compose files, build arguments that remain visible in\nimage metadata, and copied appsettings files containing production secrets. Use\nplatform/container secret mechanisms where appropriate.\n",
+            "\nFor Docker changes: build the image; verify application startup, required ports\nand configuration, non-root behavior when relevant, and health-probe\nintegration; review the image for accidental secrets or files. Run meaningful\napplication tests outside or as part of the selected build pipeline.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              108,
+              113
+            ]
+          ],
+          "context_quotes": [
+            "\nFor SQL Server projects, create the Development configuration described in\n`references/backend-layout.md` (policy: `.claude/rules/persistence.md`).\nDevelopment seeding implementation: `ef-core` skill. Do not add Production\ncredentials or Production migration automation.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "bc437d8bb719c84614ea8666e9bfe6a989347794e96daf4f7345d4e3308c4887",
+          "inspected_ranges": [
+            [
+              106,
+              108
+            ],
+            [
+              120,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nIgnore generated and local artifacts where applicable:\n",
+            "\nDo not ignore files that are intentionally part of the Development\nconfiguration contract, such as a non-secret `appsettings.Development.json`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              32,
+              35
+            ],
+            [
+              143,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "   context — never from a suspicious pattern or a raw CVSS score alone.\n5. Do not suppress a real secret merely because it appears in a Development\n   file.\n6. Do not require security mechanisms the project does not need.",
+            "\nConversely, do not automatically treat as safe: secrets in\n`appsettings.Development.json`, sensitive values logged only at Debug level,\nclient-side Angular route guards, hidden UI buttons, or CORS configuration used\nas a substitute for authorization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              40,
+              44
+            ],
+            [
+              52,
+              58
+            ],
+            [
+              68,
+              72
+            ]
+          ],
+          "context_quotes": [
+            "\nSearch source-controlled files for real credentials and secret material:\n`.cs`, `.ts`, `.json`, `.yml`, `.yaml`, `.xml`, `.config`, `.env*`, Dockerfiles,\nCompose files, CI workflow files, scripts.\n",
+            "\nDo not automatically ignore `appsettings.Development.json`: a real committed\nsecret remains a secret regardless of the file name. Obviously fake values\n(`changeme`, `example-only`, `test-password`, `not-a-real-key`) may be ignored or\nreported as Info when context makes them clearly non-sensitive. `UserSecretsId`\nitself is not a secret.\n",
+            "\nAlso review production debug/development flags, certificate-validation bypass,\ninsecure URLs carrying credentials, overly verbose production error\nconfiguration, and accidentally committed `.env` files.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              23,
+              31
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing any checks. Confirm:\n\n- changes match the requested scope and no unrelated refactoring slipped in;\n- no generated or build artifacts were added accidentally;\n- no secrets or environment-specific credentials were introduced;\n- temporary diagnostics and probes are removed only after step 4 preserved any\n  behavior they uniquely verified.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-002",
+        "name": "Use appropriate secret mechanisms",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Secrets"
+        ],
+        "normalized_policy": "Use appropriate local secret mechanisms for development and environment-specific injection/managed secret storage for deployed environments; do not assume a cloud provider.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0108",
+        "primary/M/constraints.jsonl/RULE-M-0337",
+        "primary/M/constraints.jsonl/RULE-M-0372",
+        "primary/M/constraints.jsonl/RULE-M-0400",
+        "primary/M/constraints.jsonl/RULE-M-0402",
+        "primary/M/constraints.jsonl/RULE-M-0545"
+      ],
+      "boundary_analysis": "Actual provider/local deployment secret mechanisms and nonsecret Development structure covered; EXTRA0095/BF0059 retain federation preference. Configuration accessor table deferred to RUN022, not concluded covered here.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/persistence.md",
+          "sha256": "68bb09fa5cfd614461774f77646a16216bdc98f121c2886f857f302f7cce0467",
+          "inspected_ranges": [
+            [
+              42,
+              46
+            ]
+          ],
+          "context_quotes": [
+            "\nFor the SQL Server baseline, `appsettings.Development.json` provides a usable\nlocal Development connection string when that connection string contains no\nsecret credentials. Credential-bearing local values are supplied through\nuser-secrets or another approved local secret mechanism."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              33,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "  including example configuration files.\n- Use an appropriate local secret mechanism such as `dotnet user-secrets` for\n  development, and environment-specific secret injection or a managed secret\n  store for deployed environments. Do not assume a specific cloud provider\n  unless the project has chosen one.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "f610882412dcdd0a6bbb229c2999cba1b68d3c7ab56e5d16c08775dd908fe297",
+          "inspected_ranges": [
+            [
+              145,
+              177
+            ]
+          ],
+          "context_quotes": [
+            "\n## Build Once, Promote\n\nWhen the deployment model supports artifact promotion, prefer promoting the same\ntested artifact or image through environments instead of recompiling for each\nenvironment; environment-specific behavior comes from runtime configuration.\n\n## Secrets\n\nUse the CI platform's secret/identity mechanism instead of values in pipeline\nYAML, and prefer workload/federated identity over long-lived deployment\ncredentials when the platform supports it.\n\n## Database Migrations\n\nA deployment that performs migrations makes the step explicit, uses the\nproject's approved credentials, runs it at a controlled point, and fails visibly.\nMigration scripts or bundles may be generated in CI and executed during\ndeployment.\n\n## Deployment\n\nCI and CD may be separate workflows; a green CI build does not mean every branch\ndeploys. Use environment protection or approval appropriate to the hosting\nplatform.\n\n## Verification\n\nBefore considering a pipeline complete, verify that it restores from a clean\nenvironment, builds the backend, builds the frontend when present, runs the\nconfigured tests, does not depend on developer-machine state, does not expose\nsecrets, and produces the expected artifacts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "a97b130e4215ef94ca65e68ad66ce5ad400a81c4b6bcb20c468485aedb91ca22",
+          "inspected_ranges": [
+            [
+              116,
+              120
+            ],
+            [
+              171,
+              187
+            ],
+            [
+              200,
+              210
+            ]
+          ],
+          "context_quotes": [
+            "\nAzure Key Vault is one possible managed secret provider; use the provider that\nmatches the hosting environment and add Azure-specific dependencies only when\nthe project actually uses Azure.\n",
+            "\n```json\n// BAD - secrets committed to source control\n{\n  \"Jwt\": { \"Key\": \"super-secret-key\" },\n  \"Database\": { \"ConnectionString\": \"Server=prod;Password=secret\" }\n}\n\n// GOOD - appsettings.json holds defaults and structure only\n{\n  \"Jwt\": { \"Key\": \"\", \"Issuer\": \"myapp\", \"Audience\": \"myapp\" },\n  \"Database\": { \"ConnectionString\": \"\" }\n}\n// Secrets come from user-secrets (development) or environment\n// variables / a managed secret store (deployed environments).\n```\n",
+            "\n| Scenario | Recommendation |\n|----------|---------------|\n| Binding config to a class | Options pattern with `BindConfiguration` |\n| Simple, immutable config | `IOptions<T>` |\n| Config that changes per request | `IOptionsSnapshot<T>` |\n| Background service watching config | `IOptionsMonitor<T>` |\n| Development secrets | `dotnet user-secrets` |\n| Production secrets | Environment/platform secret injection or chosen managed store |\n| Validating config | `ValidateDataAnnotations()` + `ValidateOnStart()` |\n| Multiple configs of the same type | Named options with `IOptionsSnapshot<T>.Get(name)` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "56369fcfc34f4b94ab2c53882767670f3eef293f803843610b01e4da2b0c4479",
+          "inspected_ranges": [
+            [
+              89,
+              96
+            ],
+            [
+              114,
+              118
+            ]
+          ],
+          "context_quotes": [
+            "\nPass environment-specific configuration at runtime, for example\n`ASPNETCORE_ENVIRONMENT`, `ConnectionStrings__Default`,\n`Authentication__Authority`. Places where real credentials must never go: the\nDockerfile, committed Compose files, build arguments that remain visible in\nimage metadata, and copied appsettings files containing production secrets. Use\nplatform/container secret mechanisms where appropriate.\n",
+            "\nAdd only infrastructure the project actually uses — not PostgreSQL, Redis,\nRabbitMQ, or other services because they are common in examples. Keep local\npasswords in an ignored `.env` or another local developer mechanism.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              108,
+              113
+            ],
+            [
+              150,
+              156
+            ]
+          ],
+          "context_quotes": [
+            "\nFor SQL Server projects, create the Development configuration described in\n`references/backend-layout.md` (policy: `.claude/rules/persistence.md`).\nDevelopment seeding implementation: `ef-core` skill. Do not add Production\ncredentials or Production migration automation.\n",
+            "\nA project-structure task is complete when the physical structure matches the\nrequested scope, project references respect the architectural boundaries, the\napproved baseline technology is used, no unnecessary projects or speculative\ndirectories were introduced, the backend builds, the frontend builds when\npresent, relevant tests pass, the local Development configuration is usable, and\nno unrelated code was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "ece97dca16f49d116d9bf9002f3472ff68610a8512cdcb507047c85711989229",
+          "inspected_ranges": [
+            [
+              134,
+              138
+            ],
+            [
+              146,
+              151
+            ]
+          ],
+          "context_quotes": [
+            "\nAPI configuration includes `appsettings.json` and `appsettings.Development.json`.\nA suitable Windows Development default for SQL Server LocalDB, which contains no\nsecret credentials:\n",
+            "\nAdapt the database name to the project. When local SQL Server requires\ncredentials, keep the non-secret structure in configuration and supply the\nsecret through user-secrets (policy: `.claude/rules/persistence.md` and\n`.claude/rules/security.md`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "bc437d8bb719c84614ea8666e9bfe6a989347794e96daf4f7345d4e3308c4887",
+          "inspected_ranges": [
+            [
+              120,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not ignore files that are intentionally part of the Development\nconfiguration contract, such as a non-secret `appsettings.Development.json`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              65,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nwith the real secret supplied through the project's local or deployment secret\nmechanism.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-003",
+        "name": "Treat external data as untrusted",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Input Boundaries"
+        ],
+        "normalized_policy": "Treat data crossing the trusted boundary as untrusted and validate it at the owning layer when assumptions matter.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0076",
+        "primary/M/constraints.jsonl/RULE-M-0109",
+        "primary/M/constraints.jsonl/RULE-M-0500"
+      ],
+      "boundary_analysis": "Trust boundary validation and external correlation normalization covered; EXTRA0191..0194/BF0098 preserve specific injection controls.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "f211e9b96af6c80033c5613ac5afa73dd5c3e70f24a34484493d5276698cec49",
+          "inspected_ranges": [
+            [
+              43,
+              51
+            ]
+          ],
+          "context_quotes": [
+            "\nUse FluentValidation for explicit request and use-case validation where\nappropriate, and keep each concern at the layer that owns it: API validates\ntransport/request concerns; Application enforces use-case and straightforward\nworkflow rules; Domain protects non-trivial invariants it genuinely owns;\nInfrastructure validates assumptions about external systems. Do not move Domain\ninvariants into validators merely because the library is available, and do not\nduplicate the same rule mechanically at every layer.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              40,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "\n- Treat data crossing the trusted application boundary as untrusted — HTTP\n  requests, uploaded files, external-service responses when assumptions matter,\n  message/event payloads, user-provided identifiers and filters — and validate\n  it at the owning layer when assumptions matter.\n- Do not trust client-provided file metadata such as the MIME type as"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              130,
+              137
+            ]
+          ],
+          "context_quotes": [
+            "\nReview changed data-access and security-sensitive code carefully. When\nrelevant, check transaction and commit behavior, destructive data changes, raw\nSQL parameterization, authorization, input trust boundaries, secrets, sensitive\nlogging, concurrency, migrations, cache consistency, and — when a migration or\nDomain change affects seeded entities — whether `DbSeeder` was reviewed and\nupdated.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "e4c0e4dace478f0cd2231e2cedd228cb31e6451001e5ab78c1538b3152b1da3e",
+          "inspected_ranges": [
+            [
+              77,
+              104
+            ]
+          ],
+          "context_quotes": [
+            "\nPrefer platform/runtime trace identifiers when they already provide adequate\nrequest correlation. Add an explicit correlation identifier only when an\nintegration or operational requirement needs one; validate or normalize an\nidentifier accepted from an external client before propagating it. Propagate\ncorrelation/tracing context across outbound calls with the project's chosen\ntracing or HTTP infrastructure.\n\n## Sensitive Data in Practice\n\nBesides credentials and secrets, watch for authorization headers and full\nrequest/response bodies. Logging the specific properties needed for operation\nand diagnosis instead of whole objects reduces accidental secret/PII exposure,\nhuge log events, serialization cost, and fragile log schemas.\n\n## Performance\n\nNormal structured `ILogger` logging is sufficient for most code. For measured\nhigh-volume logging hot paths, consider source-generated `LoggerMessage` APIs\n(example in `references/serilog.md`); do not add them everywhere to avoid\ntheoretical allocations.\n\n## Anti-Patterns\n\nAvoid putting provider-specific APIs throughout Application code, dumping full\nobjects without review, and using logs as an audit database unless a dedicated\naudit design has been adopted.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              79,
+              81
+            ],
+            [
+              86,
+              91
+            ],
+            [
+              93,
+              136
+            ]
+          ],
+          "context_quotes": [
+            "\nLook for SQL constructed from untrusted input:\n",
+            "\nor interpolated/concatenated data passed to APIs that do not parameterize it.\nSafe alternatives: EF Core LINQ, parameterized SQL, `FromSqlInterpolated` where\nappropriate, ADO.NET/Dapper parameters. Do not report normal EF Core LINQ as SQL\ninjection merely because user input participates in a predicate.\n",
+            "\nInspect `Process.Start`, shell execution, PowerShell/bash invocation, and\ncommand arguments built from user input. Prefer APIs that separate executable\nand arguments; validate or constrain external input when command execution is\ngenuinely needed.\n\n## Path Traversal\n\nReview user-controlled file names, paths, archive extraction, download paths,\nand upload destinations for `../`, absolute-path injection, escaping the\nintended root, and unsafe archive extraction. Normalize and verify that paths\nremain within the intended storage boundary.\n\n## SSRF\n\nInspect outbound requests where users can influence the scheme, host, port,\nfull URL, or redirect destination — especially when the server can reach\ninternal networks, metadata endpoints, or privileged services. Do not report\nevery user-supplied query parameter in an outbound request as SSRF;\nhost/control-plane influence matters.\n\n## XSS / Unsafe HTML\n\nFor Angular, investigate deliberate sanitizer bypasses\n(`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`,\n`bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted\ncontent. Ordinary Angular binding benefits from framework escaping and\nsanitization and is not automatically XSS. Review deliberate raw HTML handling in\nany server-rendered UI as well.\n\n## Unsafe Deserialization\n\nInvestigate dangerous polymorphic or type-driven deserialization, such as\n`BinaryFormatter` or unsafe Newtonsoft `TypeNameHandling` configurations. Do not\ndeserialize untrusted payloads into arbitrary runtime types.\n\n## Cryptography\n\nFlag security-sensitive uses of MD5, SHA1, ECB mode, hardcoded encryption keys,\ncustom password hashing, and home-grown encryption protocols. Do not flag\nMD5/SHA1 used solely as a non-security checksum. For passwords, established\npassword-hashing facilities such as ASP.NET Core Identity password hashers are\nthe expected mechanism, not reversible encryption.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-004",
+        "name": "Parameterize database access",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#SQL and Persistence"
+        ],
+        "normalized_policy": "Use parameterized database access; never build SQL by concatenating untrusted input.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0111",
+        "primary/M/constraints.jsonl/RULE-M-0440",
+        "primary/M/constraints.jsonl/RULE-M-0508"
+      ],
+      "boundary_analysis": "Parameterization and concrete need/measured reason for raw SQL covered; no security finding inferred from ordinary EF predicates.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              50,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\nUse parameterized database access. EF Core LINQ parameterizes values; for raw\nSQL, Dapper, or ADO.NET use the supported parameterization mechanisms. Never\nbuild SQL by concatenating untrusted input.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              130,
+              137
+            ]
+          ],
+          "context_quotes": [
+            "\nReview changed data-access and security-sensitive code carefully. When\nrelevant, check transaction and commit behavior, destructive data changes, raw\nSQL parameterization, authorization, input trust boundaries, secrets, sensitive\nlogging, concurrency, migrations, cache consistency, and — when a migration or\nDomain change affects seeded entities — whether `DbSeeder` was reviewed and\nupdated.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "330080f3e286dc07c593cd1d02add2d53e7a3980a026a7bd907590ac82ea7008",
+          "inspected_ranges": [
+            [
+              403,
+              407
+            ],
+            [
+              409,
+              413
+            ]
+          ],
+          "context_quotes": [
+            "\nUse raw SQL only when EF Core cannot express the query effectively or measured\nperformance justifies it, and prefer EF APIs that preserve parameterization\n(`FromSql`, `FromSqlInterpolated`, `SqlQuery`) over string-built SQL.\n",
+            "\nAvoid loading all rows and filtering in memory when the database can filter,\nlazy loading by default, fire-and-forget EF asynchronous operations, and raw SQL\nintroduced merely to appear more performant.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "2fbc4c0a4b7bf5c7e7c8a1942c23434445c5b23e42a7f3730bd84a5cb2e329b4",
+          "inspected_ranges": [
+            [
+              119,
+              121
+            ]
+          ],
+          "context_quotes": [
+            "\nRaw string literals do not make raw SQL appropriate by themselves.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              79,
+              81
+            ],
+            [
+              86,
+              91
+            ],
+            [
+              93,
+              98
+            ],
+            [
+              100,
+              105
+            ],
+            [
+              107,
+              113
+            ],
+            [
+              115,
+              122
+            ],
+            [
+              124,
+              128
+            ]
+          ],
+          "context_quotes": [
+            "\nLook for SQL constructed from untrusted input:\n",
+            "\nor interpolated/concatenated data passed to APIs that do not parameterize it.\nSafe alternatives: EF Core LINQ, parameterized SQL, `FromSqlInterpolated` where\nappropriate, ADO.NET/Dapper parameters. Do not report normal EF Core LINQ as SQL\ninjection merely because user input participates in a predicate.\n",
+            "\nInspect `Process.Start`, shell execution, PowerShell/bash invocation, and\ncommand arguments built from user input. Prefer APIs that separate executable\nand arguments; validate or constrain external input when command execution is\ngenuinely needed.\n",
+            "\nReview user-controlled file names, paths, archive extraction, download paths,\nand upload destinations for `../`, absolute-path injection, escaping the\nintended root, and unsafe archive extraction. Normalize and verify that paths\nremain within the intended storage boundary.\n",
+            "\nInspect outbound requests where users can influence the scheme, host, port,\nfull URL, or redirect destination — especially when the server can reach\ninternal networks, metadata endpoints, or privileged services. Do not report\nevery user-supplied query parameter in an outbound request as SSRF;\nhost/control-plane influence matters.\n",
+            "\nFor Angular, investigate deliberate sanitizer bypasses\n(`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`,\n`bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted\ncontent. Ordinary Angular binding benefits from framework escaping and\nsanitization and is not automatically XSS. Review deliberate raw HTML handling in\nany server-rendered UI as well.\n",
+            "\nInvestigate dangerous polymorphic or type-driven deserialization, such as\n`BinaryFormatter` or unsafe Newtonsoft `TypeNameHandling` configurations. Do not\ndeserialize untrusted payloads into arbitrary runtime types.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-005",
+        "name": "Server authorization is authoritative",
+        "related_groups": [
+          "frontend",
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Authentication and Authorization",
+          "templates/v2-baseline/.claude/skills/angular/SKILL.md#Authentication"
+        ],
+        "normalized_policy": "Enforce authorization on the server; frontend route guards, hidden buttons and client checks are UX, not a security boundary.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0112",
+        "primary/M/constraints.jsonl/RULE-M-0248",
+        "primary/M/constraints.jsonl/RULE-M-0283",
+        "primary/M/constraints.jsonl/RULE-M-0581"
+      ],
+      "boundary_analysis": "Server and resource policy duties covered. EXTRA0195 explicitly registers all five local-account review objects, so these are not missing in M. BF0052 separately records policy-name constants and role-string preference.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              56,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\n- Enforce authorization on the server. Frontend route guards, hidden or\n  disabled buttons, and client-side checks are UX, not a security boundary.\n- Anonymous access must be deliberate and visible; do not require redundant"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "30b07da5e929551fbe240b04fcf8be3756dc440ed9662a22cb41673c56c5d49c",
+          "inspected_ranges": [
+            [
+              123,
+              127
+            ]
+          ],
+          "context_quotes": [
+            "\nA frontend may attach an access token, display authenticated state, hide actions\nthe user cannot normally perform, and protect navigation with route guards —\nall UI/UX concerns. Server-side semantics: `authentication` skill.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "562880403dc3ab4b94155f46c588f57a078109e3133609dc75dfb74b8478c3a5",
+          "inspected_ranges": [
+            [
+              18,
+              22
+            ],
+            [
+              92,
+              100
+            ],
+            [
+              102,
+              107
+            ],
+            [
+              153,
+              165
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthentication determines who the caller is; authorization determines what an\nauthenticated caller may do. Prefer policies when authorization logic is more\nthan a trivial role check.\n",
+            "\nUse stable constants for policy names repeated across the application.\n\n## Roles\n\nRoles fit a genuinely role-oriented business authorization model. Avoid\nscattering compound role strings; prefer a policy when several roles or claims\nrepresent one business capability.\n",
+            "\nSome permissions depend on the resource: a user may edit only their own record; a\nproject member may update only their projects; administrators may access any\nrecord. Use ASP.NET Core resource authorization or explicit Application\nauthorization logic.\n",
+            "\n## Testing\n\nTest authorization behavior for important protected operations:\n\n- unauthenticated request → `401`;\n- authenticated caller without permission → `403`;\n- permitted caller → expected success;\n- resource-specific ownership rules;\n- anonymous endpoint remains accessible when intended.\n\nVerify observable behavior, not merely the presence of `[Authorize]`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ],
+            [
+              103,
+              107
+            ],
+            [
+              216,
+              223
+            ]
+          ],
+          "context_quotes": [
+            "  lint, or analyzer failures merely to make verification pass.\n- Preserve architecture and project conventions while fixing the failure.\n- Stop when progress has clearly stalled rather than making speculative edits.",
+            "\nDo not solve dependency-direction problems with invalid project references —\nfor example, never make Application reference Infrastructure because a missing\ntype would then compile (`.claude/rules/architecture.md`).\n",
+            "\nA build fix must not bypass architecture to compile. Invalid shortcuts include\nan Application → Infrastructure reference, `DbContext` leaking into\nApplication, business logic moved into a Controller, server authorization\nreplaced by Angular-only guards, or HTTP calls scattered into components to\nbypass a data-access service. A green build obtained by violating project\narchitecture is not a successful repair.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              121,
+              128
+            ],
+            [
+              130,
+              137
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen Angular code is in scope, check against `.claude/rules/angular.md`:\nfeature boundaries and component responsibility; HTTP calls behind a\ndata-access boundary; subscription and reactive-state lifetime; frontend error\nhandling; route guards not treated as server-side authorization; unnecessary\nglobal or shared state; meaningful frontend test coverage. Do not apply backend\nClean Architecture project-boundary rules mechanically to Angular code.\n",
+            "\nReview changed data-access and security-sensitive code carefully. When\nrelevant, check transaction and commit behavior, destructive data changes, raw\nSQL parameterization, authorization, input trust boundaries, secrets, sensitive\nlogging, concurrency, migrations, cache consistency, and — when a migration or\nDomain change affects seeded entities — whether `DbSeeder` was reviewed and\nupdated.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              35,
+              38
+            ],
+            [
+              143,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "6. Do not require security mechanisms the project does not need.\n7. Evaluate effective authorization behavior, including global/fallback\n   policies.\n8. Use the project's security, authentication, configuration, logging,",
+            "\nConversely, do not automatically treat as safe: secrets in\n`appsettings.Development.json`, sensitive values logged only at Debug level,\nclient-side Angular route guards, hidden UI buttons, or CORS configuration used\nas a substitute for authorization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              142,
+              149
+            ],
+            [
+              156,
+              161
+            ],
+            [
+              173,
+              177
+            ],
+            [
+              179,
+              182
+            ],
+            [
+              188,
+              195
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine the effective access policy from the fallback/global authorization\npolicy, controller and action `[Authorize]`, `[AllowAnonymous]`, policy names,\nrole/claim requirements, and resource-based authorization. An endpoint without\nan explicit `[Authorize]` is not automatically vulnerable when a secure\nfallback/global policy protects it; a bare `[Authorize]` is not automatically\ninsufficient when simple authentication is the intended requirement.\n",
+            "\nLook for operations such as `GET /orders/{id}`, `PUT /users/{id}`, or\n`DELETE /documents/{id}` where possessing an identifier could be enough to\naccess another user's or tenant's data. Verify ownership, tenant, permission, or\nresource policy where required. Client-side filtering is not authorization.\n",
+            "\nWhen the application owns local accounts, review password hashing, password\nreset behavior, lockout/brute-force controls where appropriate,\naccount-enumeration behavior, and credential storage.\n",
+            "\nRoute guards and hidden or disabled buttons are UX mechanisms; verify that\nsensitive operations are protected by the backend.\n",
+            "\nCORS is a browser-origin policy, not an authorization mechanism. Check whether\nconfigured origins match the actual browser-client model. Potential problems:\nunnecessarily broad trusted origins, credentialed requests from untrusted\norigins, environment-specific origins accidentally exposed in Production.\n`AllowAnyOrigin()` can be valid for a genuinely public non-credentialed API, so\ndo not report a wildcard origin alone without considering the intended exposure.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-006",
+        "name": "Anonymous access is deliberate",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Authentication and Authorization"
+        ],
+        "normalized_policy": "Anonymous access must be deliberate and visible; avoid redundant authorization attributes when a secure global policy already expresses intent.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0113",
+        "primary/M/constraints.jsonl/RULE-M-0281",
+        "primary/M/constraints.jsonl/RULE-M-0282",
+        "primary/M/constraints.jsonl/RULE-M-0562",
+        "primary/M/constraints.jsonl/RULE-M-0580"
+      ],
+      "boundary_analysis": "Effective secure global policy, deliberate anonymous access and reviewability covered; EXTRA0143 topology-specific health exposure retained.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              58,
+              62
+            ]
+          ],
+          "context_quotes": [
+            "  disabled buttons, and client-side checks are UX, not a security boundary.\n- Anonymous access must be deliberate and visible; do not require redundant\n  `[Authorize]` attributes when a secure global or fallback policy already\n  expresses the intended behavior.\n- Do not implement custom token or password security, password hashing, or"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "562880403dc3ab4b94155f46c588f57a078109e3133609dc75dfb74b8478c3a5",
+          "inspected_ranges": [
+            [
+              52,
+              56
+            ],
+            [
+              65,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nEndpoints can be secured through a global or fallback authorization policy,\ncontroller or action authorization attributes, or endpoint authorization\nconfiguration; keep the chosen approach explicit and reviewable.\n",
+            "\nA secure global/fallback policy can make repeated `[Authorize]` unnecessary;\nthen mark deliberate public endpoints:\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "0fda1c624c7fef58e8a697a1994d7b81a4a9a66537c742eb73030b48e7d692dc",
+          "inspected_ranges": [
+            [
+              100,
+              105
+            ]
+          ],
+          "context_quotes": [
+            "\nHealth endpoints often must be reachable by infrastructure without ordinary user\nauthentication. Choose exposure from the deployment topology: private/internal\nnetwork access, a dedicated management port, host restrictions, or authorization\nwhere the probe infrastructure supports it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              35,
+              38
+            ],
+            [
+              135,
+              143
+            ],
+            [
+              217,
+              224
+            ]
+          ],
+          "context_quotes": [
+            "6. Do not require security mechanisms the project does not need.\n7. Evaluate effective authorization behavior, including global/fallback\n   policies.\n8. Use the project's security, authentication, configuration, logging,",
+            "\nDo not automatically report as vulnerabilities: an endpoint without\n`[Authorize]` protected by a secure fallback/global policy; bare `[Authorize]`\nwhen authentication alone is the intended policy; `AllowAnyOrigin()` for a\ngenuinely public non-credentialed API; MD5/SHA1 used as a non-security checksum;\ndata not encrypted at application level when platform/storage encryption\nsatisfies the requirement; obviously fake test credentials; framework defaults\nthat are secure in the actual hosting configuration.\n",
+            "\nPrefer the smallest secure change consistent with the project architecture. Do\nnot recommend a new authentication system unnecessarily, custom cryptography,\nblanket encryption of all database fields, `[Authorize]` on every action when a\nglobal policy already provides the protection, security libraries merely to\nsatisfy the scan, or disabling functionality solely because a static scanner\ncannot understand it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              52,
+              58
+            ],
+            [
+              86,
+              91
+            ],
+            [
+              107,
+              113
+            ],
+            [
+              115,
+              122
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              142,
+              149
+            ],
+            [
+              151,
+              154
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not automatically ignore `appsettings.Development.json`: a real committed\nsecret remains a secret regardless of the file name. Obviously fake values\n(`changeme`, `example-only`, `test-password`, `not-a-real-key`) may be ignored or\nreported as Info when context makes them clearly non-sensitive. `UserSecretsId`\nitself is not a secret.\n",
+            "\nor interpolated/concatenated data passed to APIs that do not parameterize it.\nSafe alternatives: EF Core LINQ, parameterized SQL, `FromSqlInterpolated` where\nappropriate, ADO.NET/Dapper parameters. Do not report normal EF Core LINQ as SQL\ninjection merely because user input participates in a predicate.\n",
+            "\nInspect outbound requests where users can influence the scheme, host, port,\nfull URL, or redirect destination — especially when the server can reach\ninternal networks, metadata endpoints, or privileged services. Do not report\nevery user-supplied query parameter in an outbound request as SSRF;\nhost/control-plane influence matters.\n",
+            "\nFor Angular, investigate deliberate sanitizer bypasses\n(`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`,\n`bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted\ncontent. Ordinary Angular binding benefits from framework escaping and\nsanitization and is not automatically XSS. Review deliberate raw HTML handling in\nany server-rendered UI as well.\n",
+            "\nFlag security-sensitive uses of MD5, SHA1, ECB mode, hardcoded encryption keys,\ncustom password hashing, and home-grown encryption protocols. Do not flag\nMD5/SHA1 used solely as a non-security checksum. For passwords, established\npassword-hashing facilities such as ASP.NET Core Identity password hashers are\nthe expected mechanism, not reversible encryption.\n",
+            "\nDetermine the effective access policy from the fallback/global authorization\npolicy, controller and action `[Authorize]`, `[AllowAnonymous]`, policy names,\nrole/claim requirements, and resource-based authorization. An endpoint without\nan explicit `[Authorize]` is not automatically vulnerable when a secure\nfallback/global policy protects it; a bare `[Authorize]` is not automatically\ninsufficient when simple authentication is the intended requirement.\n",
+            "\nReview `[AllowAnonymous]` and other deliberately public surfaces and confirm the\npublic access is intentional. Do not report every public endpoint.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "83da7161fd1f99c2972edae3c23c88d6001075960b5aa1db8ad2346fd2220cef",
+          "inspected_ranges": [
+            [
+              94,
+              100
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the API actually uses authentication, configure the matching security\ndefinition and requirements; for Bearer authentication expose a Bearer scheme so\nauthenticated endpoints can be exercised from Swagger UI. Do not add a scheme\nmerely because an authentication package is installed, and do not apply\nauthentication requirements globally to anonymous endpoints.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-007",
+        "name": "Protect sensitive transport",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#HTTPS and Transport Security"
+        ],
+        "normalized_policy": "Production traffic carrying credentials or sensitive data must use TLS; respect actual hosting topology and never disable certificate validation to make integration work.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0119",
+        "primary/M/constraints.jsonl/RULE-M-0586"
+      ],
+      "boundary_analysis": "TLS topology exception and no validation bypass explicit.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              79,
+              85
+            ]
+          ],
+          "context_quotes": [
+            "\nProduction traffic carrying credentials or sensitive data must use TLS. Respect\nthe actual hosting topology — TLS may terminate in the application, a reverse\nproxy, ingress controller, gateway, or hosting platform, and in-app HTTPS\nredirection is not required when that boundary already provides secure\ntransport. Never disable certificate validation to make an integration work.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              205,
+              211
+            ]
+          ],
+          "context_quotes": [
+            "\nReview disabled certificate validation, accept-all certificate callbacks, and\nplain HTTP for sensitive external communication. Account for TLS termination at\nreverse proxies, ingress, gateways, or hosting platforms; missing HTTPS\nredirection in application code is not automatically a vulnerability when the\nhosting topology enforces TLS.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-008",
+        "name": "Use reviewed cryptography/platform mechanisms",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#Data Protection and Encryption"
+        ],
+        "normalized_policy": "Do not implement custom cryptography when a well-reviewed platform mechanism is appropriate; do not treat ASP.NET Core Data Protection as universal database encryption.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0120",
+        "primary/M/constraints.jsonl/RULE-M-0578",
+        "primary/M/constraints.jsonl/RULE-M-0588"
+      ],
+      "boundary_analysis": "Platform crypto, storage versus temporary Data Protection and verification-token hashing preferences explicitly represented.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              87,
+              93
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not implement custom cryptography when a well-reviewed platform mechanism is\nappropriate. ASP.NET Core Data Protection suits application-generated protected\npayloads such as cookies or temporary protected values; do not treat it as a\nuniversal database encryption solution — use storage, database, or platform\nencryption according to the actual requirement.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              217,
+              224
+            ]
+          ],
+          "context_quotes": [
+            "\nPrefer the smallest secure change consistent with the project architecture. Do\nnot recommend a new authentication system unnecessarily, custom cryptography,\nblanket encryption of all database fields, `[Authorize]` on every action when a\nglobal policy already provides the protection, security libraries merely to\nsatisfy the scan, or disabling functionality solely because a static scanner\ncannot understand it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              93,
+              136
+            ],
+            [
+              249,
+              259
+            ]
+          ],
+          "context_quotes": [
+            "\nInspect `Process.Start`, shell execution, PowerShell/bash invocation, and\ncommand arguments built from user input. Prefer APIs that separate executable\nand arguments; validate or constrain external input when command execution is\ngenuinely needed.\n\n## Path Traversal\n\nReview user-controlled file names, paths, archive extraction, download paths,\nand upload destinations for `../`, absolute-path injection, escaping the\nintended root, and unsafe archive extraction. Normalize and verify that paths\nremain within the intended storage boundary.\n\n## SSRF\n\nInspect outbound requests where users can influence the scheme, host, port,\nfull URL, or redirect destination — especially when the server can reach\ninternal networks, metadata endpoints, or privileged services. Do not report\nevery user-supplied query parameter in an outbound request as SSRF;\nhost/control-plane influence matters.\n\n## XSS / Unsafe HTML\n\nFor Angular, investigate deliberate sanitizer bypasses\n(`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`,\n`bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted\ncontent. Ordinary Angular binding benefits from framework escaping and\nsanitization and is not automatically XSS. Review deliberate raw HTML handling in\nany server-rendered UI as well.\n\n## Unsafe Deserialization\n\nInvestigate dangerous polymorphic or type-driven deserialization, such as\n`BinaryFormatter` or unsafe Newtonsoft `TypeNameHandling` configurations. Do not\ndeserialize untrusted payloads into arbitrary runtime types.\n\n## Cryptography\n\nFlag security-sensitive uses of MD5, SHA1, ECB mode, hardcoded encryption keys,\ncustom password hashing, and home-grown encryption protocols. Do not flag\nMD5/SHA1 used solely as a non-security checksum. For passwords, established\npassword-hashing facilities such as ASP.NET Core Identity password hashers are\nthe expected mechanism, not reversible encryption.\n",
+            "\nMatch the protection to the requirement:\n\n```text\npassword -> one-way password hashing\nverification-only token -> often hash rather than reversible encryption\nretrievable application secret -> appropriate protected/encrypted storage\ndatabase/storage encryption -> platform/database mechanism when suitable\ntemporary application payload -> ASP.NET Core Data Protection may be suitable\n```\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P012",
+      "canonical_policy": {
+        "id": "SEC-009",
+        "name": "CORS is least-permissive for requirements",
+        "related_groups": [
+          "frontend",
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/security.md#CORS"
+        ],
+        "normalized_policy": "Configure CORS to the narrowest policy that satisfies actual browser-client requirements; never combine credentialed cross-origin requests with unrestricted origins.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "SEC-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0121",
+        "primary/M/constraints.jsonl/RULE-M-0570",
+        "primary/M/constraints.jsonl/RULE-M-0584"
+      ],
+      "boundary_analysis": "Narrow actual-client policy and public noncredentialed exception represented; CORS not authorization explicit.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/security.md",
+          "sha256": "d98f39f285f05ffcf7dd987937263ed16d8c6305fc4721bd87d3854ddeb496be",
+          "inspected_ranges": [
+            [
+              95,
+              100
+            ]
+          ],
+          "context_quotes": [
+            "\nConfigure CORS to the narrowest policy that satisfies the actual browser-client\nrequirements by default. Never combine credentialed cross-origin requests with\nan unrestricted origin policy. A public unauthenticated API may legitimately\nneed a different policy than a private browser application.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              135,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not automatically report as vulnerabilities: an endpoint without\n`[Authorize]` protected by a secure fallback/global policy; bare `[Authorize]`\nwhen authentication alone is the intended policy; `AllowAnyOrigin()` for a\ngenuinely public non-credentialed API; MD5/SHA1 used as a non-security checksum;\ndata not encrypted at application level when platform/storage encryption\nsatisfies the requirement; obviously fake test credentials; framework defaults\nthat are secure in the actual hosting configuration.\n\nConversely, do not automatically treat as safe: secrets in\n`appsettings.Development.json`, sensitive values logged only at Debug level,\nclient-side Angular route guards, hidden UI buttons, or CORS configuration used\nas a substitute for authorization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "914450aee2a219afc4c68ae1b1fc958151a9797805c737e6c8d0cc5fb11cfd6f",
+          "inspected_ranges": [
+            [
+              52,
+              58
+            ],
+            [
+              86,
+              91
+            ],
+            [
+              107,
+              113
+            ],
+            [
+              115,
+              122
+            ],
+            [
+              130,
+              136
+            ],
+            [
+              142,
+              149
+            ],
+            [
+              188,
+              195
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not automatically ignore `appsettings.Development.json`: a real committed\nsecret remains a secret regardless of the file name. Obviously fake values\n(`changeme`, `example-only`, `test-password`, `not-a-real-key`) may be ignored or\nreported as Info when context makes them clearly non-sensitive. `UserSecretsId`\nitself is not a secret.\n",
+            "\nor interpolated/concatenated data passed to APIs that do not parameterize it.\nSafe alternatives: EF Core LINQ, parameterized SQL, `FromSqlInterpolated` where\nappropriate, ADO.NET/Dapper parameters. Do not report normal EF Core LINQ as SQL\ninjection merely because user input participates in a predicate.\n",
+            "\nInspect outbound requests where users can influence the scheme, host, port,\nfull URL, or redirect destination — especially when the server can reach\ninternal networks, metadata endpoints, or privileged services. Do not report\nevery user-supplied query parameter in an outbound request as SSRF;\nhost/control-plane influence matters.\n",
+            "\nFor Angular, investigate deliberate sanitizer bypasses\n(`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`,\n`bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted\ncontent. Ordinary Angular binding benefits from framework escaping and\nsanitization and is not automatically XSS. Review deliberate raw HTML handling in\nany server-rendered UI as well.\n",
+            "\nFlag security-sensitive uses of MD5, SHA1, ECB mode, hardcoded encryption keys,\ncustom password hashing, and home-grown encryption protocols. Do not flag\nMD5/SHA1 used solely as a non-security checksum. For passwords, established\npassword-hashing facilities such as ASP.NET Core Identity password hashers are\nthe expected mechanism, not reversible encryption.\n",
+            "\nDetermine the effective access policy from the fallback/global authorization\npolicy, controller and action `[Authorize]`, `[AllowAnonymous]`, policy names,\nrole/claim requirements, and resource-based authorization. An endpoint without\nan explicit `[Authorize]` is not automatically vulnerable when a secure\nfallback/global policy protects it; a bare `[Authorize]` is not automatically\ninsufficient when simple authentication is the intended requirement.\n",
+            "\nCORS is a browser-origin policy, not an authorization mechanism. Check whether\nconfigured origins match the actual browser-client model. Potential problems:\nunnecessarily broad trusted origins, credentialed requests from untrusted\norigins, environment-specific origins accidentally exposed in Production.\n`AllowAnyOrigin()` can be valid for a genuinely public non-credentialed API, so\ndo not report a wildcard origin alone without considering the intended exposure.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# M / B006 — manifest checker, repo-root resolver, hook registrations (static analysis; not executed).
+
+C R135 OL ARC-009,ARC-020 | REQUIRES_APPROVAL | Do not introduce CQRS handlers, MediatR, Kommand, Vertical Slice Architecture or similar mediator-based organization unless explicitly approved; the manifest check notes MediatR as requiring an approved decision. | backend architecture and NuGet manifests | Explicit approval.
+C R136 OL DEP-020 | DEFAULT | When resilience is required the Microsoft resilience packages are approved; direct Polly usage (Polly, Polly.Core) is a documented exception that the manifest check notes. | NuGet manifests | Documented exception.
+C R137 OL DEP-004,DEP-010 | MUST NOT | Do not use deprecated or legacy packages without a concrete requirement: the legacy FluentValidation.AspNetCore automatic-validation integration needs a concrete requirement and the deprecated Serilog.Sinks.Elasticsearch sink is flagged. | NuGet manifests | Concrete requirement.
+C R138 OL DEP-015 | MUST NOT | NgRx, Axios, Lodash, Bootstrap, Tailwind and additional form, component or state-management libraries are not added by default; an extra library is added only for a concrete need (the manifest check notes them). | npm manifests | Concrete need.
+C R139 OL DEP-003 | MUST (manifest check violation) | Pin the latest stable compatible version: missing, floating or range versions in Directory.Packages.props and floating npm specifications are violations; prerelease versions are allowed only when explicitly requested. | NuGet and npm manifests | Prerelease explicitly requested.
+C X9 EX DEP-004,DEP-020 | MUST NOT (manifest check violation; no approval path) | Microsoft.Extensions.Http.Polly and Polly.Extensions.Http (deprecated resilience integration packages) must not be added; their presence is reported as a violation with blocking hook feedback. | NuGet manifests | none stated | DEP-004 requires deprecation checks and DEP-020 prefers the Microsoft resilience packages; no oracle policy forbids specific packages outright regardless of approval. | Adding Polly.Extensions.Http produces a blocking manifest violation even when requested.
+
+FILE .claude/scripts/check-manifests.mjs | Manifest checker; exit 1 on violations, 2 when it cannot run.
+1 IM | shebang
+2-17 IM | header comment (scope, usage, active root, exit codes, rule owners)
+19-22 IM | imports
+24-27 IM | skipped directories
+29-33 EX X9 | // Packages that must not be added.
+35-42 OL R135,R136,R137 | // Packages that are allowed only with an explicit decision or reason.
+44-45 OL R138 | const REVIEW_NPM_EXACT = new Set(['axios', 'lodash', 'bootstrap', 'tailwindcss']);
+46-50 OL R71 | const NPM_TOOLING_EXACT = new Set([
+52-65 OL R37,R38 | // A test project may reference the layer it tests and the layers inward of it.
+67-136 IM | check dispatch, result formatting, discovery, path and XML comment helpers
+138-201 IM | XML element and attribute reading, central props lookup, central versions
+203-208 IM | central props bookkeeping
+209-211 OL R70 | ManagePackageVersionsCentrally is not enabled
+212-217 IM | PackageVersion loop
+219-223 MX X9,R135,R136,R137 | if (DENIED_NUGET.has(lower)) ⟫ Denied packages are reported as violations (X9); review-listed packages are notes for oracle-linked approval and exception rules (R135-R137).
+225-236 OL R139 | pin the latest stable compatible version (add-dependency)
+238-250 IM | project classification by naming
+252-256 IM | project reading
+257-285 OL R70 | versions belong in Directory.Packages.props
+287-318 OL R37,R38 | must not reference ${targetName}
+320-328 IM | package.json parsing
+329-342 OL R139 | floating version
+343-345 OL R138 | not added by default - needs a concrete requirement
+346-348 OL R71 | build/test tooling listed in dependencies - devDependencies expected
+349-350 IM | loop end
+351-353 MX R71,U1 | commit the lockfile ⟫ A maintained, consistent lockfile is DEP-007 (R71); the 'commit' wording is the uncertain link U1.
+354 IM | function end
+356-375 IM | main-module detection and command-line entry
+
+FILE .claude/scripts/repo-root.mjs | Active repository root resolution.
+1-24 IM | header comment (template root vs active root, resolution order, visible errors)
+26-123 IM | resolution, containment, canonical path and Git helpers
+
+FILE .claude/settings.json | Hook registrations.
+1-2 IM | JSON root and hooks object
+3-39 EX X6 | "onFailure": "block"
+40-41 IM | closing braces
+DONE

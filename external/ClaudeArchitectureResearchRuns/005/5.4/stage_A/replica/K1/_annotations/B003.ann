@@ -1,0 +1,70 @@
+# K1 / B003 — Run 2 replica annotation (blind).
+
+C R132 OL FE-007 | MUST | Frontend structure stays feature-oriented: no application-wide technical buckets (global components/, services/, models/) or empty architecture folders; feature-specific code stays inside its feature; core/shared stay small. | frontend (rule loads for frontend/**) | none stated
+C R133 OL FE-002 | MUST | Pages and components stay focused on presentation and UI orchestration; do not move trivial presentation logic into services merely to make components smaller. | frontend | none stated
+C R134 OL FE-005 | DEFAULT | Route-level lazy loading for meaningful features; do not lazy-load every tiny component. | frontend routing | none stated
+C R135 OL FE-006 | DEFAULT | Simple local, component or feature-service state before introducing a state-management library. | frontend state | none stated
+C R136 OL FE-003 | MUST | Backend communication lives in explicit feature data-access services or another explicit HTTP boundary; never scatter HTTP calls through presentation components and never import backend Domain types into the frontend (use frontend API models matching the published HTTP contract). | frontend | none stated
+C R137 OL FE-009 | MUST | Frontend code follows the documented API error contract: centralize reusable ProblemDetails parsing when practical and never infer business behavior from arbitrary human-readable exception messages. | frontend | none stated
+C R138 OL SEC-011 | MUST | When browser cookies automatically carry authentication credentials, CSRF protection is part of the design; never assume the SPA framework removes that risk. | frontend authentication | Bearer tokens attached explicitly via the Authorization header have different CSRF characteristics.
+C R139 OL SEC-012,SEC-010 | MUST NOT | Never claim one browser token-storage mechanism is universally secure; choose token storage by the application's threat model and never log tokens. | frontend authentication | none stated
+C R140 OL ARC-020,GOV-017 | MUST (Reserved; PostToolUse error finding) | Adding or removing a non-test backend project (a .csproj appearing or disappearing relative to the baseline) without an accepted decision naming the project in the decision register is reported as an error (Reserved, recorded approval required). | .csproj files in the active repository/worktree | Test projects (Tests/IntegrationTests naming) are exempt; changes already in HEAD are not flagged.
+C R141 OL GOV-021 | MUST (PostToolUse reminder) | When CUSTOM_SETTINGS.md changes, the agent is told to run the custom-settings workflow to synchronize affected surfaces. | Edits/commands changing CUSTOM_SETTINGS.md (pending change vs HEAD) | none stated
+C R142 OL GOV-009,GOV-007 | MUST (PostToolUse reminder) | When SPECIFICATION.md changes, the agent is told to check consistency with CUSTOM_SETTINGS.md and synchronize affected code, tests and docs (development-workflow). | Edits/commands changing SPECIFICATION.md | none stated
+C R143 OL DEP-006 | MUST (PostToolUse error finding) | Deleting a Directory.Packages.props central package management file is reported as an error. | Directory.Packages.props files | none stated
+C X11 EX - | MUST (PostToolUse feedback, exit 2) | When instruction files change (CLAUDE.md, docs/architecture/decision-register.md, .claude/** except settings.local.json), the instruction-structure checker runs and its errors are fed back to the agent for correction through the template-maintenance workflow. | Edit/Write/MultiEdit or shell commands touching instruction files | Warnings are not fed back; only checker errors. | Structural self-validation of the instruction system; no oracle policy constrains instruction-file structure. | An edit that breaks a header, skill frontmatter, map entry or leak rule is reported back as an error immediately after the edit.
+
+FILE .claude/rules/frontend/frontend.md
+1-4 IM | path-scoped loading front matter (frontend/**)
+6 NN | header metadata
+8-12 NN | headings and pointer to the framework-specific standard
+14 OL R132 |
+15 OL R133 |
+16 OL R134 |
+17 OL R135 |
+19 NN | section heading
+21 OL R136 |
+22 OL R137 |
+24 NN | routing pointer to the frontend knowledge facet
+
+FILE .claude/rules/frontend/security.md
+1-4 IM | path-scoped loading front matter (frontend/**)
+6 NN | header metadata
+8 NN | heading
+10 OL R138 |
+11 OL R139 |
+13 NN | routing pointer to technique skill
+
+FILE .claude/scripts/actual-state.cjs | Required by dispatch.cjs for PostToolUse/PostToolUseFailure.
+1-2 NN | header comments (kind/scope/loading, conformance pointer)
+3 IM | strict-mode directive
+5-9 IM | comment on post-execution snapshot mechanics; reference-graph changes count only while they differ from HEAD (exception recorded in X9 and R140)
+11-24 IM | imports and constants: state file, entry cap, inspected pathspecs (instruction files, product inputs, csproj, Directory.Packages.props, package.json) and the Reserved-owner message
+25-105 IM | helpers: relevance classification, Git context, snapshot load/save, relevant-file listing, dirty-file detection, hashing, HEAD content and project-edge extraction
+107-114 IM | graphFindings setup comparing current, baseline and HEAD edge sets
+115-120 OL R140 |
+121-126 EX X9 |
+127-129 MX R140,X9 | project reference graph changed without a recorded approval (Reserved) ⟫ shared error finding for unapproved project additions/removals (oracle ARC-020) and unapproved reference edges (EXTRA X9)
+131-180 IM | observe(): snapshot comparison, candidate-path selection and change attribution (only pending changes relative to HEAD are attributed)
+181-182 OL R141 | CUSTOM_SETTINGS.md changed: run the custom-settings workflow to synchronize affected surfaces.
+183-184 OL R142 | SPECIFICATION.md changed: check consistency with CUSTOM_SETTINGS.md
+185-187 IM | dispatches present manifests to check-manifests.checkFile (checks captured in check-manifests.cjs and facets)
+188 OL R143 | central package management file was deleted
+189 EX X8 | dependency removals go through the add-dependency workflow
+190-203 IM | csproj edge extraction against HEAD/baseline and an error finding when a project file cannot be read (mechanism)
+205-208 EX X11 |
+210-230 IM | snapshot persistence and observation result
+
+FILE .claude/scripts/check-cochange.cjs | Run by the Stop hook (hook mode) and by verify (CLI mode).
+1-2 NN | header comments (kind/scope/loading; Conforms: —)
+3 IM | strict-mode directive
+5-12 IM | imports and state constants
+14-35 IM | Git helpers and working-tree change listing (null outside a Git work tree)
+37-49 OL R7 | backend production code changed…confirm coverage and probe preservation
+51-58 IM | reminder collection: framework-neutral test reminder plus each selected facet's co-change reminders (persistence facet reminders captured as R8, R9, X10)
+60-97 IM | content fingerprinting and per-worktree state so each reminder content state is reported once in hook mode
+99-109 IM | run(): hook mode reports only unreported reminders, CLI mode always reports
+111-127 IM | reminder formatting and CLI entry point reporting NOT APPLICABLE outside Git work trees
+
+O .claude/scripts/actual-state.cjs 115-120 PL R140 ARC-020,GOV-017 | if (!manifests.isApprovedProject(approvals, name)) changes.push(`project ${name} added`); | Suspected EXTRA (recorded approval for project addition/removal). Kept oracle-linked: ARC-020 already requires explicit approval for new layers/projects and treats consequential architecture changes as approval-gated; the register record is the candidate's evidence of that approval. Unlike X9, it gates no outcome the oracle leaves free. | A new non-test project without an accepted decision naming it is reported as an error.
+DONE

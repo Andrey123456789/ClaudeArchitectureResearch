@@ -1,0 +1,838 @@
+{
+  "unit": "P0002-K0-P019",
+  "batch_input_sha256": "1f5eda9e4c9aec5504968df71a1b2c09922629afa46370faa420f908f0bd510d",
+  "reviews": [
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-019",
+        "name": "Production containers use an appropriate runtime image",
+        "related_groups": [
+          "security",
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/docker/SKILL.md#Runtime Image"
+        ],
+        "normalized_policy": "For production containers, use an appropriate runtime image rather than the SDK image solely for convenience, and avoid switching to root merely to bypass filesystem problems.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0154",
+        "primary/K0/constraints.jsonl/RULE-K0-0363",
+        "primary/K0/constraints.jsonl/RULE-K0-0364",
+        "primary/K0/constraints.jsonl/RULE-K0-0365"
+      ],
+      "boundary_analysis": "Appropriate runtime/no convenientroot matches; stronger no buildtoolingBF0021 and runtime-notaspnet workers0364 captured. RootDockerfile loadgapBF0093 already uncertainty.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/hosting.md",
+          "sha256": "c99da721c13e228b71658aa6da1b44a448045d5c4f5ca392a9ba35eca7bd02c2",
+          "inspected_ranges": [
+            [
+              2,
+              7
+            ],
+            [
+              33,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "paths:\n  - \"backend/**/*.cs\"\n  - \"backend/**/appsettings*.json\"\n  - \"backend/**/Dockerfile*\"\n  - \"backend/**/.dockerignore\"\n---",
+            "\n- Default: production containers use an appropriate runtime image (the ASP.NET Core runtime image for APIs) rather than the SDK image for convenience, and avoid switching to root merely to bypass a filesystem problem."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "69de5d7d2eec1af6c489c4153dc97f5d5d43b2da7e1568cb8f4c6bc4b1706813",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ],
+            [
+              50,
+              52
+            ],
+            [
+              58,
+              60
+            ],
+            [
+              123,
+              124
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep build tooling out of production runtime images, configuration external, images reproducible and Docker concerns out of the application architecture; prefer the deployment platform's health-probe capabilities.\n",
+            "\nCopy only the repository-level build files that exist and restore needs, and copy project files explicitly — wildcard tricks can flatten or rearrange the multi-project structure. Use the .NET runtime image (not `aspnet`) for workers that do not need ASP.NET Core.\n",
+            "\nModern .NET images provide a built-in non-root user (`USER app`). Give directories the application writes to the right ownership and permissions, and understand a permission problem before reaching for root.\n",
+            "\nSDK image as production runtime; root execution without reason; secrets baked into images; arbitrary infrastructure in Compose; assuming `curl`/`wget` exist; production migrations at application startup (see also: `delivery-pipeline` § 3); specialized image variants without compatibility checks; Docker concerns leaking into Domain/Application code."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-020",
+        "name": "Modern Microsoft resilience integration is the default",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Package Choice"
+        ],
+        "normalized_policy": "When resilience is required, prefer Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for general pipelines; direct Polly integration is an explicit exception rather than the default.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-020",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0222",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0054",
+        "primary/K0/constraints.jsonl/RULE-K0-0437",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0178"
+      ],
+      "boundary_analysis": "Microsoft resilience preference/directPolly exception matches. Document why APIs cannot express requirementBF0048, unqualified applicationAPI wordingBF0038 and mechanismobservabilityEXTRA0178 already represented.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/scripts/check-dependencies.cjs",
+          "sha256": "2a14aa061c2daf224843190038869f58610824a953b362dd8b2ab1aa37be7942",
+          "inspected_ranges": [
+            [
+              16,
+              29
+            ],
+            [
+              159,
+              165
+            ]
+          ],
+          "context_quotes": [
+            "\nconst DEPRECATED_NUGET = {\n  'microsoft.extensions.http.polly': 'deprecated; use Microsoft.Extensions.Http.Resilience (D-12, add-dependency § Package-specific choices)',\n  'polly.extensions.http': 'deprecated; use Microsoft.Extensions.Http.Resilience (D-12, add-dependency § Package-specific choices)',\n  'serilog.sinks.elasticsearch': 'deprecated; use Elastic.Serilog.Sinks (logging knowledge)',\n  'fluentvalidation.aspnetcore': 'deprecated automatic-validation integration; use FluentValidation.DependencyInjectionExtensions (D-05)',\n};\nconst DECISION_NUGET = {\n  mediatr: 'mediator-based organization is not adopted (D-02); requires an approved decision',\n  automapper: 'mapping framework other than the approved one (D-11); requires an approved decision',\n  polly: 'direct Polly is an explicit exception (add-dependency § Package-specific choices); document the reason',\n};\nconst NOT_DEFAULT_NPM = ['@ngrx/', '@ngxs/', 'axios', 'lodash', 'lodash-es', 'bootstrap', 'ngx-bootstrap', '@ng-bootstrap/ng-bootstrap', 'tailwindcss', 'primeng'];\nconst DEV_TOOLING_NPM = [/^@angular\\/cli$/, /^@angular-devkit\\//, /^@angular\\/build$/, /^@angular\\/compiler-cli$/, /^typescript$/, /^vitest$/, /^@vitest\\//, /^jsdom$/, /^@playwright\\/test$/, /^karma/, /^jasmine/, /^@types\\//, /^eslint/, /^@eslint\\//, /^prettier$/];",
+            "\nfunction checkNugetName(rel, include, result) {\n  const key = include.toLowerCase();\n  if (DEPRECATED_NUGET[key]) result.errors.push(`${rel}: ${include} is ${DEPRECATED_NUGET[key]}.`);\n  if (DECISION_NUGET[key]) result.notices.push(`${rel}: ${include}: ${DECISION_NUGET[key]}.`);\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "0a392404f0c09a1bf81e38ebad01dbd8fe6ea555e9138ce538ae21fc5c874317",
+          "inspected_ranges": [
+            [
+              19,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Resilience** — when resilience is required, prefer `Microsoft.Extensions.Http.Resilience` for HttpClient and `Microsoft.Extensions.Resilience` for general pipelines (D-12). Do not add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`; a direct Polly reference or Polly API configuration is an explicit exception that needs a documented reason why the Microsoft.Extensions APIs cannot express the requirement.\n- **API versioning** — when Controller API versioning has been explicitly adopted (D-15), use the Controller integration of `Asp.Versioning` (for example `Asp.Versioning.Mvc` with `Asp.Versioning.Mvc.ApiExplorer`); do not add it before the project actually adopts versioning.\n- **Validation** — `FluentValidation.DependencyInjectionExtensions` for registration; do not add a deprecated or legacy ASP.NET automatic-validation integration package without a concrete requirement (D-05).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              131,
+              132
+            ]
+          ],
+          "context_quotes": [
+            "\nNew `HttpClient` per request; mandating one client model everywhere; retrying unsafe operations without idempotency analysis; unbounded retries; leaking `HttpResponseMessage` across boundaries; ignoring cancellation; dynamic tokens in shared default headers; mapping every upstream failure to the same status; resilience pipelines added without understanding them."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "e873e277aa33910a20864b3117e11a9f9c5005614a7fc2bc6f41a86e3fed6396",
+          "inspected_ranges": [
+            [
+              6,
+              8
+            ],
+            [
+              18,
+              20
+            ],
+            [
+              48,
+              50
+            ],
+            [
+              68,
+              79
+            ]
+          ],
+          "context_quotes": [
+            "\nResilience policies match failure and operation semantics; add a mechanism only for an identified failure scenario, and observe retries, timeouts and circuit state when they matter operationally. The Microsoft packages are built on Polly v8, but application code uses the `Microsoft.Extensions` resilience APIs.\n",
+            "\nThe standard handler is useful when its behavior fits the remote API; it is not mandatory for every client. Review its retry behavior carefully for state-changing requests, and avoid stacking handlers with overlapping strategies.\n",
+            "\nDo not wrap normal EF Core operations in a generic application-level retry pipeline. When the provider supports transient retry through EF Core execution strategies or provider configuration, prefer that, and handle transaction/retry interaction according to the provider's EF Core guidance. HTTP retry policies are not database policies.\n",
+            "\n| Scenario | Consideration |\n|---|---|\n| External I/O | Bounded execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Honor `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| EF transient faults | Provider/EF execution strategy |\n| Incoming request rate limiting | ASP.NET Core rate limiter |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "56b75576d6317ef43a14503eee872e96e70de2058cba4ddc60c6a2a1806a5060",
+          "inspected_ranges": [
+            [
+              199,
+              201
+            ]
+          ],
+          "context_quotes": [
+            "\nThe `Serilog.Sinks.Elasticsearch` package is deprecated; use the official `Elastic.Serilog.Sinks` package (same `WriteTo.Elasticsearch` name, ECS documents to data streams):\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "- `Abstractions/ExternalServices` — Application-owned abstractions implemented by outer layers: `IEmailSender.cs`, `ICurrentUser.cs`, `IFileStorage.cs`, `IPaymentGateway.cs`. Create it when such a dependency exists.\n- `Services` — Application Services and useful public service contracts: `ITaskService.cs`, `TaskService.cs`. No handler, CQRS or MediatR structures.\n- `DTOs` — Application-level operation/data models when useful; not a dumping ground."
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "| D-11 | Mapping: manual mapping for simple cases; Mapster (`Mapster`, `Mapster.DependencyInjection`) is approved when mapping volume warrants it. | — | skills/project-structure, scripts/check-dependencies.cjs |\n| D-12 | Resilience: `Microsoft.Extensions.Http.Resilience` for HttpClient and `Microsoft.Extensions.Resilience` for other pipelines, approved only when a real integration needs resilience. | rules/backend/integrations.md | rules/backend/integrations.md, skills/add-dependency, skills/httpclient-factory, scripts/check-dependencies.cjs |\n| D-13 | Frontend E2E: Playwright is the approved default when E2E coverage is required; it is not part of the minimal scaffold. | skills/angular | skills/angular, skills/project-structure |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-021",
+        "name": "Modern Serilog integration is the baseline",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/serilog/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "When Serilog is configured, use the modern DI-integrated AddSerilog approach and keep provider configuration in environment-aware configuration; application code continues to depend on ILogger<T>.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-021",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0150",
+        "primary/K0/constraints.jsonl/RULE-K0-0450",
+        "primary/K0/constraints.jsonl/RULE-K0-0451",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0188",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0189"
+      ],
+      "boundary_analysis": "DI-integrated/configaware/ILogger matches. DirectSerilog boundary, conditionalbootstrap and staticloggerflush with purelyhostmanaged exception independently captured. DefaultstrengthBF0094 retained.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/hosting.md",
+          "sha256": "c99da721c13e228b71658aa6da1b44a448045d5c4f5ca392a9ba35eca7bd02c2",
+          "inspected_ranges": [
+            [
+              22,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: `ILogger<T>` with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text.\n- Default: when Serilog is configured, use the DI-integrated `AddSerilog` approach with provider configuration in environment-aware configuration; application code keeps depending on `ILogger<T>`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "2adb1179da408f61d35380765d7dea69545e95b4a787c22cbe3cea3fc2eb5249",
+          "inspected_ranges": [
+            [
+              91,
+              93
+            ]
+          ],
+          "context_quotes": [
+            "\nString interpolation in log calls; duplicate exception logging; expected outcomes logged as errors; credentials or secrets in logs; whole objects dumped without review; provider-specific APIs spread through Application code; logs used as an audit database without a dedicated audit design.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "56b75576d6317ef43a14503eee872e96e70de2058cba4ddc60c6a2a1806a5060",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              15,
+              17
+            ],
+            [
+              19,
+              21
+            ],
+            [
+              60,
+              62
+            ],
+            [
+              64,
+              66
+            ],
+            [
+              208,
+              219
+            ]
+          ],
+          "context_quotes": [
+            "\nIntegration rule: `rules/backend/hosting.md` § Logging. Application code keeps using `ILogger<T>`; direct Serilog APIs (`Log.Logger`, `LogContext`) stay at composition or provider-specific boundaries.\n",
+            "\n`AddSerilog()` integrates with DI (`ReadFrom.Services`), replacing the older `builder.Host.UseSerilog()`.\n",
+            "\nUse a bootstrap logger when startup failures before DI/configuration need to be captured; simpler applications can skip it.\n",
+            "\nWhen the static/bootstrap `Log.Logger` is used, flush it on shutdown (`try`/`finally` with `CloseAndFlushAsync`) so buffered events from asynchronous sinks are written; purely host-managed logging follows the provider's lifetime.\n",
+            "\nKeep levels, sinks and overrides in configuration so they can differ per environment. The example shows several optional sinks at once — File, Seq and others are not baseline dependencies; a Console sink suffices for a simple local Development baseline, and numeric limits and retention values are illustrative.\n",
+            "\n| Scenario | Technique |\n|---|---|\n| Serilog as provider | `AddSerilog()` + configuration |\n| Development log storage | Seq (free single-user) or Aspire Dashboard |\n| Production log storage | Seq, Elasticsearch (Elastic sink) or an OTLP backend |\n| Request logging | `UseSerilogRequestLogging()` |\n| Scoped properties | `LogContext.PushProperty()` in middleware |\n| Expression-based filtering | `Serilog.Expressions` |\n| Audit trail | `AuditTo` (synchronous, exceptions propagate) |\n| Levels per environment | `MinimumLevel.Override` in appsettings |\n| OpenTelemetry integration | `Serilog.Sinks.OpenTelemetry` |"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              20,
+              22
+            ]
+          ],
+          "context_quotes": [
+            "| D-05 | Validation: FluentValidation (`FluentValidation`, `FluentValidation.DependencyInjectionExtensions`) for explicit request and use-case validation. | rules/backend/error-handling.md | rules/backend/error-handling.md, skills/add-dependency, skills/aspnet-error-handling, skills/project-structure, scripts/check-dependencies.cjs |\n| D-06 | Logging: `ILogger<T>` in application code with Serilog as the provider (`Serilog.AspNetCore`; sinks only as required). | rules/backend/hosting.md | rules/backend/hosting.md, skills/logging, skills/project-structure |\n| D-07 | API documentation: Swashbuckle Swagger UI (`Swashbuckle.AspNetCore`) is the Development interactive documentation and manual-testing surface at `/swagger`; exposed outside Development only when requirements justify it. | rules/backend/api.md | rules/backend/api.md, skills/project-structure, skills/swagger, skills/verify |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-022",
+        "name": "Use current solution format by default",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Top-Level Layout"
+        ],
+        "normalized_policy": "For the current .NET template use the .slnx solution format by default; use legacy .sln only when an external tool or project requirement requires it.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-022",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0056"
+      ],
+      "boundary_analysis": "slnx with externaltool/requirement legacy exception matches; scaffoldfile inventory not novel.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "2. **Read the decisions.** Use the decided stack; conditional technologies only when the project needs their capability now.\n3. **Repository-level structure.** Create only the required top-level directories and repository-wide files (`references/solution-layout.md`): `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `.editorconfig`, `.gitignore`, `README.md`.\n4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "9bed7bd2b78663f45796f03e94e56e47d1c4a153faf4cf626ff3d165cf551fed",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "- `Directory.Packages.props` — Central Package Management; package versions in one place.\n- `global.json` — pin the intended supported .NET SDK line. When scaffolding, select the current stable SDK of the target .NET release (no RC/preview SDK unless explicitly requested) and allow patch/feature-band servicing through the chosen `rollForward` policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              40,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| D-16 | Solution format: `.slnx`; legacy `.sln` only when an external tool or project requirement needs it. | skills/project-structure | rules/common/repository-layout.md, skills/project-structure |\n| D-17 | Shared .NET build configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their own projects. | rules/common/dependencies.md | rules/common/dependencies.md, rules/common/repository-layout.md, skills/project-structure, scripts/check-dependencies.cjs, Directory.Build.props, Directory.Packages.props |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-023",
+        "name": "Shared .NET build/package configuration is repository-level",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Shared .NET Build Configuration"
+        ],
+        "normalized_policy": "Use repository-level Directory.Build.props for genuinely shared .NET build settings and Directory.Packages.props for Central Package Management; keep project-specific settings in their owning projects.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-023",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0036",
+        "primary/K0/constraints.jsonl/RULE-K0-0057",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0011",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0125"
+      ],
+      "boundary_analysis": "Sharedonly versus projectlocal matches; actual defaultNullable/Implicit/latest settingsBF0077 and explicit existingrestorefiles/copy ruleEXTRA0125 captured.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/scripts/check-dependencies.cjs",
+          "sha256": "2a14aa061c2daf224843190038869f58610824a953b362dd8b2ab1aa37be7942",
+          "inspected_ranges": [
+            [
+              118,
+              129
+            ],
+            [
+              165,
+              171
+            ],
+            [
+              243,
+              250
+            ]
+          ],
+          "context_quotes": [
+            "  const projectName = path.basename(rel, '.csproj');\n  for (const element of xmlElements(text, 'PackageReference')) {\n    if (!readable(rel, 'PackageReference', element, result)) continue;\n    const { attributes, content } = element;\n    const include = attributes.get('Include') || '?';\n    if (attributes.has('Version') || /<Version>/.test(content)) {\n      result.errors.push(`${rel}: PackageReference ${include} has a version; versions belong in Directory.Packages.props (rules/common/dependencies.md § NuGet).`);\n    }\n    if (attributes.has('VersionOverride')) {\n      result.notices.push(`${rel}: PackageReference ${include} uses VersionOverride; it needs a concrete, reported reason (rules/common/dependencies.md § NuGet).`);\n    }\n    checkNugetName(rel, include, result);",
+            "\nfunction checkPackagesProps(rel, text, result) {\n  const cpm = text.match(/<ManagePackageVersionsCentrally>\\s*(\\w+)\\s*<\\/ManagePackageVersionsCentrally>/);\n  if (!cpm || cpm[1].toLowerCase() !== 'true') {\n    result.errors.push(`${rel}: ManagePackageVersionsCentrally must be true (D-17, rules/common/dependencies.md § NuGet).`);\n  }\n  for (const element of xmlElements(text, 'PackageVersion')) {",
+            "\nfunction checkRepository(rootDir) {\n  const total = { errors: [], notices: [], files: [] };\n  const files = findManifests(rootDir);\n  if (files.some((f) => f.endsWith('.csproj')) && !files.includes('Directory.Packages.props')) {\n    total.errors.push('Directory.Packages.props is missing at the repository root (D-17).');\n  }\n  for (const rel of files) {"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "69de5d7d2eec1af6c489c4153dc97f5d5d43b2da7e1568cb8f4c6bc4b1706813",
+          "inspected_ranges": [
+            [
+              50,
+              52
+            ]
+          ],
+          "context_quotes": [
+            "\nCopy only the repository-level build files that exist and restore needs, and copy project files explicitly — wildcard tricks can flatten or rearrange the multi-project structure. Use the .NET runtime image (not `aspnet`) for workers that do not need ASP.NET Core.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ],
+            [
+              39,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "2. **Read the decisions.** Use the decided stack; conditional technologies only when the project needs their capability now.\n3. **Repository-level structure.** Create only the required top-level directories and repository-wide files (`references/solution-layout.md`): `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `.editorconfig`, `.gitignore`, `README.md`.\n4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.",
+            "\n1. Confirm a new assembly is justified (a new production project is Reserved — CLAUDE.md § Decisions).\n2. Identify its architectural or technical responsibility.\n3. Add only the minimum required references, preserving dependency direction.\n4. Update shared build or package configuration when necessary.\n5. Build and test the affected solution.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "9bed7bd2b78663f45796f03e94e56e47d1c4a153faf4cf626ff3d165cf551fed",
+          "inspected_ranges": [
+            [
+              57,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\n- `Directory.Build.props` — the shared settings of D-17, typically `TargetFramework`, `Nullable`, `ImplicitUsings`, analysis and compiler settings.\n- `Directory.Packages.props` — Central Package Management; package versions in one place.\n- `global.json` — pin the intended supported .NET SDK line. When scaffolding, select the current stable SDK of the target .NET release (no RC/preview SDK unless explicitly requested) and allow patch/feature-band servicing through the chosen `rollForward` policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Build.props",
+          "sha256": "c448845ef17ff53b2107c2eaa498b5e2017b642ddabffe17429f8588a237c5b3",
+          "inspected_ranges": [
+            [
+              2,
+              9
+            ]
+          ],
+          "context_quotes": [
+            "<Project>\n  <!-- Genuinely shared settings only; project-specific settings stay in their own project files. -->\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n    <AnalysisLevel>latest</AnalysisLevel>\n  </PropertyGroup>"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "| D-16 | Solution format: `.slnx`; legacy `.sln` only when an external tool or project requirement needs it. | skills/project-structure | rules/common/repository-layout.md, skills/project-structure |\n| D-17 | Shared .NET build configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their own projects. | rules/common/dependencies.md | rules/common/dependencies.md, rules/common/repository-layout.md, skills/project-structure, scripts/check-dependencies.cjs, Directory.Build.props, Directory.Packages.props |\n| D-18 | Repository layout: `backend/<Name>.<Layer>/` for production and backend test projects, `frontend/<Name>.Web/` for the Angular workspace, `docs/` for documentation; no separate top-level `tests/` directory. | skills/project-structure | rules/common/repository-layout.md, skills/project-structure, scripts/check-dependencies.cjs |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-024",
+        "name": "Default physical solution layout remains explicit",
+        "related_groups": [
+          "architecture",
+          "frontend",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/SKILL.md#Default Shape",
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md"
+        ],
+        "normalized_policy": "Keep backend production/test projects, frontend workspace, and documentation clearly separated according to the template's approved layout; do not create a separate top-level tests directory.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-024",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0058",
+        "primary/K0/constraints.jsonl/RULE-K0-0475",
+        "primary/K0/constraints.jsonl/RULE-K0-0504",
+        "primary/K0/constraints.jsonl/RULE-K0-0506",
+        "primary/K0/constraints.jsonl/RULE-K0-0507"
+      ],
+      "boundary_analysis": "Separated exact layout/no top-level backend tests matches; all.NETunderbackend and Angularownership/no backendAngular tests explicit. NamingstrengthBF0081 and frontendplacementBF0004 covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/scripts/check-dependencies.cjs",
+          "sha256": "2a14aa061c2daf224843190038869f58610824a953b362dd8b2ab1aa37be7942",
+          "inspected_ranges": [
+            [
+              138,
+              148
+            ],
+            [
+              154,
+              158
+            ]
+          ],
+          "context_quotes": [
+            "    }\n    const targetLayer = layerOf(target);\n    if (self.kind === 'production') {\n      if (targetLayer === 'test') {\n        result.errors.push(`${rel}: production project references test project ${target} (rules/backend/architecture.md § Dependency direction).`);\n      } else if (targetLayer !== 'unknown' && !ALLOWED_PRODUCTION_REFERENCES[self.role].includes(targetLayer)) {\n        result.errors.push(`${rel}: ${self.role} must not reference ${targetLayer} (${target}); dependencies point inward (rules/backend/architecture.md § Dependency direction, D-01).`);\n      } else if (targetLayer === 'unknown') {\n        result.notices.push(`${rel}: reference to ${target}, which is not a recognized layer project; new production projects are Reserved (CLAUDE.md § Decisions).`);\n      }\n    } else if (self.kind === 'test' && TYPICAL_TEST_REFERENCES[self.role]) {",
+            "  }\n  if (self.kind === 'unknown' && rel.startsWith('backend/')) {\n    result.notices.push(`${rel}: project name does not follow backend/<Name>.<Layer> (D-18); new production projects are Reserved (CLAUDE.md § Decisions).`);\n  }\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              21,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "2. **Read the decisions.** Use the decided stack; conditional technologies only when the project needs their capability now.\n3. **Repository-level structure.** Create only the required top-level directories and repository-wide files (`references/solution-layout.md`): `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `.editorconfig`, `.gitignore`, `README.md`.\n4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples.\n7. **Test projects.** Create only useful test projects beside production projects under `backend/` (typically `Application.Tests` and `IntegrationTests`; `Domain.Tests` only when Domain has non-trivial behavior; `Infrastructure.Tests` only for a concrete need). Angular unit/component tests stay in the Angular workspace; E2E tests, when adopted, under `frontend/<Name>.Web/e2e/`.\n8. **Angular application.** When frontend scope exists, create the workspace under `frontend/<Name>.Web/` with the Angular CLI and the decided frontend options (`references/baseline-setup.md`). Frontend structure: `rules/frontend/angular.md`.\n9. **Internal directories.** Create only directories the initial implementation needs."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              139,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nIntegration tests exercise Application, Infrastructure, EF Core, routing, DI, serialization and persistence transitively through the API host. Backend tests never go into a separate top-level `tests/` directory."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "9bed7bd2b78663f45796f03e94e56e47d1c4a153faf4cf626ff3d165cf551fed",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              33,
+              35
+            ],
+            [
+              37,
+              43
+            ],
+            [
+              47,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nTarget repository shape for scaffolding. Create optional directories and projects only when needed; do not make the repository match the diagram for its own sake.\n",
+            "\nAll backend .NET projects, backend test projects included, live under `backend/`. Detailed backend layout: `backend-layout.md`.\n",
+            "\n```text\nDomain.Tests        optional; non-trivial behavior that genuinely belongs to Domain\nApplication.Tests   application-service / use-case behavior\nIntegrationTests    API + Application + Infrastructure integration\n```\n",
+            "\nThe Angular workspace lives outside the .NET tree, in `frontend/ProjectName.Web/`, and owns its `package.json`, `package-lock.json`, `angular.json`, tsconfig files, `src/` and `public/`. Do not impose an obsolete Angular directory structure when the current Angular CLI generates a different supported one.\n\nAngular unit and component tests stay in the workspace, usually colocated with the code they test. E2E tests, when adopted, also stay in the workspace, for example `frontend/ProjectName.Web/e2e/`. Angular tests never go under `backend/`.\n\n## Documentation\n\n`docs/` holds maintained project documentation. Possible subdirectories: `architecture/` (the decision register lives in `docs/architecture/decision-register.md`), `decisions/` (ADRs), `api/`. Create them only when the corresponding documentation exists.\n\n## Shared .NET build configuration\n\n- `Directory.Build.props` — the shared settings of D-17, typically `TargetFramework`, `Nullable`, `ImplicitUsings`, analysis and compiler settings.\n- `Directory.Packages.props` — Central Package Management; package versions in one place.\n- `global.json` — pin the intended supported .NET SDK line. When scaffolding, select the current stable SDK of the target .NET release (no RC/preview SDK unless explicitly requested) and allow patch/feature-band servicing through the chosen `rollForward` policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              42,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "| D-17 | Shared .NET build configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their own projects. | rules/common/dependencies.md | rules/common/dependencies.md, rules/common/repository-layout.md, skills/project-structure, scripts/check-dependencies.cjs, Directory.Build.props, Directory.Packages.props |\n| D-18 | Repository layout: `backend/<Name>.<Layer>/` for production and backend test projects, `frontend/<Name>.Web/` for the Angular workspace, `docs/` for documentation; no separate top-level `tests/` directory. | skills/project-structure | rules/common/repository-layout.md, skills/project-structure, scripts/check-dependencies.cjs |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-025",
+        "name": "npm peer-dependency conflicts are not bypassed by force flags",
+        "related_groups": [
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "workflow",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#npm"
+        ],
+        "normalized_policy": "Do not use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; resolve the actual compatibility problem.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-025",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0234",
+        "primary/K0/constraints.jsonl/RULE-K0-0189"
+      ],
+      "boundary_analysis": "No peerconflict bypass matches; marker suppresses forcewarning explicitly0189/replica0004/BF0109. Existing quotedmarkerCIS-K0-U0003 preserved, not proven remediation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K0-U0003"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              122,
+              124
+            ],
+            [
+              154,
+              167
+            ],
+            [
+              289,
+              297
+            ]
+          ],
+          "context_quotes": [
+            "\nconst FORCE_FLAG = /^(--force|--legacy-peer-deps)(=.*)?$/i;\n",
+            "\nfunction classifyNodePackageManager(tool, args) {\n  const spec = NODE_PM[tool];\n  const valueOptions = new Set(spec.valueOptions);\n  const force = args.some((a) => FORCE_FLAG.test(a) || spec.force.includes(a));\n  const positionals = positionalsOf(args, valueOptions);\n  let [sub, ...rest] = positionals;\n  if (tool === 'yarn' && sub === 'workspace') [, , sub, ...rest] = positionals; // yarn workspace <name> <command>\n  const kind = sub === undefined ? (tool === 'yarn' ? 'restore' : null) : spec.subcommands[sub.toLowerCase()];\n  if (kind === 'change' || (kind === 'spec' && rest.length > 0) || (kind === 'fix' && rest[0] === 'fix')) return { force };\n  if ((kind === 'spec' || kind === 'restore') && force) return { force };\n  return null;\n}\n",
+            "  }\n  if (found.dependency.length > 0 && !DEPENDENCY_MARKER.test(command)) {\n    deny.push(\n      `Dependency change detected: ${found.dependency.map((d) => d.text).join(' | ')}`,\n      'Run the `add-dependency` workflow first; when its checks are complete, re-run the command with the trailing comment `# add-dependency: reviewed`.',\n    );\n    if (found.dependency.some((d) => d.force)) deny.push('The command uses --force or --legacy-peer-deps: resolve the actual peer-dependency conflict instead (`add-dependency` § 5).');\n  }\n  if (deny.length > 0) preDecision('deny', deny);"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"pre-tool-use\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "0a392404f0c09a1bf81e38ebad01dbd8fe6ea555e9138ce538ae21fc5c874317",
+          "inspected_ranges": [
+            [
+              73,
+              75
+            ]
+          ],
+          "context_quotes": [
+            "\n- **npm** — install into the Angular workspace with the right category (`--save-dev` for build and test tooling) and keep `package-lock.json` consistent. Never use `--force` or `--legacy-peer-deps` merely to bypass incompatible peer dependencies; resolve the actual compatibility problem.\n- The pre-command hook stops package-changing commands — additions, updates and removals, with or without global options such as `--prefix`, and any `--force` or `--legacy-peer-deps` install — until this workflow has run. After steps 1–4, run the command with the trailing marker comment `# add-dependency: reviewed`, for example:"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "f72dc4805915821dcbf5f28ce2f962e3b49c1962aae4659f6dbf85a3084dfb8a",
+          "inspected_ranges": [
+            [
+              106,
+              108
+            ]
+          ],
+          "context_quotes": [
+            "\nAny package addition, replacement or version change goes through `add-dependency` (including its npm peer-conflict handling); respect Central Package Management (`rules/common/dependencies.md`) and do not delete `package-lock.json` reflexively.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P019",
+      "canonical_policy": {
+        "id": "DEP-026",
+        "name": "Local Development database configuration is usable and non-secret",
+        "related_groups": [
+          "persistence-data",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Development Database Configuration"
+        ],
+        "normalized_policy": "For the SQL Server baseline, appsettings.Development.json should provide a usable local Development connection string when it contains no secret credentials; credential-bearing local values must be supplied through user-secrets or another approved local secret mechanism.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-026",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0101",
+        "primary/K0/constraints.jsonl/RULE-K0-0478",
+        "primary/K0/constraints.jsonl/RULE-K0-0479"
+      ],
+      "boundary_analysis": "Credentialfree usablelocal default and credential secretmechanism matches. Adaptdbname and broadproductionhost/username prohibition already0479/BF0002; no inferred secret in template example.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "35837f4dde7768ad8c68a542b16852b4b07b34d339718b447bf469954d23bf30",
+          "inspected_ranges": [
+            [
+              20,
+              22
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: for the SQL Server baseline, `appsettings.Development.json` provides a usable local Development connection string when it contains no secret credentials. Credential-bearing local values must come from user-secrets or another approved local secret mechanism (`rules/common/security.md` § Secrets).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "9. **Internal directories.** Create only directories the initial implementation needs.\n10. **Development persistence.** Configure the Development database and seeding entry point (`references/baseline-setup.md`; `rules/backend/persistence.md`). Add no Production credentials and no automatic production migration step (`delivery-pipeline` § 3).\n11. **Verify.** Restore backend dependencies, build the .NET solution, build the Angular application when present, run relevant tests when present, run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`, inspect the final tree, confirm the Development configuration is usable, then run `verify`. Never report successful scaffolding for a solution that does not build."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/baseline-setup.md",
+          "sha256": "4baa78d3571dcb6e54b1acd1784de7a624aeb84735980d0a465a775a5850cc57",
+          "inspected_ranges": [
+            [
+              22,
+              24
+            ],
+            [
+              27,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n`appsettings.Development.json` with a usable, credential-free local connection string. A suitable Windows default:\n",
+            "  \"ConnectionStrings\": {\n    \"DefaultConnection\": \"Server=(localdb)\\\\MSSQLLocalDB;Database=ProjectName;Trusted_Connection=True;TrustServerCertificate=True;\"\n  }\n}\n```\n\nAdapt the database name. When local SQL Server needs credentials, keep the non-secret structure in configuration and supply the secret value through user-secrets or another approved local secret mechanism. Never commit usernames/passwords, tokens, production hosts or production connection strings.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

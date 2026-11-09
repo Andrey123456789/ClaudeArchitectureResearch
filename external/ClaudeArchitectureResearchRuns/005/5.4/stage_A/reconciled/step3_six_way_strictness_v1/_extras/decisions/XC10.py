@@ -1,0 +1,40 @@
+# XC10 X0541-X0600 (WF-020..WF-022, NONE:MIXED, NONE:PRODUCT_ENGINEERING). Analyst: Step 3.
+_VOC = ("Force vocabulary line (must/default/prefer/requires approval; 'default — deviation needs a concrete reason and must be reported'): M, L0, K0, K1; "
+        "absent in M1 and L1. Same fact as X0259.")
+_REF = "Reference-command gate / recorded-edge mechanism; scored under ARC-020 D5 and GOV-017 D5 (PROBE-HOOK-01)."
+
+A(["X0541-X0546", "X0548-X0550", "X0566", "X0568", "X0569", "X0572", "X0579", "X0581", "X0586", "X0590-X0593", "X0596", "X0597", "X0600"])
+X("X0547", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Commit-message body technique (no narration of the obvious diff); all six use the body for motivation/constraints (X0299).", task="none of consequence")
+for _c in ["X0551", "X0584"]:
+    X(_c, "SAME_NORM_DIFFERENT_PACKAGING", "Product inputs are not instruction layers and never silently override engineering policy; a conflicting request becomes a Decision Request: all six root files (M :20-24, M1 :45-47, L0 :15, L1 :15, K0 :12, K1 :24).", task="none")
+X("X0552", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Idempotent migration scripts often preferable for production (technique; L0 CL25 non-normative); production migration as an explicit step is WF-019 (FULL).", task="none")
+X("X0553", "SAME_NORM_DIFFERENT_PACKAGING", "High-risk Git operations need specific authority and an immediate re-check: M, M1, L0, L1 here, K0 and K1 X0261 (GOV-015 text; the Q-04 classifier difference is scored there).", task="none beyond GOV-015")
+X("X0554", "GENUINE_EXTRA_NORM", _VOC, task="see X0259", affects=True, presence={"M1": "ABSENT", "L1": "ABSENT"}, links=["X0259", "RC-TXT-FORCE-VOCABULARY"])
+X("X0556", "GENUINE_EXTRA_NORM", _VOC + " (K0 line also carries the product-input clause of X0551.)", task="see X0259", affects=True, presence={"M1": "ABSENT", "L1": "ABSENT"}, links=["X0259", "RC-TXT-FORCE-VOCABULARY"])
+for _c in ["X0557", "X0559", "X0564"]:
+    X(_c, "SAME_NORM_DIFFERENT_PACKAGING", "Recorded decisions are Decided and changing one is Reserved in all six (Reserved list item 'changing accepted decisions', ARC-020 D1); K0/K1 phrase it for their register.", task="none")
+X("X0558", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "K0 reference marker. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE"])
+X("X0560", "SAME_NORM_DIFFERENT_PACKAGING", "CI uses the repository's commands; formatting gates only when adopted (WF-017, X0478).", task="none")
+X("X0561", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "K0 skill text of the reference marker. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE"])
+for _c in ["X0562", "X0563", "X0565", "X0567"]:
+    X(_c, "ARCHITECTURE_SPECIFIC_DIVERGENCE", "K1 recorded-edge checks and pre-execution block. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE", "RC-ENF-RESERVED-GRAPH"])
+X("X0570", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "K1 scaffolding records each reference edge in the register before running reference commands, because its hook blocks unrecorded edges. For a new-application task this adds a recording step only K1 needs. " + _REF, task="scored in P1 (ARC-020 D5 counterexample covers it)", links=["RC-ENF-REFERENCE-CMD-GATE"])
+X("X0571", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Bundle of Angular techniques present elsewhere (sanitizer bypass review X0537, XSRF names CL24, NgModule exception FE-001).", task="none")
+X("X0573", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 build properties that surface IDE0005 at build; scored under RUN-010.", task="scored in P1", links=["RC-ENF-IDE0005-BUILD", "RUN-010"])
+X("X0555", "ARCHITECTURE_SPECIFIC_DIVERGENCE", ".editorconfig IDE0005 severity (L0 warning, M1 suggestion); scored under RUN-010.", task="scored in P1", links=["RC-ENF-IDE0005-BUILD"])
+X("X0574", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 level hierarchy (volatile level refines, never contradicts a stable one; report a contradiction). The conflict-handling wording difference is scored under GOV-009 (non-material).", task="scored in P1", links=["RC-TXT-L0-CONFLICT-WORDING", "GOV-009"])
+X("X0575", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 manifest flags for AutoMapper and FluentValidation.AspNetCore; scored under DEP-002 (RC-ENF-PKG-LISTS).", task="scored in P1", links=["RC-ENF-PKG-LISTS", "DEP-002"])
+X("X0576", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 blocks every reference command. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE"])
+X("X0577", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 ships a .gitignore (SEC-001, RC-PKG-GITIGNORE).", task="scored in P1", links=["RC-PKG-GITIGNORE", "SEC-001"])
+X("X0578", "SAME_NORM_DIFFERENT_PACKAGING", "Remove dependencies the change makes unused; no unrelated cleanup in a narrow task (X0123; M1/L1 removal sections).", task="none")
+X("X0580", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L1 capability command note: additions only through add-dependency and the hook denies dependency commands (DEP-004).", task="scored in P1", links=["RC-ENF-DEP-INSTALL-GATE"])
+X("X0582", "SAME_NORM_DIFFERENT_PACKAGING", "CI from a clean environment with visible failures (WF-017, FULL).", task="none")
+X("X0583", "SAME_NORM_DIFFERENT_PACKAGING", "Implementation work runs development-workflow and is not complete before verify (WF-003, FULL).", task="none")
+X("X0585", "SAME_NORM_DIFFERENT_PACKAGING", "Security finding fields and report shape (X0532, X0535).", task="none")
+X("X0587", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "M1 reference marker. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE"])
+X("X0588", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "M1 reference marker and post-change report. " + _REF, task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE", "RC-ENF-RESERVED-GRAPH"])
+X("X0589", "SAME_NORM_DIFFERENT_PACKAGING", "Secrets/configuration scan prompts (debug flags, validation bypass, credentialed URLs, verbose errors, committed .env): all six scan-layers references (M X0542; v3 CL12 facets).", task="none")
+X("X0594", "SAME_NORM_DIFFERENT_PACKAGING", "A VersionOverride needs a concrete reported reason: M, M1, L0, L1, K0 here, K1 X0147 (DEP-006 territory).", task="none")
+X("X0595", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Latest stable servicing release: canonical DEP-008 (FULL).", task="none")
+X("X0598", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "NgModule exception: canonical FE-001 (FULL).", task="none")
+X("X0599", "SAME_NORM_DIFFERENT_PACKAGING", "Same as X0518.", task="none")

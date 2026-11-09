@@ -1,0 +1,46 @@
+# M1 / B002 — hooks (static analysis; not executed).
+
+C R11 OL DEP-001,DEP-003,DEP-004,DEP-005 | MUST (PreToolUse deny until the add-dependency marker; PostToolUse feedback on changed dependency entries) | NuGet and npm dependency additions and updates go through the add-dependency workflow first (need and approval check, package choice, latest stable compatible version, deprecation, vulnerability and license checks); dependency commands are denied until the identical command is re-run with the trailing comment '# add-dependency: checked', and edited dependency entries trigger a reminder to confirm the workflow was applied. | Bash and PowerShell commands (dotnet, nuget, npm/pnpm/yarn, ng, PowerShell package cmdlets); manifest edits | The marker is self-certified; restore-only installs (npm ci, install without package names) are not gated.
+C R13 OL GOV-009,GOV-007 | SHOULD (PostToolUse feedback; Stop reminder once per change state) | When SPECIFICATION.md changes, keep it consistent with CUSTOM_SETTINGS.md and the implementation and record approved behavior through the architecture-decision workflow. | edits of SPECIFICATION.md | Stop reminder repeats only for a changed state.
+C R14 OL GOV-021 | SHOULD (PostToolUse feedback; Stop reminder once per change state) | When CUSTOM_SETTINGS.md changes, run the custom-settings workflow to synchronize every affected surface. | edits of CUSTOM_SETTINGS.md | Stop reminder repeats only for a changed state.
+C R15 OL PST-008 | SHOULD (Stop reminder: Claude continues once per change state) | When persistence model files (Domain .cs, Infrastructure Persistence/Configurations) change without seed-data changes, confirm the persistence-change workflow (seed co-change) was applied, or state why it does not apply. | Stop in a Git work tree | Never re-blocks while stop_hook_active; repeats only when the content of the triggering files changes.
+C R16 OL TST-009,TST-010 | SHOULD (Stop reminder once per change state) | When backend production code changed without backend test changes, check regression coverage and behavioral-probe preservation (development-workflow, verify) before finishing. | Stop in a Git work tree | Same repetition limits as R15.
+C X8 EX ARC-020,ARC-001,GOV-017 | REQUIRES_APPROVAL (Reserved; PreToolUse deny until the project-reference marker; PostToolUse routing of changed project files) | Changing the project reference graph is Reserved; project-reference commands are denied until the project-structure workflow was applied (re-run with '# project-reference: checked'), which routes Reserved reference-graph changes to architecture-decision; project files or references changed, removed or moved without a recognized command are reported for confirmation of the owning workflow. | .NET project references and project files | The marker is self-certified; references inside the frame's layout follow project-structure without a Decision Request. | ARC-020 requires approval for new layers/projects and ARC-001 constrains direction; no oracle policy makes individual reference edges between existing projects Reserved or gates every reference command. | A direction-legal reference outside the frame's layout needs a Decision Request, and every 'dotnet add reference' is denied until the marker is added.
+C X9 EX - | MUST (PostToolUse feedback after instruction edits) | After an edit to an instruction file the instruction-structure check runs and its reported errors must be fixed (template-maintenance). | edits of instruction files | none stated | Instruction-system maintenance rule; no oracle policy regulates instruction-file structure. | Editing a rule so that an implementation name leaks outside its module produces blocking feedback that must be resolved.
+C X10 EX PST-009,PST-010 | SHOULD (Stop reminder once per change state) | When persistence model files change without migration changes, confirm the persistence-change workflow (schema changes paired with migrations) was applied, or state why it does not apply. | Stop in a Git work tree | Same repetition limits as R15. | The oracle requires migrations only for schema-affecting CUSTOM_SETTINGS changes (PST-009) and review of generated migrations (PST-010); it has no general duty to pair model changes with migrations or to confirm schema impact at stop time. | Editing a Domain entity without a migration interrupts the stop once until the agent confirms whether the schema changed.
+
+FILE .claude/hooks/post-tool-use.js | PostToolUse / PostToolUseFailure hook; findings returned as blocking feedback after the call ran.
+1 IM | strict-mode directive
+2-18 IM | header comment documenting triggers, state model and output
+20-27 IM | imports
+29-33 IM | constants and helpers
+35-57 IM | hashing, changed-text extraction, finding limits and report helper
+59-64 IM | manifest and architecture check dispatch for edited files
+65-66 OL R11 | confirm the add-dependency workflow was applied
+67-71 IM | layer boundary check for edited backend code (rules R5, R7)
+72-74 OL R13 | keep it consistent with CUSTOM_SETTINGS.md
+75-77 OL R14 | run the custom-settings workflow
+78-81 EX X9 | Instruction-structure check (template-maintenance workflow)
+82-164 IM | manifest state snapshots, change detection and change-note assembly
+165 MX R11,X8 | projects and project references, project-structure ⟫ Routing dependency entries to add-dependency is oracle-linked (R11); routing project and reference changes through project-structure as Reserved-gated changes is X8.
+166-226 IM | shell checks, edit recording, entry point and visible failure handling
+
+FILE .claude/hooks/pre-tool-use.js | PreToolUse gate (fails closed).
+1 IM | strict-mode directive
+2-12 IM | header comment documenting the gate (rules recorded at the command classifier)
+14-26 IM | input parsing and dispatch to the command classifier
+27-31 IM | fail-closed denial on internal errors
+
+FILE .claude/hooks/stop.js | Stop hook; reminders interrupt stopping once per change state.
+1 IM | strict-mode directive
+2-15 IM | header comment (reminder kinds, loop safety, state)
+17-21 IM | imports
+23-36 IM | hashing and content identity helpers
+38-49 IM | module loading and co-change pattern matching
+50-51 MX R15,X10 | confirm the persistence-change workflow was applied ⟫ Missing seed-data changes are oracle-linked (R15); missing migration changes are X10.
+52-60 IM | input bookkeeping and test-project detection
+61-62 OL R16 | check regression coverage and behavioral-probe preservation
+63-66 IM | bookkeeping and product-source loop
+67-71 OL R14,R13 | confirm the custom-settings workflow synchronized every affected surface
+72-110 IM | manifest error reminder, fingerprint (repeat only on changed state), state persistence, block output and failure handling
+DONE

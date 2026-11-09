@@ -1,0 +1,124 @@
+# M1 / B017 — httpclient-factory, logging/references/serilog.md, logging.
+
+C X27 EX RUN-005 | MUST NOT | Per-request values such as dynamic access tokens are applied to the specific request or through a handler; shared default headers (DefaultRequestHeaders) are not mutated concurrently. | outbound HTTP | none stated | RUN-005 governs client lifetime; no oracle policy addresses mutation of shared default headers. | Setting a per-user bearer token on a shared client's DefaultRequestHeaders is a review defect.
+C X28 EX RUN-013,RUN-014 | MUST NOT (review defect) | Logs are not used as an audit database without a dedicated audit design. | logging | Dedicated audit design. | RUN-013/RUN-014 govern structured and non-sensitive logging; no oracle policy addresses audit trails. | Relying on Information log entries as the system's audit record is a review finding.
+
+FILE .claude/skills/httpclient-factory/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R47,R89 | Outbound API clients belong in Infrastructure.
+17 NN | section heading
+19 OL R36 |
+21-28 NN | abstraction code example
+30 OL R47 |
+32-38 NN | implementation code example
+40 OL R47 |
+42 NN | section heading
+44 NN | typed client technique
+46-51 NN | typed client code example
+53-54 OL R55 | Do not capture a transient typed client inside a singleton without
+56 NN | section heading
+58-59 NN | named client technique
+61-66 NN | named client code example
+68 NN | section heading
+70-71 OL R148 | Useful when keyed DI makes consumption clearer; do not choose them
+73 NN | section heading
+75-77 OL R35 | signing — and never for business decisions.
+79-96 NN | delegating handler code example
+98 NN | section heading
+100-104 NN | cancellation code example
+106-107 OL R85 | Do not replace request cancellation with `CancellationToken.None` unless the
+109 NN | section heading
+111-113 OL R88 | Choose timeouts from the remote operation and the application's latency
+115 NN | section heading
+117-119 OL R47 | Translate remote responses into the abstraction Application consumes.
+121-128 NN | response mapping code example
+130-132 OL R47 | or Application outcomes, and do not expose every upstream status code through
+134 NN | section heading
+136-138 OL R90 | When a remote service returns `429 Too Many Requests`, honor `Retry-After` when
+140 NN | section heading
+142-149 OL R89 | `references/resilience.md`. Before enabling retry, determine whether the
+151 NN | section heading
+153-155 EX X27 | do not mutate shared default headers concurrently.
+157 NN | section heading
+159-162 OL R31,R47 | Do not reuse internal Domain entities as remote API
+164 NN | section heading
+166-167 NN | handler-based test technique
+169-174 NN | test client code example
+176-177 OL R87 | Constructing `HttpClient` directly in a focused test is fine; the lifetime rule
+179 NN | section heading
+181-187 MX R87,R148,R89,R90,R47,R85,X27 | tokens in shared `DefaultRequestHeaders`; ⟫ Review checklist restating outbound-call rules, plus the shared default-header item (X27).
+
+FILE .claude/skills/logging/references/serilog.md | Private reference of logging.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-10 NN | two-stage bootstrap technique (EXC-013)
+11-13 OL R58 | Register with `builder.Services.AddSerilog()`, which integrates with DI
+14-15 OL R57 | create queryable structured data;
+16-17 OL R58 | Keep log levels, sinks, and overrides in `appsettings` so they can vary per
+18-19 OL R57,R58 | Keep direct Serilog APIs such as `Log.Logger` and `LogContext` at composition
+21 NN | section heading
+23-70 NN | bootstrap code example
+72-76 OL R59,R166 | are not baseline dependencies: configure only what the project needs
+78 NN | section heading
+80-121 NN | appsettings example
+123-125 NN | override technique (EXC-013)
+127 NN | section heading
+129-130 NN | request logging technique
+132-150 NN | request logging code example
+152 NN | section heading
+154-166 NN | destructuring code examples
+168-171 OL R125 | Limit destructuring
+173 NN | section heading
+175-181 NN | LogContext code example
+183 NN | enricher requirement note
+185 NN | section heading
+187-198 NN | OTLP sink code example
+200 NN | section heading
+202 NN | package note
+204-211 NN | filtering code example
+213 NN | section heading
+215-225 NN | LoggerMessage code example (EXC-013)
+227 NN | section heading
+229-231 NN | flushing technique
+233-237 NN | flushing code example
+239-240 NN | host-managed logging note
+242 NN | section heading
+244-252 OL R124 | // BAD — password in logs
+254 NN | section heading
+256-258 OL R144 | package is deprecated; use the official
+260-264 NN | Elastic sink code example
+266 NN | section heading
+268-280 DU R58,R57 | decision table restating provider setup (remaining rows are EXC-013 technique)
+
+FILE .claude/skills/logging/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 NN | log-level choice guidance
+16 NN | section heading
+18-23 NN | structured logging code example
+25 OL R57 |
+27-30 NN | interpolation code example
+32 NN | section heading
+34-35 OL R124 | sensitive-data
+36-44 NN | log level definitions
+46 NN | section heading
+48-50 OL R66 | Log an exception at the boundary that actually handles or terminates the
+52 NN | section heading
+54 NN | scope technique
+56-65 NN | scope code example
+67-68 NN | provider note
+70 NN | section heading
+72-77 OL R112,R166 | integration or operational requirement needs one; validate or normalize an
+79 NN | section heading
+81-85 OL R125,R124 | and full request/response bodies that contain sensitive data. Log the specific
+87 NN | section heading
+89-91 OL R97 | add them everywhere to avoid theoretical allocations.
+93 NN | section heading
+95-99 MX R57,R66,R124,R125,R58,X28 | logs used as an audit ⟫ Review checklist restating logging rules, plus the audit-database item (X28).
+101 NN | section heading
+103-110 DU R57,R66,R97 | decision table restating logging defaults
+DONE

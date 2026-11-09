@@ -1,0 +1,263 @@
+# K1 / B011 — Run 2 replica annotation (blind).
+
+C R264 OL DEP-008,ARC-020 | MUST NOT | Confirm the configured language version supports a feature before using it; never silently change LangVersion or the target framework to use newer syntax (a platform change is Reserved). | Backend C# | none stated
+C R265 OL GOV-014,RUN-011 | MUST | When explicitly asked to modernize: preserve behavior, keep the change focused, prefer readability improvements, build and test afterwards, and do not mix architecture refactoring into syntax modernization. | Modernization tasks | none stated
+C R266 OL DEP-009,ARC-019,DEP-001 | MUST | Persistence setup installs Microsoft.EntityFrameworkCore.SqlServer in Infrastructure through add-dependency, Microsoft.EntityFrameworkCore.Design only where design-time tooling needs it (startup project), and dotnet-ef as a local tool when the CLI is used. | Initial persistence setup | none stated
+C R267 OL PST-009,PST-010 | MUST NOT | Regenerate or edit an uncommitted migration only when that matches the project's migration workflow; never casually alter migrations that are already applied or shared. | Migrations | Uncommitted migration per project workflow.
+C R268 OL PST-010 | MUST | Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys and delete behavior. | Migrations | none stated
+C R269 OL PST-008,PST-006 | MUST | Whenever a Domain or persistence change affects seeded entities (new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants) update the maintained development seeder in the same change so that recreating an empty Development database yields valid representative data; existing seeded rows are not patched automatically. | Persistence model changes | none stated
+C X44 EX TST-007,PST-009 | MUST | Add or update persistence/integration tests when provider behavior, mappings, constraints or non-trivial queries changed. | Persistence model or mapping changes | none stated | PST-009 requires updating provider-sensitive tests only for schema-affecting CUSTOM_SETTINGS changes and TST-007 governs provider fidelity, not when tests must be added; no oracle policy obliges new or updated tests for every mapping/constraint/query change. | Changing an index or a mapping requires a persistence/integration test change.
+C R270 OL WF-006,WF-005,WF-003 | MUST | After persistence changes build, run affected tests, start the API against a freshly recreated Development database when seeding or the schema changed, run check-cochange, then continue with verify. | Persistence changes | none stated
+C X45 EX PST-010,WF-009 | MUST | The persistence-change report lists model changes, migration name and review notes (destructive operations called out), seeder updates and verification results. | End of a persistence change | none stated | WF-009 requires truthful verification reporting; reporting migration review notes and seeder updates is an extra workflow report duty. | The final message must call out destructive migration operations.
+C R271 OL DEP-008,DEP-002,ARC-010 | MUST | Controllers are the HTTP endpoint mechanism; create Minimal API endpoint groups only when explicitly requested. | Backend Api scaffolding | Explicit request.
+C R272 OL DEP-013,DEP-024,ARC-027 | MUST | Backend test projects live beside production projects under backend/ (no top-level tests directory); create only useful ones — Domain.Tests and Infrastructure.Tests only for non-trivial behavior; a simple Domain of entities and enums needs no dedicated test project. | Backend test project scaffolding | none stated
+C R273 OL DEP-014,DEP-003 | MUST | Create the frontend with the latest stable Angular release supported by the selected Node.js environment through the current Angular CLI, letting the CLI select compatible TypeScript/RxJS versions (no independent TypeScript upgrade beyond Angular's supported range); accept zoneless mode when supported; Vitest is the baseline test runner for new projects; add Angular Material/CDK matching the workspace version through add-dependency checks. | Frontend workspace creation | none stated
+C U4 LU GOV-015,DEP-007 | MUST (scaffolding step) | Frontend scaffolding ends with 'Verify with the workspace's declared scripts ... and commit package-lock.json'. | Frontend workspace creation | none stated | Open question: if 'commit package-lock.json' instructs the agent to run git commit during scaffolding, it conflicts with GOV-015 (repository-changing Git operations only on explicit request); if it only means the lockfile must be tracked in version control (as in rules/frontend/dependencies.md), it restates DEP-007. The imperative step wording does not settle which. | Under the literal reading the agent would commit the lockfile without an explicit Git request.
+C R274 OL DEP-016,DEP-024 | MUST | Frontend unit/component tests stay inside the frontend workspace (normally colocated), E2E tests (Playwright, only when E2E coverage is required) live inside the workspace (e.g. frontend/ProjectName.Web/e2e/), and frontend tests are never placed under backend/. | Frontend tests placement | none stated
+C R275 OL DEP-024,ARC-027 | DEFAULT | The default physical repository layout (backend/, frontend/<Name>.Web/, docs/, shared root files) is a target structure: create optional directories or projects (including docs/ subdirectories) only when needed. | Repository scaffolding | none stated
+C R276 OL DEP-022 | DEFAULT | The solution file uses the .slnx format. | .NET solution | Legacy .sln only when an external tool or requirement needs it (register).
+C R277 OL DEP-023 | DEFAULT | Directory.Build.props holds genuinely shared settings (TargetFramework, Nullable, ImplicitUsings, analysis/compiler settings), never project-specific settings. | Shared .NET build configuration | none stated
+C X46 EX DEP-008 | MUST | The repository includes a global.json pinning the intended supported SDK line: the current stable SDK for the target .NET release (no RC/preview unless explicitly requested), with servicing allowed by the chosen rollForward policy. | Repository scaffolding | RC/preview SDK when explicitly requested. | DEP-008 fixes the platform (.NET 10 LTS, no preview without approval) but no oracle policy requires an SDK-pinning global.json file. | Scaffolding without global.json, or with a floating SDK line, is non-conformant.
+C R278 OL GOV-013,DEP-018,ARC-020 | MUST NOT | Docker files, deployment manifests, Kubernetes, cloud infrastructure, messaging infrastructure and additional services are introduced only for a concrete requirement; optional infrastructure is not scaffolded because it may be useful later. | Repository scaffolding | Concrete requirement.
+C R279 OL WF-005,WF-006,WF-009,WF-003 | MUST | Scaffolding is verified by restoring, building the .NET solution and the frontend when present, running relevant tests, inspecting project references (check-manifests), inspecting the final tree and confirming the Development configuration, then running verify; never report successful scaffolding when the result does not build; complete only when structure matches scope, references respect the architecture, approved technology is used and nothing unnecessary or unrelated was created. | project-structure workflow | none stated
+C R280 OL ARC-020,ARC-027 | REQUIRES_APPROVAL | Before adding a project later determine whether a new assembly is justified and identify its responsibility; a new production project or layer is Reserved (architecture-decision); never split code into additional projects merely to look sophisticated. | Adding projects | none stated
+C R281 OL GOV-014,ARC-027,RUN-009 | MUST | Reorganize an existing solution only for a concrete structural problem: inspect tree and references, preserve behavior, move code in small reviewable steps, update namespaces/references consistently, avoid unrelated feature work, verify; do not force an established project to match the template without concrete value. | Restructuring | none stated
+C R282 OL ARC-009,ARC-005,ARC-020,GOV-013 | REQUIRES_APPROVAL | Do not introduce by default MediatR, CQRS handler trees, Vertical Slice Architecture, Domain Events, Specifications, SharedKernel, BuildingBlocks, EventBus, messaging, microservices, Kubernetes, cloud-specific projects or state-management frameworks; each requires an approved need. | Scaffolding and structure | Approved need.
+
+FILE .claude/skills/logging/references/serilog.md | Skill-private reference read by logging.
+1 NN | header metadata
+3 NN | heading
+5 OL R58 | application code keeps using `ILogger<T>`
+7 NN | section heading
+9 NN | two-stage bootstrap technique (only when startup logging matters)
+10 OL R59 |
+11 OL R58 |
+12-13 OL R59 |
+15 NN | section heading
+17-49 NN | bootstrap/AddSerilog code example
+51 OL R112,R221 |
+53 NN | section heading
+55-81 NN | appsettings Serilog configuration example (illustrative values)
+83 OL R112 | is added to `WriteTo` only when needed
+85 NN | section heading
+87 NN | technique description of request logging
+89-98 NN | request logging code example
+100 OL R120 |
+102 NN | section heading
+104-107 NN | destructuring code example
+109 OL R121 |
+111 NN | section heading
+113-119 NN | LogContext code example
+121 NN | technique note (requires FromLogContext)
+123 NN | section heading
+125-126 NN | optional OTLP and expression-filter integrations (technique)
+127 OL R162 | the `Serilog.Sinks.Elasticsearch` package is deprecated
+128 NN | optional audit-trail technique only with an adopted audit design
+130 NN | section heading
+132 NN | shutdown flush technique
+134 NN | section heading
+136-143 DU R59,R112 | decision-guide table restating Serilog setup and need-based sinks
+
+FILE .claude/skills/logging/SKILL.md | On-demand knowledge.
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 NN | policy pointers
+15 NN | section heading
+17-20 NN | structured vs interpolated logging code example
+22 OL R58 |
+24 NN | section heading
+26 OL R120 |
+27-28 NN | level-selection guidance for Information/Warning (technique)
+29 OL R27 |
+30 NN | Critical level guidance (technique)
+32 NN | technique note on choosing levels by operational meaning
+34 NN | section heading
+36 OL R25 |
+38 NN | section heading
+40-45 NN | BeginScope code example
+47 OL R116 | validate or normalize one accepted from an external client
+49 NN | section heading
+51 OL R121,R120 |
+53 NN | section heading
+55 OL R78 |
+57-63 NN | LoggerMessage code example
+65 OL R78 |
+67 NN | section heading
+69 DU R58,R25,R27,R121,R59 | anti-pattern list restating structured logging, log-once, expected outcomes, payload and provider-boundary rules
+71 NN | section heading
+73-80 DU R58,R25,R27,R78 | decision-guide table restating logging defaults
+
+FILE .claude/skills/modern-csharp/SKILL.md | On-demand knowledge (optional language technique).
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 OL R51 |
+15-17 NN | section heading and lead-in
+19-23 NN | primary constructor code example
+25 OL R51 | Never convert constructors mechanically.
+27 NN | section heading
+29-32 NN | collection expression code example
+34 OL R51 |
+36 NN | section heading
+38 NN | records vs classes guidance (optional language technique)
+40 NN | section heading
+42-44 NN | required member code example
+46 NN | required-member usage guidance (technique)
+48 NN | section heading
+50-57 NN | pattern matching code example
+59 NN | readability technique note
+61 NN | section heading
+63-71 NN | field keyword code example
+73 OL R51 | do not rewrite backing fields that already contain clear or substantial logic
+75 NN | section heading
+77-85 NN | extension members code example
+87 OL R51 | traditional extension methods remain valid and need no conversion
+89 NN | section heading
+91-97 NN | raw string literal code example
+99 OL R78 | never a reason to introduce raw SQL
+101 NN | section heading
+103 OL R51 |
+104-105 NN | naming, visibility and sealed conventions (low-level style guidance)
+106 OL R53 |
+107 NN | immutability guidance (optional technique)
+109 NN | section heading
+111 OL R78 |
+113 NN | section heading
+115 OL R264 |
+117 NN | section heading
+119 OL R265 |
+121 NN | section heading
+123 DU R51,R78 | anti-pattern list restating no mechanical modernization and evidence-based optimization
+
+FILE .claude/skills/persistence-change/SKILL.md | On-demand workflow (persistence/ef-core facet).
+1-9 NN | skill front matter: name and trigger description (routing metadata)
+11 NN | header metadata
+13 NN | heading
+15 NN | read-first pointers
+17 NN | section heading
+19 OL R266 |
+20 EX X16 |
+21 OL R43 |
+22 OL R68 |
+24-30 NN | LocalDB connection string example
+31 OL R67,R73 |
+33 NN | section heading
+35 NN | pointer: change entities within the read-first role rules
+36 EX X10 | If the schema changes, create a **new** migration:
+38-40 NN | migration command example
+42 OL R267 |
+43 OL R268 |
+44 OL R269 |
+45 OL R75 | drop and recreate the local database when a fresh dataset is needed
+46 EX X44 |
+48 NN | section heading
+50 OL R270 |
+52 NN | section heading
+54 EX X45 |
+
+FILE .claude/skills/project-structure/references/backend-layout.md | Skill-private scaffolding facet of the architecture frame.
+1 NN | header metadata
+3 NN | heading
+5 OL R124 | Create only directories that contain real code.
+7 NN | section heading
+9-13 NN | Domain directory tree (illustrative layout)
+15 OL R36,R124 |
+17 NN | section heading
+19-28 NN | Application directory tree (illustrative layout; inline comments restate R39, R124 and R38)
+30 OL R124 | avoid generic `Models`, `Helpers`, `Common`, or `Utils` buckets
+32 NN | section heading
+34-39 NN | Infrastructure directory tree (illustrative layout; Persistence/ internal layout owned by persistence-change, X16)
+41 NN | technique note on capability-specific subdirectories
+43 NN | section heading
+45-56 NN | Api directory tree (illustrative layout)
+58 OL R271,R31,R46,R44 |
+60 NN | section heading
+62-67 DU R31 | reference listing restating the inward reference graph (R31)
+69 OL R31,R32 |
+71 NN | section heading
+73 OL R272 |
+75-81 NN | test project tree (illustrative)
+83 OL R272,R102 |
+
+FILE .claude/skills/project-structure/references/frontend-setup.md | Skill-private scaffolding facet of the frontend capability.
+1 NN | header metadata
+3 NN | heading
+5 NN | pointers to stack, standards and technique
+7 OL R273 |
+8 OL R3 | Create the workspace in the shared frontend location:
+10-12 NN | Angular CLI command example
+14 OL R273 |
+15 OL R273,R113 |
+16 NN | technique step: configure the Development API base URL compatible with CORS
+17 OL R132 |
+18 MX R190,U4 | commit `package-lock.json` ⟫ verification with declared scripts (oracle WF-018) plus an imperative 'commit' step whose Git meaning is uncertain (U4)
+20 OL R274,R160 |
+
+FILE .claude/skills/project-structure/references/solution-layout.md | Skill-private reference.
+1 NN | header metadata
+3 NN | heading
+5 OL R275 |
+7-30 NN | repository layout tree (illustrative target structure)
+32 NN | section heading
+34 OL R272,R276 |
+36 NN | section heading
+38 OL R3,R274 |
+40 NN | section heading
+42 OL R275 |
+44 NN | section heading
+46 OL R277 |
+47 OL R54 |
+48 MX X46,R264 | pin the intended supported SDK line ⟫ mandatory SDK-pinning global.json (EXTRA X46) with no RC/preview SDK unless requested (oracle DEP-008)
+49 OL R51 |
+51 NN | section heading
+53 NN | .gitignore content guidance (scaffolding technique)
+55 NN | section heading
+57 OL R278 |
+
+FILE .claude/skills/project-structure/references/test-setup.md | Skill-private scaffolding facet of the backend-testing capability.
+1 NN | header metadata
+3 NN | heading
+5 NN | pointers to placement owner and standards
+7 OL R100,R272 |
+9-13 NN | dotnet new nunit command example
+15 OL R54,R113,R112 |
+16 MX R101,X9 | recorded first as `From -> To` through `architecture-decision` ⟫ narrow test references (oracle ARC-028) combined with the recorded-approval requirement for every reference (EXTRA X9)
+17 OL R107 |
+18 OL R106 |
+19 OL R279 |
+21 NN | pointer to technique skill
+
+FILE .claude/skills/project-structure/SKILL.md | On-demand workflow.
+1-8 NN | skill front matter: name and trigger description (routing metadata)
+10 NN | header metadata
+12 NN | heading
+14 OL R239 | path-scoped standards have not loaded yet when no backend or frontend files exist
+16-23 NN | reference routing table
+25 NN | pointer to persistence-change for persistence setup
+27 NN | section heading
+29 DU R31,R275,R124 | goals summary restating dependency direction, layout default, approved technology and no speculative structure
+31 NN | section heading
+33 OL R278,R230 |
+34 OL R157,R161 |
+35 OL R275 |
+36 MX R30,R31,X9 | first record the requested scaffold through `architecture-decision` ⟫ four-project role map and inward references (oracle) plus mandatory prior recording of every reference edge (EXTRA X9)
+37 OL R272 |
+38 OL R3 |
+39 OL R124 |
+40 OL R235,R114 |
+41 OL R279 |
+43 NN | section heading
+45-46 OL R280 |
+47 MX R31,X9 | each new reference is recorded first ⟫ minimal inward references (oracle ARC-001) plus recorded approval per reference (EXTRA X9)
+48 OL R277 |
+49 OL R279 |
+51 OL R280 |
+53 NN | section heading
+55-59 OL R281 |
+61 OL R281 |
+63 NN | section heading
+65 OL R282 |
+67 NN | section heading
+69 OL R279 |
+DONE

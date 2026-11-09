@@ -1,0 +1,342 @@
+# K1 — security-scan (+ references/scan-layers.md), swagger, template-maintenance, verify, .editorconfig
+
+@@ output/template/.claude/skills/security-scan/references/scan-layers.md ;; Private workflow reference (investigation prompts).
+@scope private reference scan-layers (read by security-scan)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3-15 NN ;; Heading, statement that these are investigation prompts, layer headings and audit command example.
+17 OL [wf020.sl-reachability]
+19-29 NN ;; npm audit prompt, layer heading and secret-indicator investigation prompts.
+31 OL [sec001.sl-dev-not-exempt]
+33-49 NN ;; Preferred-pattern example, further investigation prompts and SQL injection anti-example.
+51 OL [sec004.sl-safe-forms]
+53 NN ;; Heading.
+55 EX [x.sl-command-injection]
+57 NN ;; Heading.
+59 EX [x.sl-path-traversal]
+61-69 NN ;; SSRF and XSS investigation prompts with descriptive non-findings; heading.
+71 EX [x.sl-deserialization]
+73 NN ;; Heading.
+75 OL [sec016.sl-crypto-passwords]
+77-79 NN ;; Headings.
+81 OL [sec006.sl-effective-policy]
+83 NN ;; Heading.
+85 OL [sec006.sl-anonymous]
+87 NN ;; Heading.
+89 MX [sec005.sl-idor,x.auth-resource-authz] ;; Client-side filtering not being authorization restates SEC-005; verifying ownership/tenant/resource policy restates the resource-authorization extra.
+91 NN ;; Heading.
+93 MX [sec017.sl-token-validation,x.sl-no-arbitrary-clockskew] ;; Validating issuer/audience/signature/lifetime restates SEC-017; not demanding every TokenValidationParameters property or an arbitrary ClockSkew is added.
+95 NN ;; Heading.
+97 OL [sec016.sl-no-custom-hashing]
+99 NN ;; Heading.
+101 OL [sec005.sl-frontend]
+103-105 NN ;; Headings.
+107 OL [sec009.sl-cors]
+109 NN ;; Heading.
+111 OL [sec011.sl-csrf]
+113 NN ;; Heading.
+115 OL [sec007.sl-tls]
+117 NN ;; Heading.
+119 OL [sec015.sl-uploads]
+121 NN ;; Heading.
+123 EX [x.sl-rate-limiting]
+125-127 NN ;; Headings.
+129 OL [sec010.sl-logging]
+131-133 NN ;; Heading and error-response investigation prompt (API-008 captured in the standards).
+135 NN ;; Heading.
+137 EX [x.sl-response-contracts]
+139 NN ;; Heading.
+141 OL [sec008.sl-data-at-rest]
+143-145 NN ;; Headings.
+147 OL [sec013.sl-fail-safe]
+149 NN ;; Heading.
+151 OL [sec013.sl-silent-success]
+153 NN ;; Heading.
+155 OL [run019.sl-no-cancel-retry]
+157 NN ;; Heading.
+159 OL [wf020.sl-exploitability]
+161 NN ;; Heading.
+163 OL [sec014.sl-visible-failure]
+165-167 NN ;; Heading and centralized-error investigation prompt.
+169 NN ;; Heading.
+171 EX [x.sl-threat-modeling]
+173 NN ;; Heading.
+175 OL [wf020.sl-no-mechanical-severity]
+177-200 NN ;; Finding-format and NEEDS VERIFICATION examples.
+202 OL [wf020.sl-no-invented-exploitability]
+
+C wf020.sl-reachability OL WF-020,GOV-014 MUST ;; Do not upgrade packages during a scan unless asked; do not rate dependency findings from CVSS alone; consider reachability and exposure. ;; = ;; none ;;
+C sec001.sl-dev-not-exempt OL SEC-001 DEFINITION ;; appsettings.Development.json is not automatically ignored: a real committed secret remains a secret; obviously fake values may be ignored or reported as Info; UserSecretsId is not a secret. ;; = ;; none ;;
+C sec004.sl-safe-forms OL SEC-004 DEFINITION ;; Safe forms: ORM LINQ, parameterized SQL, the persistence technology's interpolation-parameterizing APIs, ADO.NET/Dapper parameters; ordinary LINQ with user input in a predicate is not SQL injection. ;; = ;; none ;;
+C x.sl-command-injection EX SEC-003 PREFER ;; Prefer APIs that separate executable and arguments; validate or constrain input when command execution is genuinely needed. ;; = ;; none ;; Not in the oracle.
+C x.sl-path-traversal EX SEC-003 MUST ;; Normalize and verify that user-influenced paths remain within the intended storage boundary. ;; = ;; none ;; Not in the oracle.
+C x.sl-deserialization EX SEC-003 MUST_NOT ;; Untrusted payloads must not deserialize into arbitrary runtime types (e.g. BinaryFormatter, unsafe TypeNameHandling). ;; = ;; none ;; Not in the oracle.
+C sec016.sl-crypto-passwords OL SEC-016,SEC-008 MUST ;; Flag security-sensitive MD5/SHA1/ECB, hardcoded keys, custom hashing and home-grown protocols (not non-security checksums); passwords use established hashers, not reversible encryption; never recommend custom cryptography. ;; = ;; none ;;
+C sec006.sl-effective-policy OL SEC-006 DEFINITION ;; Determine the effective authorization policy; an endpoint without explicit [Authorize] under a secure fallback is not automatically vulnerable; bare [Authorize] is not automatically insufficient. ;; = ;; none ;;
+C sec006.sl-anonymous OL SEC-006 MUST ;; Confirm deliberately public surfaces ([AllowAnonymous]) are intentional; not every public endpoint is a vulnerability. ;; = ;; none ;;
+C sec005.sl-idor OL SEC-005 DEFINITION ;; Client-side filtering is not authorization. ;; = ;; none ;;
+C sec017.sl-token-validation OL SEC-017 MUST ;; Check that issuer, audience where applicable, signature/signing authority and lifetime are validated; flag intentionally disabled validation without valid reason. ;; = ;; none ;;
+C x.sl-no-arbitrary-clockskew EX SEC-017 MUST_NOT ;; Do not require manually setting every TokenValidationParameters property when authority/metadata configuration establishes secure validation, and do not impose an arbitrary universal ClockSkew. ;; = ;; none ;; Not in the oracle.
+C sec016.sl-no-custom-hashing OL SEC-016,SEC-018 MUST_NOT ;; Review local-account hashing, reset, lockout and enumeration behaviour; never recommend custom password hashing. ;; = ;; none ;;
+C sec005.sl-frontend OL SEC-005 MUST ;; Route guards and hidden/disabled buttons are UX; verify sensitive operations are protected by the backend. ;; = ;; none ;;
+C sec009.sl-cors OL SEC-009 DEFINITION ;; CORS is a browser-origin policy, not authorization; broad, credentialed-untrusted or Production-exposed environment origins are problems; AllowAnyOrigin can be valid for a public non-credentialed API; credentialed cross-origin access requires restricted origins. ;; = ;; none ;;
+C sec011.sl-csrf OL SEC-011 MUST ;; When browser credentials (especially cookies) are sent automatically review CSRF protection for state-changing operations; do not assume the frontend framework provides server-side CSRF protection. ;; = ;; none ;;
+C sec007.sl-tls OL SEC-007 DEFINITION ;; Disabled certificate validation, accept-all callbacks and plain HTTP for sensitive communication are findings, accounting for TLS termination; missing in-app redirection is not automatically a vulnerability. ;; = ;; none ;;
+C sec015.sl-uploads OL SEC-015 MUST_NOT ;; Client-provided MIME types are not authoritative (review size limits, path safety, names, content assumptions, serving risks and authorization). ;; = ;; none ;;
+C x.sl-rate-limiting EX SEC-013,RUN-017 DEFAULT ;; Consider rate limiting where abuse realistically matters (login/password reset, expensive anonymous endpoints, resource-intensive operations); do not require it on every endpoint. ;; = ;; none ;; Not in the oracle.
+C sec010.sl-logging OL SEC-010,RUN-014 DEFINITION ;; Logs must not contain passwords, tokens, keys, auth secrets or full payment credentials; PII per project requirements; prefer technical identifiers; Debug/Trace is not a security boundary. ;; = ;; none ;;
+C x.sl-response-contracts EX ARC-029,SEC-010 PREFER ;; Prefer explicit response contracts where needed, but inspect the serialized fields before calling a returned entity a vulnerability. ;; = ;; none ;; Not in the oracle.
+C sec008.sl-data-at-rest OL SEC-008,SEC-016 DEFINITION ;; Choose data-at-rest protection from the requirement (password hashing; hashed verification tokens; protected storage for retrievable secrets; platform/database encryption; Data Protection for temporary payloads, not universal database encryption; never custom cryptography). ;; = ;; none ;;
+C sec013.sl-fail-safe OL SEC-013 MUST ;; Security-sensitive checks fail safely (no allow on failed authorization service, token validation or permission lookup). ;; = ;; none ;;
+C sec013.sl-silent-success OL SEC-013 MUST_NOT ;; Not every swallowed exception is a vulnerability, but security-relevant failures must not silently turn into success. ;; = ;; none ;;
+C run019.sl-no-cancel-retry OL RUN-016,RUN-019 MUST_NOT ;; Review retries of state-changing operations for duplicate effects; caller cancellation is never retried. ;; = ;; none ;;
+C wf020.sl-exploitability OL WF-020 MUST ;; A theoretical missing limit is not automatically High; evaluate whether an attacker can exploit it. ;; = ;; none ;;
+C sec014.sl-visible-failure OL SEC-014 MUST ;; Prefer visible failure over insecure fallback in security-sensitive startup configuration (no silently disabled authentication, plaintext mode or allow-all). ;; = ;; none ;;
+C x.sl-threat-modeling EX WF-020 MUST ;; When meaningful security-sensitive workflows exist, flag them for threat modeling or manual review instead of claiming the scan proves them secure. ;; = ;; none ;; Not in the oracle.
+C wf020.sl-no-mechanical-severity OL WF-020 MUST_NOT ;; Never map pattern, CVSS or OWASP category mechanically to severity. ;; = ;; none ;;
+C wf020.sl-no-invented-exploitability OL WF-020,WF-012 MUST_NOT ;; Never invent exploitability the code does not establish. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/security-scan/SKILL.md ;; Workflow (security audits).
+@scope workflow security-scan (security audit or materially security-sensitive change)
+1-9 IM ;; Frontmatter (name, routing description).
+11 NN ;; Banner (kind, scope, capability, loading metadata).
+13 NN ;; Heading.
+15 NN ;; Heading.
+17 EX [x.ss-static-limits]
+19 NN ;; Heading.
+21 OL [wf020.ss-concrete]
+22 OL [wf020.ss-context]
+23 OL [wf020.ss-confirmed-severity]
+24 OL [sec001.ss-dev-secrets]
+25 OL [gov013.ss-no-unneeded]
+26 OL [sec006.ss-effective-authz]
+27 IM ;; Instruction to apply the owning standards and knowledge rather than duplicating them (routing).
+28 OL [wf021.ss-tool-independent]
+30 NN ;; Heading.
+32 EX [x.ss-scope-surfaces,x.ss-full-vs-targeted]
+34-35 NN ;; Table header.
+36-44 DU [x.ss-full-vs-targeted] ;; Change-type → priority-layer table illustrating targeted scoping.
+46 NN ;; Heading.
+48 IM ;; Routing to the layer reference.
+50-51 NN ;; Table header.
+52-58 NN ;; Layer → OWASP mapping table (descriptive taxonomy).
+60 EX [x.ss-owasp-fit]
+62 IM ;; Routing to the governing standards and knowledge skills.
+64 NN ;; Heading.
+66 OL [wf021.ss-scanner-findings]
+68 NN ;; Heading.
+70 OL [wf020.ss-severity]
+72-76 EX [x.ss-severity-scale]
+78 NN ;; Heading.
+80 EX [x.ss-false-positives]
+82 OL [sec005.ss-not-safe]
+84 NN ;; Heading.
+86 MX [x.ss-finding-fields,wf020.ss-needs-verification] ;; Labelling uncertain items restates WF-020; the required finding fields are added.
+88-128 NN ;; Report template.
+130 OL [wf009.ss-layer-status]
+132 NN ;; Heading.
+134 MX [x.ss-remediation,sec016.no-custom-auth,sec008.no-custom-crypto,sec006.anonymous-visible] ;; Exclusions restate SEC-016/SEC-008/SEC-006; smallest secure change and the remaining remediation exclusions are added.
+136 NN ;; Heading.
+138 MX [wf020.ss-confirmed-severity,wf009.ss-layer-status,x.ss-static-limits] ;; Completion criteria restating the evidence, severity and status rules and the limitation extra.
+
+C x.ss-static-limits EX WF-020 MUST ;; The scan is an evidence-based static review, not a penetration test, and cannot prove the application secure; state that limitation in the report. ;; = ;; none ;; Not in the oracle.
+C wf020.ss-concrete OL WF-020,WF-012 MUST ;; Report concrete risks, not generic security advice. ;; = ;; none ;;
+C wf020.ss-context OL WF-020 MUST ;; Evaluate findings in the context of actual exposure and application behaviour. ;; = ;; none ;;
+C wf020.ss-confirmed-severity OL WF-020 MUST ;; Every finding distinguishes confirmed evidence from items needing verification; severity comes from exploitability, reachability, impact and context, never from a suspicious pattern or raw CVSS alone. ;; = ;; none ;;
+C sec001.ss-dev-secrets OL SEC-001 MUST_NOT ;; Do not suppress a real secret because it sits in a Development file. ;; = ;; none ;;
+C gov013.ss-no-unneeded OL GOV-013,WF-012 MUST_NOT ;; Do not require security mechanisms the project does not need. ;; = ;; none ;;
+C sec006.ss-effective-authz OL SEC-006,SEC-005 MUST ;; Evaluate effective authorization behaviour including global/fallback policies. ;; = ;; none ;;
+C wf021.ss-tool-independent OL WF-021 MUST_NOT ;; The review must not depend on a specific MCP server, agent, analyzer, commercial scanner or external tool; available tooling is evidence, not the sole authority. ;; = ;; none ;;
+C x.ss-scope-surfaces EX WF-020 MUST ;; Inspect which surfaces exist and skip irrelevant checks instead of reporting them as failures. ;; = ;; none ;; Not in the oracle.
+C x.ss-full-vs-targeted EX WF-020 MUST ;; A full pre-release or requested audit reviews all applicable layers; a targeted change focuses on affected layers and expands when it crosses security boundaries. ;; = ;; none ;; Not in the oracle.
+C x.ss-owasp-fit EX WF-020 MUST ;; Map OWASP Top 10:2025 categories only when they genuinely fit. ;; = ;; none ;; Not in the oracle.
+C wf021.ss-scanner-findings OL WF-021,WF-020 MUST ;; When a scanner reports a possible issue inspect the code, decide reachability and relevance, and report only with appropriate confidence. ;; = ;; none ;;
+C wf020.ss-severity OL WF-020 MUST ;; Severity considers exploitability, exposure, privileges, affected data/capability, blast radius, reliability and compensating controls. ;; = ;; none ;;
+C x.ss-severity-scale EX WF-020 DEFINITION ;; Severity scale: Critical (sparingly), High, Medium, Low, Info. ;; = ;; none ;; Not in the oracle.
+C x.ss-false-positives EX SEC-006,SEC-009,SEC-008 DEFINITION ;; Not automatically vulnerabilities: endpoints without [Authorize] under a secure fallback, bare [Authorize] when authentication alone is intended, AllowAnyOrigin for a public non-credentialed API, MD5/SHA1 checksums, no app-level encryption when platform encryption suffices, obvious fake credentials, secure framework defaults. ;; = ;; none ;; Not in the oracle.
+C sec005.ss-not-safe OL SEC-001,SEC-010,SEC-005 DEFINITION ;; Not automatically safe: secrets in appsettings.Development.json, sensitive values logged at Debug, client-side route guards, hidden UI buttons, CORS as an authorization substitute. ;; = ;; none ;;
+C x.ss-finding-fields EX WF-020 MUST ;; Every confirmed finding includes severity, location, title, evidence, why it is a risk, likely impact, smallest remediation and OWASP category when applicable. ;; = ;; none ;; Not in the oracle.
+C wf020.ss-needs-verification OL WF-020 MUST ;; Label uncertain items NEEDS VERIFICATION instead of presenting them as confirmed. ;; = ;; none ;;
+C wf009.ss-layer-status OL WF-009 MUST_NOT ;; Layer status is PASS, FINDINGS, NOT APPLICABLE or NOT CHECKED; never PASS for an uninspected layer. ;; = ;; none ;;
+C x.ss-remediation EX SEC-008,GOV-013 MUST_NOT ;; Prefer the smallest secure change; do not recommend blanket encryption of all fields, security libraries merely to satisfy the scan, or disabling functionality a static scanner cannot understand. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/swagger/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge swagger (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 OL [dep012.sw-ui]
+15 NN ;; Heading.
+17-30 NN ;; Development-only setup example.
+32 MX [x.sw-config-api-layer,dep012.sw-package] ;; Swashbuckle via add-dependency restates DEP-012/DEP-003; keeping configuration in the Api/composition layer is added.
+34 NN ;; Heading.
+36 EX [x.sw-launch-urls]
+38 NN ;; Heading.
+40-48 NN ;; Response metadata example.
+50 MX [api016.sw-accuracy,api003.sw-201,x.sw-error-contracts,api008.sw-no-internals] ;; Runtime-accurate metadata, 201 for creation and no internals restate API-016/API-003/API-008; describing ProblemDetails contracts where useful is added.
+52 NN ;; Heading.
+54 OL [api016.sw-auth-metadata]
+56 NN ;; Heading.
+58 EX [x.sw-descriptions]
+60 NN ;; Heading.
+62 EX [x.sw-multiple-docs]
+64 NN ;; Heading.
+66 MX [api014.sw-generated-clients,x.sw-client-contracts] ;; Treating breaking schema changes seriously restates API-014; stable explicit contracts and reviewing generated-client changes are added.
+68 NN ;; Heading.
+70 OL [wf006.sw-verify]
+72 NN ;; Heading.
+74 MX [api016.swagger-accurate,api017.swagger-dev,x.sw-not-test-substitute,x.sw-client-contracts,gov013.no-speculative] ;; Anti-pattern list restating rule-owned items; Swagger as a substitute for integration tests has no owner clause and is registered.
+
+C dep012.sw-ui OL DEP-012 DECIDED ;; Swashbuckle Swagger UI is the decided surface; the requirement is the interactive UI, not a standalone raw OpenAPI endpoint. ;; = ;; none ;;
+C x.sw-config-api-layer EX ARC-012 MUST ;; Keep Swagger configuration in the Api/composition layer. ;; = ;; none ;; Not in the oracle.
+C dep012.sw-package OL DEP-012,DEP-003 MUST ;; Add Swashbuckle.AspNetCore through add-dependency. ;; = ;; none ;;
+C x.sw-launch-urls EX WF-006 MUST ;; Application HTTP/HTTPS URLs must agree with the launch profile; never point a browser launch URL to HTTPS on an HTTP-only port. ;; = ;; none ;; Not in the oracle.
+C api016.sw-accuracy OL API-016 MUST ;; Document only statuses in the real runtime contract (never 201 for 200, 204 with a body, or speculative statuses), considering the whole pipeline (binding, validation, auth, rate limiting, exception handling, middleware). ;; = ;; none ;;
+C api003.sw-201 OL API-003 DEFAULT ;; For creation endpoints document 201 and prefer CreatedAtAction/CreatedAtRoute when a canonical URL exists. ;; = ;; none ;;
+C x.sw-error-contracts EX API-002,API-016 DEFAULT ;; Describe ProblemDetails/ValidationProblemDetails where useful. ;; = ;; none ;; Not in the oracle.
+C api008.sw-no-internals OL API-008 MUST_NOT ;; Never expose internal exception types, stack traces, SQL, connection strings or paths in Swagger examples. ;; = ;; none ;;
+C api016.sw-auth-metadata OL API-016 MUST ;; When the API uses authentication configure the matching security definition; no scheme merely because a package is installed; no global auth requirements on anonymous endpoints. ;; = ;; none ;;
+C x.sw-descriptions EX API-016 DEFAULT ;; Document what helps consumers (preconditions, idempotency, pagination/filtering, outcomes), not name repetitions; XML comments only when the project chooses them, not on every internal type. ;; = ;; none ;; Not in the oracle.
+C x.sw-multiple-docs EX API-016 MUST_NOT ;; Use several documents only for a real contract separation (API versions, public/internal surfaces). ;; = ;; none ;; Not in the oracle.
+C api014.sw-generated-clients OL API-014 MUST ;; When the contract feeds client generation treat breaking schema changes seriously and keep metadata accurate. ;; = ;; none ;;
+C x.sw-client-contracts EX API-016,ARC-029 MUST ;; Avoid unstable anonymous response shapes, use explicit request/response contracts and review generated-client changes when the contract changes. ;; = ;; none ;; Not in the oracle.
+C wf006.sw-verify OL WF-006,API-016,TST-010 MUST ;; When API behaviour changes verify controller behaviour, integration tests and metadata; start the API when startup changed, open the Development Swagger UI, exercise endpoints when meaningful and preserve newly verified behaviour in tests. ;; = ;; none ;;
+C x.sw-not-test-substitute EX TST-006 MUST_NOT ;; Swagger is not a substitute for integration tests. ;; = ;; none ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/template-maintenance/SKILL.md ;; Workflow (user-invoked only; repo/meta).
+@scope repo/meta: template-maintenance (instruction-system changes; user-invoked only)
+1-6 IM ;; Frontmatter (name, description).
+7 EX [x.template-maint-user-only]
+8 IM ;; Frontmatter delimiter.
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 EX [x.template-maint-user-only]
+16 NN ;; Heading.
+18 EX [x.tm-capability-placement]
+19 EX [x.map-classification]
+21-22 NN ;; Table header.
+23-29 EX [x.map-classification]
+31 EX [x.tm-scope-globs]
+33 NN ;; Heading.
+35 EX [x.tm-one-owner]
+36 DU [x.vocab-default-report] ;; Vocabulary pointer restating CLAUDE.md. ;; must / must not
+37 EX [x.tm-trigger-role]
+38 EX [x.map-direction]
+39 EX [x.tm-leak-rule]
+41 NN ;; Heading.
+43 EX [x.tm-header]
+44 EX [x.tm-skill-frontmatter]
+45 EX [x.tm-capability-changes]
+46 EX [x.tm-update-manifest-map]
+47 EX [x.tm-hooks]
+48 EX [x.tm-enf-conforms]
+50 NN ;; Heading.
+52 EX [x.tm-run-checker]
+
+C x.tm-capability-placement EX - MUST ;; Implementation-specific content of a slot becomes a facet listed in the module manifest with 'Capability: <slot>/<implementation>'; implementation-independent slot policy stays in the neutral standard; placement belongs to the architecture frame, technique to leaves declaring frame bindings in Binds:. ;; repo/meta (instruction-system change) ;; none ;; Instruction-system placement rule.
+C x.tm-scope-globs EX - MUST ;; A rule's paths include its scope's canonical glob (**/*, backend/**/*, backend/**/*Tests/**/*, frontend/**/*); no other directory hierarchy under .claude/rules/. ;; = ;; none ;; Instruction-system rule.
+C x.tm-one-owner EX - MUST ;; Every normative statement has exactly one owner; elsewhere only a routing pointer, a check-by-reference item or a register decision summary. ;; = ;; none ;; Instruction-system rule.
+C x.tm-trigger-role EX - MUST ;; Keep the trigger role: always-loaded policy in OP/DEC, path policy in STD, procedure obligations in WF; do not move content between roles to save tokens; never place critical must-policy only in a skill. ;; = ;; none ;; Instruction-system rule.
+C x.tm-leak-rule EX - MUST_NOT ;; Outside a module's facets, manifest, the register's selection block and the map, never name the selected implementation; facet file names are role-based. ;; = ;; none ;; Instruction-system rule.
+C x.tm-header EX - MUST ;; Start each artifact with the header 'Kind | Scope | Capability | Loading' (after required frontmatter). ;; = ;; none ;; Instruction-system rule.
+C x.tm-skill-frontmatter EX - MUST ;; Skill frontmatter name equals the directory and the description is concise and trigger-first; WF bodies own procedure and output; KNW bodies own technique and point to standards for policy. ;; = ;; none ;; Instruction-system rule.
+C x.tm-capability-changes EX ARC-020 MUST ;; Capability changes follow architecture-decision (contract coverage, single implementation per slot, no unselected implementations at runtime). ;; = ;; none ;; Instruction-system rule.
+C x.tm-update-manifest-map EX - MUST ;; Update the module manifest's facet table and both MAP views for every added, moved or removed artifact. ;; = ;; none ;; Instruction-system rule.
+C x.tm-hooks EX - MUST ;; Hooks use exec form (node + [dispatch.cjs launcher, event]); the launcher only locates code while checks use the active root from the hook input cwd; the PreToolUse guard keeps onFailure block; post and Stop hooks stay advisory; hook messages point to owners. ;; = ;; none ;; Instruction-system rule.
+C x.tm-enf-conforms EX - MUST ;; ENF artifacts declare their policy owners on the line after the header ('Conforms: …' or '—') and every cited owner path is declared; slot bindings and facet roles are fixed; contract and manifest Binds agree. ;; = ;; none ;; Instruction-system rule.
+C x.tm-run-checker EX - MUST ;; Run check-instructions with the active root and fix every error; review the always-loaded size and keep it compact without moving required planning-time policy out. ;; = ;; none ;; Instruction-system rule.
+
+@@ output/template/.claude/skills/verify/SKILL.md ;; Workflow (completion verification).
+@scope workflow verify (before declaring work finished)
+1-9 IM ;; Frontmatter (name, routing description).
+11 NN ;; Banner (kind, scope, capability, loading metadata).
+13 NN ;; Heading.
+15 NN ;; Heading.
+17 OL [wf003.vf-goal]
+19 NN ;; Heading.
+21-25 OL [wf004.vf-inspect]
+27 OL [wf007.vf-affected-areas]
+29 NN ;; Heading.
+31 MX [wf005.vf-build,wf018.vf-build-script,x.vf-no-restore] ;; Building affected projects and using the declared script restate WF-005/WF-018; not using --no-restore unless restore is complete is added.
+33 NN ;; Heading.
+35 MX [wf005.vf-tests,wf018.vf-test-script,x.vf-suite-scope] ;; Running relevant tests, investigating failures and inspecting package.json restate WF-005/WF-018; full-suite vs affected-first scoping is added.
+37 NN ;; Heading.
+39 OL [wf006.vf-smoke]
+41 NN ;; Heading.
+43 OL [tst010.vf-probes]
+45 NN ;; Heading.
+47 OL [wf007.vf-risk-scoped]
+49 EX [x.vf-root-aware-commands]
+52 OL [wf007.vf-architecture,pst008.vf-seeder]
+53 EX [x.vf-cochange-check]
+54 OL [wf007.vf-format]
+55 MX [dep004.vf-dep-security,x.cr-scan-when-warranted] ;; Audits and inspecting security-sensitive changes restate DEP-004/WF-007; not requiring a full security-scan for every small change restates the code-review extra.
+56 EX [x.vf-instr-check]
+58 NN ;; Heading.
+60 MX [wf004.vf-final-diff,x.vf-final-diff-items,gov003.vf-spec-drift,gov021.vf-stale,tst010.vf-probes] ;; Accidental edits, architecture drift, specification drift, stale settings surfaces and unpreserved probes restate WF-004/GOV-003/GOV-021/TST-010; commented-out code, temporary logging, TODO/FIXME markers and stale temporary tests are added.
+62 OL [run010.vf-usings]
+64 NN ;; Heading.
+66 OL [wf008.vf-fix-retry,wf008.vf-no-hide]
+68 NN ;; Heading.
+70 OL [wf009.vf-report]
+72-82 DU [wf009.vf-report,gov017.dw-report-unresolved] ;; Report template restating the status vocabulary and open Decision Requests.
+
+C wf003.vf-goal OL WF-003,WF-007 MUST ;; Produce evidence that the change is complete without obvious regressions, matched to scope and risk, without requiring unconfigured optional tooling. ;; = ;; none ;;
+C wf004.vf-inspect OL WF-004,TST-010 MUST ;; Review the final changed files and diff first: scope match without unrelated refactoring, temporary probes removed only after their behaviour is preserved, no generated/build artifacts, no secrets or environment credentials (remove any). ;; = ;; none ;;
+C wf007.vf-affected-areas OL WF-004,WF-007 MUST ;; Determine affected areas (backend-only, frontend-only, contract/full-stack, documentation-only without unrelated builds). ;; = ;; none ;;
+C wf005.vf-build OL WF-005 MUST ;; Build the affected solution or projects; a build failure means the implementation is not complete. ;; = ;; none ;;
+C wf018.vf-build-script OL WF-018 MUST ;; For frontend changes inspect package.json and run the declared build script. ;; = ;; none ;;
+C x.vf-no-restore EX WF-005 MUST_NOT ;; Do not use --no-restore unless restore is known to be complete. ;; = ;; none ;; Not in the oracle.
+C wf005.vf-tests OL WF-005 MUST ;; Run tests covering the changed area and investigate every newly failing relevant test; never dismiss one as unrelated without checking. ;; = ;; none ;;
+C wf018.vf-test-script OL WF-018 MUST ;; Run the frontend's declared test script when one exists; inspect package.json rather than assuming a runner. ;; = ;; none ;;
+C x.vf-suite-scope EX WF-005 DEFAULT ;; Small solutions run the full suite; large solutions run affected test projects first, then the broader suite required. ;; = ;; none ;; Not in the oracle.
+C wf006.vf-smoke OL WF-006 DEFAULT ;; For new runnable applications or substantial composition/startup/configuration/persistence/full-stack changes verify Development startup (host, endpoint, Swagger UI, configuration binding, database initialization, frontend dev server, compatible API base URL and CORS); a build alone does not prove runtime composition. ;; = ;; none ;;
+C tst010.vf-probes OL TST-010 MUST ;; Behaviour uniquely demonstrated by an ad-hoc/manual probe must be represented by maintained automated tests before completion unless confirmed equivalent coverage exists; builds, compilers, formatters, analysis and existing suites need no new tests. ;; = ;; none ;;
+C wf007.vf-risk-scoped OL WF-007 MUST ;; Run architecture, formatting/analyzer, dependency and security checks when relevant, not indiscriminately. ;; = ;; none ;;
+C x.vf-root-aware-commands EX - MUST ;; Run checker commands by absolute path (node "<root>/.claude/scripts/<checker>.cjs", root from git rev-parse --show-toplevel or the directory holding CLAUDE.md and .claude/). ;; repo/meta ;; none ;; Command-form rule not in the oracle.
+C wf007.vf-architecture OL WF-007,ARC-001 MUST ;; For architecture-relevant changes read the architecture-style and persistence standards and run check-manifests. ;; = ;; none ;;
+C pst008.vf-seeder OL PST-008 MUST ;; When the persistence model changed confirm persistence-change was completed, including the development seeder for a freshly recreated database. ;; = ;; none ;;
+C x.vf-cochange-check EX PST-008,TST-009 DEFAULT ;; Run check-cochange for seed, migration and test reminders of the working tree. ;; = ;; none ;; Not in the oracle.
+C wf007.vf-format OL WF-007,WF-021 MUST ;; Formatting/analyzer checks when configured; do not add a formatter or analyzer just to complete verification; analyzer output needs context. ;; = ;; none ;;
+C dep004.vf-dep-security OL DEP-004,WF-007,SEC-001 MUST ;; For dependency or security-sensitive changes inspect vulnerabilities and changed secrets, authorization, raw SQL, CORS/TLS, sensitive logging and certificate validation. ;; = ;; none ;;
+C x.vf-instr-check EX - MUST ;; When .claude/, CLAUDE.md or the register changed run check-instructions. ;; repo/meta ;; none ;; Not in the oracle.
+C wf004.vf-final-diff OL WF-004,GOV-014 MUST ;; Review the final diff after all fixes for accidental unrelated edits and architecture drift. ;; = ;; none ;;
+C x.vf-final-diff-items EX WF-004 MUST ;; Final diff review also checks commented-out code, temporary logging, unintended TODO/FIXME markers and stale temporary tests or scripts. ;; = ;; none ;; Not in the oracle.
+C gov003.vf-spec-drift OL GOV-003 MUST ;; Check for unapproved drift from SPECIFICATION.md or CUSTOM_SETTINGS.md. ;; = ;; none ;;
+C gov021.vf-stale OL GOV-021 MUST ;; Check for stale code, tests, docs or configuration after a settings change. ;; = ;; none ;;
+C run010.vf-usings OL RUN-010 MUST ;; Remove unused/redundant usings in every created or modified C# file (including implicit/global duplicates unless needed) without unrelated repository-wide cleanup; verify the changed files. ;; = ;; none ;;
+C wf008.vf-fix-retry OL WF-008 MUST ;; On failure identify it, make the smallest fix, rerun affected verification (and builds/tests when code changed), repeat until green or genuine user input is required. ;; = ;; none ;;
+C wf008.vf-no-hide OL WF-008,WF-009 MUST_NOT ;; Never hide a known failure and declare completion; persistent failures go to build-fix. ;; = ;; none ;;
+C wf009.vf-report OL WF-009 MUST ;; Report what was actually run using PASS / NOT RUN / NOT APPLICABLE; never imply that an unchecked area passed. ;; = ;; none ;;
+
+@@ output/template/.editorconfig ;; Formatting and code-style configuration (editors, dotnet format, build tooling).
+@scope all files (.editorconfig; C# rules for *.cs)
+1 NN ;; Banner comment (kind, scope, capability, loading).
+2 IM ;; Conformance comment.
+3 NN ;; Descriptive comment.
+5 IM ;; root = true.
+7 IM ;; Section header.
+8-21 EX [x.ec-formatting]
+23 IM ;; [*.cs] section header.
+24 NN ;; Comment heading.
+25 OL [run024.ec-file-scoped]
+26-27 EX [x.ec-usings-order]
+28 OL [run010.ec-ide0005]
+30 NN ;; Comment heading.
+31-33 EX [x.ec-var]
+35 NN ;; Comment heading.
+36-39 EX [x.ec-modern-syntax]
+41 NN ;; Comment heading.
+42-44 EX [x.ec-braces-bodies]
+46 NN ;; Comment heading.
+47-58 EX [x.ec-naming]
+60-66 OL [run024.ec-async-suffix]
+
+C x.ec-formatting EX RUN-009 ENFORCED_DEFAULT ;; UTF-8, space indentation of 4 (2 for JSON/YAML/project/XML and TS/JS/HTML/SCSS/CSS), final newline, trimmed trailing whitespace (not in Markdown). ;; = ;; none ;; Concrete formatting settings not in the oracle.
+C run024.ec-file-scoped OL RUN-024 ENFORCED_ADVISORY ;; File-scoped namespace declarations are suggested for C#. ;; = ;; none ;;
+C x.ec-usings-order EX RUN-009 ENFORCED_ADVISORY ;; System directives sorted first; import groups not separated. ;; = ;; none ;; Not in the oracle.
+C run010.ec-ide0005 OL RUN-010 ENFORCED_ADVISORY ;; IDE0005 (unnecessary usings) is reported at suggestion severity. ;; = ;; none ;;
+C x.ec-var EX RUN-009 ENFORCED_ADVISORY ;; var suggested when the type is apparent; explicit types suggested for built-in types; silent elsewhere. ;; = ;; none ;; Not in the oracle.
+C x.ec-modern-syntax EX RUN-009 ENFORCED_ADVISORY ;; Primary constructors (silent), collection expressions and switch expressions (suggestion), pattern matching (silent). ;; = ;; none ;; Not in the oracle.
+C x.ec-braces-bodies EX RUN-009 ENFORCED_ADVISORY ;; Braces suggested when multiline; expression-bodied methods on single lines and properties (silent). ;; = ;; none ;; Not in the oracle.
+C x.ec-naming EX RUN-009,RUN-024 ENFORCED_ADVISORY ;; I-prefix for interfaces and PascalCase for types and members (suggestion). ;; = ;; none ;; Not in the oracle.
+C run024.ec-async-suffix OL RUN-024 ENFORCED_ADVISORY ;; Async methods should end in Async (silent severity). ;; = ;; Async-modifier methods only. ;;

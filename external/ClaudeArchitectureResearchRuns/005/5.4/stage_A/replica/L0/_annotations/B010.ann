@@ -1,0 +1,169 @@
+# L0 / B010 — security-scan (+layers), swagger, template-maintenance, verify.
+
+C R208 OL WF-020 | MUST | Security review is evidence-based: report concrete risks in the context of actual exposure, distinguish confirmed findings from items needing verification (NEEDS VERIFICATION), assign severity from exploitability, reachability, impact and context (never mechanically from a pattern, CVSS or OWASP category), do not suppress a real secret because it sits in a Development file, name workflows needing threat modeling instead of claiming the scan proves them secure, and never invent exploitability. | security review | none stated
+C R209 OL WF-004 | MUST | Verification starts by reviewing the final changed-file set and diff: confirm scope (no accidental unrelated refactoring), no generated/build artifacts, secrets or environment-specific credentials, temporary diagnostics removed only after their uniquely verified behavior is preserved; determine the affected areas before choosing checks; after fixes review the final diff again (unrelated edits, commented-out code, temporary logging, TODO/FIXME, stale temporary tests, architecture drift, unapproved drift from product inputs, stale surfaces after a settings change). | verification | none stated
+C R210 OL WF-005 | MUST | Build the affected backend solution/projects and the frontend with its configured script; a build failure means the implementation is not complete; run relevant tests (whole suite for small solutions, affected projects first for large ones) and investigate every newly failing relevant test. | verification | none stated
+C R211 OL WF-006 | DEFAULT | For a new runnable application or substantial startup, configuration, persistence or full-stack changes verify the intended Development startup and key composition surfaces (host starts, endpoint reachable, Swagger UI loads, configuration binds, database initialization succeeds, frontend dev server starts, API base URL and CORS compatible); a successful build alone does not prove runtime composition. | verification | none stated
+C R212 OL RUN-010 | MUST (IDE0005 surfaced in build) | For every C# file created or modified by the task remove unused or redundant using directives (including those already provided by implicit/global usings unless needed for clarity or disambiguation), verify the changed files themselves, and do not perform an unrelated repository-wide cleanup. | changed C# files | Imports kept for clarity or disambiguation.
+C X24 EX WF-020,WF-009 | MUST | Security-scan report shape: every report states the static-analysis limitation; severity uses the five levels Critical (sparingly) / High / Medium / Low / Info; each confirmed finding gives severity, file and location, title, evidence, why it is a risk, likely impact, smallest remediation and OWASP category when applicable; the report contains scope, limitations, a severity summary, findings and per-layer results. | security reviews | none stated | WF-020 requires evidence-based contextual severity and WF-009 truthful status reporting; the oracle prescribes no report structure, severity scale or mandatory limitation statement. | A security review delivered without the limitation statement or the per-layer table does not follow the procedure.
+C X25 EX - | MUST | template-maintenance runs only when the user invokes it (disable-model-invocation; never started automatically), and maintenance keeps the always-loaded surface compact (CLAUDE.md plus the two imported decision summaries; the checker prints its estimate). | instruction-system maintenance | none stated | Invocation and loading-surface rules of the template; no oracle policy regulates how the instruction system is maintained. | The agent may not start template-maintenance on its own initiative, and moving path rules into the always-loaded surface violates the procedure.
+
+FILE .claude/skills/security-scan/references/scan-layers.md | Private reference of security-scan (investigation prompts, EXC-015 class).
+1 NN | header metadata
+3 NN | document heading
+5 OL R208 | Investigation prompts, not automatic vulnerability declarations.
+7 NN | section heading
+9 OL R24 | Do not upgrade packages during a scan unless asked.
+10 NN | npm audit prompt
+12 NN | section heading
+14 NN | secret search locations
+16-17 NN | secret indicators (investigation heuristics)
+18 DU R43,R208 | prompt restating that Development files are not exempt from secret findings
+19-20 NN | preferred pattern and configuration review prompts
+22 NN | section heading
+24-29 NN | injection, command, path, SSRF, XSS and deserialization prompts (investigation heuristics)
+30 DU R50,R56 | cryptography prompt restating established hashing and reviewed-crypto rules
+32 NN | section heading
+34-39 NN | access-control prompts (investigation heuristics)
+41 NN | section heading
+43-47 NN | browser and HTTP security prompts (investigation heuristics)
+49 NN | section heading
+51 DU R25 | logging prompt restating the never-log rule
+52 DU R60 | error-response prompt restating the public-error rule
+53-54 NN | response-data and data-at-rest prompts
+56 NN | section heading
+58 NN | fail-open prompt
+59 DU R58,R38 | swallowed-exception prompt restating fail-safe and fallback rules
+60 DU R36,R39 | retry prompt restating retry-safety and cancellation rules
+61-62 NN | resource exhaustion and startup failure prompts
+63 DU R109,R60 | error-exposure prompt restating centralized handling and safe public errors
+65 NN | section heading
+67 OL R208 | instead of claiming the scan proves them secure
+69 NN | section heading
+71 OL R208 | Do not map pattern → severity, CVSS → severity, or OWASP category → severity mechanically
+73-76 NN | severity examples (false-positive examples)
+78 NN | section heading
+80-94 NN | finding format example
+96 NN | lead-in
+98-102 NN | needs-verification example
+104 OL R208 | Never invent exploitability that the code does not establish.
+
+FILE .claude/skills/security-scan/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 MX R208,X24 | State that limitation in every report. ⟫ Honest scope of static review is oracle-linked (R208); the mandatory limitation statement in every report is part of X24.
+14 OL R21 | read them first
+16 NN | section heading
+18-19 OL R208 | never from a suspicious pattern or raw CVSS alone
+20 OL R208,R43,R181 | Do not suppress a real secret because it sits in a Development file
+21 OL R49 |
+22 OL R191 |
+24 NN | section heading
+26 OL R188 | skip irrelevant checks rather than reporting them as failures
+28-38 NN | change-to-layer routing table (EXC-015 class)
+40 NN | section heading
+42 NN | pointer to private reference
+44-52 NN | layer table with OWASP mapping
+54 NN | OWASP awareness taxonomy note
+56 NN | section heading
+58 OL R191,R208 | report it only with appropriate confidence
+60 NN | section heading
+62 OL R208 |
+64-68 MX R208,X24 | **Critical** (sparingly) ⟫ Contextual severity is oracle-linked (R208); the fixed five-level scale is part of X24.
+70 NN | section heading
+72 OL R208 | Not automatically vulnerabilities
+74 OL R208,R43 | Not automatically safe
+76 NN | section heading
+78 MX X24,R208 | Label uncertain items `NEEDS VERIFICATION`. ⟫ Finding fields are the report shape X24; labeling uncertain items is oracle-linked (R208).
+80-108 EX X24 | Limitations: Static analysis only.
+110 OL R180 | never mark a layer PASS without checking it
+112 NN | section heading
+114 OL R181,R56,R49 | Prefer the smallest secure change consistent with the architecture.
+116 NN | section heading
+118 OL R208,R180 | no layer is marked PASS unchecked
+
+FILE .claude/skills/swagger/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R155 | the developer-facing baseline is interactive Swagger UI, not a standalone raw OpenAPI endpoint
+14 NN | section heading
+16-29 NN | setup code example (Development-only UI)
+31 OL R155 | is not the template default when the requirement is Swagger UI
+33 NN | section heading
+35-40 NN | launch profile example
+42 NN | launch-profile URL consistency (EXC-008 class)
+44 NN | section heading
+46-54 NN | response metadata code example
+56 OL R99,R60 | consider the whole pipeline
+58 NN | section heading
+60 OL R99 | When the API actually uses Bearer authentication
+62-72 NN | security definition code example
+74 OL R99 | do not apply authentication requirements globally to anonymous endpoints
+76 NN | section heading
+78 NN | description and XML comment technique (EXC-008 class)
+80 NN | section heading
+82 NN | document partitioning technique (EXC-008 class)
+84 NN | section heading
+86 OL R99,R95 | keep response metadata accurate
+88 NN | section heading
+90 OL R190,R211 | preserve newly verified behavior as `verify` step 4 requires
+92 NN | section heading
+94 DU R181,R140 | anti-pattern list restating test and need-based rules
+
+FILE .claude/skills/template-maintenance/SKILL.md | User-invoked workflow.
+1-5 NN | front matter (name, description)
+6 EX X25 | disable-model-invocation: true
+7 NN | front-matter delimiter
+9 NN | header metadata
+11 NN | document heading
+13 EX X25 | Run only when the user invokes it. Never start it automatically.
+15 NN | section heading
+17 NN | organizing question lead-in
+19-22 EX X3 | Names a technology other than the fixed platform
+24 EX X3 | A statement's level is set by the most volatile thing it depends on.
+26 NN | section heading
+28-32 EX X6 | never the sole owner of a must-rule
+34 NN | section heading
+36 EX X6 | State each rule once, in its owner.
+38 NN | section heading
+40-43 EX X3 | Update `.claude/INSTRUCTION_MAP.md` for every added, moved, or removed artifact.
+45 NN | section heading
+47 EX X3,X25 | fix every reported error
+
+FILE .claude/skills/verify/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R188 | do not require optional tooling the repository has not configured
+14 NN | section heading
+16 OL R209 |
+18 OL R209,R24 |
+19 OL R209,R43 |
+20 OL R209,R190 |
+22 OL R209 | Determine the affected areas
+24 NN | section heading
+26-27 OL R210 | inspect `package.json` first
+28 OL R210,R179 | A build failure means the implementation is not complete
+30 NN | section heading
+32-34 OL R210 | Investigate every newly failing relevant test
+36 NN | section heading
+38 OL R211 |
+40 NN | section heading
+42 OL R190 |
+44 NN | section heading
+46 OL R188 |
+48 OL R188,R201,R202 | confirm the seeder was updated
+49 OL R188,R191 | do not add a formatter or analyzer dependency just to verify
+50 OL R188 | A full `security-scan` is not needed for every small change.
+52 NN | section heading
+54 OL R209,R186,R192,R190 | unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`
+56 OL R212 |
+58 NN | section heading
+60 OL R179 | Never hide a known failure and declare completion.
+62 NN | section heading
+64 OL R180 |
+66-74 OL R180 | Tests: PASS / NOT RUN / NOT APPLICABLE
+76 OL R180 |
+DONE

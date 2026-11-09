@@ -1,0 +1,26 @@
+# XC12 X0661-X0720 (NONE:PRODUCT_ENGINEERING, NONE:WORKFLOW_ENFORCEMENT). Analyst: Step 3.
+_P1 = "Force or wording delta of a canonical policy whose six-way comparison is recorded in P1 ({}); not a separate extra obligation."
+
+A(["X0663", "X0667", "X0669", "X0674-X0677", "X0679-X0689", "X0691", "X0692", "X0694", "X0696", "X0699", "X0702-X0707", "X0709", "X0711-X0715", "X0717-X0719"])
+X("X0661", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 writes references into project files because its hook blocks every reference command (ARC-020 D5).", task="scored in P1", links=["RC-ENF-REFERENCE-CMD-GATE"])
+X("X0662", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", _P1.format("ARC-018, FULL"), task="none", links=["ARC-018"])
+X("X0664", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L0 manifest note for direct Polly / FluentValidation.AspNetCore (DEP-002/DEP-020 package lists).", task="scored in P1", links=["RC-ENF-PKG-LISTS"])
+X("X0665", "ARCHITECTURE_SPECIFIC_DIVERGENCE", "L1 capability enforcement flags a second test framework; scored under TST-001.", task="scored in P1", links=["RC-ENF-COMPETING-TEST-FW", "TST-001"])
+X("X0666", "SAME_NORM_DIFFERENT_PACKAGING", "Same as X0031.", task="none")
+X("X0668", "SAME_NORM_DIFFERENT_PACKAGING", "Consistency before caching (X0385) and a distributed cache as a Reserved infrastructure category (Reserved list in all six).", task="none")
+X("X0670", "SAME_NORM_DIFFERENT_PACKAGING", "CI secrets through the platform mechanism, federated identity preferred (X0396).", task="none")
+X("X0671", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", _P1.format("DEP-015, FULL"), task="none", links=["DEP-015"])
+X("X0672", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Baseline test packages: derived from DEP-013 (FULL); M1 and K1 canonical-only copies.", task="none")
+X("X0673", "SAME_NORM_DIFFERENT_PACKAGING", "Cache-key dimensions (entity id, tenant, user, locale, query parameters): caching skills of M :79, L0 :47, L1 :47, K1 :48; M1 and K0 test key isolation (grep).", task="none")
+X("X0678", "SAME_NORM_DIFFERENT_PACKAGING", "Non-secret Development settings are not git-ignored: all six (DEP-026).", task="none")
+X("X0690", "SAME_NORM_DIFFERENT_PACKAGING", "Same as X0031.", task="none")
+X("X0693", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", _P1.format("API-019, PARTIAL non-material"), task="scored in P1", links=["API-019"])
+X("X0695", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Restates DEP-010.", task="none")
+for _c in ["X0697", "X0701"]:
+    X(_c, "REDUNDANT_DERIVED_OR_NON_NORMATIVE", _P1.format("ARC-028, MEANINGFUL through RC-ENF-TEST-REFS"), task="scored in P1", links=["ARC-028"])
+X("X0698", "SAME_NORM_DIFFERENT_PACKAGING", "Only listed references; other changes Reserved in all six (X0114).", task="none")
+X("X0700", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Raw exception messages not exposed to clients: derived from the canonical error-contract policies (API-00x); L1 :97 and K0 :160 list it as an anti-pattern too.", task="none")
+X("X0708", "SAME_NORM_DIFFERENT_PACKAGING", "PR description content (what, why, how verified, compatibility notes): M, L0, L1, K0, K1 here; M1 git-workflow :102-104 'Pull Requests' (grep).", task="none")
+X("X0710", "SAME_NORM_DIFFERENT_PACKAGING", "Unresolved Decision Requests listed in the final report: all six (X0269).", task="none")
+X("X0716", "SAME_NORM_DIFFERENT_PACKAGING", "Reserved decisions raised as Decision Requests through architecture-decision: all six (GOV-017).", task="none")
+X("X0720", "REDUNDANT_DERIVED_OR_NON_NORMATIVE", "Restates DEP-020 (documented direct-Polly exception).", task="none")

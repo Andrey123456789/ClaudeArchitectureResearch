@@ -1,0 +1,80 @@
+# Batch B001 — agents/code-reviewer.md, hooks/dependency-guard.mjs, hooks/file-change.mjs
+
+@@ output/template/.claude/agents/code-reviewer.md ;; Subagent definition; loaded when the main session delegates a review. Frontmatter disallowedTools and preloaded skill are effective configuration.
+@scope subagent code-reviewer (delegated review)
+1-3 IM ;; Frontmatter open, agent name and description key (routing description for delegation).
+4-6 IM ;; Agent description text: when the subagent is used (PR/pre-merge/second-pass review) - delegation trigger.
+7 OL [wf010.reviewer-readonly] ;; ;; disallowedTools: Write, Edit, NotebookEdit
+8-9 OL [wf010.reviewer-uses-skill] ;; ;; - code-review
+10 IM ;; Frontmatter close.
+12 NN ;; Ownership/scope/loading banner.
+14 NN ;; Heading.
+16-17 OL [wf010.reviewer-uses-skill] ;; ;; Run the `code-review` skill as the complete review procedure
+18 OL [wf010.reviewer-readonly,wf010.reviewer-output] ;; Line holds 'Do not edit files.' and the start of the output-format instruction.
+19 OL [wf010.reviewer-output]
+
+C wf010.reviewer-readonly OL WF-010 MUST_NOT ;; The code-reviewer subagent is read-only: Write, Edit and NotebookEdit tools are disallowed and it must not edit files. ;; = ;; Bash is not disallowed by the frontmatter. ;;
+C wf010.reviewer-uses-skill OL WF-010 MUST ;; The code-reviewer preloads and runs the code-review skill as the complete procedure (scope, rule reads, checks, priorities, severity, output) rather than redefining policy. ;; = ;; none ;;
+C wf010.reviewer-output OL WF-010 MUST ;; Return findings exactly in the output format defined by the code-review skill. ;; = ;; none ;;
+
+@@ output/template/.claude/hooks/dependency-guard.mjs ;; Executable hook (PreToolUse fail-closed; PostToolUse and PostToolUseFailure advisory) on Bash/PowerShell tool calls.
+@scope executable hook on Bash/PowerShell tool calls (registered in settings.json)
+1-19 IM ;; Header documenting PreToolUse block, PostToolUse manifest checks/routing and PostToolUseFailure behaviour (implemented below).
+20-24 IM ;; Registration and manual-test documentation.
+25-34 IM ;; Documentation of the deliberately minimal command parser and its known gaps (npx npm, -EncodedCommand, unlisted option values) - limits of the enforcement.
+O 33-34 NN ;; Documented coverage gaps (npx npm ..., PowerShell -EncodedCommand) are limitations of the guard, not rules; recorded so the bypass surface is not mistaken for permission. ;; ;; Not covered: npx npm ..., PowerShell -EncodedCommand
+36-38 IM ;; Imports of hook helpers, repo-root and check-manifests.
+40-50 IM ;; npm subcommand alias sets used to classify install-like/changing commands.
+51-63 IM ;; Full npm command list used to distinguish subcommands from option values.
+65-70 IM ;; npm options that take a separate value.
+72-78 IM ;; Shell-wrapper detection (cmd /c, bash -c, pwsh -Command ...).
+80-82 MX [dep025.guard-block,x.dg-unconditional-block] ;; Bypass patterns: --force, -f, --legacy-peer-deps (unless =false), config keys and npm_config_* env assignments.
+84-87 IM ;; Reads hook input; exits when no command.
+89-95 IM ;; Splits the command into segments/tokens and unwraps shell wrappers.
+97-98 IM ;; PreToolUse: selects npm segments.
+99-105 MX [dep025.guard-block,x.dg-unconditional-block] ;; Blocks (exit 2) npm installs combined with npm_config_force/legacy_peer_deps env settings.
+106-116 MX [dep025.guard-block,x.dg-unconditional-block] ;; Blocks install-like npm commands with bypass flags and `npm config set` of force/legacy-peer-deps.
+117-118 IM ;; PreToolUse: allow otherwise.
+120-125 IM ;; PostToolUse/Failure: classifies package vs reference changing segments.
+126-129 OL [dep.route-add-dependency] ;; ;; complete the add-dependency workflow
+130-133 MX [arc001.reference-change-routing,x.cl-reserved-refgraph] ;; Routes reference changes to architecture.md and requires that a changed production reference graph went through Decision Control.
+135-137 NN ;; Comment.
+138-158 OL [enf.manifest-postcheck] ;; ;; if (!knownCommand || failed) {
+159-165 IM ;; Builds the explanatory 'what was checked' message.
+166-168 OL [dep.route-add-dependency] ;; ;; dependency changes follow the add-dependency workflow
+169-170 EX [x.dg-removal-decision]
+171-177 OL [enf.manifest-postcheck] ;; ;; found violations
+178-185 OL [enf.manifest-postcheck] ;; ;; found no violations. If not already done
+186 IM ;; Block close.
+188-205 OL [enf.manifest-postcheck] ;; ;; Manifest-changing command detected
+206 IM ;; Block close.
+208 IM ;; Unexpected event: hook error exit (fail; for PreToolUse this blocks via onFailure).
+210-233 IM ;; Token helpers: unquote, assignment/call-operator skipping, shell unwrapping, executable normalisation.
+235-252 IM ;; npm argument parser.
+254-257 IM ;; Bypass-flag predicate (value 'false' is not a bypass).
+259-288 IM ;; Change classification: dotnet add/remove package|reference, dotnet package/reference subcommands, npm install/uninstall/update, pnpm/yarn add/remove/update, ng add, npx ng add.
+
+C dep025.guard-block OL DEP-025 ENFORCED ;; PreToolUse blocks npm install-like commands (install/ci/install-test/update) using --force, -f or --legacy-peer-deps, npm_config_force/npm_config_legacy_peer_deps env settings, or `npm config set` of force/legacy-peer-deps, telling Claude to resolve the compatibility problem. ;; = ;; Flag value =false is not treated as bypass; parser gaps (npx npm, -EncodedCommand). ;;
+C x.dg-unconditional-block EX DEP-025 ENFORCED ;; The npm bypass block applies unconditionally (no exception path), including setting the npm config key without any install. ;; = ;; none ;; DEP-025 forbids using the flags 'merely to bypass incompatible peer dependencies'; the hook blocks every such use regardless of purpose and also blocks the config change itself.
+C arc001.reference-change-routing OL ARC-001,ARC-028 ENFORCED_ADVISORY ;; After a project-reference command, Claude is told to confirm references follow architecture.md (Project References). ;; = ;; none ;;
+C enf.manifest-postcheck OL DEP-006,DEP-003,DEP-007,DEP-015,ARC-001,ARC-028 ENFORCED ;; After dependency/project-reference shell commands (full check) and after any other or failed shell command that changed/removed manifests (changed-only or full check), run check-manifests; violations are returned as a blocking reason Claude must address, otherwise notes and owner routing are added as context. ;; = ;; Unchanged manifests are not re-checked; outside any checkout nothing is checked. ;;
+C x.dg-removal-decision EX ARC-020,ARC-001 ENFORCED_ADVISORY ;; When a project or package-version manifest is removed, Claude is told the change goes through CLAUDE.md Decision Control. ;; = ;; none ;; Treats removal of a project/manifest file as a Reserved-decision matter; the oracle gates new projects and architecture changes but not removal of manifests per se.
+
+@@ output/template/.claude/hooks/file-change.mjs ;; Executable PostToolUse hook on Edit/Write/MultiEdit.
+@scope executable hook after Edit/Write/MultiEdit of files in this repository
+1-9 IM ;; Header documenting reminders and manifest checks; files outside every checkout are ignored.
+10-13 IM ;; Registration and manual-test documentation.
+15-18 IM ;; Imports.
+20-30 IM ;; Reads input, resolves edited file to a repository-relative path; ignores files outside the repository.
+32-37 OL [fc.custom-settings-reminder]
+39-44 OL [fc.spec-reminder]
+46-47 IM ;; Only manifests outside node_modules continue to the manifest check.
+49-57 OL [enf.manifest-editcheck] ;; ;; Manifest check failed for
+59-63 IM ;; Detects dependency-touching edits from the edited text.
+65-68 OL [dep.route-add-dependency] ;; ;; dependency additions, updates, and removals follow the add-dependency workflow
+69-71 IM ;; Adds manifest notes and emits context.
+73-81 IM ;; Helper resolving the repository for a directory (null when outside every checkout).
+
+C fc.custom-settings-reminder OL GOV-021,GOV-009 ENFORCED_ADVISORY ;; After CUSTOM_SETTINGS.md is edited, Claude is told to run custom-settings to synchronize every affected surface and confirm consistency with SPECIFICATION.md. ;; = ;; none ;;
+C fc.spec-reminder OL GOV-009,GOV-007 ENFORCED_ADVISORY ;; After SPECIFICATION.md is edited, Claude is told to confirm consistency with CUSTOM_SETTINGS.md and carry approved behaviour changes through development-workflow. ;; = ;; none ;;
+C enf.manifest-editcheck OL DEP-006,DEP-003,DEP-007,DEP-015,ARC-001,ARC-028 ENFORCED ;; After editing a .csproj, Directory.Packages.props or package.json, run check-manifests on it; violations are returned as a blocking reason to fix. ;; = ;; Files under node_modules ignored. ;;

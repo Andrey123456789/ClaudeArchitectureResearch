@@ -1,0 +1,171 @@
+# K1 / B007 — Run 2 replica annotation (blind).
+
+C R156 OL TST-001 | SHOULD (test facet check: warning) | Test projects referencing xUnit (incl. xunit.v3/xunit.core), MSTest (incl. TestFramework/TestAdapter) or TUnit packages, in addition to or instead of NUnit, and central versions for those frameworks, are warned: introducing another test framework needs a concrete reason. | backend test projects and Directory.Packages.props | Warning only; concrete reason permits it.
+C U2 LU DEP-002,DEP-001,ARC-020 | MUST (workflow checklist) | Before adding a dependency, the choice must match the decision register's approved stack; anything else goes through architecture-decision first. | Every NuGet/npm addition via add-dependency | none stated | Open question: if 'anything else' covers any package not named in the register (e.g. a small utility library for a concern with no approved technology), the clause makes every non-stack dependency a Reserved decision, which is stricter than DEP-001/DEP-002 (need-based additions are allowed; only silent replacement of an approved technology needs approval). If it only means alternatives to an approved technology, it restates DEP-002. The text does not settle which reading applies. | Under the broad reading, adding e.g. a CSV parser requires an architecture-decision request first.
+C R157 OL DEP-002 | MUST | A dependency choice that departs from the decision register's approved stack goes through architecture-decision before installation (no silent alternative). | Dependency additions | none stated
+C R158 OL DEP-017 | DEFAULT | API versioning uses the Controller integration of Asp.Versioning (Asp.Versioning.Mvc, plus Asp.Versioning.Mvc.ApiExplorer for documentation), added only after the project has adopted API versioning, never before. | Adding API-versioning packages | none stated
+C R159 OL DEP-020,DEP-011 | DEFAULT | When resilience is required use Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for general pipelines; direct Polly usage is an explicit, documented exception. | Adding resilience packages | Direct Polly as documented exception.
+C X26 EX DEP-011,ARC-002 | MUST NOT | Mapster (with Mapster.DependencyInjection) is never referenced from Domain. | Adding/using the mapping library | none stated | DEP-011 approves Mapster when mapping volume warrants it and ARC-002 keeps Domain free of EF Core, ASP.NET Core, HTTP, persistence and external-service concerns; no oracle policy forbids a mapping library in Domain. | A Domain project referencing Mapster violates the workflow rule.
+C R160 OL DEP-011,DEP-013,DEP-016 | DEFAULT | Mapster with Mapster.DependencyInjection is added once mapping volume warrants it; Testcontainers, Playwright and similar conditional packages are added per the decision register (only when the capability is adopted). | Conditional package additions | none stated
+C R161 OL DEP-003 | MUST | For every NuGet or npm addition or update, determine the latest stable version compatible with target framework/runtime and peers, verify it from the registry rather than memory, and never select preview/alpha/beta/RC/dev/nightly/prerelease or floating versions unless the user explicitly requested them ('latest' means latest stable compatible). | Dependency additions and updates | Explicit user request for prerelease/floating.
+C R162 OL DEP-004 | MUST | Before installation, confirm the selected package/version is not deprecated, check known vulnerability information (dotnet package list --vulnerable --include-transitive, npm audit, advisories) with context and without upgrading or replacing unrelated packages because of a finding, and verify the exact version's license from official registry metadata (permissive MIT/Apache-2.0/BSD may be accepted; free download does not imply an acceptable license). | Dependency additions and updates | none stated
+C R163 OL DEP-005 | REQUIRES_APPROVAL | Do not automatically install paid/commercial or materially restrictive/unclear-license dependencies (strong copyleft, dual licensing that may require a commercial license, source-available/custom, unclear or missing license); explain the concern and present choices without silently substituting an alternative; say so when no reasonable free alternative exists; draw no legal conclusions beyond the published license. | Dependency additions | none stated
+C R164 OL DEP-006,DEP-003 | MUST | NuGet installs add/update the PackageVersion in Directory.Packages.props and reference the package without a version only from the narrowest project that needs it (dotnet add <project> package <id> --version <version>). | NuGet installation | none stated
+C R165 OL DEP-007,DEP-003 | MUST | npm installs use npm install <name>@<version> (--save-dev for build/test tooling) and keep package-lock.json consistent and committed. | npm installation | none stated
+C R166 OL DEP-025 | MUST NOT | Resolve peer-dependency conflicts at their cause; never use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies. | npm installation | none stated
+C X27 EX DEP-001,GOV-014 | MUST | Remove dependencies that are no longer used when doing so is part of the current change and safe to verify; do not leave dead package references behind. | Changes that make a dependency unused | Not during unrelated cleanup of a narrowly scoped task. | No oracle policy requires removing packages made unused by a change (RUN-010 covers only unused usings in changed C# files); the candidate adds a cleanup obligation. | A change that stops using a package must also remove its PackageReference/PackageVersion or package.json entry.
+C R167 OL GOV-014 | MUST NOT | Do not perform unrelated dependency cleanup during a narrowly scoped task. | Dependency changes | none stated
+C X28 EX DEP-004,DEP-005,WF-009 | MUST | After a dependency change, build and run affected tests (verify) and report the package, version, license, due-diligence results and any approval obtained or pending. | Completion of add/update/remove dependency work | none stated | WF-009 requires reporting what verification actually ran; no oracle policy requires reporting package, version, license and due-diligence outcomes for each dependency change. | The final report of a dependency change must list license and due-diligence results.
+C R168 OL WF-003,WF-005 | MUST | After a dependency change, build and run the affected tests through verify. | Dependency changes | none stated
+C R169 OL DEP-014,DEP-016 | DEFAULT | Frontend tests use the workspace's configured runner (Vitest for new projects); Playwright E2E only when adopted. | Angular testing | none stated
+C R170 OL TST-003,TST-002 | SHOULD | Frontend tests target meaningful component behavior, validation, data-access request mapping, important route/auth behavior and complex reactive state; do not test framework internals or duplicate the same behavior at every level; E2E covers a small number of important user workflows unless broader coverage is required. | Angular testing (on-demand knowledge) | Broader E2E coverage when required.
+C R171 OL RUN-001 | DEFAULT | Do not prematurely optimize the frontend: lazy loading and sensible rendering/data access first; memoization, virtual scrolling, custom change detection and similar optimizations only after identifying a real need. | Angular performance (on-demand knowledge) | none stated
+C R172 OL DEP-014,DEP-015,GOV-012,DEP-001 | DEFAULT | When the project has chosen Angular Material, use its components consistently for common UI primitives where they satisfy the requirement; do not add it to projects that have not chosen it; do not wrap every Material component in a custom abstraction without a concrete reason. | Angular UI (on-demand knowledge) | concrete reason for wrappers
+C R173 OL WF-016 | DEFAULT | When OpenAPI client generation is adopted, keep generated code separate from handwritten feature logic, regenerate it when the API contract changes, and do not patch generated files unless the generation workflow requires it. | Angular API client generation | Generation workflow requires patching.
+C R174 OL API-010,FE-010 | SHOULD | Do not duplicate complex Domain rules in TypeScript unless the UI genuinely needs an equivalent user-facing rule. | Angular forms (on-demand knowledge) | UI needs an equivalent user-facing rule.
+C R175 OL API-022 | MUST | Deprecation is a migration process: mark the version deprecated (ApiVersion Deprecated = true with ReportApiVersions) and document the replacement, migration period and removal timing (procedure: development-workflow). | Deprecating API versions | none stated
+
+FILE .claude/scripts/facets/test-framework.cjs | Backend-testing ENF facet (via check-manifests).
+1-2 NN | header comments (kind/scope/capability/loading; conformance pointer)
+3 IM | strict-mode directive
+5-7 IM | imports and owner constant
+8-9 OL R156 | Test frameworks other than NUnit; introducing one needs a concrete reason.
+11-16 OL R156 | in addition to or instead of NUnit
+18-22 OL R156 | central version for additional test framework
+24 IM | exports
+
+FILE .claude/scripts/lib.cjs | Shared helpers; no policy content.
+1-2 NN | header comments (kind/scope/loading; Conforms: —)
+3 IM | strict-mode directive
+5-9 IM | imports and directories ignored by file walks (build/tool output)
+11-30 IM | path normalization, launcher-root location and realpath helpers
+32-37 IM | read-only Git invocation helper
+39-79 IM | active-root resolution (Git top level / linked worktree / enclosing project) so checks run where Claude works
+81-98 IM | command-root, path-containment and existence helpers
+100-119 IM | text decoding (UTF-8/UTF-16 with BOM) that throws on undecodable input so enforcement fails visibly
+121-140 IM | repository walk skipping ignored directories and nested Git roots
+142-182 IM | minimal MSBuild element reader (throws on malformed start tags) and XML comment stripping
+184-192 IM | finding construction and formatting
+194-211 IM | exports
+
+FILE .claude/settings.json | Claude Code hook registration (effective loading route of all hook enforcement).
+1-2 IM | JSON object opening and hooks key
+3-16 MX R4,R5,R6,X8,X9,X22 | "onFailure": "block" ⟫ registers the fail-closed PreToolUse dependency/reference gate for Bash|PowerShell (oracle-linked R4-R6, extra X8/X9) in the exec form required by X22
+17-29 IM | registers the advisory PostToolUse observer for Edit|Write|MultiEdit|Bash|PowerShell (checks and their constraints are captured in actual-state.cjs, check-manifests.cjs, facets and check-instructions.cjs)
+30-42 IM | registers the advisory PostToolUseFailure observer for Bash|PowerShell (same checks as PostToolUse)
+43-54 MX R7,R8,R9,X10 | "Stop" ⟫ registers the Stop hook that carries the co-change reminder gate (oracle-linked R7-R9, extra X10)
+55-56 IM | JSON closing braces
+
+FILE .claude/skills/add-dependency/SKILL.md | On-demand workflow.
+1-9 NN | skill front matter: name and trigger description (routing metadata)
+11 NN | header metadata
+13 NN | heading
+15 NN | routing pointer: standards and register to read first
+17 NN | section heading
+19 OL R112 | A concrete current requirement exists
+20 MX R157,U2 | anything else goes through `architecture-decision` first ⟫ alternatives to the approved stack go through architecture-decision (oracle DEP-002) but the literal scope ('anything else') may extend to every non-stack package (uncertain)
+21 OL R160 | Conditional packages are added only when their capability is actually adopted:
+22 OL R158 |
+23 MX R159,X25 | never add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http` ⟫ Microsoft resilience default with documented Polly exception (oracle DEP-020) plus the deny rule for the two deprecated integration packages (EXTRA X25)
+24 MX R160,X26 | never referenced from Domain ⟫ conditional Mapster/Testcontainers/Playwright additions (oracle DEP-011/013/016) plus the extra Mapster-never-in-Domain prohibition (X26)
+26 NN | section heading
+28-32 OL R161 |
+34 OL R161 |
+36 NN | section heading
+38-40 OL R162 |
+42 NN | section heading
+44 OL R163 |
+46-56 NN | illustrative presentation template for license options (format example)
+58 OL R163 |
+60 NN | section heading
+62 OL R164 |
+63-69 NN | illustrative XML snippet of central version and versionless reference
+71 OL R165 |
+72 OL R166 |
+74 NN | section heading
+76 MX X27,R167 | ⟫ obligation to remove dependencies made unused by the change (EXTRA X27) combined with no unrelated dependency cleanup (oracle GOV-014)
+78 EX X8 |
+80 NN | section heading
+82 MX R168,X28 | ⟫ verify after dependency changes (oracle WF-003/WF-005) plus the extra dependency-specific report content (X28)
+84 DU R4,R5,R6,X8 | describes the enforcement already captured in dispatch.cjs/classify-command.cjs (pre-execution routing of unpinned additions, bulk updates, removals and --force) and check-manifests.cjs (post-edit manifest checks); the note that updates re-run the install command with the exact version restates R4
+
+FILE .claude/skills/angular/SKILL.md | On-demand knowledge (frontend/angular facet).
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 NN | routing pointers to the policy owners and the register
+15 NN | section heading
+17-26 NN | 'Suggested structure' directory-tree example (illustrative technique)
+28 OL R132 |
+30 NN | section heading
+32-39 NN | standalone component code example
+41 OL R126,R133 |
+43 NN | section heading
+45-49 NN | Signals code example
+51 OL R127 |
+53 NN | section heading
+55 OL R130,R131 |
+57-65 NN | takeUntilDestroyed code example
+67 NN | soft technique preference (async pipe / toSignal) supporting FE-011/FE-012; adds no binding requirement
+69 NN | section heading
+71-80 NN | HTTP data-access service code example
+82 OL R136 | Use frontend API models that match the published HTTP contract.
+84-86 NN | provider configuration code example
+88 OL R128 |
+90 NN | section heading
+92 OL R117 |
+94 NN | section heading
+96 OL R137 |
+98 NN | section heading
+100 OL R129,R174 |
+102 NN | section heading
+104-111 NN | lazy-route code example
+113 NN | technique note (loadComponent option)
+115 NN | section heading
+117 OL R135 |
+119 NN | section heading
+121 OL R172 |
+123 NN | section heading
+125 OL R173 |
+127 NN | section heading
+129 NN | security-review investigation prompts (sanitizer bypasses, innerHTML, nativeElement) and an informative note on XSRF support; investigation hints, the CSRF rule itself is captured in rules/frontend/security.md (R138)
+131 NN | section heading
+133 OL R169,R170 |
+135 NN | section heading
+137 OL R171 |
+139 NN | section heading
+141 OL R126 | Fix the missing standalone import or provider instead of adding an NgModule
+143 NN | section heading
+145 DU R126,R132,R135,R128,R127 | anti-pattern list restating standalone-API, feature-structure, simple-state, interceptor and Signals/RxJS rules captured above
+
+FILE .claude/skills/api-versioning/SKILL.md | On-demand knowledge.
+1-7 NN | skill front matter: name and trigger description (routing metadata)
+9 NN | header metadata
+11 NN | heading
+13 MX X17,R158,R14 | Adopting versioning is Reserved (`architecture-decision`) ⟫ extra Reserved gate for adopting versioning (X17), package added via add-dependency (oracle DEP-017) and versioning kept out of Domain/Application (oracle ARC-026)
+15 NN | section heading
+17 OL R11 | do not add `v1` automatically
+19 NN | section heading
+21 OL R13 |
+23 NN | section heading
+25-38 NN | Asp.Versioning setup code example
+40 NN | section heading
+42-62 NN | versioned controller code example
+64 OL R14 |
+66 NN | section heading
+68 NN | breaking-vs-compatible change examples (classification guidance supporting API-014, captured as R12); examples, not an independent rule
+70 NN | section heading
+72 OL R175 |
+74 NN | section heading
+76 OL R15 |
+78 NN | section heading
+80 OL R111 | Do not duplicate identical tests per version.
+82 NN | section heading
+84 OL R175,R12 |
+
+O .claude/skills/angular/SKILL.md 121-121 PL R172 DEP-014,DEP-015,GOV-012 | use its components consistently for common UI primitives | Suspected EXTRA (mandatory consistent Material usage). Kept oracle-linked: DEP-014 makes Angular Material/CDK part of the baseline and DEP-015 requires built-in/baseline capabilities before extra libraries; using the chosen library consistently where it satisfies the requirement adds no outcome restriction beyond those defaults. | Hand-rolled primitives where Material satisfies the need are discouraged.
+O .claude/skills/angular/SKILL.md 100-100 PL R174 API-010,FE-010 | Do not duplicate complex Domain rules in TypeScript | Suspected EXTRA (frontend prohibition). Kept oracle-linked: API-010 keeps Domain invariants at their owning boundary and FE-010 limits frontend validation to UX; the exception for equivalent user-facing rules mirrors FE-010. | Complex Domain rules stay out of TypeScript unless needed for UX.
+O .claude/skills/angular/SKILL.md 133-133 PL R170 TST-003,TST-002 | do not test framework internals | Suspected EXTRA because oracle TST policies are scoped to backend-tests. Kept oracle-linked: TST-002/TST-003 normalized wording is stack-neutral (behavior over implementation details, narrowest meaningful level) and the clause applies it to frontend tests without adding a new restriction. | Frontend tests avoid framework internals and duplicate coverage.
+O .claude/skills/angular/SKILL.md 129-129 NN - SEC-011,WF-020 | Investigate deliberate bypasses | Considered as a hidden review obligation. Rejected as non-normative: investigation prompts in on-demand knowledge, comparable to the oracle's own exclusion of scan-layer prompts (EXC-015); no outcome is required or forbidden. | none
+O .claude/skills/add-dependency/SKILL.md 40-40 PL R162 DEP-004,DEP-005 | Permissive licenses such as MIT, Apache-2.0, and BSD-family licenses may normally be accepted | Suspected relaxation EXTRA (pre-approved license classes). Kept oracle-linked: DEP-005 requires approval only for paid/commercial or materially restrictive/unclear licenses; accepting permissive licenses is the complement of that rule. | Permissive-licensed packages may be installed without approval after due diligence.
+DONE

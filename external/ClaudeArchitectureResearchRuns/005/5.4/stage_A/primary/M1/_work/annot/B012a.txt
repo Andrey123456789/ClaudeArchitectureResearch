@@ -1,0 +1,115 @@
+# Batch B012 (part 1) — skills: caching, ci-cd
+
+@@ output/template/.claude/skills/caching/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge skill caching (backend)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13-14 OL [run007.semantics-first]
+16 NN ;; Heading.
+18-19 OL [api001.output-cache-api]
+20-23 OL [arc024.abstraction-when-needed]
+24-26 NN ;; Permissive: adapters may cache when the Application contract is preserved.
+28 NN ;; Heading.
+30-32 NN ;; HybridCache described as an option, not mandatory.
+34-43 NN ;; Registration example.
+45-46 OL [run007.redis-justified]
+48 NN ;; Heading.
+50 NN ;; Lead-in.
+52-67 NN ;; Cache abstraction example.
+69-70 OL [arc024.no-hybridcache-in-app]
+72 NN ;; Heading.
+74-75 EX [x.cache-central-keys]
+77 NN ;; Heading.
+79-81 MX [x.cache-expiry-semantics,run023.no-unbounded] ;; Choosing expiration from data semantics instead of universal defaults is added; avoiding unbounded entries is RUN-023.
+83 NN ;; Heading.
+85 NN ;; Enumerates typical invalidation strategies.
+86-88 LU [u.cache-preinvalidate] ;; Allows invalidation before the mutation is known to succeed when deliberately accepted; relation to RUN-021 unresolved.
+90 NN ;; Heading.
+92-103 NN ;; Output caching example.
+105-107 OL [run020.output-cache-isolation] ;; ;; Do not cache authenticated or user-specific responses unless
+O 105-106 NN ;; Applying the output-cache policy via controller/action metadata is Controller technique, no outcome restriction. ;; ;; For Controllers, apply the selected output-cache policy through controller or
+109 NN ;; Heading.
+111-114 OL [arc016.no-bypass-invalidation]
+116 NN ;; Heading.
+118-119 EX [x.cache-failure-decision]
+121 NN ;; Heading.
+123-126 EX [x.cache-testing]
+128 NN ;; Heading.
+130-136 MX [x.cache-no-tracked,run021.not-authoritative,run007.no-redis-default,arc024.no-hybridcache-in-app] ;; Presented as check-by-reference, but 'tracked persistence entities cached across Unit of Work boundaries' has no owner clause in performance.md/architecture.md (recorded as added); the other items restate RUN-007/RUN-020/RUN-021/RUN-023/ARC-024.
+138 NN ;; Heading.
+140-147 DU ;; Decision table restating caching defaults (owners: performance.md, architecture.md).
+
+C run007.semantics-first OL RUN-007,RUN-008 MUST ;; Define consistency semantics (staleness, invalidation) first and measure before caching solely for performance. ;; = ;; none ;;
+C api001.output-cache-api OL API-001 DEFAULT ;; HTTP output caching, when the entire response is safely reusable, belongs in the API layer. ;; = ;; none ;;
+C arc024.abstraction-when-needed OL ARC-024,ARC-007,GOV-012 MUST ;; Define an Application cache abstraction implemented in Infrastructure only when a use case needs cache-aware behaviour; otherwise keep caching internal to Infrastructure. ;; = ;; none ;;
+C run007.redis-justified OL RUN-007,ARC-020 MUST ;; Add a distributed backend such as Redis only when deployment requirements justify it (distributed caching is Reserved). ;; = ;; none ;;
+C arc024.no-hybridcache-in-app OL ARC-024 MUST_NOT ;; Do not expose HybridCache itself from Application contracts (Infrastructure may implement the contract with it). ;; = ;; none ;;
+C x.cache-central-keys EX RUN-020 DEFAULT ;; Centralize key construction when duplicated key formats become hard to maintain. ;; = ;; none ;; Key-construction organisation not in the oracle.
+C x.cache-expiry-semantics EX RUN-023 MUST ;; Choose expiration from data semantics (change frequency, regeneration cost, staleness, memory, source-failure behaviour) rather than arbitrary universal defaults. ;; = ;; none ;; Forbids universal default TTLs; RUN-023 only requires some lifetime/invalidation.
+C run023.no-unbounded OL RUN-023 AVOID ;; Avoid unbounded cache entries. ;; = ;; none ;;
+C u.cache-preinvalidate LU RUN-021 ALLOWED ;; Invalidate before the mutation is known to have succeeded only when the workflow deliberately accepts that behaviour. ;; = ;; Deliberate acceptance. ;; Open question: is pre-success invalidation an exception relaxing RUN-021 ('only consistently with successful mutations') or consistent with it because it never makes the cache a source of truth?
+C run020.output-cache-isolation OL RUN-020 MUST_NOT ;; Do not cache authenticated/user-specific responses unless key and policy isolate users and authorization context. ;; = ;; none ;;
+C arc016.no-bypass-invalidation OL ARC-016,ARC-024 MUST_NOT ;; Application Services keep the repository/UoW workflow and coordinate invalidation through an abstraction; never bypass repositories/IUnitOfWork for convenience. ;; = ;; none ;;
+C x.cache-failure-decision EX RUN-018 MUST ;; Decide whether a cache failure falls back to the source, fails the request or returns stale data. ;; = ;; none ;; Explicit failure-policy decision not in the oracle.
+C x.cache-testing EX TST-003 DEFAULT ;; Test cache behaviour affecting correctness (invalidation after mutation, key isolation, miss fallback, outage policy); not framework internals. ;; = ;; none ;; Cache test obligations not in the oracle.
+C x.cache-no-tracked EX RUN-021,ARC-016 MUST_NOT ;; Do not cache tracked persistence entities across Unit of Work boundaries. ;; = ;; none ;; Not stated in the oracle or in the cited owner rules.
+C run021.not-authoritative OL RUN-021 MUST_NOT ;; The cache is not authoritative persistence. ;; = ;; none ;;
+C run007.no-redis-default OL RUN-007,GOV-013 MUST_NOT ;; Do not cache by default without reason or add Redis merely because the application caches. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/ci-cd/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge skill ci-cd (pipelines)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13-15 MX [x.cicd-artifacts-config,gov013.cicd-actual-stages] ;; Reproducible artifacts/external configuration are added; stages per the actual project is GOV-013.
+17 NN ;; Heading.
+19-22 OL [wf017.cicd-discover]
+24 NN ;; Heading.
+26-30 NN ;; Example backend CI commands.
+32-35 MX [wf007.cicd-format-adopted,x.cicd-no-new-gates] ;; Running adopted format/analyzer checks is WF-007/WF-017; not turning optional formatters into gates is added.
+37 NN ;; Heading.
+39-41 OL [wf018.cicd-npm-ci]
+43 NN ;; Heading.
+45-87 NN ;; Illustrative GitHub Actions YAML.
+89-90 OL [wf018.cicd-adapt]
+92 NN ;; Heading.
+94-97 OL [wf017.cicd-services]
+99 NN ;; Heading.
+101-103 NN ;; Vulnerability command example.
+105-108 OL [wf020.cicd-findings] ;; ;; Treat
+110 NN ;; Heading.
+112-118 NN ;; Publish command example.
+120-121 EX [x.cicd-minimal-artifacts] ;; ;; Store or
+123 NN ;; Heading.
+125-127 OL [dep018.cicd-docker]
+129 NN ;; Heading.
+131-134 EX [x.cicd-build-once]
+136 NN ;; Heading.
+138-140 MX [sec001.cicd-secrets,x.cicd-federated] ;; CI secret mechanism and no real secrets in YAML are SEC-001/SEC-002; preferring workload/federated identity is added.
+142 NN ;; Heading.
+144-148 OL [wf019.cicd-migrations]
+150 NN ;; Heading.
+152-154 EX [x.cicd-env-protection]
+156 NN ;; Heading.
+158-161 EX [x.cicd-verify-pipeline]
+163 NN ;; Heading.
+165-169 DU ;; Check-by-reference list against verify § Delivery Changes and security.md (generic pipeline DB infra, YAML secrets, rebuilds per environment, suppressed tests, production seeding/startup migrations, assumed Docker/scripts); owner constraints captured there.
+
+C x.cicd-artifacts-config EX WF-017 DEFAULT ;; Build deployable artifacts reproducibly and keep deployment/environment configuration outside compiled artifacts where practical. ;; = ;; Where practical. ;; Delivery technique outside the oracle (EXC-014).
+C gov013.cicd-actual-stages OL GOV-013,WF-017 MUST ;; Add pipeline stages according to the actual project rather than generic boilerplate. ;; = ;; none ;;
+C wf017.cicd-discover OL WF-017,WF-001 MUST ;; Inspect the repository before writing a pipeline; do not assume a database, Redis, Docker or frontend tooling exists. ;; = ;; none ;;
+C wf007.cicd-format-adopted OL WF-007,WF-017 DEFAULT ;; Run formatting/analyzers in CI when adopted as enforced checks. ;; = ;; none ;;
+C x.cicd-no-new-gates EX WF-017 MUST_NOT ;; Do not turn an optional local formatter into a mandatory CI gate without the project adopting that policy. ;; = ;; Project adoption. ;; CI-gate restriction not in the oracle.
+C wf018.cicd-npm-ci OL WF-018 MUST ;; Install from the lockfile with npm ci, then run the scripts the frontend defines (build; tests/lint when configured). ;; = ;; none ;;
+C wf018.cicd-adapt OL WF-018,WF-017 MUST ;; Adapt action/runtime versions to the repository's supported versions; add frontend test/lint commands only when defined. ;; = ;; none ;;
+C wf017.cicd-services OL WF-017,GOV-013,TST-004 MUST ;; Provide external services in CI only when tests require them; no hardcoded provider in generic pipelines; integration environment isolated from Development/Production data. ;; = ;; none ;;
+C wf020.cicd-findings OL WF-020,GOV-014 MUST_NOT ;; Treat dependency findings per the project's security policy; no automatic CI upgrades unless automated updates are adopted. ;; = ;; Automated dependency updates adopted. ;;
+C x.cicd-minimal-artifacts EX WF-017 DEFAULT ;; Store or publish only artifacts required by later stages. ;; = ;; none ;; Artifact retention rule outside the oracle.
+C dep018.cicd-docker OL DEP-018 MUST_NOT ;; Build/publish images from CI only when the project deploys containers; do not add Docker because the skill supports it. ;; = ;; none ;;
+C x.cicd-build-once EX WF-017 PREFER ;; Prefer promoting the same tested artifact/image through environments over recompiling different production code per environment; environment behaviour from runtime configuration. ;; = ;; Promotion-capable deployment. ;; Build-once/promote preference is outside the oracle (EXC-014).
+C sec001.cicd-secrets OL SEC-001,SEC-002 MUST_NOT ;; Use the CI platform secret/identity mechanism; never real secrets in pipeline YAML. ;; = ;; none ;;
+C x.cicd-federated EX SEC-002 PREFER ;; Prefer workload/federated identity over long-lived deployment credentials when supported. ;; = ;; Platform support. ;; Credential-type preference not in the oracle.
+C wf019.cicd-migrations OL WF-019 MUST ;; Deployment migrations are explicit, use approved credentials, run at a controlled point and fail visibly; scripts may be generated earlier in CI. ;; = ;; none ;;
+C x.cicd-env-protection EX WF-017 DEFAULT ;; CI and CD may be separate; a green CI does not imply deployment; use environment protection/approval appropriate to the platform. ;; = ;; none ;; Deployment gating practice outside the oracle.
+C x.cicd-verify-pipeline EX WF-017,SEC-001 MUST ;; Before a pipeline is complete confirm clean restore, backend build, frontend build when present, configured tests, no developer-machine dependence, no secret exposure and expected artifacts. ;; = ;; none ;; Pipeline completion checklist beyond WF-017.

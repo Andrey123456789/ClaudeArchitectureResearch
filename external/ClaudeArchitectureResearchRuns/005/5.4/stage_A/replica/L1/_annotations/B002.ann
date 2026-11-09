@@ -1,0 +1,69 @@
+# L1 / B002 — hooks (static analysis; hooks were not executed).
+
+C R43 OL DEP-025 | MUST NOT (PreToolUse hook: asks the user) | Do not use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; resolve the actual compatibility problem. The PreToolUse hook detects --force, -f, --legacy-peer-deps (and npm config set force/legacy-peer-deps) on npm/pnpm/yarn install-like commands and asks the user to confirm. | Bash and PowerShell package-manager commands | Proceeds when the user explicitly confirms.
+C R44 OL GOV-009,GOV-021 | SHOULD (PostToolUse feedback after edits; Stop reminder once per change state) | When SPECIFICATION.md or CUSTOM_SETTINGS.md changes, keep the two consistent and run the custom-settings workflow to synchronize affected code, validation, configuration, tests, documentation and frontend. | edits of product sources | Stop reminder only in a Git working tree and once per material state.
+C R45 OL TST-009,TST-010 | SHOULD (Stop hook reminder: blocks stopping once per change state) | When backend production C# files changed without any backend test change, confirm existing coverage, regression tests for bug fixes and preservation of behavioral probes (verify) before finishing, or state briefly why it does not apply. | Stop event in a Git working tree | Once per material state; outside Git only an advisory system message; a continuation caused by the hook is not re-blocked.
+C X10 EX DEP-001,DEP-003 | MUST (PreToolUse hook: first attempt denied) | Dependency-removal commands (npm/pnpm uninstall, remove, rm, un, unlink; yarn remove; dotnet remove package; dotnet package remove; dotnet tool uninstall; Uninstall-Package) are treated as dependency changes: the hook denies them once and routes them to the add-dependency workflow. | Bash and PowerShell commands | The identical command passes when retried within 30 minutes. | DEP-001..DEP-005 govern additions and updates; no oracle policy routes dependency removals through a workflow gate. | 'npm uninstall lodash' requested by the user is denied on first attempt; the agent must go through add-dependency and re-run the command.
+C X11 EX ARC-020,ARC-001,GOV-017 | REQUIRES_APPROVAL (Reserved; PreToolUse hook asks on every reference command; manifest hook reports removed or moved project files) | Changing the project reference graph is Reserved unless it implements the approved layout: every dotnet add/remove reference and dotnet reference add/remove command requires user confirmation, and removing or moving a .csproj is reported as a Reserved change of the project set/reference graph. | .NET project references and project files | Changes implementing the approved layout (project-structure) are not Reserved, but the hook asks anyway because it cannot tell; direct .csproj edits are only checked afterwards by the architecture check. | ARC-020 requires approval for new layers/projects and ARC-001 constrains direction; no oracle policy makes individual reference edges between existing projects (including direction-legal edges outside the documented layout) Reserved, nor requires confirmation of each reference command. | A direction-legal Api -> Domain reference needs approval, and even standard layout reference commands stop for user confirmation.
+
+FILE .claude/hooks/post-change-checks.mjs | PostToolUse / PostToolUseFailure manifest hook; findings exit 2 after the tool call ran; internal failures exit 1 and never block.
+1 IM | shebang
+2-12 IM | header comment documenting triggers, snapshot model, checks and exit codes (behavior is encoded below)
+13-20 IM | imports
+22-27 IM | constants (edit tools, manifest pattern, Git pathspecs, owner path)
+29-31 IM | prerelease detection helper
+33-49 IM | loads project-level and module package lists
+51-53 IM | iteration and MSBuild-property advisory (asks for manual confirmation only)
+54 EX X9 | must not be added
+55 OL R10,R22,R40,R41 | Remove it unless the user approved it.
+56-61 IM | loop delimiters and project-file parsing
+62 OL R18 | versions belong only in Directory.Packages.props
+63 OL R18 | keep it only for a concrete reason and report that reason
+64-69 IM | delimiters and central-package file parsing
+70 OL R18 | ManagePackageVersionsCentrally must stay true
+71-73 IM | iteration and MSBuild-property advisory
+74 OL R42 | uses a floating or empty version
+75 OL R42 | is a prerelease; allowed only when explicitly requested
+76-86 IM | package-id check call, package.json parsing (invalid JSON finding), frontend list selection, dependency-section iteration
+87 OL R42 | uses floating version
+88 OL R42 | is a prerelease; allowed only when explicitly requested
+89 OL R28 | requires a concrete need and approval
+90-111 IM | manifest dispatch and visible encoding errors
+113-163 IM | per-worktree snapshot and state handling; report helper (exit 2 feedback)
+165-168 IM | architecture findings glue (rules R6, R7, R33 evaluated by check-architecture.mjs)
+170-176 IM | edit-flow root and path resolution
+177-178 OL R44 | keep SPECIFICATION.md and CUSTOM_SETTINGS.md consistent
+179-212 IM | edit-flow manifest validation and state update; shell-flow snapshot comparison
+213 MX X11,R18 | a Reserved decision unless it implements the approved layout ⟫ Removing or moving a project file is reported as a Reserved reference-graph change (extra X11); removing package configuration is reported against the package-management rule (R18).
+214-239 IM | finding emission, validation of changed manifests, architecture findings, state save, report, entry point and non-blocking failure handling
+
+FILE .claude/hooks/pre-shell-command.mjs | PreToolUse Bash/PowerShell gate; registered with onFailure block (fails closed).
+1 IM | shebang
+2-9 IM | header comment documenting the gate (behavior encoded below)
+10-12 IM | imports
+14 IM | grace-window constant (30 minutes) used by the deny-once exception
+16-29 IM | option and subcommand classification tables
+31-142 IM | command segmentation, tokenization and classification (shell wrappers up to depth 3, npx/corepack, framework CLI, PowerShell package cmdlets)
+144-167 IM | permission-decision output, fail-closed blocking of malformed input and internal failures, root resolution
+168-170 OL R43 | Peer-dependency bypass flag (--force / -f / --legacy-peer-deps) detected.
+171-173 EX X11 | Changing the project reference graph is Reserved (CLAUDE.md § Decision control) unless it implements the approved layout
+174-193 IM | deny-once state handling (identical command allowed within the grace window)
+194 MX R21,X10 | Dependency change detected. Run the add-dependency workflow first ⟫ For additions and updates the gate implements the add-dependency obligations (R21); the same deny-once gate applied to removal commands is an extra (X10).
+195-197 IM | closing and fail-closed catch
+
+FILE .claude/hooks/stop-cochange.mjs | Stop hook; reminders block stopping once per material change state; advisory outside Git.
+1 IM | shebang
+2-7 IM | header comment (once per material state, loop guard, advisory failures)
+8-13 IM | imports
+15-32 IM | output helper, changed-file listing, content ids
+34-46 IM | input parsing, loop guard, root resolution, Git availability
+47 MX R35,R45,X7 | Check seed, migration, and test co-changes manually ⟫ Outside Git the hook only asks for manual checks: seed and test co-changes are oracle-linked (R35, R45), the migration co-change is the extra X7.
+48-58 IM | selection and facet loading, model-file matching
+59 OL R35 | without a seeder change: confirm seeded entities are unaffected or update the seeder
+60 EX X7 | without a migration: confirm no schema change is needed
+61-65 IM | production-file matching
+66 OL R45 | Backend production code changed without test changes
+67-68 IM | delimiter and product-file matching
+69 OL R44 | Product sources changed: confirm SPECIFICATION.md and CUSTOM_SETTINGS.md are consistent and synchronized
+70-90 IM | fingerprint (once per material state), state file, block decision output, failure handling as system message
+DONE

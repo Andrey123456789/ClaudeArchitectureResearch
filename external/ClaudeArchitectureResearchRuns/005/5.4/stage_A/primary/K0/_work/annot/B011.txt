@@ -1,0 +1,232 @@
+# K0 — skills batch B011: logging (+ references/serilog.md), modern-csharp, project-structure references backend-layout.md and baseline-setup.md
+
+@@ output/template/.claude/skills/logging/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge logging (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule, decision and private-reference pointers.
+12 NN ;; Heading.
+14-19 NN ;; Structured logging example.
+21 OL [run013.lg-structured]
+23-26 NN ;; Interpolation anti-example.
+28 OL [run013.lg-structured]
+30 NN ;; Heading.
+32-38 EX [x.lg-levels,x.eh-expected-not-errors]
+40 NN ;; Heading.
+42 IM ;; Pointers to the exception-logging rule and technique.
+44 NN ;; Heading.
+46-55 NN ;; Scope example.
+57 NN ;; Descriptive provider note with pointer.
+59 NN ;; Heading.
+61 MX [x.lg-correlation,sec003.lg-validate-correlation] ;; Validating externally supplied identifiers before propagation restates SEC-003; correlation-identifier and trace-propagation guidance is added.
+63 NN ;; Heading.
+65 OL [run014.lg-no-headers-bodies]
+67-73 NN ;; Avoid/prefer example.
+75 NN ;; Rationale for logging specific properties instead of whole objects.
+77 NN ;; Heading.
+79 OL [run008.lg-loggermessage]
+81-88 NN ;; LoggerMessage example.
+90 NN ;; Heading.
+92 MX [run013.lg-structured,api012.log-once,x.eh-expected-not-errors,sec010.no-sensitive-logs,run014.no-payload-logs,dep021.add-serilog,x.lg-no-audit-db] ;; Common-mistakes list restating rule-owned items; using logs as an audit database without a dedicated audit design has no owner clause and is registered.
+94 NN ;; Heading.
+96-97 NN ;; Table header.
+98-103 DU [dep010.d06-logging,api012.log-once,x.eh-expected-not-errors,run008.lg-loggermessage] ;; Decision guide restating the rules and guidance captured above.
+
+C run013.lg-structured OL RUN-013 DEFAULT ;; Use structured message templates; avoid interpolation (opaque text, allocations when disabled); keep property names stable so logs stay queryable. ;; = ;; none ;;
+C x.lg-levels EX RUN-013 DEFINITION ;; Choose log levels by operational meaning: Trace/Debug diagnostics (not safe for sensitive data), Information meaningful events (not every call), Warning recovered/degraded conditions, Error failed operations needing investigation, Critical when the application or a subsystem cannot continue. ;; = ;; none ;; Log-level semantics not in the oracle.
+C x.lg-correlation EX RUN-013 PREFER ;; Prefer platform/runtime trace identifiers; add an explicit correlation identifier only for an integration or operational requirement; propagate tracing context across outbound calls with the chosen tracing/HTTP infrastructure. ;; = ;; none ;; Correlation guidance not in the oracle.
+C sec003.lg-validate-correlation OL SEC-003 MUST ;; Validate or normalize a correlation identifier accepted from an external client before propagating it. ;; = ;; none ;;
+C run014.lg-no-headers-bodies OL RUN-014,SEC-010 MUST_NOT ;; Keep authorization headers and full request/response bodies out of logs (never-log data is owned by the security standard). ;; = ;; none ;;
+C run008.lg-loggermessage OL RUN-008,RUN-001 DEFAULT ;; Normal structured ILogger calls suffice; source-generated LoggerMessage only for measured high-volume hot paths, not everywhere by default. ;; = ;; none ;;
+C x.lg-no-audit-db EX RUN-014 AVOID ;; Do not use logs as an audit database without a dedicated audit design. ;; = ;; Dedicated audit design. ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/logging/references/serilog.md ;; Private knowledge reference (read by logging only).
+@scope private reference serilog (read by logging)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+3 NN ;; Heading.
+5 OL [dep021.sl-ilogger]
+7 NN ;; Heading.
+9-14 NN ;; AddSerilog example.
+16 OL [dep021.sl-addserilog]
+18 NN ;; Heading.
+20 EX [x.sl-bootstrap]
+22-59 NN ;; Two-stage bootstrap example.
+61 EX [x.sl-flush]
+63 NN ;; Heading.
+65 MX [dep021.sl-config,x.sl-sinks-optional] ;; Environment-aware configuration of levels, sinks and overrides restates DEP-021; File/Seq not being baseline dependencies with Console sufficient for a simple Development baseline is added.
+67-109 NN ;; appsettings example with several optional sinks and illustrative limits.
+111 NN ;; Descriptive note on Override matching.
+113 NN ;; Heading.
+115 NN ;; Descriptive statement of request logging behaviour.
+117-135 NN ;; Request logging example.
+137 NN ;; Heading.
+139-149 NN ;; Destructuring examples.
+151 EX [x.sl-destructure-limits]
+153-158 NN ;; Destructuring limit example.
+160 NN ;; Heading.
+162-168 NN ;; LogContext example.
+170 NN ;; Technical prerequisite (FromLogContext enrichment).
+172 NN ;; Heading.
+174 NN ;; Descriptive note on the OpenTelemetry sink.
+176-187 NN ;; OpenTelemetry sink example.
+189 NN ;; Heading.
+191-196 NN ;; Serilog.Expressions filtering example.
+198 NN ;; Heading.
+200 EX [x.sl-elastic-deprecated]
+202-205 NN ;; Elastic sink example.
+207 NN ;; Heading.
+209-210 NN ;; Table header.
+211-219 DU [dep021.sl-addserilog,x.sl-elastic-deprecated,dep021.sl-config] ;; Decision guide; the storage/sink rows (Seq, Aspire Dashboard, OTLP backends, AuditTo) are descriptive technique options.
+
+C dep021.sl-ilogger OL DEP-021 MUST ;; Application code keeps using ILogger<T>; direct Serilog APIs (Log.Logger, LogContext) stay at composition or provider-specific boundaries. ;; = ;; none ;;
+C dep021.sl-addserilog OL DEP-021 DEFAULT ;; AddSerilog() integrates with DI (ReadFrom.Services), replacing the older builder.Host.UseSerilog(). ;; = ;; none ;;
+C x.sl-bootstrap EX DEP-021 DEFAULT ;; Use a two-stage bootstrap logger when startup failures before DI/configuration need to be captured; simpler applications can skip it. ;; = ;; Simpler applications. ;; Bootstrap-logger guidance not in the oracle.
+C x.sl-flush EX DEP-021 MUST ;; When the static/bootstrap Log.Logger is used, flush it on shutdown (try/finally with CloseAndFlushAsync). ;; = ;; Purely host-managed logging follows the provider lifetime. ;; Flush requirement not in the oracle.
+C dep021.sl-config OL DEP-021 DEFAULT ;; Keep levels, sinks and overrides in configuration so they can differ per environment. ;; = ;; none ;;
+C x.sl-sinks-optional EX DEP-001,DEP-021 DEFAULT ;; File, Seq and other sinks are not baseline dependencies; a Console sink suffices for a simple local Development baseline; example limits and retention values are illustrative. ;; = ;; none ;; Sink-baseline guidance not in the oracle.
+C x.sl-destructure-limits EX RUN-014 DEFAULT ;; Limit destructuring of large object graphs or transform types to specific properties. ;; = ;; none ;; Destructuring guidance not in the oracle.
+C x.sl-elastic-deprecated EX DEP-004 MUST_NOT ;; Serilog.Sinks.Elasticsearch is deprecated; use the official Elastic.Serilog.Sinks package. ;; = ;; none ;; Concrete deprecated-package guidance not in the oracle.
+
+@@ output/template/.claude/skills/modern-csharp/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge modern-csharp (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule and decision pointers.
+12 OL [run009.mc-when-clearer]
+14 NN ;; Heading.
+16-22 NN ;; Primary constructor example.
+24 DU [x.cs-primary-ctor] ;; Restates the constructor guidance of csharp.md.
+26 NN ;; Heading.
+28-32 NN ;; Collection expression example.
+34 EX [x.mc-collection-expr]
+36 NN ;; Heading.
+38 DU [x.cs-records] ;; Restates the record/class guidance of csharp.md.
+40 NN ;; Heading.
+42-44 NN ;; Required member example.
+46 EX [x.mc-required]
+48 NN ;; Heading.
+50-57 NN ;; Switch expression example.
+59 NN ;; Hedged readability note (deeply nested patterns often harder to read).
+61 NN ;; Heading.
+63-72 NN ;; field keyword example.
+74 NN ;; Descriptive/permissive note on the field keyword.
+76 NN ;; Heading.
+78-87 NN ;; Extension members example.
+89 NN ;; Permissive note (extension members useful; traditional extensions valid).
+91 NN ;; Heading.
+93-99 NN ;; Raw string example.
+101 OL [run008.mc-raw-strings-not-sql]
+103 NN ;; Heading.
+105 EX [x.mc-immutability]
+107 NN ;; Heading.
+109 OL [run008.mc-spans]
+111 NN ;; Heading.
+113 EX [x.mc-langversion]
+115 NN ;; Heading.
+117 NN ;; Lead-in (when explicitly asked to modernize).
+119-123 OL [run011.mc-modernization]
+125 NN ;; Heading.
+127 MX [run009.mc-when-clearer,x.cs-records,run008.mc-spans,x.cs-primary-ctor,x.mc-langversion,x.mc-mistakes] ;; Common-mistakes list restating rule-owned items; record struct merely to avoid allocations and deeply nested patterns have no owner clause and are registered.
+
+C run009.mc-when-clearer OL RUN-009 DEFAULT ;; Use a modern feature when it makes code clearer, safer or simpler, not to demonstrate syntax. ;; = ;; none ;;
+C x.mc-collection-expr EX RUN-009 DEFAULT ;; Use collection expressions when the target type is clear. ;; = ;; none ;; Collection-expression guidance not in the oracle.
+C x.mc-required EX ARC-004,API-010 DEFINITION ;; required expresses a construction contract and does not replace constructor or domain validation where invariants need protection. ;; = ;; none ;; required-member semantics not in the oracle.
+C run008.mc-raw-strings-not-sql OL RUN-008 MUST_NOT ;; Raw string literals suit test JSON, templates and SQL that belongs in code, but are not a reason to write raw SQL. ;; = ;; none ;;
+C x.mc-immutability EX RUN-009 DEFAULT ;; Model immutability where it is natural; framework models and controlled-mutation workflows often stay simpler mutable. ;; = ;; none ;; Immutability guidance not in the oracle.
+C run008.mc-spans OL RUN-008,RUN-012 DEFAULT ;; Span<T>, stackalloc, pooling, source-generated serialization and preallocated buffers are for demonstrated allocation-heavy hot paths with verified improvement; ordinary arrays, strings and collections are the default. ;; = ;; none ;;
+C x.mc-langversion EX DEP-008,ARC-020 REQUIRES_APPROVAL ;; Confirm the configured language version supports a feature before using it; changing LangVersion or the target framework to use newer syntax is a decision, not a silent edit. ;; = ;; none ;; LangVersion/TFM decision gate beyond DEP-008's preview/RC rule.
+C run011.mc-modernization OL RUN-011,GOV-014,RUN-009 MUST ;; When explicitly asked to modernize: preserve behaviour, keep the change focused, favour readability, build and test afterwards, keep architecture refactoring out of syntax modernization. ;; = ;; none ;;
+C x.mc-mistakes EX RUN-008,RUN-009 AVOID ;; Avoid record struct merely to avoid allocations and deeply nested patterns. ;; = ;; none ;; No owner clause for these items.
+
+@@ output/template/.claude/skills/project-structure/references/backend-layout.md ;; Private workflow reference (read by project-structure only).
+@scope private reference backend-layout (read by project-structure)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+3 NN ;; Heading.
+5 OL [arc027.bl-real-dirs]
+7 NN ;; Heading.
+9-13 NN ;; Domain tree example.
+15 OL [arc005.bl-ddd-dirs]
+17 NN ;; Heading.
+19-28 NN ;; Application tree example.
+30 OL [arc014.bl-persistence-abstractions]
+31 OL [arc007.bl-external-abstractions]
+32 OL [arc009.bl-no-cqrs-structures]
+33 OL [arc029.bl-dtos]
+34 OL [api010.bl-validation]
+35 OL [arc023.bl-app-di]
+37 NN ;; Heading.
+39 EX [x.bl-type-roles]
+41-51 NN ;; Suffix table.
+53 MX [x.bl-type-roles,arc027.bl-no-generic-buckets] ;; Avoiding generic Models/Helpers/Common/Utils buckets restates ARC-027; specific names and subdirectories only when a flat directory becomes hard to navigate are added.
+55 NN ;; Heading.
+57-70 NN ;; Infrastructure tree example.
+72 OL [arc015.bl-infra-dirs]
+73 OL [arc007.bl-infra-services]
+74 OL [arc023.bl-infra-di]
+76 NN ;; Heading.
+78-89 NN ;; Api tree example.
+91 OL [arc010.bl-controllers]
+92 OL [arc029.bl-contracts]
+93 OL [arc027.bl-only-when]
+94 EX [x.bl-extensions]
+95 OL [arc012.bl-program]
+97-100 NN ;; Composition root example.
+102 NN ;; Heading.
+104-118 DU [arc001.inward] ;; Reference diagram restating the dependency-direction rule.
+120 OL [arc001.bl-never-outward]
+122 NN ;; Heading.
+124-138 DU [arc028.test-refs] ;; Test reference diagram restating the test-reference rule.
+140 OL [tst006.bl-integration-transitive,dep024.bl-no-tests-dir]
+
+C arc027.bl-real-dirs OL ARC-027 MUST ;; Default physical backend structure; create only directories that contain real code. ;; = ;; none ;;
+C arc005.bl-ddd-dirs OL ARC-005,ARC-004 MUST_NOT ;; DDD-oriented Domain directories (ValueObjects, DomainServices, Events, Exceptions) only when an approved design justifies them; business rules or workflows alone do not. ;; = ;; Approved design. ;;
+C arc014.bl-persistence-abstractions OL ARC-007,ARC-008,ARC-016 MUST ;; Application/Abstractions/Persistence holds inward-facing persistence contracts (repositories, IUnitOfWork) with no EF Core types. ;; = ;; none ;;
+C arc007.bl-external-abstractions OL ARC-007 MUST ;; Application/Abstractions/ExternalServices holds Application-owned abstractions implemented by outer layers, created when such a dependency exists. ;; = ;; none ;;
+C arc009.bl-no-cqrs-structures OL ARC-006,ARC-009 MUST_NOT ;; Application/Services holds Application Services and service contracts; no handler, CQRS or MediatR structures. ;; = ;; none ;;
+C arc029.bl-dtos OL ARC-029,ARC-027 MUST_NOT ;; Application DTOs are operation/data models when useful, not a dumping ground. ;; = ;; none ;;
+C api010.bl-validation OL API-010 DEFINITION ;; Application/Validation holds FluentValidation validators for Application-level input and use-case validation. ;; = ;; none ;;
+C arc023.bl-app-di OL ARC-023,ARC-001 MUST_NOT ;; Application DependencyInjection.cs registers Application services and validation infrastructure, never concrete Infrastructure implementations. ;; = ;; none ;;
+C x.bl-type-roles EX RUN-024 MUST ;; Make each supporting type's responsibility clear from its name, directory or both (role suffixes; e.g. TaskWorkflowRules over TaskWorkflow); add responsibility subdirectories only when a flat feature directory becomes hard to navigate. ;; = ;; none ;; Type-role naming convention not in the oracle.
+C arc027.bl-no-generic-buckets OL ARC-027 AVOID ;; Avoid generic Models, Helpers, Common or Utils buckets when a specific responsibility can be named. ;; = ;; none ;;
+C arc015.bl-infra-dirs OL ARC-015,PST-003 DEFINITION ;; Infrastructure Configurations (EF mappings), Repositories (Infrastructure-only generic base allowed when it removes real duplication), Migrations, Seeding (Development initialization). ;; = ;; none ;;
+C arc007.bl-infra-services OL ARC-007 DEFINITION ;; Infrastructure Services hold technical/external implementations of Application abstractions, with capability subdirectories when they improve cohesion. ;; = ;; none ;;
+C arc023.bl-infra-di OL ARC-023 DEFAULT ;; Infrastructure DependencyInjection.cs registers AppDbContext, repositories, IUnitOfWork, adapters, the SQL Server provider and HttpClient/resilience integrations when used. ;; = ;; none ;;
+C arc010.bl-controllers OL ARC-010 DEFAULT ;; Api Controllers are thin ASP.NET Core Controllers; no Minimal API endpoint groups unless explicitly requested. ;; = ;; Explicit request. ;;
+C arc029.bl-contracts OL ARC-029 DEFINITION ;; Api Contracts hold request/response contracts when used. ;; = ;; none ;;
+C arc027.bl-only-when OL ARC-027 MUST_NOT ;; A Middleware directory exists only when custom middleware exists. ;; = ;; none ;;
+C x.bl-extensions EX ARC-012,GOV-012 MUST_NOT ;; Api Extensions hold cohesive API/composition extension methods; do not move arbitrary code out of Program.cs just to shorten it. ;; = ;; none ;; Program.cs extraction rule not in the oracle.
+C arc012.bl-program OL ARC-012 DEFAULT ;; Program.cs is the composition root (AddApplication, AddInfrastructure). ;; = ;; none ;;
+C arc001.bl-never-outward OL ARC-001 MUST_NOT ;; Never add Domain→Application, Domain→Infrastructure or Application→Infrastructure references; reconsider the abstraction boundary; check-dependencies checks the references. ;; = ;; none ;;
+C tst006.bl-integration-transitive OL TST-006 DEFINITION ;; Integration tests exercise Application, Infrastructure, EF Core, routing, DI, serialization and persistence transitively through the API host. ;; = ;; none ;;
+C dep024.bl-no-tests-dir OL DEP-024 MUST_NOT ;; Backend tests never go into a separate top-level tests/ directory. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/references/baseline-setup.md ;; Private workflow reference (read by project-structure only).
+@scope private reference baseline-setup (read by project-structure; new applications)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+3 NN ;; Heading.
+5 OL [dep003.bs-via-add-dependency]
+7 NN ;; Heading.
+9 EX [x.bs-baseline-packages]
+11-12 NN ;; Table header.
+13-17 EX [x.bs-baseline-packages]
+19 OL [dep001.bs-conditional]
+21 NN ;; Heading.
+23 OL [dep026.bs-dev-connection]
+25-31 NN ;; Example LocalDB connection string (a suitable Windows default).
+33 OL [dep026.bs-credentials]
+35 DU [pst004.dev-only,pst001.seed-default,pst006.leave-existing] ;; Summary of the seeding rules with a technique pointer.
+37 NN ;; Heading.
+39 MX [api017.bs-swagger-dev,x.bs-launch-profile] ;; Swagger UI at /swagger in Development restates API-017/DEP-012; the launch profile opening it with matching URLs is added.
+41 NN ;; Heading.
+43 OL [dep014.bs-angular-cli]
+
+C dep003.bs-via-add-dependency OL DEP-002,DEP-003 MUST ;; Package and technology selection comes from the decision register; install every package through add-dependency with the version resolved at install time. ;; = ;; none ;;
+C x.bs-baseline-packages EX DEP-013,DEP-009,DEP-010 MUST ;; New applications install the packages each decision names plus scaffold packages: Microsoft.EntityFrameworkCore.Design where migrations are created (provider in Infrastructure, Api as startup project), a Console sink for a simple local logging baseline (Api), NUnit3TestAdapter and Microsoft.NET.Test.Sdk in test projects. ;; new applications ;; none ;; Concrete scaffold package set not in the oracle.
+C dep001.bs-conditional OL DEP-001,DEP-011 MUST_NOT ;; Conditional packages (D-11 to D-15) are added only when their capability is needed. ;; = ;; none ;;
+C dep026.bs-dev-connection OL DEP-026 DEFAULT ;; appsettings.Development.json carries a usable, credential-free local connection string (adapt the database name). ;; = ;; none ;;
+C dep026.bs-credentials OL DEP-026,SEC-001 MUST_NOT ;; When local SQL Server needs credentials keep the non-secret structure in configuration and supply the secret through user-secrets or another approved local mechanism; never commit usernames/passwords, tokens, production hosts or production connection strings. ;; = ;; none ;;
+C api017.bs-swagger-dev OL API-017,DEP-012 DEFAULT ;; Expose Swagger UI at /swagger in Development. ;; = ;; none ;;
+C x.bs-launch-profile EX WF-006,DEP-012 DEFAULT ;; Set the launch profile to open Swagger (launchBrowser true, launchUrl swagger) with application URLs matching the profile. ;; = ;; none ;; Launch-profile configuration not in the oracle.
+C dep014.bs-angular-cli OL DEP-014,DEP-016 DECIDED ;; Use the latest stable Angular supported by the selected Node.js and create the workspace with the current Angular CLI (compatible Angular/TypeScript/RxJS; no independent TypeScript upgrade beyond the supported range); standalone, strict, routing, SCSS, zoneless when supported; Material/CDK via the CLI; the decided unit-test runner; E2E only under D-13. ;; = ;; none ;;

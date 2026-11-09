@@ -1,0 +1,63 @@
+# K0 / B005 — Run 2 replica annotation (blind). check-instructions.cjs (template-maintenance, post-change hook).
+
+C X10 EX - | MUST (structure checker error) | Every instruction artifact carries the first-line header 'Kind | Scope | Owner | Loading' with a known Kind and Scope; its Kind must match its location/mechanism (CLAUDE.md OP, register DEC, CUSTOM_SETTINGS IN, rules STD, agents WF, hooks/scripts/root build files ENF; skills WF or KNW); OP/DEC load always and IN is read as input; no Level/Capability/Slot/Facet/Contract/Module fields, no numbered or level-ordered directories, no capability contracts/manifests/slots/facets, no unclassified files under .claude/ or docs/architecture/. | Instruction-system files | Project-owned root build/format files may omit the template header. | Classification and anti-level/anti-capability structure of the K0 design; no V2 policy governs instruction-file headers or locations. | Adding a .claude/capabilities/ folder or a 'Level:' header is a structural error.
+C X11 EX - | MUST (structure checker error) | Standards live directly in .claude/rules/<scope>/<topic>.md for scopes common, backend, backend-tests, frontend, delivery; the header Scope equals the directory; STD loads path-scoped with non-empty paths whose globs stay inside the scope territory (backend: backend/, root .NET build files, global.json, *.slnx; backend-tests: backend/ and containing Tests; frontend: frontend/; delivery: Docker/Compose/CI paths); standards contain no numbered procedures or Step/Procedure headings (procedures belong in workflows). | Rule files | common scope accepts any glob. | Rule-organization and loading discipline of the template; not a V2 policy. | A backend rule globbing docs/** or containing a numbered procedure is a structural error.
+C X12 EX - | MUST (structure checker error) | Skill and agent structure: skill frontmatter name equals the directory and has a concrete description (20+ characters); KNW skills load on demand and stay model-invocable; WF skills load as workflows; the required workflows (development-workflow, project-structure, verify, code-review, build-fix, custom-settings, git-workflow, security-scan, add-dependency, architecture-decision, delivery-pipeline, template-maintenance) and knowledge skills (ef-core, http-api, aspnet-error-handling, dotnet-testing, logging, httpclient-factory, configuration, dependency-injection, caching, swagger, api-versioning, health-check, docker, ci-cd, angular, modern-csharp, authentication) exist; template-maintenance is user-only (disable-model-invocation: true); private references have their skill's Kind and state that only that skill reads them; retired skill names (testing, error-handling, serilog, resilience) are not used; agents' frontmatter name equals the file name and they load as agents. | Instruction-system skills and agents | none stated | Template inventory and packaging rules; the oracle prescribes no skill inventory or metadata. | Removing the delivery-pipeline skill or referencing a 'resilience' skill is a structural error.
+C X13 EX - | MUST (structure checker error) | Knowledge skills and their private references must not contain normative wording (must, never, requires approval) on a line without an owner reference (rules/, CLAUDE.md or a D-xx decision ID); the rule must be moved to its standard and pointed to. | KNW skills and references | Lines citing an owner. | Instruction-authoring rule (normative statements only in owners); no V2 policy constrains where normative wording may appear. | Writing 'never use lazy loading' in the ef-core skill without citing a rule is a structural error.
+C X14 EX GOV-017 | MUST (structure checker error) | Exactly one decision register (docs/architecture/decision-register.md) carries Kind DEC and CLAUDE.md imports exactly it; register rows are 'D-xx | Decision | Details in | Affects' with unique IDs, a non-empty Decision that does not depend on rules/skills/scripts, existing Affects targets of Kind STD/KNW/WF/ENF and Details-in targets also listed in Affects; any artifact citing D-xx must be listed in that decision's Affects; decision entries are defined only in the register; no other artifact may restate a decision (8-word overlap) — cite the ID instead. | Decision register and citing artifacts | none stated | Decision-record structure and anti-restatement rule of the K0 design; GOV-017 requires classification/approval of decisions but no register format, Affects bookkeeping or citation discipline. | A standard that copies an 8-word phrase of a decision summary instead of citing D-xx is a structural error.
+C X15 EX - | MUST (structure checker error) | References must resolve: backticked file/skill/agent references and '§ section' references must point to existing targets and headings; unknown hyphenated skill/agent names in skill contexts are errors; skill-private references are used only by their own skill. | Instruction-system references | Placeholders, commands and plain hyphenated words are skipped. | Referential-integrity rule of the instruction system; not a V2 policy. | Pointing to 'verify § 7' when no such heading exists is a structural error.
+C X16 EX - | MUST (structure checker error) | Manual tool invocations in instruction files must be root-aware: node "$(git rev-parse --show-toplevel)/.claude/..." instead of a command relative to the current directory. | Instruction files and MAP.md | none stated | Command-portability rule of the template; not a V2 policy. | Documenting 'node .claude/scripts/check-dependencies.cjs' is a structural error.
+C X17 EX - | MUST (structure checker error) | Hook configuration: every hook is a command hook in exec form (executable-only command, args [${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>, <event>] with the script present and handling the event), no variable expansion in arguments, a positive timeout; PreToolUse (pre-tool-use, Bash/PowerShell), PostToolUse (post-tool-use, Edit/Write/MultiEdit/NotebookEdit/Bash/PowerShell), PostToolUseFailure (Bash/PowerShell) and Stop must be registered; only the PreToolUse policy hook may set onFailure, and it must be 'block' (fail closed). | .claude/settings.json | none stated | Enforcement-configuration invariants of the template; no V2 policy requires hooks. | Dropping NotebookEdit from the PostToolUse matcher or making the Stop hook fail closed is a structural error.
+
+FILE .claude/scripts/check-instructions.cjs | Instruction-structure checker; CLI exit 1 on errors; errors fed back by the post-change hook.
+1-2 NN | header comment (kind/scope/owner/loading)
+3-6 IM | usage comment and strict-mode directive
+8-9 IM | imports
+11-13 EX X4,X11 |
+14-17 EX X12 |
+18 IM | tokens excluded from unknown-skill detection
+19-21 IM | root-file, register and map path constants
+22-24 EX X10 |
+26-38 EX X5 | Conformance direction WF → KNW → STD → DEC → OP, and ENF → STD / DEC
+39-45 EX X5 | A routing pointer may point in any direction
+47-53 EX X17 |
+54-55 EX X17,X16 |
+57-106 IM | fenced-block blanking (malformed fences reported), frontmatter parsing and shingle computation helpers
+108-117 EX X11 |
+119-126 IM | check() setup and file readers
+127-130 IM | directory walk setup
+131 OL R119 | empty directory; create directories only for real content.
+132-141 IM | directory walk recursion skipping hook state and build output
+143-148 IM | section comment and artifact collection
+150-160 EX X10 |
+162 IM | files excluded from header checks (SPECIFICATION.md, MAP, settings)
+163-186 EX X10 | capability contracts, module manifests, slots or facets are not part of this system.
+188-193 IM | artifact index, skill directory and agent name collection
+194-203 EX X10 |
+205-209 EX X10 | OP/DEC must load always.
+211-223 EX X11 | procedures belong in a workflow, not in a standard.
+225-241 EX X12 |
+243-247 EX X12 |
+249-255 EX X13 |
+257-261 EX X12 |
+262 IM | loop end
+264-267 MX X12,R2 | agent must delegate to the code-review workflow. ⟫ required skill inventory (EXTRA X12) and reviewer delegation to the canonical code-review workflow (oracle WF-010)
+269-283 IM | register section comment and Affects/Details path resolution helpers
+285-288 EX X14 |
+290-314 EX X14 |
+316-323 EX X14 |
+324-326 EX X14 |
+327-335 EX X14 | cite the ID instead
+337-367 IM | reference section comment and reference/section resolution helpers
+369-390 IM | per-line reference extraction
+392-410 EX X15 |
+411-451 EX X5,X15 | violates the Kind direction WF → KNW → STD → DEC → OP, ENF → STD/DEC
+453-465 EX X5 | conformance dependency cycle
+467-472 EX X16 |
+474-477 IM | section comment
+478-514 EX X17 |
+516-519 IM | section comment
+520-534 EX X6 |
+536-549 IM | informational always-loaded size estimate (no finding) and result assembly
+551-567 IM | CLI entry point (exit 1 on errors) and export
+DONE

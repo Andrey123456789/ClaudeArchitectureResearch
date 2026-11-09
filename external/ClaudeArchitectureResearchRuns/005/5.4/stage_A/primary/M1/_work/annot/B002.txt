@@ -1,0 +1,62 @@
+# Batch B002 — hooks: post-tool-use.js, pre-tool-use.js, stop.js
+
+@@ output/template/.claude/hooks/post-tool-use.js ;; Executable PostToolUse (Write/Edit/MultiEdit/Bash/PowerShell) and PostToolUseFailure (Bash/PowerShell) hook; returns decision:block with findings.
+@scope executable hook after file edits and shell commands (registered in settings.json)
+1-18 IM ;; Header documenting the post-change checks, worktree state and routing of unexplained manifest changes (behaviour implemented below).
+20-27 IM ;; Module imports.
+29-33 IM ;; Constants (message limits, state file name, titles, project predicate).
+35-51 IM ;; Helpers: hashing, edited-text extraction, message limiting.
+53-57 EX [x.post-warn-as-block] ;; report() forwards both ERROR and WARN findings, which main() returns as a blocking reason.
+59-67 OL [enf.manifest-edit-check,dep.route-add-dependency-edit]
+68-71 OL [enf.layer-boundary-edit]
+72-74 MX [gov009.spec-reminder,x.spec-record-adr] ;; Consistency reminder is GOV-009; recording approved behaviour through architecture-decision is an added routing.
+75-77 OL [gov021.cs-reminder]
+78-81 EX [x.instruction-check-on-edit]
+82-83 IM ;; Return of collected messages.
+85-146 IM ;; Manifest state: read/write per-worktree snapshot, compute changed/added/removed/moved manifests (initial snapshot when no state).
+148-167 OL [enf.unexplained-manifest-changes]
+169-184 OL [enf.shell-post-checks]
+186-202 IM ;; Records manifests edited via Write/Edit so a later shell command does not re-report them.
+204-220 IM ;; Entry point: reads input, resolves active root, dispatches file or shell checks.
+221-222 MX [enf.shell-post-checks,x.post-warn-as-block] ;; Findings returned as additionalContext after failed commands and as decision:block otherwise.
+223-226 IM ;; Allow when no messages; on internal failure report visibly (exit 1, non-blocking).
+
+C x.post-warn-as-block EX - ENFORCED ;; Post-change checks return WARN-level findings (e.g. VersionOverride, competing test framework, not-by-default packages) as well as ERRORs in a decision:block that Claude must address. ;; = ;; After failed shell commands findings are added as context instead. ;; Escalating advisory findings to a blocking reason is an enforcement-strength choice not in the oracle.
+C enf.manifest-edit-check OL DEP-006,DEP-003,DEP-007,DEP-015,ARC-001,ARC-028 ENFORCED ;; After editing a .csproj, Directory.Packages.props or package.json run the manifest check (and the architecture check for .csproj) and return findings as a blocking reason. ;; = ;; none ;;
+C dep.route-add-dependency-edit OL DEP-003,DEP-004,DEP-005 ENFORCED_ADVISORY ;; Editing dependency entries (PackageReference/PackageVersion/dependencies or package.json) returns a reminder to confirm the add-dependency workflow was applied. ;; = ;; none ;;
+C enf.layer-boundary-edit OL ARC-002,ARC-008,ARC-001 ENFORCED ;; After editing a backend .cs file the namespace boundary check runs for that file and its errors are returned as a blocking reason. ;; = ;; none ;;
+C gov009.spec-reminder OL GOV-009,GOV-007 ENFORCED_ADVISORY ;; After editing SPECIFICATION.md Claude is told to keep it consistent with CUSTOM_SETTINGS.md. ;; = ;; none ;;
+C x.spec-record-adr EX GOV-007 ENFORCED_ADVISORY ;; After editing SPECIFICATION.md Claude is told to record approved behaviour through the architecture-decision workflow. ;; = ;; none ;; Routing of approved behaviour changes through architecture-decision is not entailed by GOV-007.
+C gov021.cs-reminder OL GOV-021 ENFORCED_ADVISORY ;; After editing CUSTOM_SETTINGS.md Claude is told to run the custom-settings workflow to synchronize every affected surface. ;; = ;; none ;;
+C x.instruction-check-on-edit EX - ENFORCED ;; After editing CLAUDE.md, an imported file or anything under .claude/, check-instructions.js runs and its ERROR findings are returned as a blocking reason. ;; = ;; none ;; Automatic enforcement of instruction-system invariants on every instruction edit (repo/meta).
+C enf.unexplained-manifest-changes OL DEP-003,DEP-004,ARC-001,ARC-020 ENFORCED_ADVISORY ;; Manifest/project-file changes not explained by a recognized command, and every removal or move, are reported with routing to add-dependency (dependency entries) or project-structure (projects/references). ;; = ;; Branch switches or other revision changes need no workflow; files equal to the checked-out revision are only validated. ;;
+C enf.shell-post-checks OL DEP-006,DEP-003,DEP-007,DEP-015,ARC-001,ARC-028 ENFORCED ;; After a recognized dependency/reference command run full manifest and architecture checks; after other or failed shell commands check changed manifests (architecture check when projects changed); return findings to Claude. ;; = ;; Initial worktree run validates all manifests once. ;;
+
+@@ output/template/.claude/hooks/pre-tool-use.js ;; Executable PreToolUse hook on Bash/PowerShell (fail-closed).
+@scope executable PreToolUse hook on Bash/PowerShell
+1-12 IM ;; Header: denies dependency/project-reference changes until workflows applied and peer-override flags without approval; fails closed (behaviour implemented in dependency-commands.js and below).
+14-26 IM ;; Dispatch: classifies Bash/PowerShell command text with analyzeCommand and denies when blocked (constraints captured in dependency-commands.js).
+27-31 EX [x.pre-fail-closed] ;; Internal error or malformed input denies the command and exits with blocking code 2.
+
+C x.pre-fail-closed EX DEP-025,DEP-003 ENFORCED ;; The PreToolUse guard fails closed: an internal error, malformed hook input, helper load failure, crash or timeout blocks the shell command (and the user is told the instruction system needs repair via template-maintenance). ;; = ;; none ;; Makes a working hook a precondition for every Bash/PowerShell call; not an oracle policy.
+
+@@ output/template/.claude/hooks/stop.js ;; Executable Stop hook: co-change reminders once per change state via decision:block.
+@scope executable Stop hook (end of turn) over the uncommitted change set
+1-15 IM ;; Header documenting reminders, loop safety and state identity.
+17-21 IM ;; Imports.
+23-36 IM ;; Hash and content-identity helpers.
+38-43 IM ;; Loads selected modules and the persistence co-change patterns.
+44-56 OL [pst008.stop-cochange]
+57-64 OL [tst009.stop-test-gap]
+65-73 OL [gov021.stop-product-sources]
+74-81 OL [enf.stop-manifest-errors]
+82-83 IM ;; Returns reminders and their inputs.
+85-106 IM ;; Entry point: stop_hook_active guard, changed files, fingerprint/state so an unchanged state is not re-reminded.
+107 EX [x.stop-address-or-justify]
+108-110 IM ;; Failure reported visibly (non-blocking).
+
+C pst008.stop-cochange OL PST-008,PST-010,PST-009 ENFORCED_ADVISORY ;; At Stop, if persistence model files (Domain, Persistence/Configurations) changed without seed-data or migration changes, Claude is told to confirm the persistence-change workflow was applied. ;; = ;; Patterns from the selected persistence manifest. ;;
+C tst009.stop-test-gap OL TST-009,TST-010 ENFORCED_ADVISORY ;; At Stop, if backend production code changed without backend test changes, Claude is told to check regression coverage and probe preservation. ;; = ;; none ;;
+C gov021.stop-product-sources OL GOV-021,GOV-009 ENFORCED_ADVISORY ;; At Stop, changed CUSTOM_SETTINGS.md or SPECIFICATION.md raises reminders to confirm synchronization and consistency. ;; = ;; none ;;
+C enf.stop-manifest-errors OL DEP-006,DEP-003 ENFORCED_ADVISORY ;; At Stop, manifest ERROR findings on changed manifests are reported. ;; = ;; none ;;
+C x.stop-address-or-justify EX - ENFORCED ;; The Stop hook blocks once per change state; Claude must address each reminder or state why it does not apply before finishing. ;; = ;; Not re-blocked while stop_hook_active or for an unchanged state. ;; Turn-completion gate not required by the oracle.

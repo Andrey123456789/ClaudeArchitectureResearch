@@ -1,0 +1,91 @@
+# Batches B005 (check-architecture.js), B007 (check-manifests.js), B008 (lib/common.js)
+
+@@ output/template/.claude/scripts/check-architecture.js ;; Executable architecture checker (CLI exit 0/1/2; called by post-tool-use hook).
+@scope executable: check-architecture.js (hooks after edits/commands; manual/verify runs)
+1-10 IM ;; Header: purpose, data sources (selected frame/persistence manifests), usage.
+12-17 IM ;; Imports and finding helper.
+19-42 IM ;; Loads the selected frame specification and resolves namespace placeholders; throws (cannot run) when no frame/spec is selected.
+44-53 IM ;; Classifies projects by test/layer suffix or test-framework package.
+55-64 IM ;; Reads ProjectReference names and unreadable elements.
+66-74 IM ;; Collects backend projects.
+75-79 MX [arc020.unknown-project,x.project-suffix-naming] ;; A project matching no frame layer/test role warns that adding a project or layer is Reserved (ARC-020); the warning also enforces the layer-suffix naming convention (added).
+80-83 IM ;; Unreadable reference elements reported as incomplete-check warnings.
+84-90 OL [arc001.no-test-refs] ;; ;; references test project
+91-94 IM ;; References to projects matching no frame layer are warnings (unclassifiable).
+95-98 OL [arc001.layer-matrix] ;; ;; dependencies point inward
+99-101 OL [arc028.test-matrix] ;; ;; keep test references as narrow as the test scope requires
+102-105 IM ;; Loop closings.
+107-114 IM ;; Maps a file to its owning project.
+116-135 OL [arc008.forbidden-namespaces] ;; ;; types must not be used in this layer
+137-146 IM ;; checkArchitecture aggregation and export.
+148-164 IM ;; CLI entry: exit 1 on errors, 2 when it cannot run.
+
+C arc020.unknown-project OL ARC-020,ARC-027 ENFORCED_ADVISORY ;; A backend project matching no frame layer or test-project role raises a warning that adding a project or layer is Reserved. ;; = ;; none ;;
+C x.project-suffix-naming EX DEP-024,ARC-001 ENFORCED_ADVISORY ;; Backend projects are expected to end with the frame suffixes (.Domain, .Application, .Infrastructure, .Api, .Domain.Tests, .Application.Tests, .Infrastructure.Tests, .IntegrationTests); others are flagged. ;; = ;; none ;; Project naming convention not in the oracle.
+C arc001.no-test-refs OL ARC-001,ARC-028 ENFORCED ;; A production project referencing a test project is an error. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/check-manifests.js ;; Executable dependency-manifest checker (CLI exit 0/1/2; called by post-tool-use and stop hooks).
+@scope executable: check-manifests.js (hooks after edits/commands, Stop, manual)
+1-11 IM ;; Header: purpose, owners, usage.
+12-16 IM ;; Imports and owner constants.
+18 NN ;; Comment.
+19 IM ;; Map declaration.
+20-21 EX [x.deny-polly-integration]
+22 EX [x.deny-es-sink]
+23 EX [x.deny-fv-aspnetcore]
+24 IM ;; Map close.
+25-27 OL [dep020.polly-warn]
+28 OL [dep007.dev-only-pkgs] ;; ;; const NEUTRAL_DEV_ONLY_NPM
+30 IM ;; Prerelease pattern.
+32-49 IM ;; Loads slot package lists from selected manifests.
+51-73 IM ;; Version metadata and PackageReference readers; unreadable-element message helper.
+75-85 MX [x.deny-polly-integration,x.deny-es-sink,x.deny-fv-aspnetcore,dep020.polly-warn,arc009.reserved-packages] ;; Applies deprecated (ERROR), exception (WARN) and reserved-pattern (WARN) package lists.
+87-93 IM ;; Reads csproj references; unreadable entries warn that the check is incomplete.
+94-96 OL [dep006.version-in-project]
+97-99 EX [x.versionoverride-documented]
+100-101 IM ;; Package id check and id collection.
+102-112 OL [tst001.competing-frameworks] ;; ;; a second framework needs a concrete reason
+113 IM ;; Function close.
+115-119 OL [dep006.cpm-enabled-check]
+120-123 IM ;; Iterates PackageVersion items.
+124-131 MX [dep003.version-checks,x.floating-no-exception] ;; Prerelease WARN 'allowed only when explicitly requested' is DEP-003; floating/empty version as unconditional ERROR is stricter.
+132-134 IM ;; Package id check and closings.
+136-143 IM ;; package.json parse; parse failure reported as an error.
+144-149 IM ;; Iterates dependencies and devDependencies.
+150-154 MX [dep003.version-checks,x.floating-no-exception] ;; npm floating specs ('', *, latest, x) unconditional ERROR; prerelease WARN.
+155-157 OL [dep007.dev-only-pkgs] ;; ;; is build/test tooling listed in runtime dependencies
+158-160 OL [dep015.not-by-default-pkgs] ;; ;; is not part of the frontend baseline
+161-162 IM ;; Loop closings.
+163-166 OL [dep007.lockfile]
+167 IM ;; Function close.
+169-187 IM ;; Manifest predicate, aggregation and exports.
+189-205 IM ;; CLI entry: exit 1 on errors, 2 when it cannot run.
+
+C x.deny-polly-integration EX DEP-020,DEP-004 ENFORCED ;; Microsoft.Extensions.Http.Polly and Polly.Extensions.Http are errors (deprecated resilience integrations). ;; = ;; none ;; Hard executable ban stricter than DEP-020's default/exception wording.
+C x.deny-es-sink EX DEP-004,DEP-021 ENFORCED ;; Serilog.Sinks.Elasticsearch is an error (deprecated sink; use Elastic.Serilog.Sinks). ;; = ;; none ;; Package-specific ban not in the oracle.
+C x.deny-fv-aspnetcore EX DEP-010 ENFORCED ;; FluentValidation.AspNetCore is an error (legacy automatic-validation integration). ;; = ;; none ;; The oracle names FluentValidation as standard but does not ban this integration package.
+C dep020.polly-warn OL DEP-020 ENFORCED_ADVISORY ;; Direct Polly references are flagged (WARN) as an explicit documented exception. ;; = ;; Documented exception. ;;
+C dep006.version-in-project OL DEP-006 ENFORCED ;; A PackageReference declaring a version in a project file is an error. ;; = ;; none ;;
+C x.versionoverride-documented EX DEP-006 ENFORCED_ADVISORY ;; VersionOverride is flagged as needing a concrete, documented reason. ;; = ;; none ;; Documentation obligation beyond DEP-006.
+C dep006.cpm-enabled-check OL DEP-006 ENFORCED ;; Directory.Packages.props without ManagePackageVersionsCentrally=true is an error. ;; = ;; none ;;
+C dep003.version-checks OL DEP-003 ENFORCED ;; Prerelease versions warn as allowed only when explicitly requested; floating versions are errors. ;; = ;; Prerelease on explicit request. ;;
+C x.floating-no-exception EX DEP-003 ENFORCED ;; Floating or empty versions ('*', empty; npm '', '*', 'latest', x) are errors with no explicit-request exception (range specifiers such as ^/~/[..] are not flagged). ;; = ;; none ;; DEP-003 allows floating versions when explicitly requested.
+C dep007.lockfile OL DEP-007 ENFORCED_ADVISORY ;; A package.json with dependencies but no package-lock.json warns to maintain and commit the lockfile. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/lib/common.js ;; Shared helper library for hooks and checkers (root resolution, XML/front-matter parsing, selection and manifest loading, Git status).
+@scope executable helper library
+1-12 IM ;; Header: launcher root vs active root; no silent fallback to the launcher root.
+14-25 IM ;; Imports, skip lists (node_modules, bin, obj, dist, coverage, TestResults, dot-directories except .claude/.github) and active-root state.
+27-61 IM ;; Path canonicalisation and Git location helpers.
+63-98 IM ;; Active-root resolution (instruction root containing CLAUDE.md and .claude/); throws when none is found.
+100-153 IM ;; Git invocation (throws when Git is unavailable), path containment, file reading with BOM handling.
+155-162 IM ;; UTF-16 aware XML reading.
+164-254 IM ;; Tolerant XML element reader reporting unreadable elements as problems.
+256-280 IM ;; Repository walk skipping nested repositories/worktrees and excluded directories.
+282-309 IM ;; Glob matching.
+311-379 IM ;; Front-matter, heading, JSON-block and Capability-header parsing helpers.
+381-405 IM ;; Reads the capability selection table and the selected implementation per slot.
+407-424 IM ;; Loads selected module manifests; throws when a selected implementation has no manifest or JSON block (hooks then fail per their policy).
+426-434 IM ;; Hook input parsing (BOM tolerant; non-object input is an error).
+436-458 IM ;; Changed-file listing via git status and per-worktree hook state location.
+460-498 IM ;; Finding formatting and exports.

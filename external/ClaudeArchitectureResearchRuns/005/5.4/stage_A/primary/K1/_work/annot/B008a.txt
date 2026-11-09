@@ -1,0 +1,179 @@
+# K1 — skills: aspnet-error-handling (KNW), authentication (KNW), build-fix (WF)
+
+@@ output/template/.claude/skills/aspnet-error-handling/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge aspnet-error-handling (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Policy and technique pointers.
+15 NN ;; Heading.
+17 OL [api007.eh-central-aborted]
+19-52 NN ;; Example handler and registration; returning 499 for aborted requests and skipping error logging is example technique (the operative rule is API-021 in api.md).
+54 NN ;; Descriptive note on development diagnostics (public contracts stay safe).
+56 NN ;; Heading.
+58 OL [api009.eh-simplest]
+60-62 NN ;; Nullable return example.
+64 OL [api009.eh-categories]
+66 NN ;; Heading.
+68-86 NN ;; Controller mapping example.
+88 NN ;; Heading.
+90 OL [api002.eh-machine-readable]
+92 NN ;; Heading.
+94 NN ;; Descriptive statement of model-binding handling and what FluentValidation expresses.
+96-100 DU [api010.validation-boundaries] ;; Boundary placement table restating the validation-boundaries rule.
+102 MX [api010.eh-no-dup,dep010.eh-fv-di,x.eh-no-legacy-validation,x.eh-one-invocation-pattern] ;; No Domain invariants in validators without reason and no unjustified duplication restate API-010; FluentValidation DI registration restates DEP-010; the legacy-integration ban and single invocation pattern are added.
+104 NN ;; Heading.
+106 EX [x.eh-typed-exceptions-decision]
+108 NN ;; Heading.
+110 OL [api007.eh-external]
+112 NN ;; Heading.
+114 OL [api007.eh-catch]
+116-125 NN ;; Anti-examples (swallowed failure; catch/log/rethrow at every layer).
+127 EX [x.eh-expected-not-errors]
+129 NN ;; Heading.
+131 MX [api009.eh-result-optional,x.eh-typed-errors] ;; Optional Result<T> criteria and project-wide adoption as a decision restate API-009/ARC-020; typed errors instead of string arrays are added.
+133-135 NN ;; Typed error record example.
+137 NN ;; Heading.
+139 MX [api008.no-exposure,api002.problem-details,api010.validation-boundaries,x.eh-no-endpoint-filters] ;; Anti-pattern list restating rule-owned items; coupling validation to Minimal API endpoint filters in a Controller project has no owner clause and is registered.
+141 NN ;; Heading.
+143-144 NN ;; Table header.
+145-154 DU [api002.problem-details,api009.expected-outcomes,api007.central-handler,api010.validation-boundaries,api021.cancellation] ;; Decision guide restating the rules.
+
+C api007.eh-central-aborted OL API-007,API-021 DEFAULT ;; Unexpected exceptions (defects, unexpected database/external failures, violated assumptions) propagate to one centralized handler; client-aborted requests are treated separately. ;; = ;; none ;;
+C api009.eh-simplest OL API-009 DEFAULT ;; Expected outcomes (not found, transition not allowed, duplicate, concurrency conflict, rejection by a known rule) use the simplest representation (null for a simple query). ;; = ;; none ;;
+C api009.eh-categories OL API-009,API-001 DEFAULT ;; Commands with several outcomes may use a typed outcome named by Application/business semantics (Validation, NotFound, Conflict, BusinessRuleViolation), not HTTP names, mapped to HTTP in the Api layer. ;; = ;; none ;;
+C api002.eh-machine-readable OL API-002,FE-009 MUST_NOT ;; Human-readable exception messages are never the machine-readable error contract. ;; = ;; none ;;
+C api010.eh-no-dup OL API-010 MUST_NOT ;; Do not move Domain invariants into FluentValidation merely because the library exists, and do not duplicate one rule in several layers unless each has a distinct reason. ;; = ;; none ;;
+C dep010.eh-fv-di OL DEP-010 DEFAULT ;; Register validators with FluentValidation.DependencyInjectionExtensions. ;; = ;; none ;;
+C x.eh-no-legacy-validation EX DEP-010,DEP-004 MUST_NOT ;; Do not add deprecated/legacy ASP.NET automatic-validation integration packages. ;; = ;; none ;; Package-class ban not in the oracle.
+C x.eh-one-invocation-pattern EX API-010 MUST ;; Follow the project's established validator invocation pattern instead of adding a competing one. ;; = ;; none ;; Not in the oracle.
+C x.eh-typed-exceptions-decision EX API-011,ARC-020 DEFAULT ;; Typed exceptions for selected cases only as a deliberate, consistent project-level decision. ;; = ;; none ;; Not in the oracle.
+C api007.eh-external OL API-007,ARC-025 MUST_NOT ;; Catch external-service exceptions locally only to translate, add context, apply a defined fallback or an infrastructure retry policy; otherwise propagate; never swallow external-service failures. ;; = ;; none ;;
+C api007.eh-catch OL API-007,API-012 MUST_NOT ;; Catch only to recover, translate, clean up or add context while preserving the original; never catch Exception merely to continue; avoid catch/log/rethrow at every layer. ;; = ;; none ;;
+C x.eh-expected-not-errors EX API-012,RUN-013 DEFAULT ;; Expected outcomes (not found, validation failures, rejected operations) are normally not logged as application errors. ;; = ;; none ;; Log-level rule for expected outcomes not in the oracle.
+C api009.eh-result-optional OL API-009,ARC-020 DEFAULT ;; Result<T> is optional: consider it for several expected failure modes, typed outcomes, avoiding exception control flow and consistent use; avoid it when simpler responses suffice, for straightforward CRUD or on every method; project-wide adoption is a Reserved decision. ;; = ;; none ;;
+C x.eh-typed-errors EX API-009 MUST ;; If a Result pattern is adopted use typed errors rather than string arrays. ;; = ;; Result pattern adopted. ;; Not in the oracle.
+C x.eh-no-endpoint-filters EX API-010,ARC-010 AVOID ;; Avoid coupling validation to Minimal API endpoint filters when Controllers are the HTTP model. ;; = ;; none ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/authentication/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge authentication (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 OL [arc020.reserved-auth,arc002.auth-domain]
+15 NN ;; Heading.
+17 EX [x.auth-choice]
+19 NN ;; Heading.
+21 OL [sec016.auth-identity]
+23 NN ;; Heading.
+25 OL [sec017.auth-bearer]
+27 NN ;; Heading.
+29-36 NN ;; Authorize attribute example.
+38 OL [sec006.auth-fallback]
+40 NN ;; Heading.
+42 EX [x.auth-policies]
+44-53 NN ;; Policy registration and usage example.
+55 EX [x.auth-policies]
+57 NN ;; Heading.
+59 MX [x.auth-resource-authz,sec005.server-authz] ;; Client-side checks being UX restates SEC-005; resource authorization technique is added.
+61 NN ;; Heading.
+63-66 DU [api005.401-403] ;; Status mapping example restating API-005.
+68 EX [x.auth-middleware-produces]
+70 NN ;; Heading.
+72 NN ;; Permissive note (controllers may read User for HTTP-specific information).
+74-79 NN ;; Current-user endpoint example.
+81 OL [arc008.auth-current-user]
+83-89 NN ;; ICurrentUser interface example.
+91 NN ;; Heading.
+93 MX [x.auth-antiforgery,sec001.auth-signing-secrets] ;; Signing secrets following the secret rules restates SEC-001; antiforgery technique paired with SPA XSRF handling is added.
+95 NN ;; Heading.
+97 EX [x.auth-test-authz]
+99 NN ;; Heading.
+101 MX [sec001.no-secrets,sec005.server-authz,arc008.auth-current-user,api005.401-403,x.auth-policies,x.auth-choice] ;; Anti-pattern list restating rule-owned items and the guidance registered above.
+
+C arc002.auth-domain OL ARC-002 MUST ;; Keep ASP.NET Core transport/authentication types out of Domain. ;; = ;; none ;;
+C x.auth-choice EX SEC-016,GOV-013 DEFAULT ;; Choose the scheme by the application: Bearer/OIDC for an SPA calling an API, cookies for server-rendered apps, Identity when the app owns local users and needs account management, external OIDC/OAuth when identity is delegated; a User entity does not justify Identity; no custom JWT issuance when an identity provider owns token issuance. ;; = ;; none ;; Scheme-selection guidance not in the oracle.
+C sec016.auth-identity OL SEC-016,SEC-001 MUST ;; When the application owns passwords use Identity's hashing, lockout and reset tokens; never store plaintext passwords or authentication secrets in source. ;; = ;; none ;;
+C sec017.auth-bearer OL SEC-017,SEC-001 MUST ;; Configure token validation for the issuer that actually issues tokens (authority/metadata configuration establishes issuer, audience, signature and lifetime); signing keys and credentials follow the secret rules. ;; = ;; none ;;
+C sec006.auth-fallback OL SEC-006 MUST ;; A secure global/fallback policy can make repeated [Authorize] unnecessary; with authenticated-by-default, mark public endpoints [AllowAnonymous]. ;; = ;; none ;;
+C x.auth-policies EX SEC-006 PREFER ;; Prefer policies for meaningful capabilities with stable constants; roles only for a genuinely role-oriented model; avoid scattered compound role strings and magic strings. ;; = ;; none ;; Policy-vs-role guidance not in the oracle.
+C x.auth-resource-authz EX SEC-005 MUST ;; Resource-dependent permissions use ASP.NET Core resource authorization or explicit Application authorization logic. ;; = ;; none ;; Not in the oracle.
+C x.auth-middleware-produces EX API-005,ARC-011 DEFAULT ;; Authentication/authorization middleware normally produces 401/403 rather than controllers manufacturing them. ;; = ;; none ;; Not in the oracle.
+C arc008.auth-current-user OL ARC-008,ARC-007 MUST_NOT ;; When use cases repeatedly need caller identity define a small Application abstraction with an outer HTTP adapter; Application services never depend on HttpContext, ClaimsPrincipal or IHttpContextAccessor; skip ICurrentUser when an explicit user id is simpler. ;; = ;; none ;;
+C x.auth-antiforgery EX SEC-011 DEFAULT ;; For cookie authentication use ASP.NET Core antiforgery (AddAntiforgery, token validation on state-changing endpoints) paired with the SPA's matching XSRF header handling. ;; = ;; none ;; Antiforgery technique not in the oracle.
+C sec001.auth-signing-secrets OL SEC-001 MUST ;; Signing secrets follow the configuration and secret rules. ;; = ;; none ;;
+C x.auth-test-authz EX TST-003 DEFAULT ;; Test authorization behaviour of important protected operations (401, 403, success, ownership, intended anonymous access), not merely the presence of [Authorize]. ;; = ;; none ;; Authorization-test guidance not in the oracle.
+
+@@ output/template/.claude/skills/build-fix/SKILL.md ;; Workflow (failing build or tests).
+@scope workflow build-fix (failing build or tests)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 NN ;; Heading.
+16 OL [wf008.bf-goal]
+18 NN ;; Heading.
+20 OL [wf013.bf-reproduce]
+21 OL [wf013.bf-root-cause]
+22 OL [wf014.bf-bounded]
+23 OL [wf015.bf-no-weaken]
+24 OL [arc001.bf-preserve]
+25 EX [x.bf-stop-stalled]
+27 NN ;; Heading.
+29 OL [wf014.bf-scope]
+31 NN ;; Heading.
+33 OL [wf014.bf-narrowest,wf018.bf-existing-scripts]
+35 OL [wf013.bf-read-full]
+37 NN ;; Heading.
+39 NN ;; Lead-in.
+41-46 OL [wf014.bf-loop]
+48 OL [arc001.bf-no-invalid-ref,wf015.bf-fe-no-bypass]
+50 NN ;; Heading.
+52 MX [x.bf-authoritative-contract,wf016.bf-regenerate-client] ;; Regenerating the client from the verified contract restates WF-016; determining the authoritative contract and not patching both sides inconsistently is added.
+54 NN ;; Heading.
+56 OL [wf013.bf-test-loop,wf015.bf-tests,gov014.bf-confirm-requested]
+58 NN ;; Heading.
+60 OL [dep003.bf-via-add-dependency]
+62 NN ;; Heading.
+64 MX [gov014.bf-upgrade,x.bf-verify-apis,x.bf-toolchain] ;; Deliberate upgrades without additional unrelated upgrades restate GOV-014; verified documentation instead of fabricated APIs and preserving declared toolchain versions are added.
+66 NN ;; Heading.
+68 OL [wf016.bf-generated]
+70 NN ;; Heading.
+72 MX [wf014.bf-iteration-limits,x.bf-revert-new-failures,gov014.bf-no-unrelated-fixes] ;; Bounded iteration and not cleaning unrelated failures restate WF-014/GOV-014; reverting fixes that introduce unrelated failures and never leaving the repository worse are added.
+74 NN ;; Heading.
+76 OL [tst010.bf-probes]
+78 NN ;; Heading.
+80 OL [wf005.bf-complete]
+82-90 OL [wf009.bf-report]
+92 OL [wf009.bf-no-false-claim]
+
+C wf008.bf-goal OL WF-008,WF-015,GOV-014 MUST ;; Restore the affected scope to green without hiding failures, weakening behaviour or introducing unrelated changes (build-fix repairs; code-review inspects; verify proves readiness). ;; = ;; none ;;
+C wf013.bf-reproduce OL WF-013 MUST ;; Reproduce and diagnose the actual failure before editing; never guess at a fix first. ;; = ;; none ;;
+C wf013.bf-root-cause OL WF-013 MUST ;; Fix root causes before downstream symptoms; fix the highest-leverage cause first. ;; = ;; none ;;
+C wf014.bf-bounded OL WF-014 MUST ;; Small bounded iterations: rerun the narrowest failing verification after each meaningful fix; expand only after the focused failure is resolved. ;; = ;; none ;;
+C wf015.bf-no-weaken OL WF-015 MUST_NOT ;; Must not weaken, delete, skip or suppress relevant tests, compiler, TypeScript, lint or analyzer failures merely to pass; understand a diagnostic before changing how it is reported. ;; = ;; none ;;
+C arc001.bf-preserve OL ARC-001,GOV-014 MUST ;; Preserve architecture and conventions while fixing; a green build obtained by violating them is not a successful repair. ;; = ;; none ;;
+C x.bf-stop-stalled EX WF-014,WF-008 MUST ;; Stop when progress has clearly stalled instead of making speculative edits. ;; = ;; none ;; Not in the oracle.
+C wf014.bf-scope OL WF-014,WF-007 MUST ;; Classify the failure scope and do not run unrelated build systems merely because they exist (documentation-only: no application builds without a reason). ;; = ;; none ;;
+C wf014.bf-narrowest OL WF-014,WF-013 MUST ;; Start with the narrowest reproducing command using the repository's actual .slnx, project paths and configuration; broaden only when required. ;; = ;; none ;;
+C wf018.bf-existing-scripts OL WF-018 MUST_NOT ;; For the frontend inspect package.json and use scripts that exist; never invent script names or assume a test runner. ;; = ;; none ;;
+C wf013.bf-read-full OL WF-013 MUST ;; Read the complete relevant output and group errors by likely root cause. ;; = ;; none ;;
+C wf014.bf-loop OL WF-013,WF-014 MUST ;; Repair loop: reproduce the narrowest failure, identify the root cause, inspect source/configuration/references/packages, make the smallest correct change, rerun and compare failure sets, expand only after the focused failure is resolved. ;; = ;; none ;;
+C arc001.bf-no-invalid-ref OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003 MUST_NOT ;; Never solve a dependency problem with an invalid project reference; other refused shortcuts: persistence types in Application, business logic in controllers, frontend-only authorization, HTTP calls scattered into components. ;; = ;; none ;;
+C wf015.bf-fe-no-bypass OL WF-015,DEP-015 MUST_NOT ;; Refuse frontend shortcuts: any to silence the compiler, disabling strict mode, suppressing template diagnostics without understanding, speculative framework API replacement, another state/HTTP library to bypass a local issue. ;; = ;; none ;;
+C x.bf-authoritative-contract EX GOV-014,FE-009 MUST_NOT ;; Determine which contract is authoritative; never patch both sides independently into inconsistent shapes merely to compile. ;; = ;; none ;; Not in the oracle.
+C wf016.bf-regenerate-client OL WF-016 MUST ;; With OpenAPI client generation verify the backend contract, regenerate through the normal workflow, review the generated changes, then fix handwritten code. ;; = ;; none ;;
+C wf013.bf-test-loop OL WF-013,WF-014 MUST ;; Test failures: read the test and the production behaviour, classify the defect location, make the smallest change, rerun the affected test then broader tests. ;; = ;; none ;;
+C wf015.bf-tests OL WF-015 MUST_NOT ;; Never weaken a strong assertion or delete/skip a failing test because fixing it is inconvenient. ;; = ;; none ;;
+C gov014.bf-confirm-requested OL GOV-014,GOV-003 MUST ;; If expected behaviour intentionally changed, update the test to the new contract and confirm the change was actually requested. ;; = ;; none ;;
+C dep003.bf-via-add-dependency OL DEP-003,DEP-001,DEP-006,DEP-007,DEP-025 MUST ;; Package failures: inspect versions, compatibility, peers and diagnostics; every addition or version change runs add-dependency; never replace or add a package merely for a green build; respect CPM and never delete package-lock.json reflexively. ;; = ;; none ;;
+C gov014.bf-upgrade OL GOV-014 MUST ;; Upgrade fallout: separate compile errors from runtime changes, update obsolete APIs deliberately, and perform no additional unrelated upgrade. ;; = ;; none ;;
+C x.bf-verify-apis EX WF-013 MUST_NOT ;; Update APIs from verified documentation; never fabricate replacement APIs from memory. ;; = ;; none ;; Not in the oracle.
+C x.bf-toolchain EX DEP-008,GOV-014 MUST_NOT ;; Never change the declared SDK, Node, framework or language version because the local machine differs; report an unavailable toolchain instead of editing source to compensate. ;; = ;; none ;; Not in the oracle.
+C wf016.bf-generated OL WF-016 DEFAULT ;; Wrong generated output: identify the generator and input, fix the authoritative source and regenerate; no manual patching unless the output is intentionally maintained. ;; = ;; Output intentionally maintained as source. ;;
+C wf014.bf-iteration-limits OL WF-014,WF-008 MUST ;; Bounded iteration; stop and reassess when a root failure survives different fixes, failures grow, toolchain/infrastructure is unavailable, compatibility cannot be resolved or correct behaviour cannot be determined; never repeat variants of a failed guess. ;; = ;; none ;;
+C x.bf-revert-new-failures EX WF-008,GOV-014 MUST ;; If a fix introduces new failures that are not a legitimate dependency of the change, revert or correct it; never leave the repository knowingly worse than at the start. ;; = ;; none ;; Not in the oracle.
+C gov014.bf-no-unrelated-fixes OL GOV-014 MUST_NOT ;; Do not clean up unrelated pre-existing failures unless they block verification or the user asks. ;; = ;; Blocking or requested. ;;
+C tst010.bf-probes OL TST-010 MUST ;; A behavioural test or probe used during diagnosis follows verify step 4: preserve uniquely verified behaviour in maintained tests before removing temporary diagnostics. ;; = ;; none ;;
+C wf005.bf-complete OL WF-005,WF-007,WF-003 MUST ;; Complete when the affected scope is green (builds, affected tests, consistent contracts, no known regression, no accidental workaround), without requiring unrelated builds; then run verify when appropriate. ;; = ;; none ;;
+C wf009.bf-report OL WF-009 MUST ;; Report initial failure, root cause, changes, backend/frontend build and tests as PASS / NOT RUN / NOT APPLICABLE, and remaining issues. ;; = ;; none ;;
+C wf009.bf-no-false-claim OL WF-009,WF-008 MUST_NOT ;; Never claim the problem is fixed while a known relevant failure remains. ;; = ;; none ;;

@@ -1,0 +1,85 @@
+# M batch 5: regions r201-r250 (protocol v1.2)
+# r202-r205 aspnet-error-handling SKILL.md
+RD OVERLAP R:RULE-M-0073 P:RULE-M-0272 | R: propagate unexpected failures, catch only for listed purposes; P (skill): do not catch Exception simply to continue execution.
+RD OVERLAP R:RULE-M-0083 P:RULE-M-0272 | R: fallback only when semantically acceptable; P: do not catch Exception simply to continue.
+RD COMPOUND_PART R:RULE-M-0073#a P:RULE-M-0273 | R part a adds 'unexpected failures propagate to IExceptionHandler'; P: no catch/log/rethrow boilerplate at every layer when the global handler owns it.
+RD OVERLAP R:RULE-M-0078#a P:RULE-M-0273 | R: log an unexpected exception once at the handling boundary; P: no catch/log/rethrow boilerplate at every layer.
+RD OVERLAP R:RULE-M-0072 P:RULE-M-0274 | R: ProblemDetails / ValidationProblemDetails with stable machine-readable contracts; P (AVOID): inconsistent anonymous error objects.
+RD OVERLAP R:RULE-M-0077 P:RULE-M-0276 | R: validation concerns stay at their owning layer; P (AVOID): business rules only in request validators.
+RD OVERLAP R:RULE-M-0046 P:RULE-M-0275 | R: Controllers default, no Minimal API groups unless requested; P (AVOID): coupling validation to Minimal API endpoint filters in a Controller-based project.
+# r206-r215 authentication SKILL.md
+SPLIT X:BF-M-0051 | a@19-21: Prefer policy-based authorization when authorization logic is more than a trivial role check. | b@25-30: Choose the authentication scheme from the actual application (Bearer/OIDC for SPA to API, cookies for server-rendered apps, Identity for local accounts, external OIDC/OAuth for delegated identity). | c@35-36: Do not issue custom JWTs when an existing identity provider already owns token issuance.
+SD P:EXTRA-M-0078 X:BF-M-0051#a | S: backend authorization M: P PREFER, X no modality (AMBIGUOUS) E: none in either T: none
+SD P:EXTRA-M-0079 X:BF-M-0051#b | S: choice of authentication scheme M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-M-0278 X:BF-M-0051#c | S: token issuance with an existing identity provider M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0277 | R: no frameworks/libraries/infrastructure without a concrete need (general); P: do not add Identity, JWT issuance or OIDC infrastructure without actual need.
+RD OVERLAP R:RULE-M-0112 P:RULE-M-0278 | R: no custom token/password security when ASP.NET Core facilities cover it; P: no custom JWT issuance when an identity provider owns it.
+RD OVERLAP R:RULE-M-0112 P:RULE-M-0279 | R: no custom password hashing / reset-token crypto; P: when the app owns passwords use framework hashing, lockout and reset tokens and never store plaintext passwords.
+RD OVERLAP R:RULE-M-0105 P:RULE-M-0279 | R: never commit secrets; P adds 'never store plaintext passwords or auth secrets in source' within a password-handling duty.
+RD OVERLAP R:RULE-M-0113 P:RULE-M-0280 | R: validate the issuer-required token properties; P: configure Bearer validation for the actual issuer, keys/certificates follow configuration rules.
+RD OVERLAP R:RULE-M-0111 P:RULE-M-0281 | R: anonymous access deliberate, no redundant [Authorize]; P: secure endpoints via global policy, attributes or endpoint configuration and keep the approach explicit.
+SD P:RULE-M-0282 R:RULE-M-0111 | S: backend endpoints under a secure global/fallback policy (P via skill, R via rule and skill; F8) M: MUST both E: none in either T: none | [AllowAnonymous] marking is P's concrete form of 'deliberate and visible' anonymous access
+SPLIT X:BF-M-0052 | a@93: Use stable constants for policy names repeated across the application. | b@97-99: Prefer a policy over scattered compound role strings when several roles or claims represent one capability.
+RD COMPOUND_PART P:EXTRA-M-0080 X:BF-M-0052#a | P adds 'avoid role/permission magic strings scattered through the codebase' from lines 168-170, outside X's quote.
+SD P:EXTRA-M-0081 X:BF-M-0052#b | S: role-based authorization M: P PREFER, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0110 P:RULE-M-0283 | R: enforce authorization on the server; P: resource-dependent permissions use resource authorization or explicit Application logic.
+RD OVERLAP R:RULE-M-0045 P:RULE-M-0284 | R: Application must not use ASP.NET Core transport types; P: caller identity via a small Application abstraction, never HttpContext/ClaimsPrincipal/IHttpContextAccessor.
+SPLIT X:BF-M-0053 | a@133-136: Application never depends on HttpContext, ClaimsPrincipal or IHttpContextAccessor; repeated caller-identity needs use a small Application abstraction with an outer adapter. | b@146-147: Do not create ICurrentUser when passing an explicit user identifier is simpler.
+SD P:RULE-M-0284 X:BF-M-0053#a | S: backend Application caller identity M: P MUST, X no modality E: none in either T: when use cases repeatedly need caller identity
+SD P:RULE-M-0285 X:BF-M-0053#b | S: backend Application caller identity M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0148 P:RULE-M-0285 | R: avoid speculative abstractions (general); P: no ICurrentUser when an explicit user id is simpler.
+CX X:BF-M-0054@156-162 | Test authorization behavior of important protected operations: unauthenticated 401, unauthorized 403, permitted success, resource ownership rules and intended anonymous access.
+SD P:EXTRA-M-0082 X:BF-M-0054 | S: tests of important protected operations M: P DEFAULT, X no modality E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M-0105 P:RULE-M-0287 | R: never hardcode or commit secrets incl. private keys (MUST NOT); P (skill): avoid hardcoded signing keys (AVOID).
+# r216-r242 build-fix SKILL.md: replica bundles the workflow into a few compound records
+RD OVERLAP R:RULE-M-0159 P:RULE-M-0288 | R: do not weaken/skip tests or suppress failures; P: restore the affected scope to green without hiding failures, weakening behavior or unrelated changes.
+RD OVERLAP R:RULE-M-0147 P:RULE-M-0288 | R: keep changes focused on the requested scope; P: no unrelated changes while restoring green.
+SPLIT R:RULE-M-0157 | a: Reproduce and diagnose the actual failure before editing. | b: Read the complete output, group errors by root cause and fix the highest-leverage root cause first. | c: For failing tests decide whether production code, setup, expectation, environment or an intentionally changed contract is at fault. | d: For cross-stack failures determine the authoritative contract. | e: Update obsolete APIs from verified documentation; never fabricate replacement APIs.
+SD P:RULE-M-0289 R:RULE-M-0157#a | S: build/test repair M: MUST both E: none in either T: before editing
+SD P:RULE-M-0300 R:RULE-M-0157#b | S: build/test repair M: MUST both E: none in either T: before fixing
+RD OVERLAP P:RULE-M-0290 R:RULE-M-0157#b | P: fix root causes before downstream symptoms; R part b: fix the highest-leverage root cause first after grouping errors.
+RD COMPOUND_PART P:RULE-M-0306 R:RULE-M-0157#c | P's test-fix flow includes deciding where the defect is plus smallest change, rerun and broaden steps.
+RD COMPOUND_PART P:RULE-M-0305 R:RULE-M-0157#d | P adds 'do not patch both sides into inconsistent shapes' and the generated-client step.
+SD P:EXTRA-M-0083 R:RULE-M-0157#e | S: build/test repair involving obsolete APIs M: MUST_NOT fabricate (P) = MUST use verified documentation (R) E: P's 'when verification is impossible' is inside lines 174-180 cited by both, R silent (F6) T: when updating API usage | labels: P EXTRA, R ORACLE_LINKED WF-013
+SPLIT R:RULE-M-0158 | a: Keep repair iterations small and bounded: rerun the narrowest failing verification after each meaningful fix and expand only after the focused failure is resolved. | b: Start with the narrowest command that reliably reproduces the problem. | c: Do not run unrelated build systems. | d: Stop and reassess when progress stalls. | e: Do not repeat variants of a failed guess.
+SD P:RULE-M-0291 R:RULE-M-0158#a | S: build/test repair M: MUST both E: none in either T: after each meaningful fix
+SD P:RULE-M-0298 R:RULE-M-0158#b | S: build/test repair M: MUST both E: none in either T: at the start of repair
+SD P:RULE-M-0297 R:RULE-M-0158#c | S: build/test repair M: MUST_NOT (P) = MUST not run (R record MUST) E: none in either T: none | P adds 'merely because they exist' (same lines 41-46)
+SD P:RULE-M-0294 R:RULE-M-0158#d | S: build/test repair M: MUST both E: none in either T: when progress has stalled
+SPLIT X:BF-M-0055 | a@187-191: Do not change the repository's declared SDK, Node, framework or language version because the local machine differs; report an unavailable toolchain instead of editing source. | b@195-205: Use bounded iteration and stop and reassess under concrete conditions (same root failure survives, new unrelated failures, incompatible toolchain, missing infrastructure, unresolvable packages, undeterminable behavior); do not repeat failed guesses.
+SD P:RULE-M-0312 X:BF-M-0055#b | S: build/test repair M: P MUST, X no modality E: none in either T: during repair iterations
+RD COMPOUND_PART P:RULE-M-0312 R:RULE-M-0158#e | P bundles 'do not repeat variants of the same failed guess' with bounded attempts and the stop conditions.
+SPLIT R:RULE-M-0161 | a: When verification fails make the smallest appropriate fix and rerun until green or genuine input is required. | b: Never claim a problem fixed while a known relevant failure remains. | c: Never leave the repository knowingly worse; unrelated pre-existing failures are left alone unless they block verification or the user asks. | d: Report an unavailable toolchain instead of editing source or changing declared SDK, Node, framework or language versions.
+SD P:EXTRA-M-0084 R:RULE-M-0161#d X:BF-M-0055#a | S: build/test repair with a toolchain mismatch M: MUST_NOT change declared versions (P) = report instead of changing (R), X no modality E: none in any T: when the toolchain is unavailable | labels: P EXTRA, R ORACLE_LINKED WF-008, X POTENTIAL_EXTRA
+SD P:RULE-M-0319 R:RULE-M-0161#b | S: repair / verification reports M: MUST_NOT both E: none in either T: when reporting
+RD COMPOUND_PART P:RULE-M-0313 R:RULE-M-0161#c | P adds 'revert or correct a fix that introduces new failures unless legitimately dependent' to 'do not leave the repository worse'.
+SPLIT R:RULE-M-0159 | a: Do not weaken, delete, skip or suppress relevant tests or compiler, TypeScript, lint or analyzer failures to make verification pass. | b: No strong-to-weak assertion swaps, any-casts, disabled strict mode or suppressed template diagnostics. | c: Update a test only for an actually requested contract change.
+SD P:RULE-M-0292 R:RULE-M-0159#a | S: build/test repair M: MUST_NOT both E: none for this clause (R's 'requested contract change' exception belongs to part c) T: none
+RD COMPOUND_PART P:RULE-M-0304 R:RULE-M-0159#b | P's list also covers NgModule workarounds, speculative framework API replacement and adding libraries to bypass a local issue.
+RD COMPOUND_PART P:RULE-M-0307 R:RULE-M-0159#c | P bundles 'do not weaken assertions or skip failing tests for convenience' with updating a test for an intentional, requested change.
+SPLIT R:RULE-M-0160 | a: A build fix must not bypass architecture to compile (Application to Infrastructure references, DbContext in Application, business logic in Controllers, Angular-only authorization, HTTP calls scattered into components). | b: Preserve architecture and project conventions while fixing.
+SD P:RULE-M-0314 R:RULE-M-0160#a | S: build/test repair M: MUST_NOT both E: none in either T: none | P adds that such a green build is not a successful repair (same lines 217-222)
+SD P:RULE-M-0293 R:RULE-M-0160#b | S: build/test repair M: MUST both E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0160#a P:RULE-M-0302 | P: never solve dependency-direction problems with invalid project references (one listed case).
+RD EXAMPLE_GENERAL R:RULE-M-0140#b P:RULE-M-0296 | R: read the owning rules (even if not loaded) before a non-trivial change; P: in build-fix read the rules matching the failing area before editing.
+SPLIT R:RULE-M-0164 | a: Build and test the frontend through the scripts package.json actually defines; never invent script names or assume a test runner. | b: In CI install with npm ci and add test/lint commands only when the project defines them.
+SD P:RULE-M-0299 R:RULE-M-0164#a | S: frontend build and test commands M: MUST both E: none in either T: none | P's Vitest-baseline remark is an illustration from the same lines
+RD OVERLAP R:RULE-M-0005 P:RULE-M-0309 | P: dependency changes during repair go through add-dependency and must not be used merely to get green (plus CPM, peer-flag and lockfile items); R: all dependency changes follow add-dependency.
+RD EXAMPLE_GENERAL R:RULE-M-0147 P:RULE-M-0310 | R: keep changes focused; P: after a framework upgrade do not perform an additional unrelated upgrade (plus upgrade-handling steps).
+RD DETAIL_DIFFERENCE R:RULE-M-0163 P:RULE-M-0315 | same probe-to-maintained-test duty; R reports an 'equivalent coverage exists' exception from locations P's record does not cite.
+RD DETAIL_DIFFERENCE R:RULE-M-0168 P:RULE-M-0317 | R: run verify before declaring any work complete; P (build-fix): run verify for the final pass 'when appropriate'.
+SPLIT R:EXTRA-M-0014 | a: The build-fix report states the initial failure, root cause, changes made and remaining issues. | b: The build-fix report states backend build, frontend build and tests as PASS, NOT RUN or NOT APPLICABLE.
+SD P:EXTRA-M-0085 R:EXTRA-M-0014#a | S: build-fix report M: MUST both E: none in either T: at reporting
+SD P:RULE-M-0318 R:EXTRA-M-0014#b | S: build-fix report M: MUST both E: none in either T: at reporting | labels: P ORACLE_LINKED WF-009, R EXTRA
+RD EXAMPLE_GENERAL R:RULE-M-0162 P:RULE-M-0318 | R: report verification state per area for all completion/repair reports and never imply unchecked areas passed; P: the build-fix status fields.
+# r243-r250 caching SKILL.md
+CX X:BF-M-0056 | Adding caching solely for performance requires a measurement first (reported as stronger than 'measured or reasoned need').
+RD COMPOUND_PART P:RULE-M-0320 X:BF-M-0056 | P bundles 'define consistency semantics first' with 'measure before adding caching solely for performance'.
+RD DIFFERENT_STRENGTH R:RULE-M-0091 X:BF-M-0056 | R/P rule: caching for a measured OR reasoned need; X: the skill requires measurement for performance-only caching.
+RD OVERLAP R:RULE-M-0061 P:RULE-M-0321 | R: no cache APIs in Application without a deliberate abstraction; P: define an Application cache abstraction only when a use case needs cache-aware behavior.
+RD EXAMPLE_GENERAL R:RULE-M-0061 P:RULE-M-0323 | P: HybridCache may implement an Infrastructure contract but not appear in Application contracts.
+SD P:RULE-M-0324 R:RULE-M-0092 | S: backend cache keys (P via skill, R via rule and skill; F8) M: MUST both E: none in either T: none
+RD OVERLAP R:RULE-M-0094 P:EXTRA-M-0087 | R: every entry has a lifetime or invalidation strategy; P: choose expiration from data semantics, not a universal default.
+AC P:UNCERTAIN-M-0001 R:RULE-M-0093 | rule (R/P): invalidate or update cache only consistently with successful mutations; skill (P, LINK_UNCERTAIN, ALLOWED): invalidating before the mutation is known to succeed is acceptable when the workflow deliberately accepts it.
+RD OVERLAP R:RULE-M-0092 P:RULE-M-0325 | R: keys include user/tenant dimensions; P: do not cache authenticated or user-specific responses unless key and policy isolate users and authorization context.
+REVIEWED r201-r250

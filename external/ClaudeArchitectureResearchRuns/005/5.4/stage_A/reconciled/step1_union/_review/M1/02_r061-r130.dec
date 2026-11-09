@@ -1,0 +1,124 @@
+# M1 batch 2: regions r061-r130 (protocol v1.2.1)
+# r061-r076 architecture.md
+SPLIT R:RULE-M1-0040 | a: Program.cs is the application composition root and may register Infrastructure implementations. | b: Controllers do not consume Infrastructure implementation types directly.
+SD P:RULE-M1-0129 R:RULE-M1-0040#a | S: backend composition M: DEFAULT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0040#b P:RULE-M1-0130 | same clause; R reports DEFAULT (record), P reports MUST_NOT.
+RD DIFFERENT_STRENGTH R:RULE-M1-0041 P:RULE-M1-0131 | same repository-interface guidance; R reports DEFAULT and adds the DDD Aggregate Root note, P reports PREFER.
+RD OVERLAP R:RULE-M1-0036 P:RULE-M1-0132 | both: repository interfaces defined in Application, implemented in Infrastructure; P adds 'query construction stays in Infrastructure'.
+RD OVERLAP R:RULE-M1-0042 P:RULE-M1-0132 | both: query construction stays in Infrastructure.
+RD DETAIL_DIFFERENCE R:RULE-M1-0042 P:RULE-M1-0133 | same IQueryable/provider-type prohibition; R adds 'query construction stays in Infrastructure' from lines 82-83, which P's record does not cite.
+RD DETAIL_DIFFERENCE R:RULE-M1-0043 P:RULE-M1-0134 | same generic-repository prohibition; R adds 'use-case-specific queries belong in concrete repositories'.
+SPLIT R:RULE-M1-0044 | a: IUnitOfWork is the default commit boundary of an Application use case; repositories stage changes and do not commit independently; Application Services decide when to commit. | b: IUnitOfWork is implemented in Infrastructure over the scoped persistence session.
+SD P:RULE-M1-0135 R:RULE-M1-0044#a | S: use-case commits M: DEFAULT both E: none in either T: commit decided by Application Services
+RD DIFFERENT_STRENGTH R:RULE-M1-0044#b P:RULE-M1-0136 | same clause; R reports DEFAULT (record), P reports MUST.
+SPLIT R:RULE-M1-0045 | a: Repositories in one use case share the same scoped Unit of Work and persistence session; repositories are injected explicitly. | b: IUnitOfWork must not act as a repository container or service locator.
+SD P:RULE-M1-0137 R:RULE-M1-0045#a | S: repositories and Unit of Work M: MUST both E: none in either T: none
+SD P:RULE-M1-0138 R:RULE-M1-0045#b | S: Unit of Work M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0139 R:RULE-M1-0046 | S: caching boundaries M: MUST both E: none in either T: none
+SD P:RULE-M1-0140 R:RULE-M1-0047 | S: outbound HTTP boundaries M: MUST both E: none in either T: none
+SD P:RULE-M1-0141 R:RULE-M1-0048 | S: DI registration M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0142 R:RULE-M1-0049 | S: API versions vs models M: MUST_NOT both E: R's 'when practical' is in the shared lines 141-143, P silent (F6) T: none
+SD P:RULE-M1-0143 R:RULE-M1-0050 | S: Api/Application contracts M: MUST_NOT both E: concrete boundary benefit (both) T: none
+RD OVERLAP R:RULE-M1-0006 P:RULE-M1-0144 | R: per-test-project reference allow-lists (architecture check); P: no broader references than needed, inward discipline (rule text).
+# r077-r082 coding-style.md
+SD P:RULE-M1-0145 R:RULE-M1-0051 | S: C# code M: DEFAULT both E: none in either T: none | R's 'e.g. no mechanical constructor conversion' is an instance of the same no-syntax-rewrite rule
+RD EXAMPLE_GENERAL R:RULE-M1-0051 P:RULE-M1-0149 | P states 'do not convert constructors mechanically' as its own MUST_NOT; R gives it as an example.
+SPLIT R:RULE-M1-0052 | a: For new code prefer file-scoped namespaces when consistent. | b: Keep one primary top-level type per file with a matching file name. | c: Use the Async suffix for Task/ValueTask-returning methods unless an existing contract or framework API would break.
+RD DIFFERENT_STRENGTH R:RULE-M1-0052#a P:RULE-M1-0163 | same clause; R reports DEFAULT (record), P reports PREFER.
+SD P:RULE-M1-0146 R:RULE-M1-0052#b | S: new C# code M: DEFAULT both E: P's nested/private supporting-type exception is in the shared lines 22-24 (F6) T: none
+SD P:RULE-M1-0148 R:RULE-M1-0052#c | S: C# async methods M: DEFAULT both E: existing or framework contracts (both) T: none
+SPLIT R:RULE-M1-0053 | a: Do not perform style-only rewrites outside the requested change unless explicitly asked. | b: Avoid mixing large formatting or modernization changes with functional work. | c: Do not reorganize an existing file merely to satisfy a preferred member ordering.
+SD P:RULE-M1-0151 R:RULE-M1-0053#a | S: C# code outside the requested change M: MUST_NOT both E: explicit request (both) T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0053#b P:EXTRA-M1-0077 | same clause; R reports MUST NOT (record), P reports AVOID.
+SD P:RULE-M1-0147 R:RULE-M1-0053#c | S: existing C# files M: MUST_NOT both E: none for this clause T: none
+SPLIT X:BF-M1-0026 | a@49-52: Use a regular constructor when validation or initialization is non-trivial, explicit fields help, the codebase uses that style, or parameter capture hurts readability; do not convert constructors mechanically. | b@56-59: Use records for value semantics and immutability and classes for identity, mutable lifecycle, inheritance or framework behavior; do not turn every DTO or Domain type into a record. | c@63-66: Keep implementation details non-public unless part of the public API; use sealed for deliberate non-inheritance intent, not as a speculative optimization. | d@78-81: Use standard .NET naming; private-field naming follows the repository convention.
+RD COMPOUND_PART P:EXTRA-M1-0072 X:BF-M1-0026#a | P adds the primary-constructor guidance from lines 38-39 and omits 'do not convert mechanically' (P RULE-M1-0149).
+RD OVERLAP P:RULE-M1-0149 X:BF-M1-0026#a | both include 'do not convert constructors mechanically'.
+SD P:EXTRA-M1-0073 X:BF-M1-0026#b | S: C# code M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-M1-0074 X:BF-M1-0026#c | S: C# code M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-M1-0076 X:BF-M1-0026#d | S: C# code M: P MUST, X no modality E: private-field convention (both) T: none
+# r083-r088 composition.md
+SD P:RULE-M1-0152 R:RULE-M1-0054 | S: DI M: DEFAULT both E: none in either T: none
+CX X:BF-M1-0027@20-21 | A singleton or hosted service that needs scoped work creates a scope per operation and resolves a scoped orchestration service.
+SD P:RULE-M1-0153 R:RULE-M1-0055 | S: DI lifetimes M: MUST both E: none in either T: per operation
+RD COMPOUND_PART P:RULE-M1-0153 X:BF-M1-0027 | P/R add 'never capture a shorter-lived dependency in a longer-lived service'; X states the per-operation scope clause.
+SPLIT R:RULE-M1-0056 | a: Prefer strongly typed options for structured configuration consumed by services; direct IConfiguration access is appropriate in the composition root, provider setup and infrastructure registration. | b: Validate settings at startup when missing or invalid values prevent correct or secure operation.
+RD DIFFERENT_STRENGTH R:RULE-M1-0056#a P:RULE-M1-0154 | same typed-options guidance; R reports DEFAULT (record), P reports PREFER.
+SD P:RULE-M1-0155 R:RULE-M1-0056#b | S: configuration M: DEFAULT both E: none in either T: at startup
+SD P:RULE-M1-0156 R:RULE-M1-0057 | S: logging M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0157 R:RULE-M1-0058 | S: Serilog setup M: DEFAULT both E: none in either T: none
+# r089-r093 dependencies.md
+RD COMPOUND_PART P:RULE-M1-0158 R:RULE-M1-0011#a | P covers adding, updating and removing; R part a covers additions and updates (removals are R EXTRA-M1-0007).
+RD OVERLAP P:RULE-M1-0158 R:EXTRA-M1-0007 | R: removals follow add-dependency through the marker gate (EXTRA); P includes removals in the ORACLE_LINKED rule.
+SD P:RULE-M1-0159 R:RULE-M1-0059 | S: dependencies M: MUST both E: none in either T: none
+SPLIT R:RULE-M1-0060 | a: NuGet Central Package Management: versions in Directory.Packages.props, versionless PackageReference entries by default, no duplicated central versions. | b: A VersionOverride needs a concrete, documented reason. | c: Package references live in the narrowest project that needs them.
+SD P:RULE-M1-0160 R:RULE-M1-0060#a | S: NuGet manifests M: MUST both E: none for this clause T: none
+CX X:BF-M1-0028@27-28 | Every VersionOverride needs a concrete, documented reason.
+SD R:RULE-M1-0060#b X:BF-M1-0028 | S: NuGet manifests M: R MUST, X no modality E: none in either T: none
+RD DIFFERENT_LAYER P:EXTRA-M1-0046 R:RULE-M1-0060#b | P: the manifest checker flags a VersionOverride (advisory); R/X: the rule that it needs a documented reason.
+SD P:RULE-M1-0161 R:RULE-M1-0060#c | S: NuGet package references M: MUST both E: none in either T: none
+SPLIT P:RULE-M1-0162 | a: Use npm by default unless the project deliberately adopts another package manager; build/test tooling goes into devDependencies unless there is a reason. | b: Maintain and commit package.json and package-lock.json.
+RD DETAIL_DIFFERENCE P:RULE-M1-0162#a R:RULE-M1-0061 | same npm/devDependencies rule; R adds 'keep package-lock.json consistent when adding packages'.
+SD P:RULE-M1-0162#b R:UNCERTAIN-M1-0001 | S: frontend workspace manifests M: MUST both E: none for this clause T: none | labels: P ORACLE_LINKED DEP-007, R LINK_UNCERTAIN; R's note on the checker warning is mechanism context
+# r094-r106 error-handling.md
+SPLIT R:RULE-M1-0062 | a: Represent common expected outcomes explicitly when that improves clarity, using the simplest contract (null, bool, typed outcome, deliberately adopted Result<T>). | b: Do not force a generic Result<T> pattern. | c: Application outcome categories describe business semantics, not HTTP-named categories. | d: Expected outcomes are not logged as application errors.
+SD P:RULE-M1-0165 R:RULE-M1-0062#a | S: use-case outcomes M: DEFAULT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0062#b P:RULE-M1-0166 | same clause; R reports DEFAULT (record), P reports MUST_NOT.
+RD DIFFERENT_STRENGTH R:RULE-M1-0062#c P:RULE-M1-0167 | same clause; R reports DEFAULT (record), P reports MUST.
+CX X:BF-M1-0031@47-48 | Expected outcomes such as not found or validation rejection are not logged as application errors.
+SD P:RULE-M1-0172 R:RULE-M1-0062#d X:BF-M1-0031 | S: logging of expected outcomes M: DEFAULT in P and R, X no modality E: none in any T: none
+SPLIT R:RULE-M1-0063 | a: Do not use exceptions casually for normal control flow. | b: Do not establish custom business exceptions as the default architecture or throw and catch merely to jump between normal branches; typed exceptions for selected cases are a consistent project-level decision.
+SD P:RULE-M1-0164 R:RULE-M1-0063#a | S: backend error flow M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0168 R:RULE-M1-0063#b | S: backend error flow M: MUST_NOT both E: none in either T: none
+CX X:BF-M1-0029 | Treating typed exceptions as a consistent project-level decision may turn a single local typed exception into an architectural (Reserved-like) decision (reported ambiguity).
+RD OVERLAP X:BF-M1-0029 P:RULE-M1-0168 | X questions the scope of the project-level typed-exception clause stated by P/R.
+SPLIT R:RULE-M1-0064 | a: Unexpected failures propagate to centralized handling at the outer boundary (IExceptionHandler); avoid repetitive catch/log/rethrow blocks. | b: Catch only to recover, translate, perform a defined fallback, add context or clean up.
+SD P:RULE-M1-0169 R:RULE-M1-0064#a | S: backend error flow M: DEFAULT both E: none in either T: none
+SPLIT X:BF-M1-0030 | a@38-41: Catch an exception only to recover, translate into the layer's own outcome, perform a defined fallback, add context while preserving the original exception, or perform cleanup. | b@41: Never swallow exceptions to continue execution.
+SD P:EXTRA-M1-0078 X:BF-M1-0030#a | S: backend exception handling M: P MUST, X no modality E: the listed purposes (both) T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0064#b P:EXTRA-M1-0078 | same catch-purpose list; R reports DEFAULT (record), P reports MUST.
+SPLIT R:RULE-M1-0065 | a: Use a fallback only when its result is semantically acceptable; do not hide correctness failures behind convenient defaults. | b: Never swallow exceptions to continue execution.
+SD P:RULE-M1-0170 R:RULE-M1-0065#b X:BF-M1-0030#b | S: backend exception handling M: MUST_NOT in P and R, X no modality E: none in any T: none
+SD P:RULE-M1-0202 R:RULE-M1-0065#a | S: fallbacks M: MUST both E: none in either T: none
+SD P:RULE-M1-0171 R:RULE-M1-0066 | S: exception logging M: MUST both E: none in either T: once, at the handling boundary
+SD P:RULE-M1-0173 R:RULE-M1-0067 | S: HTTP errors M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0174 R:RULE-M1-0068 | S: public API errors M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0175 R:RULE-M1-0069 | S: client cancellation M: MUST_NOT both E: none in either T: none
+SPLIT R:RULE-M1-0070 | a: Validate each concern at the owning layer, using FluentValidation for explicit request and use-case validation. | b: Api validates transport concerns, Application use-case and workflow rules, Domain genuine invariants (not moved into validators merely because the library is available), Infrastructure external-system assumptions. | c: Do not duplicate the same validation mechanically across layers.
+SD P:RULE-M1-0176 R:RULE-M1-0070#a | S: backend validation M: MUST both E: none in either T: none
+SD P:RULE-M1-0177 R:RULE-M1-0070#b | S: backend validation layering M: MUST both E: none in either T: none
+SD P:RULE-M1-0178 R:RULE-M1-0070#c | S: backend validation M: MUST_NOT duplicate (P) = no duplication (R) E: none in either T: none
+# r107-r120 frontend-framework.md and frontend.md
+SD P:RULE-M1-0179 R:RULE-M1-0071 | S: frontend new code M: DEFAULT both E: integration or legacy dependency requires NgModules (both) T: none
+CX X:BF-M1-0032 | NgModules are allowed for ordinary new features only when an integration or legacy dependency genuinely requires them (reported as a restriction stronger than a standalone default).
+RD DIFFERENT_STRENGTH X:BF-M1-0032 P:RULE-M1-0179 | same sentence; P and R report DEFAULT, X reads it as a restriction (POTENTIAL_DIFFERENT_STRENGTH).
+SD P:RULE-M1-0180 R:RULE-M1-0072 | S: frontend state M: DEFAULT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0073 P:RULE-M1-0181 | same interceptor guidance; R reports DEFAULT, P reports PREFER (F7).
+RD DIFFERENT_STRENGTH R:RULE-M1-0074 P:RULE-M1-0182 | same nested-subscription guidance; R reports DEFAULT, P reports AVOID (F7).
+SD P:RULE-M1-0183 R:RULE-M1-0075 | S: frontend subscriptions M: MUST both E: none in either T: none
+SPLIT R:RULE-M1-0078 | a: Keep backend communication in explicit feature data-access services; do not scatter HTTP calls through presentation components; use frontend API models matching the published contract and do not import backend Domain entities. | b: In Angular the data-access service is an @Injectable feature service using HttpClient.
+SD P:RULE-M1-0189 R:RULE-M1-0078#a | S: frontend HTTP boundary M: MUST both E: none in either T: none
+SD P:RULE-M1-0184 R:RULE-M1-0078#b | S: Angular HTTP boundary M: MUST both E: none in either T: none
+SPLIT R:RULE-M1-0082 | a: Use the explicit form model for non-trivial forms when useful; frontend validation improves UX but does not replace backend validation, data-integrity or security enforcement. | b: The explicit form model is Angular Reactive Forms.
+SD P:RULE-M1-0193 R:RULE-M1-0082#a | S: frontend forms M: MUST both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0082#b P:RULE-M1-0185 | same clause; R reports MUST (record), P reports DEFAULT.
+SPLIT R:RULE-M1-0076 | a: Frontend structure stays feature-oriented: a feature owns its UI and data-access logic; no application-wide technical buckets or empty architecture folders; core and shared stay small. | b: Use shared only for genuinely cross-feature primitives.
+SD P:RULE-M1-0186 R:RULE-M1-0076#a | S: frontend structure M: MUST both E: none in either T: none
+CX X:BF-M1-0033 | Use shared only for UI primitives or behavior that genuinely cross features; do not move feature code into shared merely because two components of one feature use it.
+SD P:RULE-M1-0187 R:RULE-M1-0076#b X:BF-M1-0033 | S: frontend shared area M: MUST_NOT in P, MUST in R, X no modality E: none in any T: none | P's 'not merely because two components of one feature use it' is the negative form in the shared lines 20-22
+SD P:RULE-M1-0188 R:RULE-M1-0077 | S: frontend components M: MUST both E: none in either T: none
+SD P:RULE-M1-0190 R:RULE-M1-0079 | S: frontend error handling M: MUST both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0080 P:RULE-M1-0191 | same state-management guidance; R reports DEFAULT, P reports PREFER (F7).
+SD P:RULE-M1-0192 R:RULE-M1-0081 | S: frontend routing M: DEFAULT both E: none in either T: none
+# r121-r130 performance.md
+SD P:RULE-M1-0194 R:RULE-M1-0083 | S: backend code M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0195 R:RULE-M1-0084 | S: async I/O M: MUST both E: none in either T: none
+SD P:RULE-M1-0196 R:RULE-M1-0085 | S: cancellation M: MUST both E: none in either T: none
+CX X:BF-M1-0034 | TimeProvider is used by default (not mandatorily) for current-time-dependent logic that needs deterministic tests.
+SD P:RULE-M1-0197 R:RULE-M1-0086 X:BF-M1-0034 | S: clock-dependent logic M: DEFAULT in P and R; X reports the same default reading E: stored/explicit timestamps not replaced (all) T: none
+SD P:RULE-M1-0198 R:RULE-M1-0087 | S: HttpClient lifetime M: MUST / MUST NOT = same prohibition E: none in either T: none
+SD P:RULE-M1-0199 R:RULE-M1-0088 | S: external I/O M: MUST both E: none in either T: none
+SD P:RULE-M1-0200 R:RULE-M1-0089 | S: retries M: MUST both E: none in either T: none
+SD P:RULE-M1-0201 R:RULE-M1-0090 | S: retries M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0203 R:RULE-M1-0091 | S: caller cancellation M: MUST_NOT both E: none in either T: none
+REVIEWED r061-r130

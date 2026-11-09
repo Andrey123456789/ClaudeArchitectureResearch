@@ -1,0 +1,266 @@
+# L0 / B006 — authentication, build-fix, caching, ci-cd, code-review, configuration, custom-settings, delivery-pipeline.
+
+C R175 OL WF-013 | MUST | Build-fix starts from reproduction and diagnosis: reproduce with the narrowest command, read the complete output, group errors by root cause and fix the highest-leverage cause first; decide for failing tests whether production code, setup, expectation, environment or an intentional contract change is at fault; determine the authoritative contract instead of patching both sides of a cross-stack break; update obsolete APIs from verified documentation, never invented. | build and test repair | none stated
+C R176 OL WF-014 | MUST | Repair in small bounded iterations: rerun the narrowest failing verification after each meaningful fix, expand only after the focused failure is resolved, do not run unrelated build systems, use several focused attempts rather than an unlimited loop and stop when progress stalls instead of making speculative edits. | build and test repair | none stated
+C R177 OL WF-015 | MUST NOT | Never weaken, delete, skip or suppress relevant tests or compiler, TypeScript, lint or analyzer failures to make verification pass (no strong-to-weak assertion swaps, no any-casts or disabled strict mode to silence errors); update a test only for an intentionally requested contract change. | build and test repair | Intentionally requested contract change.
+C R178 OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003 | MUST NOT | A green build obtained by violating the architecture (outward or invalid project references, persistence types in Application, business logic in Controllers, Angular-only authorization, HTTP calls scattered into components) is not a successful repair; preserve architecture and project conventions while fixing. | build and test repair | none stated
+C R179 OL WF-008 | MUST | When verification fails make the smallest appropriate fix and rerun until green or genuine user input is required; never claim a problem fixed while a known relevant failure remains, never leave the repository knowingly worse, and when the required toolchain is unavailable report the limitation instead of editing source or changing declared SDK/Node/framework versions. | verification failures | Unrelated pre-existing failures are left alone unless they block verification or the user asks.
+C R180 OL WF-009 | MUST | Report verification state with PASS / NOT RUN / NOT APPLICABLE per area; never imply that an unchecked area passed. | completion and repair reports | none stated
+C R181 OL GOV-013 | MUST NOT | Do not introduce frameworks, libraries, infrastructure or architectural patterns without a concrete current need (e.g. pipeline stages or CI services for parts that do not exist, distributed caches merely because caching exists). | all changes | none stated
+C R182 OL WF-017 | MUST | CI definitions stay in source control, reproduce the repository's supported build and test commands for the parts that actually exist and never hide build or test failures (no continue-on-error on build/test steps, no suppressed exit codes, no skipped failing tests); formatting/analyzer gates only when adopted; restore from a clean environment without developer-machine state. | CI pipelines | none stated
+C R183 OL WF-019 | MUST NOT | Do not apply production database migrations automatically from normal application startup (in containers or anywhere else); production migration is an explicit, visible deployment step at a controlled point with approved credentials; deployment never runs Development seeding in Production. | deployment | none stated
+C R184 OL WF-012 | MUST NOT | Never invent review findings to populate categories or failures without a plausible execution path; when there are no meaningful findings, say so and state the important areas that could not be verified. | code review | none stated
+C R185 OL GOV-001 | MUST | When SPECIFICATION.md is non-empty it is authoritative for project-specific functional requirements and observable product behavior; an empty template file is intentional. | product behavior | none stated
+C R186 OL GOV-003 | MUST NOT | Do not silently weaken, contradict or materially extend approved behavior; do not invent user-visible behavior, limits, defaults, restrictions or workflows (new limits, reserved values, required fields, extra validation), also not merely because the specification does not forbid them. | product behavior | User-approved and synchronized details.
+C R187 OL GOV-006 | REQUIRES_APPROVAL | String semantics are product behavior when observable (case sensitivity, collation, culture vs ordinal, normalization, trimming, uniqueness, lookup); when product sources do not define them and the choice affects equality, uniqueness, lookup or accepted input, ask for approval instead of choosing silently, including through database configuration or framework defaults. | product behavior | none stated
+C R188 OL WF-007 | MUST | Run the full security-scan only when the user requested a security audit, the change is materially security-sensitive, or a concrete finding justifies broader investigation; run architecture, formatting/analyzer, dependency and security checks according to the change's risk. | review and verification | none stated
+C R189 OL TST-009 | DEFAULT | For a meaningful bug with plausible recurrence add a regression test (failing before, passing after the fix) unless equivalent coverage exists; do not request duplicate tests. | bug fixes | Equivalent coverage exists.
+C R190 OL TST-010 | MUST | Behavior established with a temporary or manual probe is preserved in maintained automated coverage (verify step 4) unless equivalent coverage exists. | behavioral probes | Equivalent coverage exists.
+C R191 OL WF-021 | MUST NOT | Compiler diagnostics, analyzers, IDE tooling, scanners and repository search are evidence, not authority; no MCP server or specific analyzer is required; read the code before turning a tool warning into a finding. | review | none stated
+C R192 OL GOV-021 | MUST | When a CUSTOM_SETTINGS.md value is added, changed or removed, search for and update every affected implementation, validation, configuration, test, documentation and mirrored frontend/backend surface (backend validation authoritative, frontend kept in sync for UX), search for stale references and run the normal verification; changing one literal alone does not establish synchronization. | settings changes | none stated
+C R193 OL GOV-009 | REQUIRES_APPROVAL | SPECIFICATION.md and CUSTOM_SETTINGS.md must not contradict each other; confirm consistency before changing a value and re-check afterwards; if they conflict, stop and resolve which source must be corrected before continuing. | product sources | none stated
+C R194 OL GOV-008 | MUST | CUSTOM_SETTINGS.md holds approved project-level tunable limits and defaults (maximum lengths, page-size defaults and maximums, retention periods, numeric thresholds) under stable descriptive names with value and purpose; SPECIFICATION.md owns behavioral intent. | product settings | none stated
+C R195 OL PST-009 | MUST | When a settings change affects schema constraints, indexes, column lengths or other persistence metadata: update the EF Core mapping, create the appropriate new migration per the project's migration workflow (regenerate or edit only an uncommitted migration when that matches the workflow; do not casually alter existing migrations), verify Development seeding remains valid, and add or update provider-sensitive tests when needed. | schema-affecting settings changes | none stated
+C X13 EX WF-009 | MUST | The build-fix report states the initial failure, root cause, changes made, backend build / frontend build / tests status (PASS, NOT RUN, NOT APPLICABLE) and remaining issues. | build and test repair | none stated | WF-009 requires reporting actual verification states only; no oracle policy prescribes failure/root-cause/changes sections. | A repair summary without root cause or changes made does not satisfy the workflow.
+C X14 EX WF-011,WF-012 | MUST | Code-review findings are reported ordered by severity with severity, file/location, problem, why it matters and smallest reasonable fix, on the scale Critical (data loss, security vulnerability, reliably broken core behavior; blocks merge), High, Medium, Low. | code review output | none stated | WF-011/WF-012 set priorities and forbid manufactured findings; the oracle prescribes no output format or severity scale. | A review without severity levels or proposed fixes does not follow the procedure.
+C X15 EX RUN-021,ARC-019 | MUST NOT | Do not cache EF tracked entities across Unit of Work boundaries (named caching anti-pattern). | caching with EF Core | none stated | RUN-021 governs invalidation consistency and ARC-019 confines EF Core to Infrastructure; caching tracked entities is an EF technique pitfall (EXC-011 class) that the template turns into a named prohibition. | An adapter that keeps tracked entity instances in a cache for later use cases violates the instruction even with correct invalidation.
+
+FILE .claude/skills/authentication/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R7 | a new authentication architecture → Reserved (CLAUDE.md)
+14 NN | section heading
+16-18 NN | scheme selection technique
+19 OL R50 | do not issue custom JWTs when that provider already issues tokens
+21 NN | section heading
+23 OL R50 | use its password hashing, lockout, reset-token, and related features
+25 NN | section heading
+27-35 NN | bearer registration code example
+37 OL R51,R43 | set additional `TokenValidationParameters` only when the actual issuer requires it
+39 NN | section heading
+41-48 NN | authorization attribute code example
+50 OL R49 | mark deliberately public endpoints with `[AllowAnonymous]`
+52-55 NN | fallback policy code example
+57 NN | section heading
+59-68 NN | policy code example
+70 NN | policy vs role technique (prefer)
+72 NN | section heading
+74 NN | resource authorization technique examples
+76 NN | section heading
+78 NN | pointer and middleware technique note
+80 NN | section heading
+82 NN | lead-in
+84-89 NN | current-user code example
+91 OL R76 | keeping `HttpContext`, `ClaimsPrincipal`, and `IHttpContextAccessor` in Api
+93-99 NN | current-user abstraction code example
+101 NN | technique note
+103 NN | section heading
+105 OL R53,R54 | Cookie-carried credentials need antiforgery protection for state-changing requests
+107 NN | section heading
+109 NN | authorization test targeting (test technique)
+111 NN | section heading
+113 NN | anti-pattern note on scattered role strings (style technique)
+
+FILE .claude/skills/build-fix/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R177,R24 | without hiding failures, weakening behavior, or introducing unrelated changes
+14 NN | section heading
+16 OL R175 |
+17 OL R176 |
+18 OL R177 |
+19 OL R178,R176 | Preserve architecture and project conventions while fixing
+21 NN | section heading
+23 OL R176 | Do not run unrelated build systems merely because they exist
+25 NN | section heading
+27 OL R175 | the narrowest command that reproduces it
+28 OL R126 | never invent script names or assume a runner
+30 NN | section heading
+32 OL R175 | Fix the highest-leverage cause first.
+34 NN | section heading
+36 OL R175,R176 | Expand verification only after the focused failure is resolved.
+38 OL R178 | Never fix a dependency problem with an invalid project reference
+40 NN | section heading
+42 OL R175,R176 | Make the smallest correct change.
+44 OL R177,R160 | Do not convert code to `any` to silence TypeScript
+46 NN | section heading
+48 OL R175,R170 | do not patch both sides into inconsistent shapes just to compile
+50 NN | section heading
+52 OL R175,R177 | confirm the change was actually requested
+54 NN | section heading
+56 OL R6,R19,R165,R5 | do not delete `package-lock.json` reflexively as a troubleshooting technique
+57 OL R175,R24 | do not perform another unrelated upgrade at the same time
+58 OL R179,R24 | report the limitation instead of editing source to compensate
+60 NN | section heading
+62 OL R170 |
+64 NN | section heading
+66 OL R176,R179,R24 | Never leave the repository knowingly worse than before
+68 OL R178,R190 | is not a successful repair
+70 NN | section heading
+72 OL R179 | no known new regression remains
+74-82 MX R180,X13 | Backend build: PASS / NOT RUN / NOT APPLICABLE ⟫ PASS/NOT RUN/NOT APPLICABLE reporting is oracle-linked (R180); the fixed failure/root-cause/changes/remaining-issues sections are X13.
+84 OL R179,R180 | Never claim the problem is fixed while a known relevant failure remains.
+
+FILE .claude/skills/caching/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R7,R31 | distributed cache as new infrastructure → Reserved
+14 NN | section heading
+16 NN | output caching layer option
+17 OL R78 | define an abstraction in Application and implement it in Infrastructure
+18 NN | adapter caching option
+20 NN | section heading
+22 OL R31,R7 | Add a distributed backend such as Redis only when deployment requires it.
+24-30 NN | registration code example
+32 NN | section heading
+34-41 NN | cache abstraction code example
+43 OL R78,R33 | remove or update the affected entry after the commit succeeded
+45 NN | section heading
+47 OL R32 |
+49 NN | section heading
+51 OL R34,R33 |
+53 NN | section heading
+55-64 NN | output caching code example
+66 OL R32 | Do not cache authenticated or user-specific responses unless the key and policy isolate users and authorization context.
+68 NN | section heading
+70 OL R38 |
+72 NN | section heading
+74 NN | cache test targeting (test technique)
+76 NN | section heading
+78 MX X15,R31,R181 | Caching EF tracked entities across Unit of Work boundaries ⟫ The prohibition on caching tracked entities is X15; Redis merely because caching exists restates the need-based caching and infrastructure rules (R31, R181).
+80 NN | section heading
+82-85 NN | decision table header and technique rows
+86 OL R7 | (Reserved infrastructure)
+87 NN | adapter caching technique row
+88 OL R78 | Application abstraction + Infrastructure implementation
+
+FILE .claude/skills/ci-cd/SKILL.md | Knowledge skill (technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | policy owner pointers; technique only
+15 NN | section heading
+17-52 NN | pipeline YAML example (EXC-014 class)
+54 OL R126,R182 | Add frontend test/lint steps only for scripts the workspace defines.
+56 NN | section heading
+58 OL R181,R65 | do not hardcode one provider into a generic pipeline
+60 NN | section heading
+62 NN | dependency audit technique
+64 NN | section heading
+66-69 NN | publish command example
+71 NN | artifact technique (EXC-014 class)
+73 NN | section heading
+75 NN | pointer to delivery-pipeline and docker technique
+77 NN | section heading
+79 OL R44 | Use the CI platform's secret store
+81 NN | section heading
+83 OL R183 | execute them as an explicit, visible deployment step
+85-88 NN | migration bundle command example
+89 NN | section heading
+91 DU R181,R129 | anti-pattern list restating need-based infrastructure and Docker optionality
+
+FILE .claude/skills/code-review/SKILL.md | Workflow skill (preloaded by the code-reviewer agent).
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 OL R113 | identify concrete defects or risks
+15 NN | section heading
+17 OL R113 |
+19 NN | section heading
+21 NN | review scoping technique (EXC-016 class)
+23 NN | section heading
+25 OL R21 | Read the rule files that govern the changed area (they may not have loaded)
+27 NN | section heading
+29 OL R185,R186,R187 | must not silently add unapproved behavior
+31 NN | section heading
+33 OL R184 | Do not invent failures without a plausible execution path.
+35 NN | section heading
+37 OL R113,R169 | Never report a violation merely because the code differs from a pattern this architecture has not adopted
+39 NN | section heading
+41 DU R100,R102,R103,R124,R105,R48,R104 | frontend review checklist restating frontend rules
+43 NN | section heading
+45 OL R188 | Use the full `security-scan` only when the user requested a security audit
+47 NN | section heading
+49 OL R36 | Do not demand retries for operations that are not safe to retry.
+51 NN | section heading
+53 OL R189,R190 | For bugs, look for a regression test when recurrence is plausible.
+55 NN | section heading
+57 OL R113,R29 | Do not recommend caching, compiled queries, pooling
+59 NN | section heading
+61 OL R191 |
+63 NN | section heading
+65-70 EX X14 | severity · file/location · problem · why it matters · smallest reasonable fix
+72 OL R184,R113 | Never invent findings to populate categories.
+
+FILE .claude/skills/configuration/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 NN | policy owner pointers; technique only
+14 OL R138 | the problem is ordinary services parsing configuration keys
+16 NN | section heading
+18 NN | provider precedence (EXC-013 class)
+20 NN | section heading
+22-38 NN | options pattern code example
+40 NN | note that example numbers are illustrative
+42 NN | section heading
+44-51 NN | options interface code example
+53 NN | section heading
+55-60 NN | custom validation code example
+62 NN | section heading
+64-67 NN | user-secrets command example
+69 OL R43,R44 | `appsettings.json` keeps structure and non-secret defaults only:
+71-76 NN | settings JSON example
+78 OL R44 | use it only when the project runs on Azure
+80-86 NN | managed provider code example
+88 NN | section heading
+90-103 NN | named options code example
+105 NN | section heading
+107-116 DU R138 | anti-pattern code restating the typed-options rule
+118 NN | section heading
+120-129 DU R138,R44 | technique decision table restating typed options and secret mechanisms
+
+FILE .claude/skills/custom-settings/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 NN | ownership pointer to CLAUDE.md product governance
+14 NN | section heading
+16 OL R193 | Confirm the value is approved and consistent with `SPECIFICATION.md`
+17 OL R194 |
+19 NN | section heading
+21 OL R192 |
+23 NN | section heading
+25 OL R192,R106 | changing one literal alone does not establish synchronization
+27 NN | section heading
+29-34 OL R195 | do not casually alter existing migrations
+36 NN | section heading
+38-42 OL R192,R193 | Re-check `SPECIFICATION.md` for conflicts.
+44 OL R192 |
+
+FILE .claude/skills/delivery-pipeline/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R129,R21 | read them first
+14 NN | section heading
+16 OL R182,R181 | add stages only for the actual project
+18 NN | section heading
+20 OL R182 |
+21 OL R182 | Run formatting/analyzer gates only when the project has adopted them as enforced checks.
+22 OL R126 |
+23 OL R65,R181 | isolated from Development and Production data
+24 OL R44 |
+25 OL R24 | Do not let CI upgrade packages automatically
+27 NN | section heading
+29 OL R129,R130 | Build and publish images from CI only when container deployment is part of the project.
+31 NN | section heading
+33-35 OL R183,R148 | Deployment never runs Development seeding in Production
+37 NN | section heading
+39 NN | CI/CD separation and artifact promotion technique (prefer; EXC-014 class)
+41 NN | section heading
+43 OL R182,R43 | exposes no secrets
+DONE

@@ -1,0 +1,113 @@
+# Batch B013 (part 1) — skills: ef-core
+
+@@ output/template/.claude/skills/ef-core/SKILL.md ;; Knowledge skill (on demand when writing/reviewing EF Core code).
+@scope on-demand knowledge skill ef-core (backend persistence)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-18 NN ;; Pointers to policy owners.
+20 NN ;; Heading.
+22-28 OL [arc007.ef-contracts]
+30 NN ;; Heading.
+32 EX [x.ef-entity-config]
+34-63 NN ;; DbContext and entity configuration code examples.
+65 OL [arc002.ef-config-out-of-domain]
+67 NN ;; Heading.
+69 OL [arc023.ef-in-infrastructure]
+71-88 NN ;; Registration code example.
+90-91 OL [dep009.project-provider]
+93 NN ;; Heading.
+95-116 NN ;; Repository code example.
+118-119 OL [arc016.stage-commit]
+121 NN ;; Heading.
+123-124 OL [arc017.shared-dbcontext]
+126-136 NN ;; UnitOfWork code example.
+138 NN ;; Heading.
+140 NN ;; Conditional lead-in to example.
+142-148 NN ;; Generic base repository code example.
+150-151 OL [arc015.full-ef-in-concrete]
+153 NN ;; Heading.
+155-156 OL [run006.projection]
+158-171 NN ;; Projection code example.
+173-174 OL [run006.no-overfetch]
+176 NN ;; Heading.
+178-182 EX [x.ef-tracking]
+184 NN ;; Heading.
+186-187 NN ;; Permissive technique: when FindAsync fits.
+189-193 NN ;; FindAsync code example.
+195-196 NN ;; Technical fact that LINQ is needed for predicates/projection/related data (FindAsync cannot express them); no behavioural choice.
+198 NN ;; Heading.
+200-204 MX [run006.no-lazy-loading,x.ef-query-shape] ;; Avoiding lazy loading by default (N+1) is RUN-006; explicit query shape and verifying split-query SQL are additional technique rules.
+206 NN ;; Heading.
+208-209 MX [run006.db-pagination,x.ef-deterministic-order] ;; Filtering/pagination in the database is RUN-006; always deterministic ordering for paged queries is additional.
+211-226 NN ;; Pagination code example.
+228-229 NN ;; Advisory 'consider keyset pagination when justified'; no required outcome.
+231 NN ;; Heading.
+233-234 NN ;; Describes ExecuteUpdateAsync/ExecuteDeleteAsync usefulness.
+236-240 NN ;; Code example.
+242-244 EX [x.ef-bulk-ops]
+246 NN ;; Heading.
+248-251 MX [arc018.explicit-tx-need,x.ef-no-distributed-tx] ;; Explicit transactions only for concrete need is ARC-018; no distributed transactions via EF APIs is additional.
+253 NN ;; Heading.
+255-258 OL [run008.compiled-queries]
+260 NN ;; Heading.
+262-263 EX [x.ef-interceptors] ;; ;; Use EF Core interceptors for infrastructure-level cross-cutting behavior such as
+265-293 NN ;; AuditInterceptor code example.
+295 EX [x.ef-interceptors]
+297 NN ;; Heading.
+299-301 OL [pst005.seeder-assumes-migrated]
+303 NN ;; Heading.
+305-311 OL [pst001.dataset-shape]
+313 NN ;; Heading.
+315 OL [pst006.anchor-detection]
+317-361 NN ;; DbSeeder and initialization-extension code example.
+363-364 OL [pst007.match-model]
+366 NN ;; Heading.
+368-373 NN ;; Startup wiring code example (Development-only seeding, PST-004 captured in persistence.md).
+375-376 OL [pst003.extension-delegates]
+378 NN ;; Heading.
+380-381 EX [x.ef-migration-project]
+383-385 NN ;; dotnet ef migrations add example.
+387-389 MX [pst008.recreate-valid,x.ef-migration-scripts] ;; Valid seed data after model change is PST-008; preferring generated scripts for controlled production deployment is an added preference.
+391-393 NN ;; dotnet ef migrations script example.
+395 NN ;; Heading.
+397-400 OL [run012.query-optimization-order]
+402 NN ;; Heading.
+404-406 OL [run008.raw-sql-justified]
+408 NN ;; Heading.
+410-412 MX [run006.no-in-memory-filter,x.ef-no-fire-and-forget,run008.raw-sql-justified] ;; In-memory filtering/lazy loading (RUN-006) and performative raw SQL (RUN-008) are oracle; fire-and-forget EF async operations is an added anti-pattern.
+414 NN ;; Heading.
+416-428 DU ;; Decision-guide table restating ef-core technique and owner rules (tracking, projection, Include, bulk ops, compiled query, transactions, migration scripts, seeder, explicit recreation).
+
+C arc007.ef-contracts OL ARC-007,ARC-016,ARC-017 MUST ;; Application defines persistence contracts (specific repositories, IUnitOfWork); Infrastructure implements them with EF Core; IUnitOfWork delegates to the same DbContext. ;; = ;; none ;;
+C x.ef-entity-config EX ARC-019 DEFAULT ;; Keep entity configuration separate with IEntityTypeConfiguration<T>. ;; = ;; none ;; Configuration-organisation technique not in the oracle.
+C arc002.ef-config-out-of-domain OL ARC-002 MUST ;; Keep persistence-specific configuration out of Domain entities where practical. ;; = ;; Where practical. ;;
+C arc023.ef-in-infrastructure OL ARC-023,ARC-019 DEFAULT ;; Register EF Core and persistence implementations in Infrastructure. ;; = ;; none ;;
+C dep009.project-provider OL DEP-009,DEP-001 MUST ;; Use the database provider selected by the project; do not add a provider because it appears in an example. ;; = ;; none ;;
+C arc016.stage-commit OL ARC-016 DEFAULT ;; Repositories stage changes; the Application Service commits through IUnitOfWork. ;; = ;; none ;;
+C arc017.shared-dbcontext OL ARC-017 MUST ;; Repositories are injected independently and share the same scoped AppDbContext within a Unit of Work. ;; = ;; none ;;
+C arc015.full-ef-in-concrete OL ARC-015,ARC-019 MUST_NOT ;; Concrete repositories may use the full EF Core API; do not force complex queries through a generic CRUD abstraction. ;; = ;; none ;;
+C run006.projection OL RUN-006 PREFER ;; For read-only queries needing selected data prefer database-side projection. ;; = ;; none ;;
+C run006.no-overfetch OL RUN-006 AVOID ;; Projection is not mandatory when the entity is needed, but avoid loading a full aggregate to return a few scalars. ;; = ;; none ;;
+C x.ef-tracking EX RUN-006 DEFAULT ;; Use tracking intentionally: tracking queries for entities modified in the current UoW; AsNoTracking for read-only entity queries; not mechanically on DTO projections. ;; = ;; none ;; Tracking technique outside the oracle (EXC-011).
+C run006.no-lazy-loading OL RUN-006 AVOID ;; Avoid lazy loading by default because it hides database access and causes N+1 queries. ;; = ;; none ;;
+C x.ef-query-shape EX RUN-006 PREFER ;; Prefer explicit query shape (projection for selected data, Include/ThenInclude when the graph is needed); for large collection includes consider split queries and verify generated SQL/performance. ;; = ;; none ;; Query-shaping technique outside the oracle (EXC-011).
+C run006.db-pagination OL RUN-006 MUST ;; Apply filtering, ordering and pagination in the database. ;; = ;; none ;;
+C x.ef-deterministic-order EX RUN-006 MUST ;; Always use deterministic ordering for paged queries. ;; = ;; none ;; Deterministic paging order is a concrete correctness rule not stated in RUN-006.
+C x.ef-bulk-ops EX RUN-021,ARC-016 MUST_NOT ;; Do not casually mix ExecuteUpdateAsync/ExecuteDeleteAsync with tracked entities for the same rows; understand their transaction and consistency implications. ;; = ;; none ;; Bulk-operation consistency caution not in the oracle.
+C arc018.explicit-tx-need OL ARC-018 DEFAULT ;; A single SaveChangesAsync is normally the transaction boundary; use an explicit transaction only when a concrete use case needs several operations/commits to be atomic. ;; = ;; Concrete atomicity need. ;;
+C x.ef-no-distributed-tx EX ARC-018,ARC-020 MUST_NOT ;; Do not attempt distributed transactions with EF transaction APIs. ;; = ;; none ;; Prohibition not stated in the oracle.
+C run008.compiled-queries OL RUN-008 DEFAULT ;; Normal LINQ is default; compiled queries only on a measured hot path where profiling shows compilation overhead is material. ;; = ;; Measured hot path. ;;
+C x.ef-interceptors EX API-011,ARC-019 MUST_NOT ;; Use EF Core interceptors for infrastructure-level cross-cutting behaviour (e.g. auditing) and never hide business behaviour in persistence interceptors. ;; = ;; none ;; Interceptor placement/prohibition is EF technique outside the oracle (EXC-011).
+C pst005.seeder-assumes-migrated OL PST-005,PST-004 MUST ;; The seeder assumes the Development schema is already migrated; developers apply migrations first and Development startup populates the empty schema. ;; = ;; none ;;
+C pst001.dataset-shape OL PST-001,PST-007 DEFAULT ;; Cover main meaningful states and relationships (created, active, completed, archived, optional values/relationships, status values, boundary states) without every combination; complex datasets should be described by task requirements rather than invented. ;; = ;; none ;;
+C pst006.anchor-detection OL PST-006 MUST ;; Use representative root/anchor entities to detect existing data (and skip seeding when present). ;; = ;; none ;;
+C pst007.match-model OL PST-007 MUST ;; Concrete seed entities and states must match the current Domain and persistence model. ;; = ;; none ;;
+C pst003.extension-delegates OL PST-003,PST-005 MUST ;; An Infrastructure extension creates the scope and delegates to the internal DbSeeder; migration strategy is separate from seeding. ;; = ;; none ;;
+C x.ef-migration-project EX ARC-019 DEFAULT ;; Create migrations from the Infrastructure project, using the API project as startup project when required. ;; = ;; none ;; Migration-command technique not in the oracle.
+C pst008.recreate-valid OL PST-008 MUST ;; After a model change recreating an empty Development database must produce seed data valid for the migrated schema. ;; = ;; none ;;
+C x.ef-migration-scripts EX WF-019 PREFER ;; For controlled production deployment generated (idempotent) migration scripts are often preferable. ;; = ;; none ;; Deployment-artifact preference beyond WF-019.
+C run012.query-optimization-order OL RUN-001,RUN-012 MUST ;; Start with clear LINQ and optimize after identifying a real problem; first inspect round trips, columns, N+1, indexes, SQL, plan, materialized data and tracking overhead. ;; = ;; none ;;
+C run008.raw-sql-justified OL RUN-008,SEC-004 MUST ;; Use raw SQL only when EF cannot express the query effectively or measured performance justifies it; prefer parameterization-preserving APIs (FromSql, FromSqlInterpolated, SqlQuery); avoid raw SQL merely to appear performant. ;; = ;; none ;;
+C run006.no-in-memory-filter OL RUN-006 AVOID ;; Avoid loading all rows and filtering in memory when the database can filter, and lazy loading by default. ;; = ;; none ;;
+C x.ef-no-fire-and-forget EX RUN-002 AVOID ;; Avoid fire-and-forget EF asynchronous operations. ;; = ;; none ;; Not stated in RUN-002 (which targets sync-over-async).

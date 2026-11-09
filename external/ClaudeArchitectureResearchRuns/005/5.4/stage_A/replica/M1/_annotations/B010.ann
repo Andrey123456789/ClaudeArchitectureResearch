@@ -1,0 +1,163 @@
+# M1 / B010 — add-dependency, angular, api-versioning, architecture-decision.
+
+C R142 OL DEP-002 | MUST NOT | Use the approved technology when one exists (technology stack and capability decisions) rather than silently selecting an alternative; replacing an approved technology is Reserved. | technology choices | Approved replacement.
+C R143 OL DEP-017 | DEFAULT | Add a versioning package only after the project has explicitly adopted Controller API versioning; then use the Controller integration of Asp.Versioning (Asp.Versioning.Mvc, plus Asp.Versioning.Mvc.ApiExplorer). | API versioning packages | none stated
+C R144 OL DEP-004 | MUST | Before installing check whether the selected package/version is deprecated, known vulnerability information and the license of the exact version from official registry metadata (and upstream when necessary); downloadable without payment does not mean acceptable; check manifests and vulnerability information when verifying the dependency. | dependency additions and updates | none stated
+C R145 OL DEP-005 | REQUIRES_APPROVAL | Permissive licenses (MIT, Apache-2.0, BSD) may be accepted; do not install automatically a paid/commercial dependency or one with material obligations or unclassifiable licensing; explain the concern and present alternatives (say so when none exists) without silently substituting; no legal conclusions beyond the published license. | dependency additions | User decision.
+C R147 OL GOV-014 | MUST | Keep changes focused on the requested scope and preserve existing behavior unless the task or approved specification requires a change (e.g. do not automatically replace or upgrade unrelated packages after a scanner finding; no unrelated dependency cleanup in narrow tasks). | all changes | Task or approved specification requires change.
+C R148 OL GOV-012 | DEFAULT | Prefer simple, maintainable solutions and avoid speculative abstractions (e.g. no custom abstraction around every UI-library component without a concrete reason). | all code | none stated
+C R149 OL WF-016 | DEFAULT | Treat generated code as generated: keep it separate from handwritten logic and regenerate it when the source contract changes; fix wrong generated output at its source. | generated code | none stated
+C R150 OL DEP-014 | DECIDED | Frontend baseline: latest stable Angular supported by the selected Node.js environment, created with the current Angular CLI, which selects mutually compatible TypeScript and RxJS versions (TypeScript not upgraded beyond Angular's supported range); standalone APIs, strict mode, routing, zoneless change detection when supported, SCSS, Angular Material and CDK, Vitest. | frontend workspace | none stated
+C R151 OL DEP-024,DEP-013 | DEFAULT | Keep backend production and test projects (backend/<Name>.<Layer>/), the frontend workspace (frontend/<Name>.Web/, with unit/component tests colocated and E2E under e2e/) and documentation separated per the repository layout; backend test projects live under backend/ beside the production projects; no separate top-level tests/ directory. | repository layout | none stated
+C R152 OL WF-018 | MUST | Build and test the frontend through the scripts the workspace actually defines; never invent npm scripts; in CI use npm ci when a maintained lockfile supports it. | frontend commands and CI | none stated
+C R153 OL GOV-017 | MUST | Classify every consequential choice: Decided (settled by these instructions, decision records, the approved specification, established structure or an accepted ADR; do not reopen without approval), Delegated (local, reversible, no material boundary, dependency, convention, contract or behavior change; decide yourself), Reserved (explicit approval); an explicit user instruction counts as approval. | all consequential choices | none stated
+C R154 OL GOV-017 | MUST | Raise a Reserved decision as a Decision Request (Context, Options, Recommendation, Blocked, Proceeding with) through architecture-decision and wait for an explicit answer before implementing the Reserved part. | Reserved decisions | none stated
+C R155 OL GOV-017 | MUST | In an autonomous or headless run continue only on the policy-compliant non-Reserved path named in 'Proceeding with', never make a Reserved decision silently, and list every unresolved Decision Request in the final report. | headless runs | none stated
+C R156 OL GOV-007 | MUST | When a new behavioral rule is approved, update the durable source of truth in the same change, including SPECIFICATION.md when appropriate. | approved product behavior | none stated
+C R157 OL GOV-008 | MUST | CUSTOM_SETTINGS.md holds approved project-level tunable product limits and defaults (maximum lengths, page sizes, retention periods, numeric thresholds); SPECIFICATION.md owns behavioral intent; tunable values are recorded through custom-settings. | product settings | none stated
+C R158 OL GOV-006 | REQUIRES_APPROVAL | Observable string semantics (case sensitivity, collation, culture vs ordinal, normalization, trimming, uniqueness, lookup) are product behavior; when approved sources do not define them and the choice affects equality, uniqueness, lookup or accepted input, ask for approval instead of choosing silently; the persistence collation default is a technology default, and changing effective string comparison (e.g. through a declared-property change) is a product decision that must not happen silently. | product behavior | none stated
+C X16 EX DEP-001,GOV-014 | MUST | Remove dependencies that are no longer used when that is part of the current change and safe to verify; do not leave dead package references. | dependency changes | Unrelated cleanup during a narrowly scoped task is excluded. | DEP-001 restricts additions and GOV-014 limits scope; no oracle policy requires removing dependencies made unused by a change. | A refactor that stops using a package must also remove its reference.
+C X17 EX GOV-017,GOV-007 | MUST | Accepted architecture, stack, convention or public-contract decisions are recorded in the same change as an ADR in docs/decisions/NNNN-short-title.md (Status, Context, Decision, Consequences) and in the affected decision record (technology stack or capability planning facet); a rejected request is recorded only when the rejection itself is a durable decision. | approved decisions | Product behavior and tunable values go to SPECIFICATION.md / CUSTOM_SETTINGS.md. | GOV-017 requires approval for Reserved decisions but no recording artifact; no oracle policy requires ADRs or decision-record updates. | After approval to add a new library, the change is incomplete until the ADR and the stack record are written.
+C X18 EX ARC-020,GOV-017,DEP-002 | MUST | Changing a capability selection, enabling or disabling the optional frontend slot, or changing a declared property such as the persistence provider variant is Reserved and requires an ADR; after approval the replacement itself is applied by the user-run template-maintenance workflow (Capability Replacement). | capability selection changes | none stated | ARC-020/DEP-002 require approval for replacing approved technology, but no oracle policy requires an ADR or routes the change through a user-run maintenance workflow. | After the user approves switching the test framework, the agent records the ADR and asks the user to run /template-maintenance instead of editing the modules itself.
+
+FILE .claude/skills/add-dependency/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-16 OL R59 | The dependency must solve a concrete current requirement
+17-19 OL R142,R139 | A major library or framework, or a replacement for an
+21 NN | section heading
+23 NN | lead-in
+25-28 OL R143 | add a versioning package only after the project has
+29-35 MX R140,X15 | deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http` ⟫ Microsoft resilience packages by default with documented Polly exception are oracle-linked (R140); the absolute ban on the deprecated integrations is X15.
+36-37 EX X15 | do not add deprecated or legacy ASP.NET automatic-validation
+39 NN | section heading
+41 NN | lead-in
+43-49 OL R141 | verify the current version from the package registry rather than relying on
+51-52 OL R141 | "Latest" means latest stable compatible version
+54 NN | section heading
+56-64 OL R144 | whether the selected package/version is deprecated;
+66 NN | section heading
+68-77 OL R145 | Do not install automatically a dependency that requires payment or a
+79-89 NN | example option message
+91-92 OL R145 | Do not make legal conclusions beyond what the published license information
+94 NN | section heading
+96-98 OL R60 | a versionless `PackageReference` in the narrowest project that needs it
+99-102 OL R61,R12 | resolve the actual compatibility problem instead.
+104-108 OL R11,R12 | re-run the same command with the trailing comment
+110 NN | section heading
+112-115 OL R144 | ecosystem's vulnerability information when the change is security-relevant
+117-120 NN | vulnerability command example
+122-123 OL R147 | Do not automatically replace or upgrade
+125 NN | section heading
+127-129 MX X16,R147 | do not leave dead package references ⟫ Removing unused dependencies and leaving no dead references is X16; avoiding unrelated cleanup is scope preservation (R147).
+
+FILE .claude/skills/angular/SKILL.md | Capability frontend/angular; knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-42 NN | suggested directory tree (EXC-018 class)
+44 OL R109 | Create directories only when they contain meaningful code.
+46 NN | section heading
+48-55 NN | component code example
+57 NN | section heading
+59-60 NN | page vs presentation component technique
+62 NN | section heading
+64-71 NN | signals code example
+73-75 NN | computed vs effect technique (EXC-018 class)
+77 NN | section heading
+79-82 OL R74 | instead of nesting subscriptions.
+84 NN | section heading
+86-95 NN | data-access service code example
+97 OL R78 | Do not expose raw HTTP details throughout presentation components.
+99 NN | section heading
+101 NN | lead-in
+103-110 NN | provider configuration example
+112 OL R73 | Do not introduce class-based interceptors without a reason.
+114 NN | section heading
+116-120 OL R114 | server-side authorization stays authoritative
+122 NN | section heading
+124-127 OL R79 | map them in one reusable place
+129 NN | section heading
+131-134 OL R82 | Reactive Forms give explicit state, validation, and testability for
+136 NN | section heading
+138-147 NN | lazy route code example
+149-150 NN | route component technique
+152 NN | section heading
+154-157 OL R80 | Introduce a dedicated state-management library only when
+159 NN | section heading
+161-162 NN | shared component candidates (technique)
+164 NN | section heading
+166-169 OL R148 | Material component in a custom abstraction without a concrete reason.
+171 NN | section heading
+173-176 OL R149 | treat generated code as generated:
+178 NN | section heading
+180-184 NN | frontend test targeting (EXC-018 class)
+186 NN | section heading
+188-191 OL R83 | Do not prematurely optimize normal Angular code.
+193 NN | section heading
+195-198 NN | security review technique for sanitizer bypasses
+200 NN | section heading
+202-209 DU R71,R78,R76,R80,R75,R73,R114,R79,R72 | review checklist restating frontend rules
+211 NN | section heading
+213-217 OL R150,R151 | Create the workspace under `frontend/<Name>.Web/` with the current Angular
+218-220 OL R150,R11 | Let the CLI select mutually compatible Angular, TypeScript, and RxJS
+221-222 OL R151 | Unit and component tests stay colocated in the workspace
+223-224 OL R152 | Build and test through the scripts the workspace defines
+
+FILE .claude/skills/api-versioning/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 OL R49 | Versioning belongs to the API contract, not to Domain or Application.
+16 NN | section heading
+18-23 OL R22 | do not add `v1`
+25 NN | section heading
+27-28 OL R24 | URL-segment versioning is visible in the URI
+30-33 NN | URL example
+35-36 OL R24 | Header and query-string versioning are valid alternatives when project
+38 NN | section heading
+40-54 NN | setup code example
+56 NN | section heading
+58-81 NN | versioned controller code example
+83 NN | lead-in
+85-94 NN | second version code example
+96-97 NN | mapping technique note
+99 NN | section heading
+101-105 OL R23 | Do not judge compatibility only
+107 NN | section heading
+109-112 NN | compatible-change technique
+114 NN | section heading
+116-118 OL R26 | the documented version must match runtime
+120 NN | section heading
+122 OL R18 | Version changes do not override normal HTTP semantics
+124 NN | section heading
+126-130 NN | versioning test targeting (test technique)
+132 NN | section heading
+134-139 DU R22,R38,R49,R23,R25,R24 | review checklist restating versioning rules
+
+FILE .claude/skills/architecture-decision/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-16 OL R153 | Decided and Delegated decisions need no request.
+18 NN | section heading
+20-38 OL R154 | Proceeding with:
+40 NN | section heading
+42-43 OL R154,R153 | wait for an explicit answer before implementing the
+44-46 OL R155 | continue only on the non-Reserved path named in
+48 NN | section heading
+50-55 EX X17 | an ADR in
+56-57 OL R156 | durable source of truth, including `SPECIFICATION.md` when appropriate;
+58 OL R157 | tunable values → `CUSTOM_SETTINGS.md` through the `custom-settings` workflow.
+60-61 EX X17 | A rejected request is recorded only when the rejection itself is a durable
+63 NN | section heading
+65-69 MX R139,X18,R158 | Reserved and requires an ADR. ⟫ Reserved status of selection changes is oracle-linked (R139) and observable declared-property changes are product decisions (R158); the ADR requirement is X18.
+71-73 EX X18,X5 | ask the user to run
+75 NN | section heading
+77-83 OL R25 | keep the old version working for the promised support period.
+85-86 OL R25,R139 | removing it is a breaking public API change (Reserved).
+DONE

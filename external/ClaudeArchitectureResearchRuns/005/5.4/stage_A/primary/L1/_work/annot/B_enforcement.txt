@@ -1,0 +1,183 @@
+# L1 — executable enforcement and enforcement data (read as code/data, never executed)
+
+@@ output/template/.claude/settings.json ;; Hook registrations (exec form).
+@scope Claude Code hook registration
+1-6 IM ;; JSON structure and PreToolUse matcher.
+7 MX [dep025.pre-ask-bypass,x.pre-fail-closed] ;; Registers the critical pre-shell gate (oracle-linked peer-bypass handling) with onFailure block (added fail-closed policy).
+8-14 IM ;; JSON structure and edit matcher.
+15 OL [dep006.post-validate]
+16-20 IM ;; JSON structure and shell matcher.
+21 OL [dep006.post-validate]
+22-28 IM ;; JSON structure and PostToolUseFailure matcher.
+29 OL [dep006.post-validate]
+30-35 IM ;; JSON structure for Stop.
+36 MX [pst008.stop-seed,x.stop-test-reminder] ;; Registers the Stop co-change hook (seed/product reminders oracle-linked; test and migration reminders added).
+37-41 IM ;; JSON structure.
+
+@@ output/template/.claude/hooks/pre-shell-command.mjs ;; PreToolUse gate for Bash/PowerShell (read as code only).
+@scope every Bash/PowerShell tool call (PreToolUse), governed active root
+1 IM ;; Shebang.
+2-9 DU ;; Header comment describing the ask/deny-once/fail-closed behaviour implemented below and in settings.json.
+10-12 IM ;; Imports.
+14 EX [x.pre-deny-once]
+16-22 IM ;; Option tables for argument parsing.
+23 OL [dep025.pre-ask-bypass]
+24-28 OL [dep004.pre-route]
+29 OL [dep025.pre-ask-bypass]
+31-76 IM ;; Command segmentation, tokenizing, executable-name and argument parsing helpers.
+78-88 MX [dep004.pre-route,x.pre-ask-reference] ;; dotnet package/tool commands are dependency changes routed to add-dependency (DEP-004); dotnet reference commands feed the added reference gate.
+90-102 OL [dep025.pre-ask-bypass,dep004.pre-route]
+104-129 IM ;; Classification through env prefixes, wrappers (sudo, env, call, &), nested shells (bash/sh/pwsh -c, cmd /c), npx/corepack mapping, frontend CLI commands from the frontend enforcement facet and NuGet PowerShell cmdlets; feeds the decisions at 168-194.
+131-142 IM ;; Frontend CLI facet loading and classify() entry.
+144-154 IM ;; Decision output helpers (permission decision JSON; exit 2 block).
+156-165 EX [x.pre-fail-closed]
+166-167 IM ;; Root resolution and classification call.
+168-170 MX [dep025.pre-ask-bypass,x.pre-bypass-ask-exception] ;; Detecting peer-bypass flags and pointing to resolving the real conflict is DEP-025; asking the user and allowing the command on explicit confirmation is an added exception path.
+171-173 EX [x.pre-ask-reference]
+174 IM ;; Non-dependency commands pass.
+176-193 EX [x.pre-deny-once]
+194 OL [dep004.pre-route]
+195 IM ;; Function end.
+197 EX [x.pre-fail-closed]
+
+C x.pre-fail-closed EX DEP-025,ARC-001 ENFORCED ;; The PreToolUse gate fails closed: empty, malformed or incomplete input and any internal failure block the command (exit 2); settings.json sets onFailure block for launch failures, crashes and timeouts. ;; = ;; none ;; Fail-closed enforcement policy not in the oracle.
+C dep025.pre-ask-bypass OL DEP-025 ENFORCED ;; npm/pnpm/yarn install-like commands with --force, -f or --legacy-peer-deps, and 'npm config set legacy-peer-deps/force true', are intercepted with a reminder that add-dependency requires resolving the actual compatibility problem. ;; = ;; none ;;
+C x.pre-bypass-ask-exception EX DEP-025 ENFORCED ;; Peer-bypass commands receive an 'ask' permission decision: they run if the user explicitly confirms. ;; = ;; Explicit user confirmation. ;; User-confirmed override path not stated in DEP-025.
+C x.pre-ask-reference EX ARC-001,ARC-020 ENFORCED ;; dotnet add/remove … reference and dotnet reference add/remove commands receive an 'ask' decision: Reserved unless they implement the approved layout; confirm only with that approval. ;; = ;; Implements the approved layout. ;; Reference-graph gate beyond the oracle.
+C dep004.pre-route OL DEP-004,DEP-003 ENFORCED ;; Dependency changes (dotnet add/remove/update package, dotnet tool install/update/uninstall, npm/pnpm/yarn add/remove/update/install <pkg>, npm audit fix, ng add/update, NuGet PowerShell cmdlets) are routed to add-dependency (need, approved technology, latest stable compatible version, deprecation, vulnerability, license checks, approval for commercial/unclear licenses). ;; = ;; none ;;
+C x.pre-deny-once EX DEP-004 ENFORCED ;; A dependency command is denied the first time and allowed when the identical command is retried within 30 minutes; deny-once state lives in the active worktree. ;; = ;; Identical retry within the grace window. ;; Deny-once mechanism not in the oracle.
+
+@@ output/template/.claude/hooks/post-change-checks.mjs ;; PostToolUse/PostToolUseFailure manifest and architecture checks (read as code only).
+@scope edits (Edit/Write/MultiEdit/NotebookEdit) and Bash/PowerShell calls (success and failure) in the governed active root
+1 IM ;; Shebang.
+2-12 DU ;; Header comment describing the checks implemented below; findings exit 2 (shown to Claude), failures exit 1 (non-blocking).
+13-21 IM ;; Imports.
+22-27 IM ;; Edit tool set, manifest pattern, pathspecs and owner path.
+29-31 IM ;; Prerelease detection helper.
+33-49 IM ;; Assembles package lists from manifest-policy.json and the selected frame/testing/frontend facets.
+51-57 MX [x.post-msbuild-property,x.deny-nuget,dep020.review-polly] ;; Flags MSBuild-property package ids (added), denied packages (added deny list) and approval-required packages (Polly DEP-020; MediatR/Kommand, AutoMapper and second test frameworks via their lists).
+59-66 MX [dep006.csproj-version-check,x.versionoverride-report] ;; Versions in project files are flagged (DEP-006); VersionOverride is flagged for a reported reason (added).
+68-78 MX [dep006.cpm-flag-check,dep003.post-versions,x.post-msbuild-property] ;; CPM switch and floating/empty/prerelease versions are oracle-linked; MSBuild-property versions are flagged as an added check.
+80-92 OL [dep003.post-versions,dep015.review-npm]
+94-111 IM ;; Manifest dispatch; undecodable files reported for re-saving.
+113-163 IM ;; Per-worktree snapshot (Git index ids/content ids, scan fallback), state persistence and report (exit 2).
+165-168 OL [arc001.post-arch-check]
+170-191 OL [gov021.edit-reminder,dep006.post-validate]
+193-222 MX [dep006.post-validate,x.post-manifest-moves,arc001.post-arch-check] ;; Validating changed manifests and re-running the architecture check after shell calls are oracle-linked; reporting removed/moved manifests (csproj as Reserved graph change unless the approved layout) is added.
+224-239 IM ;; Entry point: unreadable input or internal failure exits 1 (non-blocking).
+
+C dep006.post-validate OL DEP-006,DEP-003,DEP-007 ENFORCED_ADVISORY ;; After edits and after successful or failed shell calls the actual manifest state of the active worktree is validated (per-worktree snapshot; first observation validates all, later only added/changed/removed/moved manifests incl. HEAD transitions); findings are returned to Claude. ;; = ;; Governed active root. ;;
+C x.post-msbuild-property EX DEP-004 ENFORCED_ADVISORY ;; Package ids or versions using MSBuild properties are flagged because the hook does not evaluate MSBuild; confirm the resolved package/version is allowed and pinned. ;; = ;; none ;; Not in the oracle.
+C x.deny-nuget EX DEP-020,DEP-004,API-010 ENFORCED_ADVISORY ;; Microsoft.Extensions.Http.Polly, Polly.Extensions.Http, FluentValidation.AspNetCore and Serilog.Sinks.Elasticsearch are flagged as packages that must not be added. ;; = ;; none ;; Concrete deny list not in the oracle.
+C dep020.review-polly OL DEP-020 ENFORCED_ADVISORY ;; Direct Polly is flagged as requiring approval (documented exception to the Microsoft resilience packages). ;; = ;; User approved. ;;
+C dep006.csproj-version-check OL DEP-006 ENFORCED_ADVISORY ;; PackageReference entries declaring a version are flagged (versions only in Directory.Packages.props). ;; = ;; none ;;
+C dep006.cpm-flag-check OL DEP-006 ENFORCED_ADVISORY ;; ManagePackageVersionsCentrally must stay true. ;; = ;; none ;;
+C dep003.post-versions OL DEP-003 ENFORCED_ADVISORY ;; Floating or empty NuGet versions ('*', empty) and npm floating versions ('*', 'latest', 'x', empty) are flagged; prerelease versions are flagged as allowed only when explicitly requested (ranges such as ^/~ are not flagged). ;; = ;; Explicit request (prerelease). ;;
+C dep015.review-npm OL DEP-015 ENFORCED_ADVISORY ;; Frontend package.json entries for NgRx/NGXS, axios, lodash, bootstrap, ng-bootstrap/ngx-bootstrap, PrimeNG and Tailwind are flagged as requiring a concrete need and approval. ;; = ;; Approval. ;;
+C arc001.post-arch-check OL ARC-001,ARC-028 ENFORCED_ADVISORY ;; After project-file edits or project-set changes the architecture check runs and its violations are returned. ;; = ;; none ;;
+C gov021.edit-reminder OL GOV-009,GOV-021 ENFORCED_ADVISORY ;; Editing SPECIFICATION.md or CUSTOM_SETTINGS.md returns a reminder to keep them consistent and run custom-settings. ;; = ;; none ;;
+C x.post-manifest-moves EX ARC-020,DEP-006 ENFORCED_ADVISORY ;; Removed or moved manifests are reported: a removed/moved .csproj changes the project set/reference graph (Reserved unless the approved layout); a removed package file removes configuration the package-management rule relies on. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/hooks/stop-cochange.mjs ;; Stop co-change reminder (read as code only).
+@scope Stop event in the governed active root
+1 IM ;; Shebang.
+2-7 DU ;; Header comment describing the once-per-state, non-looping reminder implemented below.
+8-13 IM ;; Imports.
+15-18 IM ;; Output helper.
+20-32 IM ;; Changed-file listing and content ids.
+34-45 IM ;; Preamble: malformed input reported as system message; stop_hook_active exits silently.
+46-47 IM ;; Non-Git fallback: system message asking for manual co-change checks.
+48-54 IM ;; Loads frame role globs and persistence co-change data.
+55-62 MX [pst008.stop-seed,x.stop-migration-cochange] ;; Model changes without seeder change prompt a seeder update (PST-008); model changes without a migration prompt confirming no schema change is needed (added).
+63-67 EX [x.stop-test-reminder]
+68-69 OL [gov021.stop-product]
+70-82 IM ;; Block end and fingerprint de-duplication per material state.
+83 IM ;; Non-Git branch output.
+84-87 EX [x.stop-address-or-justify]
+88-90 IM ;; Function end and failure reporting as system message.
+
+C pst008.stop-seed OL PST-008 ENFORCED_ADVISORY ;; At Stop, Domain/persistence model changes without a seeder change prompt confirming seeded entities are unaffected or updating the seeder. ;; = ;; none ;;
+C x.stop-migration-cochange EX PST-010,PST-009 ENFORCED_ADVISORY ;; At Stop, model changes without a migration prompt confirming no schema change is needed. ;; = ;; none ;; Model→migration co-change reminder not in the oracle.
+C x.stop-test-reminder EX TST-009,TST-010 ENFORCED_ADVISORY ;; At Stop, backend production code changes without test changes prompt confirming coverage, regression tests and probe preservation. ;; = ;; none ;; General test co-change reminder not in the oracle.
+C gov021.stop-product OL GOV-009,GOV-021 ENFORCED_ADVISORY ;; At Stop, changed product sources prompt confirming consistency and synchronization via custom-settings. ;; = ;; none ;;
+C x.stop-address-or-justify EX - ENFORCED_ADVISORY ;; The Stop hook blocks once per change state; Claude must handle each item or state briefly that it is handled/not applicable, then finish; never loops. ;; = ;; none ;; Hook procedure (repo/meta).
+
+@@ output/template/.claude/hooks/manifest-policy.json ;; Project-level package data for post-change-checks.mjs.
+@scope manifest checks
+1-3 IM ;; JSON structure and comment.
+4-9 EX [x.deny-nuget]
+10-13 MX [dep020.review-polly,x.review-automapper] ;; Direct Polly requiring approval is DEP-020; AutoMapper as a Reserved library addition is added.
+14 IM ;; JSON structure.
+15-17 OL [dep003.post-versions]
+18 IM ;; JSON structure.
+
+C x.review-automapper EX DEP-011,DEP-002 ENFORCED_ADVISORY ;; Packages prefixed AutoMapper are flagged as a Reserved library addition (Mapster is the approved option). ;; = ;; User approved. ;; Not in the oracle.
+
+@@ output/template/.claude/scripts/check-architecture.mjs ;; Architecture checker (run by post-change hook and manually; read as code only).
+@scope backend project files of the active root
+1-6 IM ;; Header comment and usage.
+7-12 IM ;; Imports.
+14-15 IM ;; Platform fact table (SDKs implicitly referencing shared frameworks).
+17-28 IM ;; Setup (missing frame selection is a setup error).
+29-33 OL [dep024.arch-no-tests-dir]
+35-64 IM ;; Project discovery and role mapping (undecodable project files reported as violations).
+65-73 EX [x.arch-unmapped-warning]
+74-88 MX [arc001.arch-direction,arc028.arch-test-refs,x.arch-unmapped-warning] ;; Direction and production→test violations (ARC-001) and broader-than-typical test references (ARC-028, warning) are oracle-linked; unresolved references warning is part of the added mapping warnings.
+89-106 OL [arc008.arch-no-aspnet-inner]
+107-113 OL [arc019.arch-no-ef-inner]
+114-117 IM ;; Return value.
+119-136 IM ;; CLI entry (exit 1 on violations, 2 when it cannot run).
+
+C dep024.arch-no-tests-dir OL DEP-024 ENFORCED ;; A top-level tests/ directory is a violation (backend tests live under backend/). ;; = ;; none ;;
+C x.arch-unmapped-warning EX ARC-027,ARC-020 ENFORCED_ADVISORY ;; Backend projects whose names match no frame role, production projects referencing test packages and references that do not resolve to mapped projects raise warnings. ;; = ;; none ;; Not in the oracle.
+C arc001.arch-direction OL ARC-001 ENFORCED ;; Production projects referencing test projects or roles outside their allowed references (Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application, Infrastructure, Domain) are violations. ;; = ;; none ;;
+C arc028.arch-test-refs OL ARC-028 ENFORCED_ADVISORY ;; Test-project references broader than the typical references of their role raise warnings. ;; = ;; none ;;
+C arc008.arch-no-aspnet-inner OL ARC-008,ARC-002 ENFORCED ;; Domain and Application projects must not reference the Microsoft.AspNetCore.App framework, a web SDK implying it, or Microsoft.AspNetCore.* packages. ;; = ;; none ;;
+C arc019.arch-no-ef-inner OL ARC-019,ARC-008 ENFORCED ;; Domain and Application projects must not reference Microsoft.EntityFrameworkCore* packages. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/lib/project.mjs ;; Shared helper library for hooks and scripts (read as code only).
+@scope hooks and scripts
+1-9 IM ;; Header comment: launcher root vs active root.
+10-21 IM ;; Imports, skipped directories, decisions.md marker and error classes.
+23-35 IM ;; Path conversion and launcher-root resolution (missing decisions.md is a setup error).
+37-81 IM ;; Git invocation, root resolution (template root, Git top level), hook-state directory and repository-relative paths.
+83-134 IM ;; Strict UTF-8/BOM/UTF-16 decoding and stdin JSON parsing (empty or malformed input raises InputError; callers decide blocking).
+136-179 IM ;; Blob ids, file listing (skips nested repositories), minimal glob matching.
+181-218 IM ;; Capability-selection parsing from decisions.md and JSON facet loading (a selected implementation missing a facet is a setup error, never skipped).
+220-270 IM ;; MSBuild XML reading (properties not evaluated), csproj/packages parsing and package matching.
+
+@@ output/template/.claude/capabilities/architecture/clean-architecture/check.json ;; Facet architecture.check (data for the architecture checker and hooks).
+@scope architecture checker and hooks
+1-2 IM ;; JSON structure and comment.
+3-4 OL [dep024.arch-no-tests-dir]
+5-10 OL [arc001.arch-direction]
+11-12 OL [arc008.arch-no-aspnet-inner]
+13-18 OL [arc028.arch-test-refs]
+19-25 IM ;; Role path globs used by the Stop hook.
+26-29 OL [arc009.review-mediator]
+30 IM ;; JSON structure.
+
+C arc009.review-mediator OL ARC-009 ENFORCED_ADVISORY ;; MediatR- and Kommand-prefixed packages are flagged as requiring approval (mediator-based organization not adopted). ;; = ;; User approved. ;;
+
+@@ output/template/.claude/capabilities/persistence/ef-core/enforcement.json ;; Facet persistence.enforcement (data).
+@scope architecture checker and Stop hook
+1-2 IM ;; JSON structure and comment.
+3-5 OL [arc019.arch-no-ef-inner]
+6-12 MX [pst008.stop-seed,x.stop-migration-cochange] ;; Co-change globs drive the seeder reminder (PST-008) and the added migration reminder.
+13 IM ;; JSON structure.
+
+@@ output/template/.claude/capabilities/backend-testing/nunit/enforcement.json ;; Facet backend-testing.enforcement (data).
+@scope architecture checker and manifest hook
+1-2 IM ;; JSON structure and comment.
+3 EX [x.arch-unmapped-warning]
+4-8 OL [tst001.review-second-framework]
+9 IM ;; JSON structure.
+
+C tst001.review-second-framework OL TST-001 ENFORCED_ADVISORY ;; xunit, MSTest and TUnit packages are flagged as a second test framework needing a concrete reason. ;; = ;; Concrete reason. ;;
+
+@@ output/template/.claude/capabilities/frontend/angular/enforcement.json ;; Facet frontend.enforcement (data).
+@scope pre-shell gate and manifest hook (frontend)
+1-3 IM ;; JSON structure, comment and manifest globs.
+4-5 OL [dep004.pre-route]
+6-16 OL [dep015.review-npm]
+17 IM ;; JSON structure.

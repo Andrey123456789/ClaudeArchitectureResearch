@@ -1,0 +1,60 @@
+# M B014 — skills httpclient-factory (+references/resilience.md, EXC-007 lineage), logging (EXC-013 lineage)
+1 CO ARC-025~ GOV-012~ m=D | Named/typed/keyed clients all valid, simplest model chosen; outbound clients normally in Infrastructure.
+2 CO ARC-025 | Application does not know the external service uses HTTP (ARC-025).
+3 CO ARC-022 m=MN | No transient typed client captured in a singleton without understanding lifetimes (ARC-022).
+4 CO GOV-012 m=MN c=M | Keyed (or other) client models are not chosen automatically; the clearest ownership/lifetime model is preferred (GOV-012 simplicity).
+5 XP m=MN c=M rel=ARC-025 | DelegatingHandler only for genuine HTTP pipeline concerns (auth headers, correlation, request signing), never for business decisions (EXC-007 technique).
+  s: A handler that rejects requests based on a customer's credit limit: not addressed by the oracle; M forbids business decisions in handlers.
+6 CO RUN-003 | Pass the caller's CancellationToken to outbound calls; CancellationToken.None only when the operation must outlive the request (RUN-003).
+7 CO ARC-025 | Infrastructure translates remote responses into Application-facing abstractions (ARC-025).
+8 CO ARC-025~ m=MN c=M | No blind EnsureSuccessStatusCode when remote statuses carry contract meaning; no mechanical exposure/mapping of upstream statuses (translation at the Infrastructure boundary, ARC-025).
+9 CO RUN-017 m=D | Honor Retry-After on remote 429 when the policy supports it (RUN-017).
+10 CO RUN-015 RUN-016 | Timeout normally required; retry/circuit breaker not mandatory; retry only after establishing safety (RUN-015, RUN-016).
+11 XP m=MN c=M rel=RUN-005 | Per-request values (dynamic tokens) go on the request or through a handler; shared DefaultRequestHeaders are not mutated concurrently (HttpClient thread-safety technique).
+  s: Setting DefaultRequestHeaders.Authorization per call on a shared typed client: not addressed by RUN-005 (lifetime only); M forbids it.
+12 XP m=D c=M | Prefer System.Net.Http.Json/System.Text.Json where sufficient; explicit serialization options when the external contract differs (serialization technique).
+  s: Using Newtonsoft.Json for a simple external API without need: allowed by the oracle (subject to DEP-001); M prefers System.Text.Json.
+13 CO ARC-002~ ARC-025~ m=MN c=M | Internal Domain entities are not reused as remote API contracts merely to avoid mapping (Domain independent of external-service concerns; translation in Infrastructure).
+14 NN c=M rel=RUN-005 | Scope clarification: new HttpClient(testHandler) in a focused test is fine; RUN-005's lifetime rule concerns production request handling.
+15 CO RUN-016~ RUN-018~ c=M | Match resilience policies to the failure and operation semantics (safe retries, acceptable fallbacks).
+16 CO GOV-013 DEP-011~ m=MN | No resilience mechanisms merely because they are available (GOV-013, DEP-011).
+17 XP m=D c=M rel=RUN-015,RUN-016 | Observe retries, timeouts and circuit behavior when they materially affect operations; give important production circuit breakers operational visibility (EXC-007 technique).
+  t: when they materially affect operations
+  s: A production circuit breaker without any metric or log of its state: not addressed by the oracle; M's guidance asks for visibility.
+18 CO DEP-020 m=D c=M | Application code uses the Microsoft.Extensions resilience APIs (built on Polly v8) rather than Polly directly: DEP-020's default (the exception path is stated elsewhere in the skill).
+19 CO RUN-016 | Standard resilience handler optional; its retry behavior reviewed for state-changing requests (RUN-016).
+20 CO RUN-015 | Distinguish attempt timeout from total operation timeout (RUN-015 clear combined timeout behavior).
+21 CO RUN-016 m=MN | No retry of non-idempotent operations without duplicate prevention, of every exception/status, or of writes by hedging (RUN-016).
+22 XP m=MN c=M rel=RUN-016,RUN-017 | Do not retry validation errors, authentication/authorization failures, permanent 404 outcomes or deterministic business rejections: RUN-016 governs repeat safety, and these retries are safe but futile.
+  s: A retry policy retrying 401 responses three times on a GET: safe to repeat under RUN-016; M forbids retrying it.
+23 CO RUN-017 m=D | Follow Retry-After instead of an independent aggressive schedule (RUN-017).
+24 CO RUN-016~ m=MN c=M | No invented client-side Idempotency-Key unless the remote service supports it (a key the remote ignores is no concrete safety mechanism, RUN-016).
+25 CO RUN-016 | Automatic retry unsafe when it could duplicate side effects; use API-supported idempotency when appropriate (RUN-016).
+26 CO GOV-013~ DEP-011~ m=D c=M | Circuit breaker only when repeated calls to a failing dependency would add load or latency (no speculative resilience pattern).
+27 CO RUN-016 m=MN | Hedging only for operations safe to execute multiple times, never for state-changing ones by default (RUN-016).
+28 XP m=MN c=M rel=RUN-016,ARC-018 | No generic application-level retry pipeline around normal EF Core operations by default; prefer EF Core execution strategies/provider configuration; HTTP retry policies not automatically used for databases (EXC-007 database-retry technique).
+  s: A Polly retry wrapper around read-only repository calls (safe to repeat): allowed by RUN-016; M forbids the generic pipeline.
+29 XP m=D c=M rel=RUN-016 | Same EF Core retry guidance (replica wording, DEFAULT with reported-deviation exception).
+  e: reported deviation with a concrete reason
+  s: As for FG-M-a6db886b48.
+30 CO RUN-016~ m=D c=M | Retried publication can duplicate delivery; idempotent consumers, broker deduplication or outbox when required; no exactly-once assumption (concrete safety mechanisms of RUN-016).
+31 CO RUN-019 RUN-003~ | Cancellation propagates through resilience pipelines so a cancelled caller ends further attempts (RUN-019).
+32 CO GOV-013~ DEP-002~ m=MN c=M | OpenTelemetry not required solely because resilience handlers exist; use the adopted telemetry stack.
+33 CO RUN-015~ RUN-017~ m=SN | Avoid stacked overlapping handlers and unbounded retry/timeout combinations (RUN-015, RUN-017).
+34 XP m=D c=M rel=RUN-013 | Log level semantics by operational meaning (Trace/Debug, Information, Warning, Error, Critical) and not logging every internal method call (EXC-013 lineage; RUN-013 covers structured templates only).
+  s: Logging a handled fallback at Error and each method entry at Information: allowed by the oracle; M's level guidance differs.
+35 XP m=D c=M rel=RUN-013 | Same level guidance (Codex wording).
+  s: As for FG-M-e98745cb9f.
+36 CO SEC-010 m=MN | Debug or Trace level does not make sensitive data safe to log (SEC-010).
+37 CO API-012 | Log an exception where it is handled or terminated, not again when rethrowing (API-012).
+38 XP m=D c=M rel=RUN-013 | Use ILogger.BeginScope when several entries need shared context (EXC-013 technique).
+  s: Repeating the same identifiers as properties on each log call instead of a scope: allowed by RUN-013; M's technique uses scopes.
+39 XP m=D c=M rel=RUN-013 | Correlation via platform trace identifiers; explicit correlation id only when required; propagate tracing context across outbound calls (EXC-013 correlation implementation).
+  s: A custom correlation-id middleware added without an integration need: allowed by the oracle (subject to GOV-013); M's default uses platform identifiers.
+40 CO SEC-003~ c=M | Validate or normalize an externally supplied correlation identifier before propagating it (untrusted input validated where assumptions matter).
+41 CO RUN-014 SEC-010~ | Watch authorization headers and full bodies; log specific needed properties, not whole objects (RUN-014, SEC-010).
+42 CO RUN-008 m=D c=M | Normal structured logging suffices; source-generated LoggerMessage only for measured hot paths (RUN-008 advanced optimizations).
+43 XP m=SN c=M rel=RUN-013 | Avoid using logs as an audit database unless a dedicated audit design was adopted.
+  e: an adopted audit design
+  s: Using Information logs as the only audit trail of approvals: not addressed by the oracle; M advises against it.
+44 CO DEP-021~ DEP-010~ m=SN st=W | Avoid provider-specific logging APIs throughout Application code; application code depends on ILogger<T> (DEP-021, DEP-010).

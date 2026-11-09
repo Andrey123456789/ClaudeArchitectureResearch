@@ -1,0 +1,68 @@
+# Batch B015 (part 1) — skills: httpclient-factory
+
+@@ output/template/.claude/skills/httpclient-factory/SKILL.md ;; Knowledge skill (on demand when calling external HTTP APIs); owns private reference references/resilience.md.
+@scope on-demand knowledge skill httpclient-factory (outbound HTTP)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+17-18 IM ;; Loading route: instructs reading the private reference references/resilience.md for resilience topics (constraints captured there).
+20 NN ;; Heading.
+22-24 OL [arc025.clients-in-infrastructure]
+26 NN ;; Heading.
+28 NN ;; Lead-in ('Application may define an abstraction').
+30-37 NN ;; Application abstraction code example.
+39 NN ;; Lead-in.
+41-47 NN ;; Infrastructure implementation code example.
+49 OL [arc025.app-unaware-http]
+51 NN ;; Heading.
+53 NN ;; Descriptive: when typed clients are useful.
+55-60 NN ;; Typed client registration example.
+62-63 OL [arc022.typed-client-singleton]
+65 NN ;; Heading.
+67-68 NN ;; Descriptive: when named clients are useful.
+70-75 NN ;; Named client registration example.
+77 NN ;; Heading.
+79-81 OL [gov012.client-model-clarity]
+83 NN ;; Heading.
+85-87 EX [x.hcf-handlers]
+89-106 NN ;; DelegatingHandler code example.
+108 NN ;; Heading.
+110 OL [run003.pass-caller-token] ;; ;; Pass the caller's token to outbound calls:
+112-116 NN ;; Code example.
+118-119 OL [run003.pass-caller-token]
+121 NN ;; Heading.
+123-125 MX [x.cfg-operational-values,run015.attempt-vs-total] ;; Timeout values from the operation/latency budget is the operational-values extra; per-attempt vs total timeout is RUN-015.
+127 NN ;; Heading.
+129-131 MX [arc025.translate-responses,x.hcf-response-mapping] ;; Infrastructure translation is ARC-025; not blindly calling EnsureSuccessStatusCode when statuses carry meaning is additional.
+133-140 NN ;; Response mapping code example.
+142-145 MX [arc025.translate-responses,x.hcf-response-mapping] ;; Translating to explicit outcomes is ARC-025; not exposing every upstream status or mapping all failures to one status is additional.
+147 NN ;; Heading.
+149-151 OL [run017.honor-retry-after]
+153 NN ;; Heading.
+155-162 OL [run016.before-retry]
+164 NN ;; Heading.
+166-169 EX [x.hcf-headers]
+171 NN ;; Heading.
+173-176 MX [x.hcf-serialization,arc025.no-domain-as-remote-contract] ;; Preferring System.Text.Json with explicit options is additional; not reusing Domain entities as remote contracts ties to ARC-025.
+178 NN ;; Heading.
+180-181 NN ;; Descriptive: what a controlled HttpMessageHandler can verify.
+183-188 NN ;; Test client code example.
+190-191 OL [run005.test-scope]
+193 NN ;; Heading.
+195-197 MX [gov012.client-model-clarity,run003.pass-caller-token,x.hcf-headers,gov013.no-resilience-by-default] ;; Mandatory client models, ignored cancellation and resilience without understanding are oracle-linked; dynamic tokens in shared DefaultRequestHeaders is the headers extra.
+
+C arc025.clients-in-infrastructure OL ARC-025,GOV-012 DEFAULT ;; Named, typed and keyed clients are valid; choose the simplest model for consumer and lifetime; outbound API clients normally live in Infrastructure. ;; = ;; none ;;
+C arc025.app-unaware-http OL ARC-025 MUST ;; Application does not need to know an external service uses HTTP (Infrastructure implements the Application abstraction). ;; = ;; none ;;
+C arc022.typed-client-singleton OL ARC-022 MUST_NOT ;; Do not capture a transient typed client inside a singleton without understanding lifetime implications. ;; = ;; none ;;
+C gov012.client-model-clarity OL GOV-012 MUST_NOT ;; Do not choose keyed clients (or make typed/keyed/named clients mandatory) automatically; prefer the model with clearest ownership and lifetime. ;; = ;; none ;;
+C x.hcf-handlers EX ARC-025,API-011 MUST_NOT ;; Use DelegatingHandler only for genuine HTTP pipeline concerns (auth header acquisition, correlation propagation, request signing), never for business decisions. ;; = ;; none ;; Handler-responsibility rule not in the oracle.
+C run003.pass-caller-token OL RUN-003 MUST ;; Pass the caller's CancellationToken to outbound calls; do not replace it with CancellationToken.None unless the operation must outlive the request; do not ignore cancellation. ;; = ;; Operation intentionally outlives the incoming request. ;;
+C arc025.translate-responses OL ARC-025 MUST ;; Infrastructure translates remote responses into Application-facing abstractions/explicit outcomes. ;; = ;; none ;;
+C x.hcf-response-mapping EX ARC-025,API-003 MUST_NOT ;; Do not blindly call EnsureSuccessStatusCode when remote statuses carry contract meaning; do not expose every upstream status through your API or map every upstream failure mechanically to one status. ;; = ;; none ;; Response-mapping rules beyond ARC-025.
+C run017.honor-retry-after OL RUN-017 DEFAULT ;; Honor Retry-After on remote 429 if the retry policy supports it; outbound retry and inbound responses are separate decisions. ;; = ;; none ;;
+C run016.before-retry OL RUN-015,RUN-016 MUST ;; A timeout is normally required for external I/O; retry/circuit breaker are not mandatory; before retry determine transience, repeat safety, idempotency support and duplicate risk; do not assume PUT/DELETE are operationally safe merely by HTTP definition. ;; = ;; none ;;
+C x.hcf-headers EX - MUST_NOT ;; Apply per-request values (dynamic tokens) to the request or via a handler; do not mutate shared DefaultRequestHeaders concurrently for request-specific values. ;; = ;; none ;; HttpClient header-safety rule not in the oracle.
+C x.hcf-serialization EX - PREFER ;; Prefer System.Net.Http.Json/System.Text.Json where sufficient; use explicit serialization options when the external contract differs from application defaults. ;; = ;; none ;; Serializer choice preference not in the oracle.
+C arc025.no-domain-as-remote-contract OL ARC-025,ARC-002 MUST_NOT ;; Do not reuse internal Domain entities as remote API contracts merely to avoid mapping. ;; = ;; none ;;
+C run005.test-scope OL RUN-005 ALLOWED ;; Constructing new HttpClient(testHandler) in a focused test is fine; the HttpClient lifetime rule concerns production code. ;; = ;; Tests. ;;

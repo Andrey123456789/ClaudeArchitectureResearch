@@ -1,0 +1,65 @@
+# K1 / B006 — Run 2 replica annotation (blind).
+
+C R150 OL ARC-001 | MUST (architecture facet check: error) | A backend production project may reference only inward roles (Domain: none; Application: Domain; Infrastructure: Application, Domain; Api: Application, Infrastructure, Domain); any other production reference and any production -> test-project reference is an error. | backend/**/*.csproj (manifest hook, verify) | Projects outside backend/ are not checked.
+C R151 OL ARC-028 | MUST (architecture facet check: error/warning) | Test-project references: the typical target (Domain.Tests -> Domain; Application.Tests -> Application, Domain; Infrastructure.Tests -> Infrastructure; Api.Tests and IntegrationTests -> Api) passes; broader but justifiable references (Infrastructure.Tests -> Application/Domain; Api.Tests/IntegrationTests -> Application/Infrastructure/Domain) are warned to keep only if required; other production references are errors; test -> test references are warned. | backend test projects | Generic *.Tests projects without a layer target are not checked.
+C R152 OL ARC-002,ARC-008 | MUST NOT (architecture facet check: error) | Domain and Application projects must not use the Web SDK (Microsoft.NET.Sdk.Web), reference the Microsoft.AspNetCore.App shared framework, or reference Microsoft.AspNetCore.* packages. | backend Domain/Application .csproj | none stated
+C R153 OL DEP-015 | MUST NOT by default (frontend facet check: warning) | @ngrx/*, axios, lodash/lodash-es, bootstrap, @ng-bootstrap/*, ngx-bootstrap and tailwindcss in a frontend package.json are warned as not added by default; the concrete need must be confirmed. | frontend/**/package.json | Concrete need confirmed.
+C R154 OL DEP-007 | SHOULD (frontend facet check: warning) | Angular build tooling (@angular/cli, @angular/build, @angular-devkit/*, @angular/compiler-cli) in runtime dependencies is warned (belongs in devDependencies). | frontend/**/package.json | none stated
+C R155 OL ARC-019,ARC-008,DEP-009 | MUST NOT (persistence facet check: error) | Domain and Application projects must not reference EF Core packages (Microsoft.EntityFrameworkCore and Microsoft.EntityFrameworkCore.*). | backend Domain/Application .csproj | none stated
+
+FILE .claude/scripts/classify-command.cjs | Pre-execution command classifier required by the PreToolUse hook.
+1-2 NN | header comments (kind/scope/loading; conformance pointers)
+3 IM | strict-mode directive
+5-7 IM | comment: classifies command text before execution and never inspects files
+9-11 IM | imports and the wrapper nesting depth limit (3)
+13-97 IM | lexer splitting command text into segments at shell separators, quotes, redirections, comments and line continuations
+99-154 IM | executable-name normalization, transparent prefix stripping (sudo, env, time, ...) and shell-wrapper unwrapping (bash -c, cmd /c, powershell -Command/-EncodedCommand) that extend the gate to wrapped commands
+156-195 IM | package-manager verb tables mapping npm/pnpm/yarn verbs to install/update/remove/restore/audit categories; they define the trigger scope of R4, R5, R6 and X8 captured below and in dispatch.cjs
+197-207 OL R4 | function npmSpecIsExact(spec)
+209 OL R6 |
+211-241 IM | option/verb/positional parsing for package-manager commands (audit fix is treated as an update)
+242-251 MX R6,X8,R5,R4 | findings.push({ kind: 'dependency-removal', segment, specs }) ⟫ classifier outcomes: peer-bypass (oracle DEP-025), removal (EXTRA X8), spec-less update (oracle DEP-003/004), loose version (oracle DEP-003)
+253-256 OL R4 | const EXACT_NUGET
+258-261 IM | project-name derivation from a project path or the current directory
+263-300 IM | dotnet verb/option parsing for add/remove package|reference and package/reference add|remove|update forms; help invocations are ignored
+301-306 EX X9 | return [{ kind: 'reference-change', segment, action, edges }];
+307 EX X8 |
+308-313 OL R5,R4 | dependency-version
+314-315 IM | no finding for an exactly pinned package command
+317-340 IM | traversal over segments tracking cd/pushd directory changes; wrappers nested beyond depth 3 produce an 'unclassifiable' finding that the gate blocks (mechanism)
+342-349 IM | exported classify() entry point
+
+FILE .claude/scripts/facets/architecture-style.cjs | Architecture frame ENF facet (via check-manifests: PostToolUse and verify).
+1-2 NN | header comments (kind/scope/capability/loading; conformance pointers)
+3 IM | strict-mode directive
+5-9 IM | imports, owner constants and layer list
+11-17 OL R150 | Inward dependency direction of the Clean Architecture frame.
+19-26 OL R151 | Typical test-project references: [allowed without remark, allowed but needing a reason].
+28-37 IM | role derivation from the <Name>.<Layer> / *.Tests / *.IntegrationTests naming convention
+39-47 OL R140,R30 | a new production project is a Reserved decision
+49-56 OL R150 | must not reference
+57-71 OL R151 | is broader than the typical test scope; keep it only if the tests require it
+73-85 OL R152 | uses the Web SDK (ASP.NET Core transport types)
+86-89 IM | return and exports
+
+FILE .claude/scripts/facets/frontend-framework.cjs | Frontend ENF facet (via check-manifests).
+1-2 NN | header comments (kind/scope/capability/loading; conformance pointers)
+3 IM | strict-mode directive
+5-8 IM | imports and owner constants
+10-11 OL R153 |
+12-13 OL R154 |
+15-24 OL R153 | is not added by default; confirm the concrete need
+25-29 OL R154 | is in runtime dependencies
+30-33 IM | return and export
+
+FILE .claude/scripts/facets/persistence-technology.cjs | Persistence ENF facet (via check-manifests and check-cochange: PostToolUse, Stop, verify).
+1-2 NN | header comments (kind/scope/capability/loading; conformance pointer)
+3 IM | strict-mode directive
+5-8 IM | imports and owner constants
+10-17 OL R155 | EF Core packages belong to the Infrastructure role only
+19-24 EX X16 | Infrastructure\/Persistence\/Seeding
+26-39 OL R8 | without a development seeder change; confirm whether seeded entities are affected
+40-47 EX X10 | persistence model changed without a migration; confirm whether the schema changed
+48-55 OL R9 | review them as source code before committing
+56-59 IM | return and exports
+DONE

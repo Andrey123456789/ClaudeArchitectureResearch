@@ -1,0 +1,130 @@
+# K1 / B001 — Run 2 replica annotation (blind). Paths are relative to output/template/.
+
+# ---------------- constraints first defined in this batch ----------------
+C R1 OL WF-010 | MUST (tool-enforced: disallowedTools) | The code-reviewer subagent performs a read-only review: Write, Edit and NotebookEdit are disallowed tools and it must not edit files. | code-reviewer subagent (PR review, diff review, pre-merge review, second-pass review of completed work) | Bash is not tool-disallowed; the no-edit duty for shell use rests on the instruction text only.
+C R2 OL WF-010 | MUST | The code-reviewer runs the preloaded code-review workflow on the requested scope and returns its report; it must not redefine review criteria — the workflow and the repository standards it loads are authoritative. | code-reviewer subagent | none stated
+C R3 OL DEP-024 | MUST (declared layout convention) | The frontend workspace lives at frontend/<Name>.Web/ (shared layout convention), separate from backend projects and docs. | frontend workspace creation and placement | With frontend selection none no workspace exists.
+C R4 OL DEP-003 | MUST (PreToolUse hook: blocks before execution, exit 2, fails closed) | Package add/install/update commands must pin an exact version: npm/pnpm/yarn install|add|update with a registry spec that lacks an exact semver, and dotnet add package / dotnet package add|update without an exact --version (or id@version), are blocked and routed to the add-dependency workflow (version selection). | Bash and PowerShell commands, including chains and shell wrappers (bash -c, cmd /c, powershell -Command/-EncodedCommand) up to nesting depth 3 | Local path, file:, link:, workspace:, git and URL specs count as pinned; exact prerelease versions pass the hook (prerelease avoidance is not hook-enforced); only npm, pnpm, yarn and dotnet are recognized.
+C R5 OL DEP-003,DEP-004 | MUST (PreToolUse hook: blocks before execution, exit 2) | Dependency updates that name no package (npm/pnpm/yarn update|upgrade without specs, audit fix, dotnet package update without an id) are blocked before execution and routed to the add-dependency workflow, so every update goes through per-package version selection and due diligence. | Bash and PowerShell package-manager commands | Named updates fall under the exact-version rule (R4).
+C R6 OL DEP-025 | MUST NOT (PreToolUse hook: blocks before execution, exit 2) | npm/pnpm/yarn install, update, remove, restore (ci, dedupe, prune) or audit-fix commands carrying --force, -f or --legacy-peer-deps are blocked as peer-dependency bypasses and routed to the add-dependency workflow (peer-dependency conflicts). | Bash and PowerShell package-manager commands | Flag value =false is allowed; the hook blocks the flags regardless of the stated purpose; other npm verbs (e.g. cache) are not classified.
+C R7 OL TST-009,TST-010 | SHOULD (Stop hook: blocks stopping once per content state; reminder must be addressed or justified) | When backend production C# files (backend/**/*.cs outside *Test/*Tests projects; deletions ignored) changed with no backend test change, the agent is reminded at Stop to confirm test coverage and probe preservation and must address the reminder or state why it does not apply before finishing. | Stop event in a Git work tree with working-tree changes | Inactive outside a Git work tree; each reminder content state is reported once; a continuation triggered by the hook is never re-blocked.
+C R8 OL PST-008 | SHOULD (Stop hook reminder, blocks stopping once per content state) | When persistence model files (Domain .cs, Infrastructure/Persistence/Configurations/*.cs, Infrastructure/Persistence/*DbContext.cs) changed without any development seeder change (Infrastructure/Persistence/Seeding/), the agent is reminded at Stop to confirm whether seeded entities are affected and must address it or state why it does not apply. | Stop event in a Git work tree | Same once-per-content-state and Git-only limits as R7.
+C R9 OL PST-010 | SHOULD (Stop hook reminder, blocks stopping once per content state) | When migration files (backend/*.Infrastructure/Persistence/Migrations/) changed, the agent is reminded at Stop to review them as source code before committing and must address it or state why it does not apply. | Stop event in a Git work tree | Same once-per-content-state and Git-only limits as R7.
+C X1 EX ARC-020,DEP-009 | MUST | Static capability composition: each required slot (architecture frame, persistence leaf, backend-testing leaf) has exactly one implementation (persistence with exactly one provider variant); the optional frontend slot has zero or one; selection none means no frontend workspace, no facets and a register row recording none (pointers to absent facet locations stay valid and dormant); unselected implementations are not part of the runtime. | Template capability structure: .claude/capabilities, decision-register selection, template maintenance and capability replacement | none stated | No oracle policy defines the template's own capability-slot composition or cardinality; this constrains how the instruction system may be structured and changed (repo/meta), beyond ARC-020/DEP-009 which only require approval for new persistence or replacing approved technology. | A maintainer agent may not keep two implementations of a slot, leave a required slot unfilled, or ship unselected implementations in the runtime; selecting none for frontend removes all frontend facets.
+C X2 EX - | MUST | A slot implementation must provide every required item listed in its slot CONTRACT.md (architecture: role-map, dependency-direction, domain-modeling, use-case-orchestration, commit-boundary-placement, composition-root, transport-contracts, test-project-placement, not-adopted-styles, scaffold-layout, reference-check; backend-testing: framework-standard, integration-host-binding, knowledge, test-scaffold, framework-consistency-check; frontend: stack-properties, framework-standard, knowledge, workspace-scaffold, library-check; persistence: technology-boundary, commit-boundary-binding, migration-mechanism, seeding-mechanism, provider-variant, declared-properties, testing-implications, change-workflow, knowledge, enforcement). | Creating or replacing a slot implementation (template maintenance, architecture-decision) | none stated | Template capability contracts are research/template structure, not V2 policy; they require e.g. deterministic reference checks, library checks and framework-consistency checks as part of any implementation, which no oracle policy demands. | Replacing NUnit or Angular with an implementation that lacks a deterministic check facet or a scaffold facet is non-conformant and must not be accepted silently.
+C X3 EX - | MUST | Non-slot artifacts refer to slot concerns through each slot's stable role vocabulary (architecture: Domain, Application, Infrastructure, Api, Application Service, repository contract, Unit of Work/IUnitOfWork, test projects) rather than through the selected implementation's names (leak rule). | Authoring or changing instruction-system artifacts outside capability modules | Per the leak checker: facet files listed in the module manifest, the module directory, .claude/MAP.md, project-owned files (SPECIFICATION.md, CUSTOM_SETTINGS.md, .editorconfig, Directory.Build.props, Directory.Packages.props), and the register's capability-selection block and Accepted decisions log may name the implementation. | Instruction-authoring vocabulary rule of the K1 capability design; no oracle policy restricts which technology names may appear in which instruction files. | An edit to a neutral rule or workflow that hardcodes e.g. "NUnit" or "EF Core" outside the owning module violates the rule and is flagged by the structure checker.
+C X4 EX - | MUST | Frame/leaf ownership: placement (project roles, commit-boundary placement, composition, test-project placement and references) belongs to the architecture frame; technique belongs to the leaf slots (persistence, backend-testing), which declare their frame bindings with Binds:. | Template content ownership during template maintenance or capability replacement | The frame binds no slot. | Template-structure ownership rule from the K1 capability model; the oracle prescribes no ownership location for instruction content (inventory grouping explicitly must not determine candidate structure). | Template maintenance must put e.g. DbContext technique in persistence facets and test-project placement in the architecture frame, and a leaf must declare its binding.
+C X5 EX - | MUST | Facet locations are role-named and fixed: every implementation of a slot provides exactly the slot's listed facet locations (DEC row in the decision register, STD rule file, KNW facet, WF reference/skill, ENF facet script), file names never change with the implementation, and the backend-testing knowledge facet keeps the shared skill name dotnet-testing. | Template maintenance and capability replacement | With frontend selection none the frontend facet locations are absent. | File-naming/location rule of the template's capability design, not derived from V2 policy. | A replacement implementation must reuse e.g. rules/backend-tests/test-framework.md and scripts/facets/test-framework.cjs instead of adding implementation-named files.
+C X6 EX - | MUST | Framework-neutral standards (rules/backend-tests/testing.md; rules/frontend/frontend.md, rules/frontend/security.md, rules/frontend/dependencies.md) stay unchanged when a slot implementation is replaced. | Capability replacement (backend-testing, frontend) | none stated | Change-procedure rule for the template's capability model; the oracle does not regulate how instruction files change when a technology is replaced. | Replacing the test framework or SPA framework may only change facet files, not the neutral standards.
+C X7 EX ARC-020,DEP-002,GOV-017 | MUST | A persistence provider change is a variant change inside the persistence slot, not a new slot; replacing the persistence implementation requires every contract item, and an item the proposed implementation cannot provide (e.g. a migration mechanism) is surfaced as Blocked in the Decision Request instead of being dropped. | Proposals to change the persistence provider or implementation (architecture-decision) | none stated | DEP-002/ARC-020 require approval for replacing approved technology, but no oracle policy requires a contract-item completeness assessment or a Blocked marking inside the Decision Request. | A Decision Request to replace EF Core with a micro-ORM must list missing items such as migrations as Blocked instead of silently omitting them.
+C X8 EX DEP-001,DEP-003 | MUST (PreToolUse hook: blocks before execution, exit 2; PostToolUse warning on deleted package.json) | Dependency-removal commands (npm/pnpm uninstall|remove|rm|r|un|unlink, yarn remove, dotnet remove package, dotnet package remove) are blocked before execution and routed to the add-dependency workflow (removal); deleting a frontend package.json is reported as a warning that dependency removals go through add-dependency. | Bash and PowerShell commands; frontend manifests | none in the hook | No oracle policy governs dependency removal (DEP-001..DEP-005 cover additions and updates); the hook makes every removal command fail via the shell regardless of approval. | `npm uninstall lodash` or `dotnet remove package Foo` is blocked (exit 2) even when the user asked for the removal; removal must follow the add-dependency workflow.
+C X9 EX ARC-001,ARC-020,ARC-028,GOV-017 | MUST (Reserved; PreToolUse block for dotnet reference commands; PostToolUse error finding for .csproj edits) | Every .NET project-reference change (dotnet add|remove reference, dotnet reference add|remove, or a .csproj ProjectReference edit) is a Reserved decision: it is blocked or flagged as an error unless each edge appears as `From -> To` in a dated (YYYY-MM-DD) row of the decision register's Accepted decisions or a docs/decisions record linked from such a row. | .NET project references in the active repository or worktree | dotnet reference update is not classified; edges already in HEAD and reverted edits are not flagged; the Accepted decisions table ships empty. | ARC-001 already permits inward references (Api -> Application, Infrastructure -> Application) and ARC-020 requires approval for consequential changes such as new layers/projects; no oracle policy requires a recorded, dated approval for each individual reference edge, including standard inward or narrow test references. | Scaffolding the standard Clean Architecture references or adding an Application.Tests -> Application reference is blocked or flagged until an accepted decision lists the edge.
+C X10 EX PST-009,PST-010 | MUST (workflow rule) / SHOULD (Stop hook reminder, blocks stopping once per content state) | If the schema changes, a new migration is created (persistence-change); when persistence model files (Domain .cs, Infrastructure/Persistence/Configurations/*.cs, Infrastructure/Persistence/*DbContext.cs) change without any migration change, the agent is reminded at Stop to confirm whether the schema changed (a schema change is expected to come with a migration) and must address the reminder or state why it does not apply. | Stop event in a Git work tree | Git-only; once per content state. | The oracle requires a migration only for schema-affecting CUSTOM_SETTINGS changes (PST-009) and review of generated migrations (PST-010); it contains no general duty that every model change be checked for schema impact and paired with a migration, nor a stop-time confirmation. | Editing a Domain entity without adding a migration blocks the stop once until the agent confirms whether the schema changed.
+
+# ---------------- files ----------------
+FILE .claude/agents/code-reviewer.md
+1-2 NN | YAML front-matter opening delimiter and subagent name (identity metadata)
+3-6 NN | subagent description: routing text describing when the reviewer is selected; it states no constraint on engineering outcomes
+7 OL R1 | disallowedTools: Write, Edit, NotebookEdit
+8-9 OL R2 | skills:
+10 NN | YAML front-matter closing delimiter
+12 NN | Kind/Scope/Capability/Loading header: instruction-system classification metadata
+14 NN | document heading
+16 OL R1,R2 |
+
+FILE .claude/capabilities/architecture/clean-architecture/MODULE.md | Manifest is not loaded at runtime; read by architecture-decision, template-maintenance and the structure checker.
+1 NN | header: declares a module manifest that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-9 IM | module identity data (slot, implementation, variant, names used by the leak checker, Binds: none) consumed by the structure checker; states no behavioral rule
+11-19 IM | facet manifest table listing facet files, loading and provided items; inventory data checked by check-instructions.cjs, the rules themselves live in the listed facet files
+21-35 IM | contract-coverage table mapping each contract item to a facet file; conformance data for the structure checker, no independent rule
+
+FILE .claude/capabilities/architecture/CONTRACT.md | Slot contract, not loaded at runtime.
+1 NN | header: declares a slot contract that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-6 EX X1 | Cardinality: exactly one implementation
+7 EX X4 | the frame binds no slot; leaves bind to it
+8 EX X3 | Stable role vocabulary usable by non-slot artifacts
+10 EX X4 |
+12-26 EX X2 | An implementation must provide
+28-38 EX X5 | Role-named facet locations; every implementation provides exactly these (file names never change with the implementation).
+
+FILE .claude/capabilities/backend-testing/CONTRACT.md | Slot contract, not loaded at runtime.
+1 NN | header: declares a slot contract that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-6 EX X1 | Cardinality: exactly one implementation
+7 EX X4 |
+9 EX X6,X5 |
+11-19 EX X2 | An implementation must provide
+21-31 EX X5 | Role-named facet locations; every implementation provides exactly these (file names never change with the implementation).
+
+FILE .claude/capabilities/backend-testing/nunit/MODULE.md | Manifest is not loaded at runtime.
+1 NN | header: declares a module manifest that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-9 IM | module identity data (slot, implementation, names for the leak checker) and a Binds declaration that points to test-projects.md, where the placement/reference rule is owned
+11-19 IM | facet manifest table listing facet files and loading; inventory data checked by the structure checker
+21-29 IM | contract-coverage table mapping contract items to facets; conformance data, no independent rule
+
+FILE .claude/capabilities/frontend/angular/MODULE.md | Manifest is not loaded at runtime.
+1 NN | header: declares a module manifest that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-9 IM | module identity data (slot, implementation, names for the leak checker, Binds: none)
+11-19 IM | facet manifest table listing facet files and loading; inventory data checked by the structure checker
+21-29 IM | contract-coverage table mapping contract items to facets; conformance data, no independent rule
+
+FILE .claude/capabilities/frontend/CONTRACT.md | Slot contract, not loaded at runtime.
+1 NN | header: declares a slot contract that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-6 EX X1 |
+7 OL R3 | Workspace location: `frontend/<Name>.Web/` (shared layout convention)
+8 NN | binding declaration: the frontend leaf binds no other slot (structural metadata, no constraint)
+10 EX X6 |
+12-20 EX X2 | An implementation must provide
+22-32 EX X5 | Role-named facet locations; every implementation provides exactly these (file names never change with the implementation).
+34 EX X1 |
+
+FILE .claude/capabilities/persistence/CONTRACT.md | Slot contract, not loaded at runtime.
+1 NN | header: declares a slot contract that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-6 EX X1 | Cardinality: exactly one implementation, with one provider variant
+7 EX X4 |
+9 EX X7 |
+11-24 EX X2 | An implementation must provide
+26-36 EX X5 | Role-named facet locations; every implementation provides exactly these (file names never change with the implementation).
+
+FILE .claude/capabilities/persistence/ef-core/MODULE.md | Manifest is not loaded at runtime.
+1 NN | header: declares a module manifest that is not loaded at runtime (classification metadata)
+3 NN | document heading
+5-8 IM | module identity data (slot, implementation, sqlserver variant, implementation names used as leak-checker vocabulary)
+9 DU | binding declaration restating the persistence frame binding owned by .claude/rules/backend/persistence-technology.md (EF Core only in Infrastructure, IUnitOfWork over the shared scoped AppDbContext); the Infrastructure/Persistence/ folder convention is checked against backend-layout.md (see orphan ledger)
+11-19 IM | facet manifest table listing facet files and loading; inventory data checked by the structure checker
+21-34 IM | contract-coverage table mapping contract items to facets; conformance data, no independent rule
+
+FILE .claude/hooks/dispatch.cjs | Hook entry point registered in settings.json for PreToolUse, PostToolUse, PostToolUseFailure and Stop.
+1-2 NN | header comments: kind/scope/loading metadata and conformance pointer
+3 IM | strict-mode directive
+5-8 IM | comment on launcher vs active root resolution (checks run in the repository/worktree of the hook input cwd)
+9-12 IM | comment describing the hook exit-code contract (PreToolUse blocks and fails closed; Post/Stop advisory); enforcement semantics recorded in the modality of R4-R6, X8, X9 and in the orphan ledger
+14-19 IM | module imports and tool-name sets (Bash/PowerShell shell tools; Edit/Write/MultiEdit edit tools) selecting which tool calls are inspected
+21-44 IM | stdin reading and hook-input JSON parsing helpers; malformed input throws into the fail-closed handler
+46-49 IM | section comment and describe() message dispatcher scaffolding
+50-51 OL R4 | without an exact version -> add-dependency workflow (version selection)
+52-53 OL R5 | updates dependencies without exact versions -> add-dependency workflow
+54-55 EX X8 | -> add-dependency workflow (removal)
+56-57 OL R6 | --force/--legacy-peer-deps bypasses peer-dependency resolution
+58-59 EX X9 | changes the project reference graph…a Reserved decision without a recorded approval
+60-63 IM | fallback message for commands whose shell-wrapper nesting is too deep to classify; part of the guard mechanism (such commands are blocked and must be run directly)
+65-79 MX R4,R5,R6,X8,X9 | Blocked before execution (dependency and project-reference guard) ⟫ PreToolUse gate for Bash/PowerShell: any classifier finding blocks the tool call with exit 2; reference-change findings are dropped only when every edge is approved in the register's accepted decisions; combines oracle-linked dependency gates (R4-R6) with the extra removal (X8) and reference-approval (X9) gates on the same code path
+81-111 IM | PostToolUse/PostToolUseFailure wiring: observes the active root after shell commands (whole root) or Edit/Write/MultiEdit (the edited file) and feeds findings back with exit 2; the individual checks are defined and captured in actual-state.cjs, check-manifests.cjs, the facet scripts and check-instructions.cjs
+113-123 IM | Stop handler setup: skips hook-triggered continuations, runs check-cochange in hook mode (unreported content states only) and reports inactivity outside Git work trees
+124-128 MX R7,R8,R9,X10 | Address each item or state why it does not apply, then finish. ⟫ Stop gate: unreported co-change reminders block stopping (exit 2) once per content state and the agent must address or justify each; carries oracle-linked reminders (tests, seed, migration review) and the extra model-without-migration reminder
+130-157 IM | event routing table, hook-event consistency check, and error handling that maps internal PreToolUse failures to exit 2 (fail closed) and other events to exit 1
+
+# ---------------- orphan candidates found in this batch ----------------
+O .claude/hooks/dispatch.cjs 143-152 DU R4,R5,R6,X8,X9 - | critical ? 2 : 1 | Fail-closed handling blocks every Bash/PowerShell call when the PreToolUse guard itself errors; this is an operating property of the dependency/reference gate already captured in the modality of R4, R5, R6, X8 and X9, not a separate engineering-outcome rule. | Any internal hook error (malformed input, classifier exception) blocks the shell command (exit 2).
+O .claude/hooks/dispatch.cjs 50-51 PL R4 DEP-003 | without an exact version | Suspected EXTRA (command must carry an exact version). Kept oracle-linked: DEP-003 requires choosing a verified exact stable version and avoiding floating versions; an unpinned npm add writes a caret range and an unpinned dotnet add skips explicit version selection, so the gate enforces DEP-003 without forbidding any outcome the oracle permits. | Unpinned install commands are blocked until an explicit version is chosen.
+O .claude/hooks/dispatch.cjs 52-53 PL R5 DEP-003,DEP-004 | updates dependencies without exact versions | Suspected EXTRA (bulk updates prohibited). Kept oracle-linked: DEP-003/DEP-004 require per-package latest-stable verification and due diligence for every update, which a bulk update cannot satisfy; the gate removes no outcome the oracle allows. | npm update / audit fix / dotnet package update without an id are blocked.
+O .claude/hooks/dispatch.cjs 56-57 PL R6 DEP-025 | --force/--legacy-peer-deps bypasses peer-dependency resolution | Suspected EXTRA because the hook blocks the flags unconditionally, while DEP-025 forbids them 'merely to bypass' peer conflicts. Kept oracle-linked: for install/update/restore verbs the flags' operative effect is peer/conflict bypass, so the gate is DEP-025 enforcement; the residual difference is noted in R6 exceptions. | --force on npm install/ci is blocked regardless of reason.
+O .claude/hooks/dispatch.cjs 124-128 PL R7 TST-009,TST-010 | Address each item or state why it does not apply, then finish. | Suspected EXTRA (mandatory justification after production changes without tests). Kept oracle-linked for the tests reminder: it asks only to confirm coverage and probe preservation (TST-009/TST-010, verify), and permits finishing after a stated reason; the model-without-migration reminder on the same path is registered separately as X10. | Stopping is blocked once per content state until the reminder is addressed or justified.
+O .claude/capabilities/persistence/ef-core/MODULE.md 9-9 DU X16 ARC-019,ARC-017 | persistence code sits in `Infrastructure/Persistence/` | Restates the persistence binding owned by persistence-technology.md (lines 10, 14-15); the Infrastructure/Persistence/ folder convention is an independent EXTRA owned and registered as X16 (persistence-technology.md line 21, persistence-change line 20, persistence facet path patterns). | none beyond X16
+DONE

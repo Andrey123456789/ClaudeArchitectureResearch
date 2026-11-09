@@ -1,0 +1,47 @@
+# K1 / B005 — Run 2 replica annotation (blind). check-manifests.cjs: manifest checks (PostToolUse via actual-state, verify, CLI).
+
+C X25 EX DEP-020,DEP-004 | MUST NOT (manifest check error) | The NuGet packages Microsoft.Extensions.Http.Polly and Polly.Extensions.Http are denied as deprecated resilience integration packages (error in project files and in Directory.Packages.props). | NuGet manifests (.csproj, Directory.Packages.props) | none stated | DEP-020 treats direct Polly integration as an explicit exception rather than a prohibition, and DEP-004 requires checking deprecation before installation but sets no fixed deny list; the candidate makes these two packages hard errors regardless of any explicit decision. | Adding Microsoft.Extensions.Http.Polly is reported as an error even when explicitly chosen.
+C R144 OL DEP-003 | MUST (manifest check error; prerelease warning) | Central PackageVersion entries need an exact version: a missing, floating (*) or range version is an error; a prerelease version is warned as allowed only when explicitly requested. | Directory.Packages.props | Prerelease allowed when explicitly requested.
+C R145 OL DEP-003 | MUST (manifest check error; prerelease warning) | package.json dependency specs must not float: empty, *, x, latest or next are errors in dependencies, devDependencies, peerDependencies and optionalDependencies; prerelease specs (alpha, beta, rc, next, canary, dev, preview) are warned as allowed only when explicitly requested. | package.json files | Caret/tilde ranges are not flagged by this post-check (only the pre-execution install gate R4 demands exact versions).
+C R146 OL DEP-020 | DEFAULT (manifest check warning) | Direct Polly or Polly.Core package usage is flagged as a documented exception (warning) to the Microsoft resilience default. | NuGet manifests | Explicit exception permitted.
+C R147 OL DEP-024 | DEFAULT (manifest check warning) | A top-level tests/ directory is flagged: backend tests live beside production projects. | repository layout (checkAll / verify) | none stated
+C R148 OL DEP-006 | MUST (manifest check error; VersionOverride warning) | Directory.Packages.props must enable ManagePackageVersionsCentrally; a project PackageReference declaring a Version is an error and a VersionOverride is warned to record its reason. | NuGet manifests | VersionOverride with a recorded reason
+C R149 OL DEP-007 | SHOULD (manifest check warnings) | Build/test tooling (typescript, vitest, eslint, prettier, jest, @playwright/test, karma, jasmine-core, @types/*) placed in runtime dependencies is warned, and a frontend package.json without an adjacent package-lock.json is warned. | frontend npm manifests | none stated
+
+FILE .claude/scripts/check-manifests.cjs | Manifest checker; findings fed back by PostToolUse (via actual-state.cjs), CLI exit 1 on errors.
+1-2 NN | header comments (kind/scope/loading; conformance pointers)
+3 IM | strict-mode directive
+5-7 IM | module imports
+9-16 EX X1,X5 | one role-named facet check per capability slot (no discovery)
+18-22 IM | owner/route message constants
+24-28 EX X25 | deprecated resilience integration package
+29-32 OL R146 | direct Polly usage is a documented exception
+33 OL R149 |
+35-48 EX X1 | Required capability facet check missing for slot
+50-58 IM | check context; the architecture frame's roleOf classifies projects for leaf facets (placement owned by the frame)
+60-78 IM | project-file parsing (SDK, PackageReference, ProjectReference Include edges, FrameworkReference)
+80-89 OL R148 | declares a version (central package management)
+90-92 EX X25 |
+93-97 IM | invokes each selected facet's project check (facet constraints captured in the facet scripts)
+99-104 OL R148 | ManagePackageVersionsCentrally is not enabled
+105-115 OL R144 | has a missing, floating, or range version…allowed only when explicitly requested
+116 EX X25 |
+117 OL R146 |
+118-123 IM | invokes facet central-package checks and returns findings
+125-128 OL R145 | s === '' || s === '*' || s === 'x' || s === 'latest' || s === 'next'
+130-136 IM | package.json parsing; invalid JSON is reported as an error (mechanism)
+137-146 OL R145 | uses a floating version
+147-151 OL R149 |
+152-156 IM | invokes facet package.json checks (frontend facet captured in frontend-framework.cjs)
+158-174 IM | manifest classification and per-file dispatch; unreadable manifests are reported as errors (mechanism)
+176-179 IM | checkAll: walks all manifests in the repository (verify/CLI mode)
+180-182 OL R147 | top-level tests directory; backend tests live beside production projects
+183-186 OL R149 | no package-lock.json next to package.json
+187-188 IM | return of aggregated findings
+190-201 EX X9 | placeholders such as TBD or pending are not dates
+202-221 MX X9,R140 | register rows with a valid Date ⟫ accepted-decision text used both for project-edge approvals (EXTRA X9) and project add/remove approvals (oracle ARC-020, R140)
+223-228 EX X9 | An edge is approved when an accepted decision lists it as `From -> To`.
+230-233 OL R140 | A project addition or removal is approved when an accepted decision names the project.
+235 IM | module exports
+237-256 IM | CLI entry point: checks all manifests or the given files, prints findings and exits 1 on errors
+DONE

@@ -1,0 +1,103 @@
+# M batch 3: regions r096-r150 (protocol v1.1)
+# r096-r099 performance.md caching
+SD P:RULE-M-0090 R:RULE-M-0091 | S: caching M: DEFAULT both E: none in either T: only for a measured or reasoned need (both)
+SD P:RULE-M-0091 R:RULE-M-0092 | S: cache keys M: MUST both E: none in either T: none
+SD P:RULE-M-0092 R:RULE-M-0093 | S: cache invalidation M: MUST both E: none in either T: consistent with successful mutations (both)
+SD P:RULE-M-0093 R:RULE-M-0094 | S: cache entries M: MUST both E: none in either T: none
+# r100-r101 performance.md 64-72
+SPLIT R:RULE-M-0095 | a: Compiled queries, ValueTask<T>, ArrayPool/MemoryPool, manual object pooling, custom serialization optimizations, aggressive caching and raw SQL for performance are introduced only for a measured or clearly demonstrated need. | b: Verify that an optimization materially improves the relevant workload.
+SD P:RULE-M-0094 R:RULE-M-0095#a | S: backend C# performance techniques M: DEFAULT both E: measured or demonstrated need (both) T: none
+RD COMPOUND_PART P:RULE-M-0096 R:RULE-M-0095#b | P (MUST) bundles 'spans/pooling/source-generated serialization are appropriate for demonstrated allocation-heavy hot paths' with the verification duty; R part b is the verification duty under R's DEFAULT label.
+# r102-r109 persistence.md
+SD P:RULE-M-0097 R:RULE-M-0096 | S: empty Development database M: DEFAULT both E: none in either T: none
+SD P:RULE-M-0098 R:RULE-M-0097 | S: Development seeding M: MUST both E: none in either T: none
+SD P:RULE-M-0099 R:RULE-M-0098 | S: Development seeding code placement M: MUST both E: none in either T: none
+SPLIT R:RULE-M-0099 | a: Automatic development seeding runs only in the Development environment; never seed Production automatically. | b: Tests never use the development seeder.
+SD P:RULE-M-0100 R:RULE-M-0099#a | S: automatic development seeding M: MUST_NOT both E: none in either T: none
+RD DETAIL_DIFFERENCE P:RULE-M-0101 R:RULE-M-0099#b | P adds 'tests own their setup' (independent obligation) to 'never use the development seeder'.
+SD P:RULE-M-0102 R:RULE-M-0100 | S: development seeder M: MUST_NOT both E: none in either T: migrations applied separately before seeding (both)
+SD P:RULE-M-0103 R:RULE-M-0101 | S: existing representative data M: MUST_NOT both E: none in either T: none
+RD COMPOUND_PART P:RULE-M-0104 R:RULE-M-0102 | P adds 'prefer readable deterministic examples over exhaustive/random combinations' to the invariant-preservation duty.
+SD P:RULE-M-0105 R:RULE-M-0103 | S: SQL Server Development configuration M: DEFAULT both E: none in either (credential-bearing values go to user-secrets in both) T: none
+# r110 repository-structure.md 19-25
+SD P:RULE-M-0106 R:RULE-M-0104 | S: repository structure M: MUST_NOT both E: none in either T: none | P's SharedKernel/BuildingBlocks/EventBus, empty ValueObjects/Events and test-project items are illustrations from the shared lines 19-25
+# r111-r130 security.md
+SD P:RULE-M-0107 R:RULE-M-0105 | S: source-controlled files incl. example configuration M: MUST_NOT both E: none in either T: none
+SD P:RULE-M-0108 R:RULE-M-0106 | S: secrets per environment M: DEFAULT both E: none in either T: none
+RD DETAIL_DIFFERENCE P:RULE-M-0109 R:RULE-M-0107 | different scope of the 'when assumptions matter' condition: P applies it to validation of all untrusted data, R only to external responses (validate the other inputs unconditionally).
+SD P:RULE-M-0110 R:RULE-M-0108 | S: file uploads M: MUST_NOT both E: none in either T: none
+SD P:RULE-M-0111 R:RULE-M-0109 | S: database access M: MUST both E: none in either T: none
+SD P:RULE-M-0112 R:RULE-M-0110 | S: authorization M: MUST both E: none in either T: none
+SD P:RULE-M-0113 R:RULE-M-0111 | S: authorization attributes M: MUST both E: none in either T: none
+SD P:RULE-M-0114 R:RULE-M-0112 | S: authentication facilities M: MUST_NOT both E: none in either T: none
+SD P:RULE-M-0115 R:RULE-M-0113 | S: Bearer/OIDC validation M: MUST both E: none in either T: none
+SD P:RULE-M-0116 R:RULE-M-0114 | S: authentication failure responses M: MUST_NOT both E: none in either T: none
+SD P:RULE-M-0117 R:RULE-M-0115 | S: cookie-carried authentication M: MUST both E: none in either T: none
+SD P:RULE-M-0118 R:RULE-M-0116 | S: browser token storage M: MUST_NOT both E: none in either T: none | R also claims SEC-010
+SD P:RULE-M-0119 R:RULE-M-0117 | S: production transport M: MUST both E: in-app HTTPS redirection not required when the boundary secures transport (both) T: none
+SD P:RULE-M-0120 R:RULE-M-0118 | S: cryptography M: MUST_NOT both E: none in either T: none
+SD P:RULE-M-0121 R:RULE-M-0119 | S: CORS M: DEFAULT both E: none in either T: none
+RD DETAIL_DIFFERENCE P:RULE-M-0122 R:RULE-M-0120 | same logging prohibition; P adds 'prefer stable technical identifiers' (additional guidance) to it.
+SD P:RULE-M-0123 R:RULE-M-0121 | S: logging payloads M: MUST_NOT both E: none in either T: by default (both)
+SD P:RULE-M-0124 R:RULE-M-0122 | S: security-sensitive checks M: DEFAULT both E: none in either T: none
+SD P:RULE-M-0125 R:RULE-M-0123 | S: required security controls M: MUST both E: none in either T: at startup/configuration
+SD P:RULE-M-0126 R:RULE-M-0124 | S: production containers M: DEFAULT both E: none in either T: none
+# r131
+RD OVERLAP R:RULE-M-0005 P:RULE-M-0127 | P: security-sensitive dependency changes must not bypass dependencies.md / add-dependency; R: all NuGet/npm dependency changes follow add-dependency plus hook feedback.
+# r132-r140 testing.md
+SD P:RULE-M-0128 R:RULE-M-0125 | S: backend tests M: DEFAULT both E: established project convention (both) T: none
+SD P:RULE-M-0129 R:RULE-M-0126 | S: backend tests M: DEFAULT both E: none in either T: none
+SD P:RULE-M-0130 R:RULE-M-0127 | S: backend integration tests M: DEFAULT both E: none in either T: none
+SD P:RULE-M-0131 R:RULE-M-0128 | S: backend tests M: MUST both E: interaction verification when the interaction is specified behavior (both) T: none
+CX X:BF-M-0040@47-48 | Prefer one observable scenario per test; a multi-step test fits when the sequence itself is the behavior.
+SD P:EXTRA-M-0013 X:BF-M-0040 | S: backend tests M: P PREFER, X reports no modality E: sequence-is-the-behavior exception (both) T: none
+RD DIFFERENT_STRENGTH P:RULE-M-0132 R:RULE-M-0129 | same declarative-cases sentence; P reports PREFER, R reports DEFAULT (F7).
+SD P:RULE-M-0133 R:RULE-M-0130 | S: backend tests M: MUST both E: none in either T: none
+SD P:RULE-M-0134 R:RULE-M-0131 | S: backend tests M: MUST both E: none in either T: none
+SD P:RULE-M-0135 R:RULE-M-0132 | S: backend tests with provider behavior M: DEFAULT both E: none in either T: none
+SD P:RULE-M-0136 R:RULE-M-0133 | S: backend tests M: MUST_NOT both E: none in either T: none
+# r141 testing.md 72-75
+SPLIT R:RULE-M-0134 | a: Use descriptive test names communicating the scenario or condition and the expected behavior. | b: The default test-name pattern is MethodOrScenario_Condition_ExpectedBehavior unless an established convention exists.
+SD P:RULE-M-0137 R:RULE-M-0134#a | S: backend tests M: DEFAULT both E: none for this clause T: none
+CX X:BF-M-0041@73-75 | The default test-name pattern is MethodOrScenario_Condition_ExpectedBehavior unless the project already has an established convention.
+SD P:EXTRA-M-0014 R:RULE-M-0134#b X:BF-M-0041 | S: backend tests M: DEFAULT in P and R, X reports no modality E: established project convention (all) T: none | labels: P EXTRA, R ORACLE_LINKED TST-012, X POTENTIAL_EXTRA
+# r142-r149 check-instructions.mjs: replica reports the whole checker as one claim; primary atomizes it
+SPLIT R:EXTRA-M-0008 | a: The instruction-system checker requires the required files (CLAUDE.md, technology stack, MAP.md, settings.json, code-reviewer agent, SPECIFICATION.md, CUSTOM_SETTINGS.md) to exist. | b: CLAUDE.md imports only docs/technology-stack.md and no other instruction file contains an import. | c: Every instruction file starts with a one-line ownership header (Owns / Scope / Loads) whose Loads value matches its kind. | d: No instruction file contains Level:/Kind: classification lines. | e: .claude/rules stays flat (Markdown only) and every rule declares a non-empty paths list. | f: A skill folder holds SKILL.md plus optional Markdown references only. | g: The required workflow and knowledge skills exist and no competing serilog/resilience skills exist. | h: Skill frontmatter name equals the folder, descriptions are at most 1024 characters, knowledge descriptions start with 'Use when', and template-maintenance is user-only. | i: The code-reviewer agent stays a thin wrapper. | j: Private references are used only by their owning skill. | k: File, section and skill references in instruction files resolve. | l: MAP.md lists every instruction, hook and script file. | m: MAP.md is never imported. | n: An always-loaded estimate above about 6000 tokens is warned.
+SPLIT X:BF-M-0023 | a@27-30: The checker requires a named inventory of instruction files to exist. | b@31-40: The checker requires the named workflow and knowledge skills to exist and forbids standalone serilog/resilience skills. | c@43: The checker defines a 6000-token warning threshold for the always-loaded budget.
+SD P:EXTRA-M-0042 R:EXTRA-M-0008#a X:BF-M-0023#a | S: check-instructions over the instruction system M: checker failure (P ENFORCED, R checker-enforced MUST, X no modality) E: none in any T: when the checker runs
+SD P:EXTRA-M-0043 R:EXTRA-M-0008#g X:BF-M-0023#b | S: check-instructions M: checker failure in P and R, X no modality E: none in any T: when the checker runs
+SD P:EXTRA-M-0058 R:EXTRA-M-0008#n X:BF-M-0023#c | S: check-instructions always-loaded budget M: warning only (P ENFORCED_WARNING; R part text 'is warned'; X 'warning threshold') E: none T: when the checker runs
+SPLIT X:BF-M-0025 | a@105-114: CLAUDE.md may import only docs/technology-stack.md and no other instruction file may import. | b@116-132: Every instruction file needs the exact ownership header with the Loads value matching its kind. | c@133-136: Level:/Kind: classification lines are forbidden. | d@138-154: Rules stay flat Markdown files with a non-empty paths list.
+SD P:EXTRA-M-0044 R:EXTRA-M-0008#b X:BF-M-0025#a | S: check-instructions imports M: checker failure (P, R), X no modality E: none T: when the checker runs
+SD P:EXTRA-M-0045 R:EXTRA-M-0008#c X:BF-M-0025#b | S: instruction file headers M: checker failure (P, R), X no modality E: none T: when the checker runs
+SD P:EXTRA-M-0046 R:EXTRA-M-0008#d X:BF-M-0025#c | S: instruction files M: checker failure (P, R), X no modality E: none T: when the checker runs
+SD P:EXTRA-M-0047 R:EXTRA-M-0008#e X:BF-M-0025#d | S: .claude/rules M: checker failure (P, R), X no modality E: none T: when the checker runs
+CX X:BF-M-0024 | A skill folder may contain only SKILL.md and flat Markdown references (no scripts, assets or nested reference folders).
+SD R:EXTRA-M-0008#f X:BF-M-0024 | S: skill folders M: checker failure (R), X no modality E: none T: when the checker runs
+RD COMPOUND_PART P:EXTRA-M-0048 R:EXTRA-M-0008#f | P adds 'agents are single Markdown files' (lines 77-80) and 'SKILL.md is mandatory' to the skill-folder content rule.
+SPLIT X:BF-M-0026 | a@163-178: Skill frontmatter name must equal the folder name, descriptions at most 1024 characters, knowledge descriptions start with a trigger prefix, and template-maintenance is user-only. | b@187: The code-reviewer agent body is capped at 1500 characters.
+SD P:EXTRA-M-0049 R:EXTRA-M-0008#h X:BF-M-0026#a | S: skill frontmatter M: checker failure (P, R), X no modality E: none T: when the checker runs
+SD P:EXTRA-M-0050 X:BF-M-0026#b | S: code-reviewer agent body M: checker failure (P ENFORCED), X no modality E: none T: when the checker runs
+RD BROADER_NARROWER R:EXTRA-M-0008#i P:EXTRA-M-0050 | R: 'stays a thin wrapper' (unquantified); P and X: body at most 1500 characters (line 187).
+RD DIFFERENT_LAYER R:RULE-M-0001 P:RULE-M-0228 | R: the code-reviewer is read-only (agent rule, also citing the checker); P: check-instructions fails unless the agent disallows Write/Edit and delegates to code-review (checker enforcement).
+SPLIT X:BF-M-0027 | a@197-208: A skill's private references cannot be cited by another skill (MAP.md exempt) and must exist. | b@210-218: Backticked Markdown/repository references in instruction files must resolve, with docs/decisions exempt.
+SD P:EXTRA-M-0051 R:EXTRA-M-0008#j X:BF-M-0027#a | S: private references M: checker failure (P, R), X no modality E: MAP.md exempt, at lines 199/202 inside all cited ranges (F6) T: when the checker runs
+SD P:EXTRA-M-0052 R:EXTRA-M-0008#k | S: references in instruction files M: checker failure both E: docs/decisions and README exemptions at lines 217 and later, inside R's cited range 191-249 (F6) T: when the checker runs
+RD BROADER_NARROWER P:EXTRA-M-0052 X:BF-M-0027#b | P covers backticked paths, section references and skill/agent routing targets (210-249); X part b covers backticked paths only (quote ends at 218).
+SPLIT X:BF-M-0028 | a@252-259: MAP.md must list every instruction, hook and script file. | b@271-305: Every settings.json hook must be registered in exact Node exec form with the script path anchored at CLAUDE_PROJECT_DIR. | c@306-314: The PreToolUse guard must fail closed (onFailure block) and advisory hooks must not.
+SD P:EXTRA-M-0053 R:EXTRA-M-0008#l X:BF-M-0028#a | S: MAP.md coverage M: checker failure (P, R), X no modality E: none T: when the checker runs
+SD P:EXTRA-M-0054 R:EXTRA-M-0008#m | S: MAP.md import M: checker failure both E: none T: when the checker runs
+SPLIT R:EXTRA-M-0006 | a: Hooks are registered in exec form (node plus the script path anchored at CLAUDE_PROJECT_DIR, no shell). | b: The dependency guard is registered for PostToolUseFailure. | c: The PreToolUse guard fails closed (onFailure block) while advisory hooks fail open.
+SD R:EXTRA-M-0006#a X:BF-M-0028#b | S: settings.json hook registrations M: checker failure (R), X no modality E: none T: when the checker runs
+RD COMPOUND_PART P:EXTRA-M-0055 R:EXTRA-M-0006#a | P bundles exec form with 'the script must exist' and 'a script dispatching on hook_event_name must handle each registered event'.
+RD COMPOUND_PART P:EXTRA-M-0057 R:EXTRA-M-0006#b | P lists every required hook registration (dependency-guard Pre/Post/PostFailure, file-change, stop-co-change); R part b names only the PostToolUseFailure registration.
+SD P:EXTRA-M-0056 R:EXTRA-M-0006#c X:BF-M-0028#c | S: hook failure policy by event M: checker failure (P, R), X no modality E: none T: when the checker runs
+# r150 check-manifests.mjs 29-42
+SPLIT X:BF-M-0029 | a@29-33: Microsoft.Extensions.Http.Polly and Polly.Extensions.Http are hard-denied by the manifest check, even with an explicit approval. | b@35-42: Other approval-gated packages (MediatR, Polly, Polly.Core, FluentValidation.AspNetCore, Serilog.Sinks.Elasticsearch) produce advisory notes only.
+SD P:EXTRA-M-0037 R:EXTRA-M-0009 X:BF-M-0029#a | S: NuGet manifests M: violation / must not be added (P MUST_NOT, R MUST NOT with no approval path, X hard-denied) E: none in any T: on manifest check; R's 'blocking hook feedback' comes from lines 219-223 cited by P too (F6)
+# [revised before M checkpoint: superseded by a SPLIT + SD in 11_r562-r602.dec] RD COMPOUND_PART R:RULE-M-0135 P:RULE-M-0219 | R bundles the architecture prohibition on CQRS/MediatR/VSA without approval with the manifest note; P reports only the manifest note for MediatR.
+RD COMPOUND_PART R:RULE-M-0136 P:RULE-M-0220 | R bundles 'Microsoft resilience packages approved, direct Polly is a documented exception' (DEFAULT) with the manifest note; P reports only the note.
+SPLIT R:RULE-M-0137 | a: The legacy FluentValidation.AspNetCore automatic-validation integration is not used without a concrete requirement. | b: The deprecated Serilog.Sinks.Elasticsearch sink is not used without a concrete requirement (the manifest check flags it).
+SD P:EXTRA-M-0027 R:RULE-M-0137#a | S: backend NuGet dependencies M: MUST_NOT both E: concrete requirement (both) T: none | labels: P EXTRA, R ORACLE_LINKED DEP-004/DEP-010
+RD DIFFERENT_STRENGTH R:RULE-M-0137#b P:EXTRA-M-0038 | R: prohibition without concrete requirement (MUST NOT); P: the checker only flags the sink with a note (ENFORCED_ADVISORY).
+REVIEWED r096-r150

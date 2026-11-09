@@ -1,0 +1,80 @@
+# Batch B005 — scripts/check-instructions.mjs
+
+@@ output/template/.claude/scripts/check-instructions.mjs ;; Executable instruction-system structure checker (repo/meta); run via template-maintenance (user-invoked) and CI per MAP.md. Exit 0 pass, 1 failures, 2 cannot run; budget is a warning only.
+@scope executable: check-instructions.mjs run during template maintenance / CI over the instruction system (CLAUDE.md, docs/technology-stack.md, .claude/**)
+1-3 NN ;; Shebang and title comment.
+4-10 IM ;; Usage and exit-code documentation (run from repository root).
+11-21 NN ;; Summary comment listing the checks implemented below (each check captured at its implementation).
+23-25 IM ;; Imports.
+27-30 EX [x.ci-required-files]
+31-39 EX [x.ci-required-skills] ;; Required workflow and knowledge skill name lists.
+40 EX [x.ci-required-skills] ;; Forbidden competing skills (serilog, resilience).
+41 EX [x.ci-imports]
+42 EX [x.ci-header]
+43 EX [x.ci-budget]
+44-46 NN ;; Comment explaining REQUIRED_HOOKS.
+47-53 EX [x.ci-required-hooks]
+55-63 IM ;; Failure/warning collectors, root location and path helpers.
+65 NN ;; Section comment.
+66 EX [x.ci-required-files] ;; ;; missing required file
+68-76 IM ;; Lists rule, skill and agent entries; collects instruction files.
+77-80 EX [x.ci-skill-shape] ;; ;; agents are single Markdown files
+81-101 EX [x.ci-skill-shape] ;; ;; a skill folder holds SKILL.md and optional references/
+102 IM ;; Existing instruction file filter.
+104 NN ;; Section comment.
+105-114 EX [x.ci-imports]
+116 NN ;; Section comment.
+117-132 EX [x.ci-header]
+133-136 EX [x.ci-no-level-kind]
+138 NN ;; Section comment.
+139-154 EX [x.ci-flat-rules-paths]
+156 NN ;; Section comment.
+157-162 EX [x.ci-required-skills]
+163-178 EX [x.ci-skill-frontmatter]
+180 NN ;; Section comment.
+181-184 IM ;; Reads code-reviewer frontmatter/body.
+185-186 OL [wf010.ci-reviewer-readonly]
+187 EX [x.ci-reviewer-thin]
+188-189 IM ;; Adds agent description to listing estimate.
+191 NN ;; Section comment.
+192-196 IM ;; Iteration setup over instruction files (fences stripped).
+197-208 EX [x.ci-private-refs]
+210-219 EX [x.ci-refs-resolve] ;; ;; does not resolve
+221-235 EX [x.ci-refs-resolve] ;; ;; section reference
+237-249 EX [x.ci-refs-resolve] ;; ;; routes to unknown skill or agent
+251 NN ;; Section comment.
+252-259 EX [x.ci-map-lists]
+260-261 EX [x.ci-map-not-imported]
+263 NN ;; Section comment.
+264-270 IM ;; Parses settings.json (invalid JSON is a failure).
+271-275 NN ;; Comment explaining exec-form requirement.
+276-305 EX [x.ci-hook-exec-form]
+306-309 NN ;; Comment explaining fail-closed vs advisory policy.
+310-314 EX [x.ci-failclosed-policy]
+315-317 IM ;; Loop closings.
+318-327 EX [x.ci-required-hooks] ;; ;; required hook
+328 IM ;; Block close.
+330 NN ;; Section comment.
+331-335 EX [x.ci-budget] ;; ;; exceeds
+337-342 IM ;; Report output and exit code (1 when any failure).
+344-358 IM ;; Root location (exit 2 when no active root or no .claude directory).
+360-455 IM ;; Helpers: directory listing, fence stripping, import parsing, frontmatter/YAML subset parsing, file-reference resolution, heading matching.
+
+C x.ci-required-files EX - ENFORCED ;; CLAUDE.md, docs/technology-stack.md, .claude/MAP.md, .claude/settings.json, .claude/agents/code-reviewer.md, SPECIFICATION.md and CUSTOM_SETTINGS.md must exist (failure otherwise). ;; = ;; none ;; Instruction-system structural invariant (repo/meta), not an oracle engineering policy.
+C x.ci-required-skills EX - ENFORCED ;; The workflow skills (development-workflow, project-structure, verify, code-review, build-fix, custom-settings, git-workflow, security-scan, add-dependency, architecture-decision, template-maintenance) and knowledge skills (ef-core, http-api, aspnet-error-handling, dotnet-testing, logging, httpclient-factory, configuration, dependency-injection, caching, swagger, api-versioning, health-check, docker, ci-cd, angular, modern-csharp, authentication) must exist; skills named serilog or resilience are forbidden. ;; = ;; none ;; Repo/meta skill-inventory invariant not present in the oracle.
+C x.ci-imports EX - ENFORCED ;; CLAUDE.md must import docs/technology-stack.md and only that file; imports must resolve; no other instruction file may contain an @ import. ;; = ;; none ;; Repo/meta loading invariant.
+C x.ci-header EX - ENFORCED ;; Every instruction file's first non-frontmatter line must be '> Owns: … | Scope: … | Loads: …' with Loads 'path-scoped' for rules, 'private reference' for references, 'on demand' for knowledge skills, 'workflow' or 'user-invoked' for workflow skills. ;; = ;; none ;; Repo/meta header convention.
+C x.ci-no-level-kind EX - ENFORCED ;; No instruction file may contain Level: or Kind: classification lines. ;; = ;; none ;; Repo/meta architecture-identity invariant (anti-leakage), not an oracle policy.
+C x.ci-flat-rules-paths EX - ENFORCED ;; .claude/rules/ must be flat, contain only Markdown, and each rule must declare a non-empty paths list. ;; = ;; none ;; Repo/meta rule-layout invariant.
+C x.ci-skill-shape EX - ENFORCED ;; Agents are single Markdown files; a skill folder holds only SKILL.md and an optional references/ directory containing only Markdown; SKILL.md is mandatory. ;; = ;; none ;; Repo/meta skill-shape invariant.
+C x.ci-skill-frontmatter EX - ENFORCED ;; Skill frontmatter name equals the folder name; description present and ≤1024 characters; knowledge-skill descriptions start with 'Use when'; template-maintenance sets disable-model-invocation: true. ;; = ;; none ;; Repo/meta skill-metadata invariant.
+C wf010.ci-reviewer-readonly OL WF-010 ENFORCED ;; check-instructions fails unless code-reviewer disallows Write and Edit and delegates to the code-review skill. ;; = ;; none ;;
+C x.ci-reviewer-thin EX WF-010 ENFORCED ;; The code-reviewer agent body must stay ≤1500 characters (thin wrapper). ;; = ;; none ;; Size limit on the agent file is a repo/meta invariant beyond WF-010.
+C x.ci-private-refs EX - ENFORCED ;; A skill's references/*.md may be referenced only by its owning skill (MAP.md exempt) and must exist. ;; = ;; MAP.md exempt. ;; Repo/meta privacy invariant for references.
+C x.ci-refs-resolve EX - ENFORCED ;; Backticked repo/doc paths, '§ Heading' section references and skill/agent routing targets in instruction files must resolve (docs/decisions and README.md exempt). ;; = ;; docs/decisions paths and README.md are exempt. ;; Repo/meta reference-integrity invariant.
+C x.ci-map-lists EX - ENFORCED ;; MAP.md must list every instruction file, settings.json, every hook and every script. ;; = ;; none ;; Repo/meta map-completeness invariant.
+C x.ci-map-not-imported EX - ENFORCED ;; MAP.md must not be imported by CLAUDE.md. ;; = ;; none ;; Repo/meta loading invariant (keeps MAP.md out of context).
+C x.ci-hook-exec-form EX - ENFORCED ;; Every settings.json hook must be a command hook in exec form ('node' plus exactly one argument '${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs'), the script must exist, and a script dispatching on hook_event_name must handle each registered event. ;; = ;; none ;; Repo/meta hook-registration invariant.
+C x.ci-failclosed-policy EX DEP-025 ENFORCED ;; PreToolUse hooks must set onFailure: block; non-PreToolUse (advisory) hooks must not. ;; = ;; none ;; Enforces the fail-closed guard / fail-open advisory split as an instruction-system invariant (not an oracle policy).
+C x.ci-required-hooks EX - ENFORCED ;; settings.json must register dependency-guard for PreToolUse, PostToolUse and PostToolUseFailure on Bash|PowerShell, file-change for PostToolUse on Edit|Write|MultiEdit, and stop-co-change for Stop. ;; = ;; none ;; Repo/meta enforcement-wiring invariant.
+C x.ci-budget EX - ENFORCED_WARNING ;; Warn when the always-loaded estimate (CLAUDE.md + imports + skill/agent descriptions) exceeds ~6000 tokens. ;; = ;; Warning only (does not fail). ;; Context-budget threshold not in the oracle.

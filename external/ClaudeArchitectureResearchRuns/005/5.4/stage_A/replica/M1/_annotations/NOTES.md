@@ -1,0 +1,24 @@
+# M1 Run-2 notes
+
+## Sweep notes
+
+Reverse checks conducted after all 21 batches, judged from M1's own text (no judgment carried over from K1, K0, L1 or L0; only the classification method was reused):
+
+1. **Keyword scan of all NON_NORMATIVE / IMPLEMENTATION / DUPLICATE spans** (`_tools/sweep.py`); every Markdown hit re-read in context. Imperative technique notes were recorded as NON_NORMATIVE orphans: coding-style.md records/visibility/modern-syntax/naming preferences (EXC-003 class), Result<T> typed-error shape, authorization/frontend/versioning test targeting, 304/429/502/idempotency HTTP reference entries, Swagger launch profile and document partitioning, health probe status mapping, Dockerfile copy/caching/context techniques, test-data and snapshot libraries, EF Core tracking and bulk-operation caveats, message-delivery resilience, log-level definitions, required-member technique, build-once/promote preference, assembly scanning, naming/bucket heuristics, literal single-sourcing ('avoid' guidance) and conditional Git completion reporting ('when useful').
+2. **Large-span review** (NN/IM/DU spans of 15+ lines): code samples, YAML/JSON/Dockerfile examples, directory trees, MAP.md navigation tables, `.editorconfig` suggestion-level settings, capability manifests and hook registrations only.
+3. **Script branch review** (static): `pre-tool-use.js` fails closed and gates NuGet/npm add/update commands until re-run with '# add-dependency: checked' (R11), removals likewise (X7), peer-dependency force flags until '# peer-override: approved-by-user' (R12) and project-reference commands until '# project-reference: checked' (X8); `post-tool-use.js` re-checks manifests, runs the architecture check on changed backend files, the instruction check after instruction edits (X9) and reminds about product-source and settings changes (R13, R14); `stop.js` co-change reminders (seed data R15, migrations X10, tests R16, product sources, manifest errors) repeated only on a changed state; `check-manifests.js` (deny list X15, direct Polly warning R140, not-adopted MediatR/Kommand R4, CPM and VersionOverride R60, second test framework R8, floating/prerelease versions R141, npm tooling category R10, not-by-default npm packages R9, lockfile U1); `check-architecture.js` (dependency direction R5, test references R6, forbidden namespaces R7); `check-instructions.js` (predicates mapped to X2, X3, X12, X14).
+4. **Branch findings recorded**: approval markers are self-certified by the agent (DU orphan on dependency-commands.js; exception of R11, R12, X8); Stop reminders are suppressed for an unchanged state (DU orphan on stop.js; exception of R13, R14); the deny list has no approval path (X15).
+5. **Config defaults**: settings.json (only PreToolUse fails closed; exec-form registrations X12), `.editorconfig` (file-scoped namespaces and IDE0005 at suggestion level; modern syntax silent), Directory.Build.props (net10.0 R208; Nullable and ImplicitUsings registered as X34), Directory.Packages.props (CPM on, empty), docs/technology-stack.md (global.json SDK pin X29).
+6. **Mixed clauses** split into oracle and extra parts (CLAUDE.md Reserved items 3 and 9, approval-and-recording line, workflow routing; git-workflow push and pull-request paragraphs; build-fix and security-scan reports; caching, ef-core, httpclient-factory, resilience and logging review checklists; FluentValidation registration package).
+7. **Notable M1-specific structure**: the static capability composition (four slots, contracts, manifests, role vocabulary, leak rule, binds, replacement and removal procedures) and instruction-system ownership/maintenance rules are template-structure extras (X1–X5, X11, X14, X18, X32); CLAUDE.md adds an unclear-case test that makes any 'yes' Reserved (X33).
+
+Classification rule (same method as for K1, K0, L1 and L0): EXTRA when binding (must/never/do not/only, a named anti-pattern prohibition, or hook/checker-enforced), outcome-changing and not entailed by a stack-neutral reading of an oracle policy; technique classes excluded by the oracle (EXC-002..EXC-018) stay NON_NORMATIVE; workflow report-content mandates beyond WF-009 are EXTRA; statements the template itself marks as 'prefer/avoid' guidance are not registered as EXTRA.
+
+## Limitations
+
+- Structural PASS (validators 11/12/13) is not semantic proof.
+- All 196 policies are MATCHED; tightened modalities and extra gates are noted in search_notes instead of downgrading status.
+- Hooks and checkers were analyzed statically, not executed.
+- Two relations remain open (UNCERTAIN-M1-0001 'maintain and commit package.json and package-lock.json'; UNCERTAIN-M1-0002 'clearly required by an approved workflow').
+- CANDIDATE.md was read as provenance only; classifications rest on the template text.
+- Identifier numbering has gaps where constraints were merged during annotation (R146 unused); IDs are local to this run.

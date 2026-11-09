@@ -1,0 +1,2 @@
+# Pass 0001 — Reverse normative-clause sweep
+Strategy family 1. Candidate order: M, M1, L0, L1, K0, K1. Read roots and routing first, then subordinate source by structure. Identify independently violable clauses before baseline retrieval. Compare claims against all three runs, including contextual policies and dismissed material. Inspect every active source file; checkpoint actual read ranges, not inferred coverage. No source execution. Exact quotes normalize line endings only.

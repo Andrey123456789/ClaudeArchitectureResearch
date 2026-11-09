@@ -1,0 +1,65 @@
+# K1 / B004 — Run 2 replica annotation (blind). check-instructions.cjs: instruction-structure checker.
+# Loading: command; run on instruction changes by actual-state.cjs (PostToolUse errors fed back, X11), by verify and template-maintenance; CLI exit 1 on errors.
+
+C X18 EX - | MUST (structure checker error) | Path-scoped standards live directly in .claude/rules/<scope>/ using only the scope directories common, backend, backend-tests, frontend, delivery (no deeper hierarchy); the header Scope equals the directory; every rule declares frontmatter paths: that include its scope's canonical glob (common **/*, backend backend/**/*, backend-tests backend/**/*Tests/**/*, frontend frontend/**/*). | Adding or changing rule files | Delivery rules declare their own CI/container globs (no canonical glob). | Loading/organization rule of the K1 instruction system; no V2 policy regulates rule-file layout or globs. | A rule placed in .claude/rules/backend/api/x.md, or a backend rule whose paths omit backend/**/*, is a structural error fed back after the edit.
+C X19 EX - | MUST (structure checker error) | CLAUDE.md must @-import the decision register; only OP/DEC artifacts may be @-imported into the always-loaded surface, every import must resolve, and no Markdown file other than CLAUDE.md may contain @ imports. | Instruction-system structure | none stated | Always-loaded-surface composition rule of the template; not a V2 policy. | Importing a standard or skill into CLAUDE.md, or adding an @ import to a rule file, is a structural error.
+C X20 EX - | MUST (structure checker error; description length warning) | Skill inventory and structure: every skill directory has a SKILL.md whose frontmatter name equals the directory name and which has a description (warning above 450 characters: keep concise and trigger-first); required workflows (project-structure, verify, code-review, build-fix, custom-settings, git-workflow, security-scan, add-dependency, architecture-decision, template-maintenance) exist as Kind WF; required knowledge skills (http-api, aspnet-error-handling, logging, httpclient-factory, configuration, dependency-injection, caching, swagger, api-versioning, health-check, docker, ci-cd, modern-csharp, authentication) exist as Kind KNW; standalone serilog or resilience skills are forbidden (use a private reference of the owning knowledge skill). | Instruction-system maintenance | none stated | Template inventory constraint; the oracle prescribes no skill inventory, naming or packaging. | Deleting or renaming a required skill, or adding a standalone resilience skill, is a structural error.
+C X21 EX - | MUST (structure checker error) | Instruction references must resolve: no references to unknown skills, no unresolved or ambiguous file references; skill-private references/ files are used only by their owning skill; conformance dependencies must not form cycles. | Instruction-system maintenance | References to absent facet roles of a slot selected none are dormant, not errors. | Referential-integrity rule of the instruction system; not a V2 policy. | Citing a skill-private reference from another skill or leaving a dangling `file.md` reference is a structural error.
+C X22 EX - | MUST (structure checker error) | Hook configuration: settings.json registers only and all of PreToolUse, PostToolUse, PostToolUseFailure and Stop; each hook uses exec form (command node with args [${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs, <event>]) without shell-variable expansion in command, a timeout of 1-600 seconds, and matchers covering Bash|PowerShell (PreToolUse, PostToolUseFailure) and Edit|Write|MultiEdit|Bash|PowerShell (PostToolUse); only the PreToolUse dependency/reference guard fails closed (onFailure block) and advisory hooks must not block on failure; the dispatcher must have a handler for each event. | .claude/settings.json maintenance | none stated | Enforcement-configuration invariants of the template; no oracle policy requires hooks or their configuration. | Removing the PreToolUse hook, dropping PowerShell from its matcher or making the Stop hook fail closed is a structural error.
+C X23 EX - | SHOULD (structure checker warning) | Normative text in OP, DEC and STD artifacts avoids the ambiguous word 'normally' and uses must/default/prefer vocabulary instead. | Authoring always-loaded and path-scoped normative text | Warning only; not applied to KNW/WF artifacts. | Authoring-vocabulary rule of the template; the oracle itself uses 'normally' in several policies and imposes no vocabulary rule. | Writing 'normally' in a standard yields a checker warning asking for must/default/prefer.
+C X24 EX - | SHOULD (structure checker warning) | The always-loaded surface (CLAUDE.md, its imports, names/descriptions of model-invocable skills and agent descriptions) stays near a 5k-token target; above about 6000 estimated tokens a warning is raised. | Instruction-system maintenance | Warning only; skills with disable-model-invocation are not counted. | Context-budget rule of the template design; not a V2 policy. | Growing CLAUDE.md or skill descriptions beyond the budget triggers a warning.
+
+FILE .claude/scripts/check-instructions.cjs | Instruction-structure checker; errors exit 1 in CLI mode and are fed back by the PostToolUse hook.
+1-2 NN | header comments (kind/scope/loading; conformance pointer)
+3 IM | strict-mode directive
+5 IM | comment stating the checker's purpose
+7-8 IM | module imports
+10-11 EX X12 |
+12-19 EX X18 |
+20-23 EX X13 |
+24-31 EX X1,X4 | The required leaf -> frame bindings are fixed here
+32-33 EX X20 |
+34-36 EX X20 |
+37 EX X20 |
+38-39 IM | root-artifact list and register path constants (collection inputs)
+40-41 EX X12,X3 | header problems are warnings and the leak rule does not apply
+42-44 IM | map, dispatcher and launcher path constants
+45-51 EX X22 |
+52 EX X24 |
+54-55 IM | severity constants
+57-95 IM | file collection (root artifacts, register, .claude/** except settings.local.json) and frontmatter parsing helpers
+97-98 EX X12,X13 |
+100-120 IM | header and Conforms-line parsing helpers
+122-132 EX X12 |
+134-147 IM | artifact parsing (settings.json validated separately)
+149-165 EX X12 | Level headers are not part of this instruction system
+167-189 EX X18 |
+191-209 EX X19 |
+211-218 IM | skill index helper
+220-243 EX X20,X15 | template-maintenance must set disable-model-invocation: true
+245-257 OL R1,R2 | read-only reviewer must disallow ${tool}…agent must delegate to the code-review workflow
+259-279 IM | reference-token resolution helper (path, skill-private and sibling resolution)
+281-348 EX X13,X21 | references to other non-invocable files are conformance dependencies and must follow
+350-353 IM | scope-ancestry helper used by the STD->STD scope rule in checkReferences
+355-381 IM | cycle-detection algorithm (the cycle error is raised in check())
+383-433 EX X13,X4 | ENF artifact lacks its conformance declaration
+435-463 IM | table, manifest-field and Binds parsing helpers
+465-488 EX X1 | static composition allows one
+490-501 IM | contract parsing helper
+503-520 EX X4 | only leaves bind, and only to the ${FRAME} frame
+522-569 EX X1,X5,X4 | unselected implementation must not be part of the runtime
+571-643 EX X5,X2,X7 | raise a Decision Request before selecting this implementation
+645-647 IM | regex escaping helper
+649-663 EX X3 | outside its module; refer to the slot/facet role
+665-681 EX X14 | artifact not listed: ${rel}
+683-740 EX X22 | policy-critical hook must fail closed ("onFailure": "block")
+742-747 EX X23 |
+749-760 EX X24 |
+762-771 EX X1 | pointers to them from neutral artifacts are dormant, not broken
+773-786 IM | check() orchestration of the individual predicates
+787-788 EX X21 | conformance dependency cycle
+789-792 IM | orchestration of capability, map, settings and vocabulary checks
+793-794 EX X24 | always-loaded surface is about ${tokens} tokens (target about 5k)
+795-800 IM | result assembly and export
+802-809 IM | CLI entry point: prints findings and exits 1 when errors exist (consumed by verify/template-maintenance)
+DONE

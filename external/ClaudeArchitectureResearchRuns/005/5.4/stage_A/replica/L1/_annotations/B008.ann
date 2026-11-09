@@ -1,0 +1,235 @@
+# L1 / B008 — dependency-injection, development-workflow, docker, dotnet-testing, ef-core, git-workflow, health-check.
+
+C R200 OL GOV-002 | MUST | For a new application or substantial feature read SPECIFICATION.md (and CUSTOM_SETTINGS.md) before planning or implementing. | new applications and substantial features | none stated
+C R201 OL GOV-018 | MUST | Before implementing a questionable request name the concrete concerns (duplication, poor cohesion, trigger or loading problems, context cost, architecture conflict, unnecessary complexity) and propose an alternative; this never authorizes silently rewriting or ignoring the user's requirement. | questionable requests | none stated
+C R202 OL RUN-012 | MUST | A performance-motivated change identifies the actual bottleneck, preserves observable behavior, uses the simplest optimization that addresses it, adds or keeps tests for affected behavior, and benchmarks or profiles non-obvious or complex optimizations. | performance changes | none stated
+C R203 OL WF-002 | MUST | For substantial feature work or a newly implemented application run code-review (or the code-reviewer agent) before final verification. | substantial work | none stated
+C R204 OL WF-003 | MUST | Before declaring implementation complete (and before preparing a PR) run verify at the scope and risk of the change; work is not complete until its verify step has run. | implementation completion | none stated
+C R205 OL GOV-015 | MUST NOT | Do not commit, push, merge, rebase, reset, force-push, delete or rename branches, or perform other repository-changing Git operations unless explicitly requested. | Git operations | Explicit request.
+C R206 OL GOV-016 | MUST | Parallel implementation work uses separate branches or worktrees (one branch is never checked out in several normal worktrees); keep unrelated changes out of the current branch. | parallel work | none stated
+C R207 OL GOV-019 | MUST NOT | Never discard, overwrite, reset, clean, stash away or otherwise destroy user work to make a Git operation easier; never remove a worktree holding uncommitted user work; never stash, reset or discard automatically to let a merge or rebase proceed. | Git operations | none stated
+C R208 OL GOV-020 | MUST | Before any repository-changing operation inspect the relevant state (status, diffs, current branch, upstream, what high-risk operations would lose or rewrite) and use the minimum operation that achieves the request; never silently clean unrelated working-tree changes. | Git operations | none stated
+C R209 OL WF-022 | MUST | Before committing inspect the staged diff and include only the requested logical change; never stage unrelated modified files; one logical change per commit with implementation and its tests together; no unrelated fixes bundled; avoid pushing unrelated local commits. | commits and pushes | none stated
+C U2 LU GOV-015 | MUST NOT (conditional) | High-risk Git operations (reset --hard, clean, push --force, push --force-with-lease, branch deletion, rebasing shared history) run only when explicitly requested or required by an approved workflow, and only after inspecting what will be lost or rewritten. | Git operations | 'required by an approved workflow' | GOV-015 allows repository-changing Git operations only on explicit request; the alternative trigger 'required by an approved workflow' names no such workflow and could authorize high-risk operations without an explicit request, or could merely refer to an explicitly approved procedure. The relation to GOV-015 cannot be settled from the text. | Under the broad reading an agent could force-push or delete a branch because a workflow 'requires' it, without the user's explicit request.
+C X26 EX WF-009 | MUST | The development-workflow output summarizes what changed, Delegated decisions taken, open Decision Requests (Reserved) and the verify report. | implementation work | none stated | WF-009 covers verification state and GOV-017 reporting of unresolved Decision Requests in headless runs; listing Delegated decisions in every implementation summary is an additional reporting duty. | A final summary that omits the Delegated decisions taken does not follow the workflow.
+C X27 EX GOV-015,GOV-019 | MUST NOT | Treat main, master and other protected or shared branches as non-rewritable. | Git history rewriting | none stated | GOV-015 permits repository-changing operations, including force-push and rebase, when explicitly requested; this rule forbids rewriting these branches without an approval path. | Even when the user explicitly asks to force-push a rewritten main, the instruction tells the agent not to rewrite it.
+C X28 EX WF-009 | MUST | A pull request stays focused and its description states what changed, why, how it was verified, and compatibility or migration notes. | pull request preparation | none stated | No oracle policy prescribes PR description contents; WF-009 only requires truthful verification reporting. | A PR prepared without verification or migration notes does not follow the workflow.
+
+FILE .claude/skills/dependency-injection/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R175 | add scanning, keyed services, factories, or decorators for an actual composition problem
+12 NN | section heading
+14-37 NN | per-layer registration code example
+39 NN | section heading
+41-46 OL R64 | scoped (registered by the persistence implementation)
+48 OL R64 | creates a scope per operation and resolves a scoped orchestration service
+50-60 NN | scoped background work code example
+62 OL R64 |
+64 NN | section heading
+66 NN | keyed services option (EXC-005 class technique)
+67 OL R181 | do not add Scrutor for one decoration
+68 OL R175 | only when registration volume creates real boilerplate
+69-70 NN | factory delegate and options technique pointers
+
+FILE .claude/skills/development-workflow/SKILL.md | Workflow skill; routed from CLAUDE.md.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | section heading
+12 OL R200 |
+13 OL R178,R201 | raise concerns and Decision Requests before writing code; continue only with Decided or Delegated work
+15 NN | section heading
+17 OL R34 |
+19 NN | section heading
+21 OL R34,R21 | Follow the applicable rules.
+22 OL R180 |
+24 NN | section heading
+26 OL R35,R36,R30 | run the `persistence.workflow` facet
+28 OL R195 |
+30-35 OL R202 | Identify the actual bottleneck or cost.
+37 OL R177 |
+39 NN | conditional-step label with technique pointers
+40 OL R188 |
+41 OL R24,R25 |
+42 OL R31,R156 |
+44 NN | section heading
+46 OL R203 |
+48 NN | section heading
+50 OL R204 |
+52 NN | section heading
+54 MX X26,R179 | Summarize what changed, Delegated decisions taken, open Decision Requests (Reserved), and the `verify` report. ⟫ Reporting open Decision Requests is oracle-linked (R179); the fixed summary contents including Delegated decisions are the extra X26.
+
+FILE .claude/skills/docker/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R165,R122 | Keep Docker concerns out of use-case and domain code.
+12 NN | section heading
+14-33 NN | multi-stage Dockerfile example (EXC-006 class)
+35-36 NN | Dockerfile copy/restore-layer technique (EXC-006 class)
+37 OL R144 | Workers without ASP.NET Core use the plain .NET runtime image.
+38 OL R144 | `USER app` is the built-in non-root user of current .NET images
+40 NN | section heading
+42 OL R93,R94 | Never put real credentials in the Dockerfile
+44 NN | section heading
+46-57 NN | Compose example
+59 OL R181,R93 | Add only infrastructure the project uses
+61 NN | section heading
+63 NN | container health-probe mechanics (EXC-006 class)
+65 NN | section heading
+67 NN | frontend container technique
+69 NN | section heading
+71-79 NN | .dockerignore example
+81 NN | .dockerignore technique note
+83 NN | section heading
+85 NN | image-size options (EXC-006 class)
+87 NN | section heading
+89 OL R93 | no secrets or stray files landed in the image
+91 NN | section heading
+93 DU R144,R93,R31,R122,R181 | anti-pattern list restating container rules recorded at their owning lines
+
+FILE .claude/skills/dotnet-testing/SKILL.md | Module knowledge skill (backend-testing.knowledge); on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R181 | do not build test infrastructure the project does not need yet
+12 NN | section heading
+14-21 NN | technique selection table (EXC-012 class)
+22 OL R195 | focused regression test
+23 OL R186 | convert it to maintained coverage or confirm equivalent coverage exists
+25 NN | section heading
+27-42 NN | NUnit test code example
+44 NN | Arrange/Act/Assert technique note
+46 NN | section heading
+48 OL R115 | A longer explicit table beats a shorter algorithmic test when it makes business rules visible
+50-60 NN | case-table code example
+62 NN | scenario-per-test technique (EXC-012 class)
+64 NN | section heading
+66 OL R113,R116 | is useful only when that interaction is the contract
+68 NN | section heading
+70-100 NN | host integration test code example
+102 OL R114 | so a test can never reach a Development or Production database
+104 NN | section heading
+106 OL R29 | Testcontainers gives an isolated real-provider database when that is worth it
+107 OL R29 | state the trade-off
+108 NN | fake-repository technique for unit tests (EXC-012 class)
+109 OL R117 | seed only what each test needs
+110 OL R118 | not every trivial `Add`/`Get`
+112 NN | section heading
+114 NN | time-control technique example (binding recorded at R51)
+115 OL R114 | keep slow or flaky external tests out of the fast run
+116 NN | builders/fixtures technique (EXC-012 class)
+118 NN | section heading
+120 OL R195,R186 | A regression test reproduces the failure before the fix and passes after it.
+122 NN | section heading
+124 OL R119 | `CreateOrder_WithValidRequest_ReturnsCreated`
+126 NN | section heading
+128 OL R118 | Coverage percentage is diagnostic only.
+130 NN | section heading
+132 DU R113,R114,R29,R186 | anti-pattern list restating backend test rules
+
+FILE .claude/skills/ef-core/SKILL.md | Module knowledge skill (persistence.knowledge); on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to rule facets, workflow and commands; states the skill adds technique only
+12 NN | section heading
+14 OL R122 | persistence-specific configuration out of domain-model entities where practical
+16-34 NN | context and mapping code example
+36 OL R16,R181 | do not add a provider merely because an example shows it
+38 NN | section heading
+40-55 NN | repository and Unit of Work code example
+57 OL R132,R133,R131 | `IUnitOfWork` is the use-case-facing abstraction over the same scoped context
+59-64 NN | internal generic base code example
+66 OL R151,R130 | Use-case-specific queries stay in concrete repositories
+68 NN | section heading
+70 OL R48 | Avoid loading a whole aggregate to return two scalars.
+72-76 NN | projection code example
+78-79 NN | tracking and key-lookup technique (EXC-011 class)
+80 OL R48 | avoid lazy loading by default (hidden queries, N+1)
+81 OL R48 | filter, order deterministically, and page in the database
+83-88 NN | pagination code example
+90 NN | bulk-operation technique (EXC-011 class)
+91 OL R134 | when the frame's Unit of Work rule allows an explicit transaction
+92 OL R47 | is a measured-optimization tool
+93 OL R96,R47 | turn interpolated values into parameters
+94 OL R46 | start with clear LINQ
+96 NN | section heading
+98 OL R126 | never hide business behavior in them
+100-116 NN | auditing interceptor code example
+118 NN | section heading
+120 OL R155,R37,R153 | ask for the desired dataset instead of inventing a large generic one
+122-151 NN | seeder and initialization code example (Development-only guard, anchor entity)
+153 NN | section heading
+155-169 DU R130,R132,R48,R47,R134,R36,R31,R153,R32,R117,R156 | decision table restating owning rules; tracking, key-lookup and bulk-operation rows are EXC-011 technique
+
+FILE .claude/skills/git-workflow/SKILL.md | Workflow skill; on invocation.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R205,R206 | explicit request only
+12 NN | section heading
+14 OL R207 |
+15 OL R208 |
+16 MX R205,R208,U2,X27 | Treat `main`, `master`, and other protected or shared branches as non-rewritable. ⟫ Explicit-request and inspection duties are oracle-linked (R205, R208); 'required by an approved workflow' is an uncertain relaxation of GOV-015 (U2); non-rewritable main/master is the extra X27.
+18 NN | section heading
+20 OL R209 |
+21 OL R209 | no unrelated fixes bundled together
+22 NN | commit-message convention suggestion (technique)
+24 NN | section heading
+26 OL R205 | Do not rename an existing user branch to fit.
+27 OL R206 |
+28 OL R207 | never remove a worktree holding uncommitted user work
+30 NN | section heading
+32 OL R208,R209 | avoid pushing unrelated local commits
+33 OL R207,R208 | never stash, reset, or discard automatically to let the operation proceed
+34 OL R174 | Resolve conflicts by the intended combined behavior
+36 NN | section heading
+38 MX R204,R187,X28 | Never claim checks that were not run. ⟫ Verify before PR (R204) and truthful check reporting (R187) are oracle-linked; the PR description contents are the extra X28.
+40 NN | section heading
+42 NN | optional ('when useful') state report suggestion
+
+FILE .claude/skills/health-check/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointer to health rules and definition
+12 NN | section heading
+14-18 NN | setup code example
+20 NN | section heading
+22 OL R91 | an endpoint that runs no dependency checks
+24-26 NN | liveness mapping code example
+28 NN | section heading
+30 NN | readiness question lead-in
+32-39 NN | readiness tagging code example
+41 OL R91 | never misuse liveness for that (restart loops)
+43 NN | section heading
+45 OL R90 | a lightweight connectivity check
+46 OL R91 | only when their availability defines readiness
+48 NN | section heading
+50 OL R92 | put detailed diagnostics behind network or authorization controls for operators
+52 NN | section heading
+54 NN | probe exposure technique (EXC-010 class)
+56 NN | section heading
+58 OL R90 | avoid long external timeouts
+60 NN | section heading
+62 NN | health-check test examples (EXC-010 class)
+64 NN | section heading
+66 DU R90,R91,R92 | anti-pattern list restating health rules
+DONE

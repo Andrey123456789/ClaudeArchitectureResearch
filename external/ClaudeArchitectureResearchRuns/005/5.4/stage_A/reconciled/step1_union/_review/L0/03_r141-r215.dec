@@ -1,0 +1,197 @@
+# L0 batch 3: regions r141-r215 (protocol v1.2.1)
+# r141-r144 2-technology/angular.md
+SD P:RULE-L0-0198 R:RULE-L0-0124 | S: Angular manual subscriptions M: MUST both E: none in either T: none
+SD P:RULE-L0-0199 R:RULE-L0-0125 | S: Angular HTTP interceptors M: DEFAULT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-L0-0106#a P:RULE-L0-0200 | same reactive-forms guidance; R reports MUST (record level), P DEFAULT.
+RD COMPOUND_PART R:RULE-L0-0126 P:EXTRA-L0-0025 | R adds 'never invent scripts' and the CI lockfile install.
+# r145-r149 2-technology/aspnet-core.md
+SPLIT X:BF-L0-0022 | a@17-17: Api entry points are ASP.NET Core Controllers; Minimal API endpoint groups only when explicitly requested. | b@18-18: IActionResult, ActionResult<T>, ProblemDetails, HttpContext, ClaimsPrincipal, IHttpContextAccessor and StatusCodes are transport types that belong to Api and never appear in Application or Domain contracts.
+SD P:RULE-L0-0178 R:RULE-L0-0127 X:BF-L0-0022#a | S: Api entry points M: MUST_NOT (P) = MUST with negation (R) (F7), X no modality E: explicit request (all) T: none
+SD P:RULE-L0-0179 X:BF-L0-0022#b | S: web transport types M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L0-0087 P:RULE-L0-0179 | R: Application and Domain return no web result types or status codes.
+SPLIT X:BF-L0-0023 | a@22-22: Use ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request validation failures with stable, safe machine-readable fields (default). | b@23-23: Centralized handling of unexpected exceptions uses IExceptionHandler with AddProblemDetails() / UseExceptionHandler().
+SD P:RULE-L0-0180 X:BF-L0-0023#a | S: ASP.NET Core HTTP failures M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-L0-0181 X:BF-L0-0023#b | S: unexpected-exception handling M: P MUST, X no modality E: none in either T: none
+RD DIFFERENT_LAYER R:RULE-L0-0089 P:RULE-L0-0180 | P (Level 2): the ASP.NET Core binding of the problem-details contract.
+RD DIFFERENT_LAYER R:RULE-L0-0109#a P:RULE-L0-0181 | P (Level 2, MUST): the concrete middleware; R (DEFAULT): centralized propagation.
+SD P:RULE-L0-0182 R:RULE-L0-0128 | S: Swagger UI exposure M: DEFAULT both E: deployment requirements (both) T: none
+RD DIFFERENT_LAYER R:RULE-L0-0050 P:RULE-L0-0183 | P (Level 2): names the established ASP.NET Core facilities.
+SPLIT R:RULE-L0-0056 | a: Do not implement custom cryptography when a well-reviewed platform mechanism is appropriate. | b: Do not treat ASP.NET Core Data Protection as universal database encryption.
+SD P:RULE-L0-0184 R:RULE-L0-0056#b | S: ASP.NET Core Data Protection M: MUST_NOT both E: none in either T: none
+# r150 2-technology/containers-ci.md
+SPLIT R:RULE-L0-0130 | a: Production containers use an appropriate runtime image (the ASP.NET runtime image) rather than the SDK image for convenience and do not switch to root to bypass permission problems. | b: Production containers run as the image's non-root user where supported. | c: Keep build tooling out of runtime images. | d: Keep environment configuration external.
+SD P:RULE-L0-0203 R:RULE-L0-0130#a | S: production containers M: DEFAULT both E: none in either T: none
+SPLIT X:BF-L0-0024 | a@20-20: Production containers run as the image's non-root user where supported. | b@21-21: Keep environment configuration external to container images.
+SD P:EXTRA-L0-0026 R:RULE-L0-0130#b X:BF-L0-0024#a | S: production containers M: DEFAULT in P and R, X no modality E: where supported (all) T: none
+SD P:RULE-L0-0204 R:RULE-L0-0130#c | S: production runtime images M: DEFAULT both E: none in either T: none
+SD P:EXTRA-L0-0027 X:BF-L0-0024#b | S: container configuration M: P MUST, X no modality E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-L0-0130#d P:EXTRA-L0-0027 | same statement; R reports DEFAULT, P MUST.
+RD BROADER_NARROWER R:RULE-L0-0043 P:RULE-L0-0205 | P: Dockerfiles, Compose files and build arguments only.
+# r151-r158 2-technology/csharp.md
+SD P:RULE-L0-0170 R:RULE-L0-0131 | S: C# conventions M: DEFAULT both E: none in either T: none
+SD P:RULE-L0-0171 R:RULE-L0-0132 | S: C# style rewrites M: MUST_NOT both E: explicit request (both) T: none
+SD P:RULE-L0-0172 R:RULE-L0-0133 | S: new C# code M: DEFAULT both E: existing or framework contracts (both) T: none
+SD P:RULE-L0-0173 R:RULE-L0-0134 | S: async I/O M: MUST_NOT (P) = MUST with 'never' (R) (F7) E: none in either T: none
+SD P:RULE-L0-0174 R:RULE-L0-0135 | S: cancellation M: MUST both E: none in either T: none
+CX X:BF-L0-0025 | Use TimeProvider for application logic that depends on the current clock and needs deterministic testing (marked default); do not mechanically replace explicit or stored timestamps.
+SD P:RULE-L0-0175 R:RULE-L0-0136 X:BF-L0-0025 | S: clock-dependent logic M: DEFAULT in P and R, X no modality E: none in any T: none
+SD P:RULE-L0-0176 R:RULE-L0-0137 | S: outbound HTTP M: MUST_NOT both E: none in either T: none
+SD P:RULE-L0-0177 R:RULE-L0-0138 | S: configuration M: DEFAULT both E: none in either T: none
+# r159-r161 2-technology/dotnet-testing.md
+SD P:RULE-L0-0191 R:RULE-L0-0139 | S: .NET test framework M: DEFAULT both E: established convention (both) T: none
+SPLIT X:BF-L0-0026 | a@14-14: Use WebApplicationFactory<Program>-based integration tests when routing, binding, middleware, authentication/authorization, DI, repositories, EF Core or persistence is the subject (default). | b@14-14: Integration tests run in an environment named Testing with isolated test resources.
+SD P:RULE-L0-0192 R:RULE-L0-0140 X:BF-L0-0026#a | S: backend integration tests M: DEFAULT in P and R, X no modality E: none in any T: none
+SPLIT R:RULE-L0-0065 | a: Tests are deterministic, independent of execution order and isolated from Production and Development data, uncontrolled external systems and shared mutable state. | b: The Testing environment uses isolated resources.
+SD P:RULE-L0-0193 R:RULE-L0-0065#b X:BF-L0-0026#b | S: Testing environment M: MUST in P and R, X no modality E: none in any T: none
+SPLIT R:RULE-L0-0064 | a: When provider behavior matters, test against the actual database provider; never claim provider fidelity from a test running on a different provider. | b: EF Core InMemory is not relational and never verifies relational or SQL Server behavior.
+RD DIFFERENT_STRENGTH R:RULE-L0-0064#b P:RULE-L0-0194 | same InMemory statement; R reports DEFAULT (record level), P MUST_NOT.
+# r162-r165 2-technology/ef-core.md
+RD OVERLAP R:RULE-L0-0076 P:RULE-L0-0185 | P (DEFINITION): which types count as persistence-framework types.
+CX X:BF-L0-0027 | Entity mappings live in Infrastructure as IEntityTypeConfiguration<T> classes (prefer).
+SD P:EXTRA-L0-0023 X:BF-L0-0027 | S: EF Core mappings M: P PREFER, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L0-0070 P:EXTRA-L0-0023 | R: entity mappings live in Infrastructure.
+RD OVERLAP R:RULE-L0-0070 P:RULE-L0-0186 | P (PREFER): persistence configuration out of Domain entities where practical.
+SPLIT R:RULE-L0-0118 | a: IUnitOfWork is the normal commit boundary of an Application use case: repositories stage changes and Application Services decide when to commit. | b: The Infrastructure IUnitOfWork implementation delegates to the shared scoped DbContext.
+RD DIFFERENT_STRENGTH R:RULE-L0-0118#b P:RULE-L0-0187 | same statement; R reports DEFAULT (record level), P MUST.
+RD OVERLAP R:RULE-L0-0119 P:RULE-L0-0187 | R: repositories share the scoped Unit of Work and context.
+RD OVERLAP R:RULE-L0-0114#a P:RULE-L0-0188 | P (ALLOWED): Infrastructure-only base with protected helpers.
+RD OVERLAP R:RULE-L0-0117 P:RULE-L0-0188 | R: the Infrastructure-only generic base.
+# r166-r167 2-technology/fluentvalidation.md
+SPLIT R:RULE-L0-0142 | a: FluentValidation is the standard explicit request/use-case validation library. | b: Application logging uses ILogger<T> with Serilog as provider.
+RD DIFFERENT_STRENGTH R:RULE-L0-0142#a P:RULE-L0-0189 | R: DECIDED library choice; P: MUST use it where explicit validation is needed.
+RD OVERLAP R:RULE-L0-0110#a P:RULE-L0-0189 | P: each rule at its owning boundary.
+SPLIT X:BF-L0-0028 | a@11-11: Application-level validators live in Application and are registered with FluentValidation.DependencyInjectionExtensions from Application's own registration. | b@12-12: Follow the project's established validation invocation pattern rather than a second competing mechanism; do not adopt a deprecated or legacy ASP.NET automatic-validation integration without a concrete requirement.
+# [revised before L0 checkpoint: P and R differ in modality on this sentence; X part related to both (convention in 05)]
+RD OVERLAP X:BF-L0-0028#a P:RULE-L0-0190 | same statement; no single merge target.
+RD OVERLAP X:BF-L0-0028#a R:EXTRA-L0-0009 | same statement; no single merge target.
+RD DIFFERENT_STRENGTH R:EXTRA-L0-0009 P:RULE-L0-0190 | same statement; R reports MUST, P DEFAULT.
+SD P:EXTRA-L0-0024 X:BF-L0-0028#b | S: validation invocation M: P DEFAULT, X no modality E: concrete project requirement (both) T: none
+RD COMPOUND_PART P:EXTRA-L0-0024 R:EXTRA-L0-0005 | R: the FluentValidation.AspNetCore element.
+RD OVERLAP R:RULE-L0-0131 P:EXTRA-L0-0024 | R: established invocation patterns.
+RD EXAMPLE_GENERAL R:RULE-L0-0080 P:RULE-L0-0190 | P: validator registration from Application.
+# r168-r169 2-technology/logging.md
+SD P:RULE-L0-0201 R:RULE-L0-0143 | S: backend logging M: DEFAULT both E: none in either T: none
+SD P:RULE-L0-0202 R:RULE-L0-0144 | S: Serilog configuration M: DEFAULT both E: none in either T: none
+# r170-r176 3-project/data-lifecycle.md
+SD P:RULE-L0-0206 R:RULE-L0-0145 | S: Development seed data M: DEFAULT both E: none in either T: none
+SD P:RULE-L0-0207 R:RULE-L0-0146 | S: Development seeding M: MUST both E: none in either T: none
+SPLIT X:BF-L0-0029 | a@17-17: Substantial seed construction lives in a dedicated internal DbSeeder invoked through a narrow Infrastructure initialization extension. | b@18-18: Automatic development seeding runs only in Development, never in Production; tests own their setup and never use the seeder.
+SD P:RULE-L0-0208 R:RULE-L0-0147 X:BF-L0-0029#a | S: seed construction M: MUST in P and R, X no modality E: none in any T: none
+SD P:RULE-L0-0209 R:RULE-L0-0148 X:BF-L0-0029#b | S: automatic seeding M: MUST_NOT in P and R, X no modality E: none in any T: none
+RD OVERLAP R:RULE-L0-0066 P:RULE-L0-0209 | R: tests never depend on development seeding.
+SD P:RULE-L0-0210 R:RULE-L0-0149 | S: seeder and schema M: MUST_NOT both E: none in either T: none
+SD P:RULE-L0-0211 R:RULE-L0-0150 | S: existing Development data M: MUST_NOT both E: none in either T: none
+SD P:RULE-L0-0212 R:RULE-L0-0151 | S: seed entities M: MUST both E: none in either T: none
+SD P:RULE-L0-0213 R:RULE-L0-0152 | S: Development configuration M: DEFAULT both E: none in either T: none
+# r177-r188 3-project/decisions.md
+SD P:RULE-L0-0047 R:RULE-L0-0153 | S: approved technologies M: MUST (P) = MUST NOT silently select an alternative (R) (F7) E: approved replacement (R; Reserved in both) T: none
+RD OVERLAP R:RULE-L0-0018 P:RULE-L0-0048 | P: versions resolved at install time, never copied from examples.
+SPLIT X:BF-L0-0030 | a@22-22: Backend platform: .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core, ASP.NET Core Controllers; a preview/RC move requires approval. | b@24-25: Validation uses FluentValidation with FluentValidation.DependencyInjectionExtensions; logging uses ILogger<T> with Serilog.AspNetCore as provider.
+SD P:RULE-L0-0049 R:RULE-L0-0154 X:BF-L0-0030#a | S: backend platform M: DECIDED in P and R, X no modality E: approval for preview/RC (all) T: none
+SD P:RULE-L0-0050 R:RULE-L0-0141 | S: persistence stack M: DECIDED both E: none in either T: none
+RD DETAIL_DIFFERENCE R:RULE-L0-0142#a P:RULE-L0-0051 | P adds FluentValidation.DependencyInjectionExtensions.
+SD P:RULE-L0-0052 R:RULE-L0-0142#b | S: application logging stack M: DECIDED both E: none in either T: none
+RD COMPOUND_PART X:BF-L0-0030#b P:RULE-L0-0051 | P: the validation element.
+RD COMPOUND_PART X:BF-L0-0030#b P:RULE-L0-0052 | P: the logging element.
+SD P:RULE-L0-0054 R:RULE-L0-0155 | S: API documentation surface M: DECIDED both E: deployment requirements beyond Development (both) T: none
+SD P:RULE-L0-0055 R:RULE-L0-0156 | S: backend testing stack M: DECIDED both E: Testcontainers conditional (both) T: none
+RD COMPOUND_PART R:RULE-L0-0156 P:RULE-L0-0059 | P: the Testcontainers element.
+SD P:RULE-L0-0056 R:RULE-L0-0157 | S: frontend stack M: DECIDED both E: zoneless when supported (both) T: none
+SPLIT R:RULE-L0-0158 | a: Mapster (with Mapster.DependencyInjection) is added only when mapping volume is repetitive or non-trivial; manual mapping is fine for simple cases. | b: Microsoft.Extensions.Http.Resilience / Microsoft.Extensions.Resilience are added only when a real integration needs resilience.
+SD P:RULE-L0-0057 R:RULE-L0-0158#a | S: object mapping M: DEFAULT both E: manual mapping for simple cases (both) T: none
+SD P:RULE-L0-0058 R:RULE-L0-0158#b | S: resilience packages M: DEFAULT both E: none in either T: when a real integration needs resilience
+SD P:RULE-L0-0060 R:RULE-L0-0159 | S: frontend E2E M: DEFAULT both E: none in either T: when E2E is required
+SD P:RULE-L0-0061 R:RULE-L0-0129 | S: Docker/container artifacts M: MUST_NOT both E: none in either T: none
+SD P:RULE-L0-0062 R:RULE-L0-0160 | S: frontend libraries M: MUST_NOT both E: concrete need (both) T: by default
+SPLIT X:BF-L0-0031 | a@43-43: Adding another mapping framework requires approval (alongside mediator libraries not being adopted). | b@49-49: Physical layout: backend production and test projects under backend/<Name>.<Layer>/, the Angular workspace under frontend/<Name>.Web/, documentation under docs/; no top-level tests/ directory.
+SD P:EXTRA-L0-0020 X:BF-L0-0031#a | S: mapping frameworks M: P REQUIRES_APPROVAL, X no modality E: none in either T: none
+RD BROADER_NARROWER P:EXTRA-L0-0020 R:RULE-L0-0014 | R: AutoMapper specifically, as a manifest-check flag.
+RD OVERLAP R:RULE-L0-0112 P:RULE-L0-0063 | P (MUST_NOT): mediator libraries are not added; R (REQUIRES_APPROVAL): not adopted.
+RD OVERLAP R:RULE-L0-0013 P:RULE-L0-0063 | R: the manifest-check flag for MediatR/Kommand.
+SD P:RULE-L0-0064 R:RULE-L0-0161 | S: solution format M: DEFAULT both E: external tool or project requirement (both) T: none
+SD P:RULE-L0-0065 R:RULE-L0-0162 | S: .NET build configuration M: DEFAULT both E: none in either T: none
+SD P:RULE-L0-0066 X:BF-L0-0031#b | S: repository layout M: P DEFAULT, X no modality E: none in either T: none
+RD COMPOUND_PART R:RULE-L0-0163 P:RULE-L0-0066 | R adds frontend test placement.
+# r189-r192 3-project/layout.md
+RD DIFFERENT_STRENGTH R:RULE-L0-0164 P:RULE-L0-0214 | same layer-to-project mapping; R reports DECIDED, P DEFAULT.
+RD OVERLAP R:RULE-L0-0017 P:EXTRA-L0-0028 | P: the layout rule states that the project hook rejects outward references.
+RD OVERLAP R:RULE-L0-0017 P:RULE-L0-0215 | P: ProjectReference entries implement the Level 1 direction.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0216 | P: only useful test projects.
+RD OVERLAP R:RULE-L0-0163 P:RULE-L0-0216 | P: test projects beside production projects under backend/.
+RD OVERLAP R:RULE-L0-0084 P:RULE-L0-0217 | P: narrowest typical test references.
+CX X:BF-L0-0032 | Test projects are <Name>.Application.Tests, <Name>.IntegrationTests and optional <Name>.Domain.Tests / <Name>.Infrastructure.Tests with fixed references; frontend unit/component tests are colocated in the workspace and E2E tests live under frontend/<Name>.Web/e2e/.
+RD COMPOUND_PART X:BF-L0-0032 P:RULE-L0-0217 | P: the backend test-project element.
+RD COMPOUND_PART X:BF-L0-0032 P:EXTRA-L0-0029 | P: the frontend test-location element.
+RD COMPOUND_PART R:RULE-L0-0163 P:EXTRA-L0-0029 | P: frontend test placement only.
+RD COMPOUND_PART R:RULE-L0-0163 P:RULE-L0-0218 | P: the Angular workspace element.
+# r193-r195 3-project/package-management.md
+RD OVERLAP R:RULE-L0-0019#a P:RULE-L0-0219 | P: CPM with versionless, narrowly scoped references.
+RD OVERLAP R:RULE-L0-0023 P:RULE-L0-0219 | P: narrow scoping of PackageReference entries.
+CX X:BF-L0-0033 | Package versions belong in Directory.Packages.props, project PackageReference entries are versionless, a VersionOverride requires a concrete reported reason, and centrally managed versions are not duplicated in .csproj files.
+RD COMPOUND_PART X:BF-L0-0033 P:RULE-L0-0219 | P: the CPM element.
+RD COMPOUND_PART X:BF-L0-0033 P:RULE-L0-0220 | P: the no-duplication element.
+RD COMPOUND_PART X:BF-L0-0033 P:EXTRA-L0-0030 | P: the VersionOverride element.
+RD OVERLAP R:RULE-L0-0019#a P:RULE-L0-0220 | P: no duplicated central versions in .csproj files.
+RD COMPOUND_PART P:RULE-L0-0221 R:UNCERTAIN-L0-0001 | P adds npm as the package manager.
+RD OVERLAP R:RULE-L0-0165 P:RULE-L0-0221 | R: npm unless deliberately changed; lockfile consistency.
+SD P:RULE-L0-0222 R:RULE-L0-0016 | S: frontend build/test tooling M: MUST both E: 'unless there is a reason' in the shared cited text L24 (F6) T: none
+# r196 .claude/settings.json
+CX X:BF-L0-0034 | Bash/PowerShell calls run the pre-bash hook through node with a 30-second timeout and onFailure block (fail closed).
+RD COMPOUND_PART R:EXTRA-L0-0007 X:BF-L0-0034 | R: the full hook registration form.
+RD OVERLAP X:BF-L0-0034 P:EXTRA-L0-0031 | P: pre-bash fails closed, incl. the settings.json onFailure block.
+# r197-r204 add-dependency/SKILL.md
+RD EXAMPLE_GENERAL R:RULE-L0-0021#b P:RULE-L0-0240 | P: the rule files add-dependency reads first.
+RD OVERLAP R:RULE-L0-0022 P:RULE-L0-0241 | P: need, approved-stack and Reserved checks before adding.
+RD OVERLAP R:RULE-L0-0153 P:RULE-L0-0241 | P: the approved stack does not already cover the need.
+RD OVERLAP R:RULE-L0-0018 P:RULE-L0-0242 | P: latest stable compatible version verified from the registry.
+SD P:RULE-L0-0243 R:RULE-L0-0018 | S: package versions M: MUST_NOT (P) = MUST never (R) (F7) E: explicit request (both) T: none
+SPLIT R:RULE-L0-0166 | a: Before installation check that the exact selected version is not deprecated, review known vulnerability information and verify its license from official registry metadata (and upstream when necessary). | b: Permissive licenses (MIT, Apache-2.0, BSD) may normally be accepted; a free download does not make a package acceptable.
+SPLIT X:BF-L0-0054 | a@26-26: Check deprecation, known vulnerabilities and license of the exact selected version from official registry metadata (and upstream when necessary). | b@26-26: Permissive licenses are normally acceptable.
+SD P:RULE-L0-0244 R:RULE-L0-0166#a X:BF-L0-0054#a | S: dependency due diligence M: MUST in P and R, X no modality E: none in any T: before installation
+SD P:RULE-L0-0245 X:BF-L0-0054#b | S: dependency licenses M: P ALLOWED, X no modality E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-L0-0166#b P:RULE-L0-0245 | same license statement; R reports MUST (record level), P ALLOWED.
+SPLIT R:RULE-L0-0167 | a: Do not automatically install a paid/commercial dependency or one with a materially restrictive or unclassifiable license; explain the concern and present options (say so when no free alternative exists) without silently substituting. | b: No legal conclusions beyond the published license.
+SD P:RULE-L0-0246 R:RULE-L0-0167#a | S: paid or restrictive-license dependencies M: REQUIRES_APPROVAL both E: user decision (R) T: none
+RD DIFFERENT_STRENGTH R:RULE-L0-0167#b P:EXTRA-L0-0042 | same statement; R reports REQUIRES_APPROVAL (record level), P MUST_NOT.
+SD P:RULE-L0-0247 R:RULE-L0-0168 | S: API versioning packages M: DEFAULT both E: none in either T: when versioning is adopted
+SPLIT X:BF-L0-0055 | a@49-49: When resilience is required prefer the Microsoft resilience packages; the named Polly integrations are not used. | b@55-55: Never use npm --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; the project hook blocks these and an explicitly approved override is run by the user.
+RD OVERLAP X:BF-L0-0055#a P:RULE-L0-0248 | P: Microsoft packages preferred; direct Polly an explicit documented exception.
+RD OVERLAP X:BF-L0-0055#a R:EXTRA-L0-0004 | R: the deprecated Polly integrations must not be added.
+SD P:RULE-L0-0248 R:RULE-L0-0012 | S: resilience packages M: DEFAULT both E: direct Polly as an explicit exception (both) T: when resilience is required
+RD COMPOUND_PART X:BF-L0-0055#b P:RULE-L0-0251 | P: the no-bypass element.
+RD COMPOUND_PART X:BF-L0-0055#b P:EXTRA-L0-0032 | P: the user-runs-the-override element.
+RD BROADER_NARROWER R:RULE-L0-0005 P:RULE-L0-0251 | P: npm only, in the install procedure.
+RD OVERLAP R:RULE-L0-0019#a P:RULE-L0-0249 | P: NuGet install places versions centrally.
+RD OVERLAP R:RULE-L0-0023 P:RULE-L0-0249 | P: the narrowest project.
+RD OVERLAP R:RULE-L0-0165 P:RULE-L0-0250 | P: npm install category and lockfile.
+SPLIT X:BF-L0-0056 | a@59-59: Report the package, version, license, reason and checks performed. | b@63-63: Removing a dependency removes the reference and its central version when no project uses it any more, then rebuilds and runs the affected tests.
+SD P:EXTRA-L0-0043 X:BF-L0-0056#a | S: dependency reports M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-L0-0044 R:EXTRA-L0-0010 X:BF-L0-0056#b | S: dependency removal M: MUST in P and R, X no modality E: none in any T: none
+RD OVERLAP R:EXTRA-L0-0002 P:EXTRA-L0-0043 | R: every dependency change reports its check results.
+RD EXAMPLE_GENERAL R:RULE-L0-0024 P:RULE-L0-0253 | P: no unrelated upgrades because of scanner output.
+# r205-r212 angular/SKILL.md
+SPLIT X:BF-L0-0057 | a@42-42: A feature owns its UI and frontend data access; do not move feature code to shared just because two components use it; shared holds genuinely cross-feature primitives. | b@65-65: Use computed for derived state; avoid effect() when computed, a template binding or an event handler expresses the dependency more clearly.
+RD COMPOUND_PART P:RULE-L0-0259 X:BF-L0-0057#a | P adds 'create directories only with meaningful code'.
+SD P:EXTRA-L0-0049 X:BF-L0-0057#b | S: Angular derived state M: P AVOID, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L0-0100 P:RULE-L0-0259 | R: feature organization.
+RD EXAMPLE_GENERAL R:RULE-L0-0124 P:RULE-L0-0260 | P: takeUntilDestroyed()/DestroyRef.
+RD EXAMPLE_GENERAL R:RULE-L0-0048 P:RULE-L0-0261 | P: frontend token/auth state is UX.
+CX X:BF-L0-0058 | Centralize ProblemDetails parsing/mapping (e.g. an error interceptor or mapping service) and branch on stable codes or fields, not message text.
+SD P:RULE-L0-0262 X:BF-L0-0058 | S: frontend ProblemDetails handling M: P MUST, X no modality E: none in either T: none
+RD DETAIL_DIFFERENCE R:RULE-L0-0105 P:RULE-L0-0262 | R qualifies centralization with 'when practical'.
+RD OVERLAP R:RULE-L0-0106#a P:RULE-L0-0263 | P: why reactive forms help.
+RD EXAMPLE_GENERAL R:RULE-L0-0104 P:RULE-L0-0264 | P: state escalation path.
+SPLIT X:BF-L0-0059 | a@122-122: When the project uses Angular Material, use it consistently for common UI primitives; do not wrap every Material component in a custom abstraction without a concrete reason. | b@126-126: Generated OpenAPI clients are treated as generated: kept separate from handwritten feature logic, regenerated when the contract changes and not patched. | c@130-130: Frontend E2E focuses on a small number of important workflows unless broader coverage is required.
+SD P:EXTRA-L0-0051 X:BF-L0-0059#a | S: Angular Material usage M: P DEFAULT, X no modality E: Material used (both) T: none
+RD EXAMPLE_GENERAL R:RULE-L0-0169 P:EXTRA-L0-0051 | R: no custom wrapper around every UI-library component.
+SD P:RULE-L0-0265 X:BF-L0-0059#b | S: generated API clients M: P MUST, X no modality E: client generation adopted (both) T: none
+RD DIFFERENT_STRENGTH R:RULE-L0-0170 P:RULE-L0-0265 | same generated-code rule; R reports DEFAULT, P MUST.
+RD COMPOUND_PART P:EXTRA-L0-0052 X:BF-L0-0059#c | P adds the frontend test targets.
+RD EXAMPLE_GENERAL R:RULE-L0-0028 P:RULE-L0-0267 | P: frontend optimization only after a real need.
+# r213-r215 api-versioning/SKILL.md
+RD COMPOUND_PART P:RULE-L0-0268 R:EXTRA-L0-0011 | P adds that versioning belongs to the API contract and the package binding.
+RD OVERLAP R:RULE-L0-0097 P:RULE-L0-0268 | P: versioning belongs to the API contract, not Domain or Application.
+RD OVERLAP R:RULE-L0-0168 P:RULE-L0-0268 | P: the package binding follows add-dependency.
+RD EXAMPLE_GENERAL R:RULE-L0-0094 P:RULE-L0-0269 | P: when versioning is useful.
+RD EXAMPLE_GENERAL R:RULE-L0-0095 P:RULE-L0-0270 | P: what counts as breaking.
+REVIEWED r141-r215

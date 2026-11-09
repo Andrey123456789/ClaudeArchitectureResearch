@@ -1,0 +1,655 @@
+{
+  "unit": "P0002-L0-P023",
+  "batch_input_sha256": "1a2c3ec0b4aed8c5a32f4a526e2fd296bddb2e626c31ac86a58707f099a370ee",
+  "reviews": [
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-017",
+        "name": "CI reproduces supported build/test commands and keeps failures visible",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "CI definitions stay in source control, reproduce the repository's supported build/test commands, and must not hide build/test failures.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0362",
+        "primary/L0/constraints.jsonl/RULE-L0-0363",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0077",
+        "primary/L0/constraints.jsonl/RULE-L0-0364",
+        "primary/L0/constraints.jsonl/RULE-L0-0366",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0068",
+        "primary/L0/constraints.jsonl/RULE-L0-0332",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0070",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0080",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0081"
+      ],
+      "boundary_analysis": "Actual project-supported commands/source-controlledCI, nohiddenfailure, conditionalexternalservices and needed-artifacts-only represented. Promotion/protection specifics already BF0074; fatal logger exit issue already BF0092.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "59a776b42a80de206fb890f8caf14f3a0b4cc3e5725c6d8859dd556847a9631d",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ],
+            [
+              57,
+              59
+            ],
+            [
+              70,
+              72
+            ],
+            [
+              90,
+              91
+            ]
+          ],
+          "context_quotes": [
+            "\nAdd frontend test/lint steps only for scripts the workspace defines. Add `dotnet format --verify-no-changes --no-restore` only when the project adopted formatting as an enforced gate.\n",
+            "\nProvide SQL Server, Redis, a broker, etc. only when tests require them; do not hardcode one provider into a generic pipeline. Keep the test environment isolated from Development and Production data (`dotnet-testing` skill).\n",
+            "\nStore or publish only the artifacts later stages need; promotion and deployment steps: `delivery-pipeline`.\n",
+            "\nProject-specific database infrastructure in a generic pipeline; rebuilding different source per environment without a reason; assuming Docker deployment."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              19,
+              26
+            ],
+            [
+              28,
+              30
+            ],
+            [
+              38,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore writing a pipeline or container definition, inspect what actually exists: .NET backend, Angular frontend, test projects, Dockerfiles, provider-specific integration tests, generated clients, deployment artifacts. Do not assume PostgreSQL, Redis, Docker, or frontend tooling exists; add stages only for the actual project.\n",
+            "\n- CI definitions stay in source control, reproduce the repository's supported build and test commands, and must never hide build or test failures (no `continue-on-error` on build/test steps, no suppressed exit codes, no skipped failing tests to permit deployment).\n- Backend flow: `dotnet restore` → `dotnet build --no-restore --configuration Release` → `dotnet test --no-build --configuration Release`. Run formatting/analyzer gates only when the project has adopted them as enforced checks.\n- Frontend flow: install with `npm ci` when a maintained lockfile supports it — do not reflexively replace it with `npm install` — then run only scripts that actually exist in the workspace `package.json` (build, and test/lint when configured); never invent npm scripts.\n- Provide external services (database, cache, broker) in CI only when tests actually require them, isolated from Development and Production data.\n- Supply credentials through the CI platform's secret/identity mechanism (secrets policy: `0-core/security-principles.md`); prefer workload/federated identity over long-lived deployment credentials where supported.\n- Do not let CI upgrade packages automatically unless the project adopted automated dependency updates.\n",
+            "\nWhen the project deploys containers, follow `containers-ci.md` and the `docker` skill: multi-stage build, explicit project-file copy for restore caching, runtime configuration passed at run time, health probes per the `health-check` skill. Build and publish images from CI only when container deployment is part of the project.\n",
+            "\nCI and CD may be separate workflows; a green CI build does not imply every branch deploys. Use environment protection/approval where the hosting platform supports it. Prefer promoting the same tested artifact or image through environments, with environment differences supplied by runtime configuration (prefer).\n\n## 6. Verify\n\nConfirm the pipeline restores from a clean environment, builds the backend, builds the frontend when present, runs the configured tests, does not depend on developer-machine state, exposes no secrets, and produces the expected artifacts. For container changes: build the image, verify startup, port/configuration, non-root behavior when relevant, health-probe integration, and that no secrets or stray files were copied. Then run `verify`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "085f23a7a0929e51460ec274024f05488371df1810f84975781628d665e5e5f8",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nAdd only the infrastructure the project actually uses (no PostgreSQL, Redis, or RabbitMQ because examples have them); keep local passwords in an ignored `.env` file.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "2e79cb400c4240681f6c880d98549f1545cb6fad144ccb667276c8fc99925639",
+          "inspected_ranges": [
+            [
+              34,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "}\ncatch (Exception ex)\n{\n    Log.Fatal(ex, \"Application terminated unexpectedly\");\n}\nfinally\n{\n    await Log.CloseAndFlushAsync();\n}"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-018",
+        "name": "CI uses repository-declared frontend commands and lockfile",
+        "related_groups": [
+          "frontend",
+          "dependencies-stack"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Frontend CI"
+        ],
+        "normalized_policy": "In CI, use scripts that actually exist and use npm ci when a maintained lockfile supports it; do not invent npm scripts or reflexively replace lockfile-based installs.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-018",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0299",
+        "primary/L0/constraints.jsonl/RULE-L0-0326",
+        "primary/L0/constraints.jsonl/RULE-L0-0365",
+        "primary/L0/constraints.jsonl/RULE-L0-0580"
+      ],
+      "boundary_analysis": "Actual scripts and maintained-lockfile npmci condition explicit; no reflexive install substitution.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/2-technology/angular.md",
+          "sha256": "055686c38dced484e66fcf80f869d91acb54ab62df83c5f082a800b6b73a6794",
+          "inspected_ranges": [
+            [
+              17,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "- Use reactive forms for non-trivial forms when explicit state, validation, and testability are useful (default).\n- Unit and component tests run with the workspace's configured runner; inspect `package.json` instead of assuming a command (the baseline runner for new workspaces is recorded in `3-project/decisions.md`)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "0e75858fa6dd43c36e126691682d2db491eb8611ebfc6f612666a95570649e01",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- .NET: the narrowest command that reproduces it, e.g. `dotnet build backend/<Name>.Api/<Name>.Api.csproj` or `dotnet test backend/<Name>.Application.Tests/<Name>.Application.Tests.csproj`; use the repository's actual `.slnx` and configuration.\n- Angular: inspect the workspace `package.json` first and use scripts that exist (`npm run build`, `npm test`); never invent script names or assume a runner.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "59a776b42a80de206fb890f8caf14f3a0b4cc3e5725c6d8859dd556847a9631d",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nAdd frontend test/lint steps only for scripts the workspace defines. Add `dotnet format --verify-no-changes --no-restore` only when the project adopted formatting as an enforced gate.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              19,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "\n- CI definitions stay in source control, reproduce the repository's supported build and test commands, and must never hide build or test failures (no `continue-on-error` on build/test steps, no suppressed exit codes, no skipped failing tests to permit deployment).\n- Backend flow: `dotnet restore` → `dotnet build --no-restore --configuration Release` → `dotnet test --no-build --configuration Release`. Run formatting/analyzer gates only when the project has adopted them as enforced checks.\n- Frontend flow: install with `npm ci` when a maintained lockfile supports it — do not reflexively replace it with `npm install` — then run only scripts that actually exist in the workspace `package.json` (build, and test/lint when configured); never invent npm scripts.\n- Provide external services (database, cache, broker) in CI only when tests actually require them, isolated from Development and Production data.\n- Supply credentials through the CI platform's secret/identity mechanism (secrets policy: `0-core/security-principles.md`); prefer workload/federated identity over long-lived deployment credentials where supported.\n- Do not let CI upgrade packages automatically unless the project adopted automated dependency updates.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              32,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "- Backend: `dotnet test` for the affected test projects; for small solutions run the whole suite, for large ones run affected projects first and then any broader suite the change risk requires.\n- Frontend: the configured test script, when the workspace has one.\n- Investigate every newly failing relevant test; do not dismiss a failure as unrelated without checking it."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-019",
+        "name": "Production migrations are deliberate deployment work",
+        "related_groups": [
+          "persistence-data",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ci-cd/SKILL.md#Database Migrations",
+          "templates/v2-baseline/.claude/skills/docker/SKILL.md#Database Migrations"
+        ],
+        "normalized_policy": "Do not automatically apply production database migrations from normal application startup by default; treat production migration as an explicit deployment operation using approved credentials and never run Development seeding in Production.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0331",
+        "primary/L0/constraints.jsonl/RULE-L0-0370",
+        "primary/L0/constraints.jsonl/RULE-L0-0371",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0079",
+        "primary/L0/constraints.jsonl/RULE-L0-0372",
+        "primary/L0/constraints.jsonl/RULE-L0-0500"
+      ],
+      "boundary_analysis": "Visible controlled explicit deployment migration with approvedcredentials and noProductionDevelopmentseeding represented. Scaffold noautomation strength already BF0100.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "59a776b42a80de206fb890f8caf14f3a0b4cc3e5725c6d8859dd556847a9631d",
+          "inspected_ranges": [
+            [
+              82,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "\nGenerate migration scripts or bundles in CI and execute them as an explicit, visible deployment step:\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              32,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "\n- Do not apply production database migrations automatically from normal application startup by default — in containers or anywhere else.\n- Production migration is an explicit deployment operation: a deliberate step at a controlled point, using the project's approved credentials, failing visibly on error. Migration scripts or bundles may be generated earlier in CI and executed during deployment.\n- Deployment never runs Development seeding in Production (`3-project/data-lifecycle.md`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nFor SQL Server projects create `appsettings.json` and `appsettings.Development.json` as `data-lifecycle.md` describes, and wire Development seeding per that rule. Configure Swagger UI for Development (`aspnet-core.md`) and a launch profile whose URLs agree with the configured HTTP/HTTPS ports. Never add Production credentials or Production migration automation.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-020",
+        "name": "Security findings require evidence and contextual severity",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/security-scan/SKILL.md#Principles",
+          "templates/v2-baseline/.claude/skills/security-scan/references/scan-layers.md#Severity Guidance"
+        ],
+        "normalized_policy": "Security review must distinguish confirmed findings from items needing verification and assign severity from exploitability, reachability, impact, and application context rather than suspicious patterns or raw CVSS alone.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-020",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0524",
+        "primary/L0/constraints.jsonl/RULE-L0-0530",
+        "primary/L0/constraints.jsonl/RULE-L0-0531",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0168",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0169",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0170",
+        "primary/L0/constraints.jsonl/RULE-L0-0534",
+        "primary/L0/constraints.jsonl/RULE-L0-0537",
+        "primary/L0/constraints.jsonl/RULE-L0-0539",
+        "primary/L0/constraints.jsonl/RULE-L0-0540",
+        "primary/L0/constraints.jsonl/RULE-L0-0545",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0176",
+        "primary/L0/constraints.jsonl/RULE-L0-0558",
+        "primary/L0/constraints.jsonl/RULE-L0-0561"
+      ],
+      "boundary_analysis": "Risk-based severity/confidence, OWASPfit, layertaxonomy and nofalsePASS explicit. Layerprompt details require residual read; no inference that general inspection automatically registers every target.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "aabd590825a8528eb0b848ea715da112587291c712a1f7278a958cc9742d7ab7",
+          "inspected_ranges": [
+            [
+              58,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "\nBuild and test the affected scope (`verify`); for security-relevant changes run `dotnet package list --vulnerable --include-transitive` or `npm audit`. Scanner output needs context — do not replace or upgrade unrelated packages merely because a scanner reports something. Report: package · version · license · reason · checks performed.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "59a776b42a80de206fb890f8caf14f3a0b4cc3e5725c6d8859dd556847a9631d",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\n`dotnet package list --vulnerable --include-transitive`; NuGet auditing also runs during restore on modern SDKs. `npm audit` for the frontend. Treat findings per the project's security policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              44,
+              46
+            ]
+          ],
+          "context_quotes": [
+            "\nReview transaction and commit behavior, destructive data changes, raw SQL parameterization, authorization, input trust boundaries, secrets, sensitive logging, concurrency, migrations (reviewed as `development-workflow` → Co-changes requires), development seed-data consistency when Domain or persistence changes affect seeded entities, and cache consistency. Use the full `security-scan` only when the user requested a security audit, the change is materially security-sensitive, or a concrete finding justifies broader investigation.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Supply credentials through the CI platform's secret/identity mechanism (secrets policy: `0-core/security-principles.md`); prefer workload/federated identity over long-lived deployment credentials where supported.\n- Do not let CI upgrade packages automatically unless the project adopted automated dependency updates.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "a7674f8c56e85d7f9102dbff876205e8157222e2cf3593d6ea40e51a12f14887",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ],
+            [
+              17,
+              21
+            ],
+            [
+              41,
+              55
+            ],
+            [
+              57,
+              59
+            ],
+            [
+              61,
+              69
+            ],
+            [
+              71,
+              75
+            ],
+            [
+              77,
+              109
+            ],
+            [
+              117,
+              118
+            ]
+          ],
+          "context_quotes": [
+            "\nPerform an evidence-based static security review. This is not a penetration test: static review cannot prove the application is secure and may miss runtime-only vulnerabilities, infrastructure outside the repository, complex business-logic abuse, sophisticated authorization bypasses, deployment-specific weaknesses, and issues that need dynamic exploitation. State that limitation in every report.\n",
+            "\n1. Report concrete risks, not generic advice; evaluate them in the context of actual exposure and behavior.\n2. Distinguish confirmed findings from items that need verification, and assign severity from exploitability, reachability, impact, and application context — never from a suspicious pattern or raw CVSS alone.\n3. Do not suppress a real secret because it sits in a Development file, and do not require security mechanisms the project does not need.\n4. Evaluate effective authorization, including global/fallback policies.",
+            "\nUse `references/scan-layers.md` for the investigation prompts of each layer.\n\n| # | Layer | Typical OWASP 2025 |\n|---|---|---|\n| 1 | Dependencies and supply chain | A03 |\n| 2 | Secrets and configuration | A02, A04 |\n| 3 | Injection and dangerous code patterns | A04, A05, A08 |\n| 4 | Authentication and access control | A01, A07 |\n| 5 | Browser and HTTP/API security | A01, A02 |\n| 6 | Sensitive data, logging, and error exposure | A04, A09 |\n| 7 | Exceptional conditions and failure handling | A06, A10 |\n\nOWASP Top 10:2025: A01 Broken Access Control · A02 Security Misconfiguration · A03 Software Supply Chain Failures · A04 Cryptographic Failures · A05 Injection · A06 Insecure Design · A07 Authentication Failures · A08 Software or Data Integrity Failures · A09 Security Logging & Alerting Failures · A10 Mishandling of Exceptional Conditions. Map only when the category genuinely fits.\n",
+            "\nWhen a scanner or analyzer reports a possible issue: inspect the actual code, decide whether the pattern is reachable and relevant, and report it only with appropriate confidence.\n",
+            "\nConsider exploitability, external exposure, required privileges, affected data or capability, blast radius, reliability of exploitation, and compensating controls.\n\n- **Critical** (sparingly) — exposed real production credentials, reachable authentication bypass, straightforward remote code execution, exploitable injection with major impact.\n- **High** — realistically exploitable or substantially compromises data, authorization, or system behavior.\n- **Medium** — meaningful weakness needing realistic conditions, limited access, or extra steps.\n- **Low** — genuine but limited weakness.\n- **Info** — useful observation or hardening opportunity, not a demonstrated vulnerability.\n",
+            "\nNot automatically vulnerabilities: an endpoint without `[Authorize]` under a secure fallback policy; bare `[Authorize]` when authentication alone is intended; `AllowAnyOrigin()` on a genuinely public non-credentialed API; MD5/SHA1 as a non-security checksum; no application-level encryption when platform/storage encryption satisfies the requirement; obviously fake test credentials; framework defaults that are secure in the actual hosting.\n\nNot automatically safe: secrets in `appsettings.Development.json`; sensitive values logged only at Debug; Angular route guards; hidden UI buttons; CORS used as a substitute for authorization.\n",
+            "\nEach confirmed finding: severity · file and location · title · evidence · why it is a risk · likely impact · smallest remediation · OWASP category when applicable. Label uncertain items `NEEDS VERIFICATION`.\n\n```markdown\n# Security Scan Report\n\nScope: ...\nLimitations: Static analysis only. This does not replace penetration testing,\ndynamic testing, threat modeling, or infrastructure review.\n\n## Summary\n| Severity | Count |\n|---|---:|\n| Critical | 0 |\n| High | 0 |\n| Medium | 0 |\n| Low | 0 |\n| Info | 0 |\n\n## Findings\n### [HIGH] File:Line — Finding title\nOWASP: A01:2025 Broken Access Control\nEvidence: ...\nImpact: ...\nRemediation: ...\n\n## Layer Results\n| Layer | Status | Findings |\n|---|---|---:|\n| Dependencies and supply chain | PASS | 0 |\n| ... | ... | ... |\n```\n",
+            "\nComplete when all applicable layers were inspected, findings have evidence, uncertain findings are labeled, severity reflects actual risk, limitations are stated, and no layer is marked PASS unchecked."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "3ad52189fdee742608f70aa3d46a73a5eb04fcf2c4f2282e8d809e1342f50389",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              8,
+              11
+            ],
+            [
+              17,
+              19
+            ],
+            [
+              23,
+              29
+            ],
+            [
+              33,
+              35
+            ],
+            [
+              46,
+              48
+            ],
+            [
+              52,
+              54
+            ],
+            [
+              60,
+              62
+            ],
+            [
+              66,
+              68
+            ],
+            [
+              70,
+              72
+            ],
+            [
+              79,
+              104
+            ]
+          ],
+          "context_quotes": [
+            "\nInvestigation prompts, not automatic vulnerability declarations. The invariants being checked are owned by `.claude/rules/0-core/security-principles.md` and `logging-principles.md`.\n",
+            "\n- .NET: `dotnet package list --vulnerable --include-transitive`. Review vulnerable direct and transitive packages, advisory severity, whether the component is actually used, whether a patched compatible version exists, and unexpected or untrusted NuGet sources. Do not upgrade packages during a scan unless asked.\n- npm: `npm audit`. Distinguish production from development/build dependencies and direct from transitive packages; a dev-only vulnerability still matters to the supply chain but has different runtime impact than a browser-shipped package. Review lockfiles when integrity or unexpected dependency changes matter.\n",
+            "- Indicators that need context: `ApiKey = \"...\"`, `Secret = \"...\"`, `Token = \"...\"`, `Password = \"...\"`, long opaque strings, connection strings, certificate material.\n- A real committed secret is a secret regardless of the file name; `appsettings.Development.json` is not exempt. Obviously fake values (`changeme`, `example-only`, `test-password`, `not-a-real-key`) may be ignored or reported as Info. `UserSecretsId` is not a secret.\n- Preferred pattern: `builder.Configuration.GetConnectionString(\"Default\")` with the real value from the chosen local or deployment secret mechanism.",
+            "\n- **SQL injection:** SQL built from untrusted input, e.g. `$\"SELECT * FROM Orders WHERE Name = '{search}'\"`, or interpolated data passed to APIs that do not parameterize. Safe forms: EF Core LINQ, parameterized SQL, `FromSqlInterpolated` where appropriate, ADO.NET/Dapper parameters. Normal EF Core LINQ with user input in a predicate is not SQL injection.\n- **Command injection:** `Process.Start`, shell/PowerShell/bash invocation, arguments built from user input. Prefer APIs that separate executable and arguments; constrain input when execution is genuinely needed.\n- **Path traversal:** user-controlled file names, paths, archive extraction, download and upload destinations; look for `../`, absolute-path injection, escaping the intended root, unsafe extraction. Normalize and verify paths stay within the storage boundary.\n- **SSRF:** outbound requests where users influence scheme, host, port, full URL, or redirect destination — especially when the server reaches internal networks, metadata endpoints, or privileged services. A user-supplied query parameter alone is not SSRF; host/control-plane influence matters.\n- **XSS / unsafe HTML:** Angular sanitizer bypasses (`bypassSecurityTrustHtml`, `bypassSecurityTrustScript`, `bypassSecurityTrustResourceUrl`) and direct DOM manipulation with untrusted content. Ordinary Angular binding is escaped/sanitized and is not automatically XSS.\n- **Unsafe deserialization:** polymorphic/type-driven mechanisms such as `BinaryFormatter` or unsafe Newtonsoft `TypeNameHandling`; never deserialize untrusted payloads into arbitrary runtime types.",
+            "\n- **Effective authorization:** fallback/global policy, controller/action `[Authorize]`, `[AllowAnonymous]`, policy names, role/claim requirements, resource-based authorization. Identify the actual behavior before reporting.\n- **Anonymous access:** confirm each deliberately public surface is intentional; a public endpoint is not automatically a vulnerability.",
+            "- **File uploads:** size limits, storage path safety, file-name handling, content/type assumptions (client MIME type treated as authoritative?), execution or public-serving risk, authorization.\n- **Rate limiting:** consider it where abuse realistically matters (login/password reset, expensive anonymous endpoints, resource-intensive operations); not on every endpoint. `429` semantics: `http-api` skill.\n",
+            "- **Error responses:** stack traces, SQL, connection strings, internal paths, secret values, internal exception details in public errors.\n- **Response data:** entities returned directly, password hashes, internal security fields, unnecessary personal data, secret metadata. Inspect the serialized fields — returning an entity is not automatically a vulnerability.\n- **Data at rest:** password → one-way hashing; verification-only token → often a hash; retrievable application secret → protected/encrypted storage; database/storage encryption → platform mechanism; temporary application payload → ASP.NET Core Data Protection may fit.",
+            "- **Retry and idempotency:** retries of state-changing operations; a lost response plus retry can duplicate effects (`httpclient-factory` skill and its resilience reference); check caller-cancellation handling against `.claude/rules/0-core/runtime-principles.md`.\n- **Timeouts and resource exhaustion:** unbounded time, memory, rows, file size, request body, retries, or parallel work; judge whether an attacker can actually exploit it.\n- **Startup/configuration failure:** invalid auth configuration → authentication silently disabled; missing encryption key → plaintext mode; failed authorization provider → allow-all.",
+            "\nStatic checks do not cover insecure design, tenant isolation, business-workflow abuse, privilege escalation through legitimate operations, financial/idempotency abuse, or multi-step authorization. Name such workflows as candidates for threat modeling or dedicated manual review instead of claiming the scan proves them secure.\n",
+            "\nDo not map pattern → severity, CVSS → severity, or OWASP category → severity mechanically:\n",
+            "\n```markdown\n### [HIGH] src/.../File.cs:42 — Resource authorization missing\n\nOWASP: A01:2025 Broken Access Control\n\nEvidence:\nThe endpoint loads an order solely by route ID and does not constrain it to the\nauthenticated customer.\n\nImpact:\nAn authenticated user who learns another order ID may access that customer's order.\n\nRemediation:\nApply resource/ownership authorization before returning the order.\n```\n\nWhen evidence is incomplete:\n\n```markdown\n### [NEEDS VERIFICATION] ...\n\nThe static code suggests ..., but effective behavior depends on ...\n```\n\nNever invent exploitability that the code does not establish."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              49,
+              51
+            ]
+          ],
+          "context_quotes": [
+            "- **Formatting and analyzers** — when configured, for example `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to verify. Analyzer output is evidence that still needs context.\n- **Dependencies and security** — for dependency changes or security-sensitive work: `dotnet package list --vulnerable --include-transitive`, `npm audit`, and inspection of secrets, authorization, raw SQL, CORS/TLS, sensitive logging, and certificate validation (`0-core/security-principles.md`). A full `security-scan` is not needed for every small change.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-021",
+        "name": "Security review cannot depend on one scanner",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/security-scan/SKILL.md#Principles"
+        ],
+        "normalized_policy": "Do not require a specific MCP server, analyzer, commercial scanner, or external tool for security review to work; use available tooling as evidence, not as the sole authority.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-021",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0347",
+        "primary/L0/constraints.jsonl/RULE-L0-0528",
+        "primary/L0/constraints.jsonl/RULE-L0-0530",
+        "primary/L0/constraints.jsonl/RULE-L0-0588"
+      ],
+      "boundary_analysis": "Tooling as evidence, code inspection and no required externalvendor/analyzer covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              60,
+              62
+            ]
+          ],
+          "context_quotes": [
+            "\nCompiler diagnostics, analyzers, IDE/Roslyn tooling, and repository search are useful evidence, not authority; no MCP server or specific analyzer is required. Read the code before turning a tool warning into a finding.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "a7674f8c56e85d7f9102dbff876205e8157222e2cf3593d6ea40e51a12f14887",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ],
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "4. Evaluate effective authorization, including global/fallback policies.\n5. Do not require a specific MCP server, agent, analyzer, commercial scanner, or other external tool; use available tooling as evidence, not as the sole authority.\n",
+            "\nWhen a scanner or analyzer reports a possible issue: inspect the actual code, decide whether the pattern is reachable and relevant, and report it only with appropriate confidence.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- **Architecture** — when the change touches boundaries, re-read and check the owning rules: project references and dependency direction (`1-architecture/backend-layers.md`), repository and Unit of Work boundary (`persistence-boundary.md`), entry points (`entry-points.md`). When a Domain or persistence change affects seeded entities, confirm the seeder was updated and stays valid for a freshly recreated Development database (`3-project/data-lifecycle.md`) and that new migrations were reviewed (`development-workflow` → Co-changes).\n- **Formatting and analyzers** — when configured, for example `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to verify. Analyzer output is evidence that still needs context.\n- **Dependencies and security** — for dependency changes or security-sensitive work: `dotnet package list --vulnerable --include-transitive`, `npm audit`, and inspection of secrets, authorization, raw SQL, CORS/TLS, sensitive logging, and certificate validation (`0-core/security-principles.md`). A full `security-scan` is not needed for every small change."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P023",
+      "canonical_policy": {
+        "id": "WF-022",
+        "name": "Git commits and staging remain focused",
+        "related_groups": [
+          "governance-product"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "repo/meta",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Scope"
+        ],
+        "normalized_policy": "Before committing, inspect the staged diff and include only the logical requested change; do not stage or clean unrelated modified files.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-022",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0423",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0106",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0107"
+      ],
+      "boundary_analysis": "Staged logicalscope, implementation+tests and no unrelated staging represented. Naming/worktree conjunction already BF0083.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "371490383337c8532cf1f80ab281d79a2ede79efb2ad0d51103c87ebb63ebbad",
+          "inspected_ranges": [
+            [
+              20,
+              30
+            ],
+            [
+              32,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n- Before committing, inspect the staged diff and include only the requested logical change; do not stage unrelated modified files merely because they are modified.\n- Prefer one logical change per commit; implementation and the tests that protect it normally belong together. Do not create artificial tiny commits or combine unrelated fixes.\n- Follow the repository's commit-message convention; without one, Conventional Commits are a useful default (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`). Use the body for motivation, constraints, or migration notes that would otherwise be lost.\n\n## Branches and worktrees\n\n- Follow an existing branch-naming convention; otherwise prefixes such as `feature/`, `fix/`, `refactor/`, `test/`, `docs/`, `chore/` with meaningful names are reasonable defaults. Do not rename an existing user branch to satisfy a convention.\n- Use separate branches and worktrees for parallel implementation streams; one branch is not checked out in several normal worktrees at once; keep each worktree focused on its branch.\n- Before removing a worktree, verify its changes are committed or otherwise preserved; never remove a worktree containing uncommitted user work.\n",
+            "\nBefore pushing: confirm the intended branch, understand the working/staged state, ensure relevant verification completed, and avoid pushing unrelated local commits. Never force-push a shared branch unless the user explicitly requests history rewriting and understands the consequences; treat `main`, `master`, and other protected/shared branches as non-rewritable.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+# Batch B010 (part 1) — skills: add-dependency, architecture-decision
+
+@@ output/template/.claude/skills/add-dependency/SKILL.md ;; Workflow skill routed from CLAUDE.md; also referenced by the PreToolUse dependency gate.
+@scope workflow add-dependency (NuGet/npm add/update/remove)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15-16 OL [dep001.need-confirm]
+17-19 MX [dep002.approved-first,x.reserved-major-lib,arc020.replace-baseline] ;; Using approved technology and replacement-is-Reserved are oracle-linked; making any major library Reserved is the added gate.
+21 NN ;; Heading.
+23 OL [dep002.approved-first] ;; ;; Prefer the approved package for the capability.
+25-28 OL [dep017.asp-versioning]
+29-35 MX [dep020.resilience-default,x.no-polly-integration,x.polly-document] ;; Microsoft resilience default/Polly exception is DEP-020; never adding the deprecated integrations and documenting Polly use are additional.
+36-37 EX [x.no-legacy-autovalidation]
+39 NN ;; Heading.
+41-49 MX [dep003.version-selection,x.floating-no-exception] ;; Latest stable compatible from the registry with prerelease only on request is DEP-003; floating versions are prohibited without an explicit-request exception (stricter).
+51-52 OL [dep003.version-selection] ;; ;; "Latest" means latest stable compatible version
+54 NN ;; Heading.
+56-64 OL [dep004.due-diligence]
+66 NN ;; Heading.
+68-69 OL [dep005.permissive-ok]
+71-77 OL [dep005.license-gate]
+79-89 NN ;; Illustrative approval-message example with placeholders.
+91-92 EX [x.no-legal-conclusions]
+94 NN ;; Heading.
+96-98 OL [dep006.install-nuget]
+99-102 OL [dep007.install-npm,dep025.no-force]
+104-108 EX [x.dep-checked-marker,x.peer-override-approval] ;; Workflow-side description of the PreToolUse marker protocol.
+110 NN ;; Heading.
+112-115 OL [wf007.check-manifests-run]
+117-120 NN ;; Vulnerability listing commands example.
+122-123 OL [wf020.scanner-context]
+125 NN ;; Heading.
+127-129 MX [x.remove-dead-refs,gov014.no-unrelated-cleanup] ;; Removing dead references within the change is additional; no unrelated cleanup is GOV-014.
+
+C dep001.need-confirm OL DEP-001 MUST ;; A dependency must solve a concrete current requirement. ;; = ;; none ;;
+C dep002.approved-first OL DEP-002 MUST ;; Use/prefer the approved technology or package for the capability when one exists. ;; = ;; none ;;
+C dep017.asp-versioning OL DEP-017 DEFAULT ;; Add a versioning package only after Controller API versioning is explicitly adopted; then use Asp.Versioning.Mvc (+ ApiExplorer for documentation grouping). ;; = ;; none ;;
+C dep020.resilience-default OL DEP-020 DEFAULT ;; When resilience is required prefer Microsoft.Extensions.Http.Resilience (HttpClient) and Microsoft.Extensions.Resilience (general); direct Polly only when a concrete requirement cannot be expressed through them. ;; = ;; none ;;
+C x.no-polly-integration EX DEP-020,DEP-004 MUST_NOT ;; Never add the deprecated Microsoft.Extensions.Http.Polly or Polly.Extensions.Http integrations. ;; = ;; none ;; Package-specific prohibition beyond DEP-020.
+C x.polly-document EX DEP-020 MUST ;; Document why direct Polly is used. ;; = ;; none ;; Documentation obligation not in DEP-020.
+C x.no-legacy-autovalidation EX DEP-010 MUST_NOT ;; Do not add deprecated or legacy ASP.NET automatic-validation integration packages merely to connect FluentValidation to the pipeline. ;; = ;; none ;; Not stated in DEP-010.
+C dep003.version-selection OL DEP-003 MUST ;; Determine the latest stable version compatible with framework/runtime and peers, verified from the registry; no prerelease unless explicitly requested; 'latest' means latest stable compatible. ;; = ;; Prerelease on explicit request. ;;
+C dep004.due-diligence OL DEP-004 MUST ;; Before installing check deprecation, known vulnerabilities and the exact version's license (registry, upstream when needed); free download does not imply acceptability. ;; = ;; none ;;
+C dep005.permissive-ok OL DEP-005 ALLOWED ;; Permissive licenses commonly suitable for commercial use (MIT, Apache-2.0, BSD) may be accepted. ;; = ;; none ;;
+C dep005.license-gate OL DEP-005 REQUIRES_APPROVAL ;; Do not install automatically paid/commercial or materially restrictive/unclassifiable-licence dependencies; explain, present alternatives, never silently substitute, say when no free alternative exists. ;; = ;; none ;;
+C x.no-legal-conclusions EX DEP-005 MUST_NOT ;; Do not make legal conclusions beyond what published license information supports. ;; = ;; none ;; Restraint not stated in DEP-005.
+C dep006.install-nuget OL DEP-006 MUST ;; NuGet: add/update PackageVersion in Directory.Packages.props and a versionless PackageReference in the narrowest project. ;; = ;; none ;;
+C dep007.install-npm OL DEP-007 MUST ;; npm: install into the correct dependency category and keep package-lock.json consistent. ;; = ;; none ;;
+C dep025.no-force OL DEP-025 MUST_NOT ;; Do not use --force or --legacy-peer-deps merely to bypass incompatible peers; resolve the actual problem. ;; = ;; none ;;
+C wf007.check-manifests-run OL WF-007,DEP-004 MUST ;; Run check-manifests.js, then ecosystem vulnerability information when security-relevant or verifying the dependency. ;; = ;; none ;;
+C wf020.scanner-context OL WF-020,GOV-014 MUST_NOT ;; Scanner output requires context; do not automatically replace/upgrade unrelated packages because of a scanner finding. ;; = ;; none ;;
+C x.remove-dead-refs EX DEP-001 MUST ;; Remove no-longer-used dependencies when part of the current change and safe to verify; leave no dead package references. ;; = ;; Within the current change. ;; Dead-reference removal obligation not in the oracle.
+C gov014.no-unrelated-cleanup OL GOV-014 MUST_NOT ;; No unrelated dependency cleanup during a narrowly scoped task. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/architecture-decision/SKILL.md ;; Workflow skill routed from CLAUDE.md for possibly Reserved decisions, approvals, capability-selection changes and API version deprecation.
+@scope workflow architecture-decision
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15-16 OL [gov017.classify-step]
+18 NN ;; Heading.
+20-38 EX [x.decision-request-format] ;; Prescribed Decision Request template.
+40 NN ;; Heading.
+42-43 MX [gov017.wait-interactive,x.instruction-as-approval] ;; Waiting for explicit approval before the Reserved part is GOV-017; an explicit instruction counting as approval is the added definition.
+44-46 OL [gov017.headless]
+48 NN ;; Heading.
+50 EX [x.record-same-change]
+52-55 EX [x.adr-record]
+56-57 OL [gov007.sync-behaviour]
+58 OL [gov021.route-custom-settings]
+60-61 EX [x.rejected-record]
+63 NN ;; Heading.
+65-67 MX [arc020.change-selection,x.selection-change-adr] ;; Selection/provider changes are Reserved (ARC-020) and require an ADR (added).
+68-69 OL [gov006.declared-property]
+71-73 EX [x.tm-ask-user]
+75 NN ;; Heading.
+77-84 OL [api022.deprecation]
+85-86 OL [api022.no-removal,api014.breaking-reserved]
+
+C gov017.classify-step OL GOV-017 MUST ;; Classify with Decision Control (classes, Reserved list, five-question test); Decided and Delegated need no request. ;; = ;; none ;;
+C gov017.wait-interactive OL GOV-017 MUST ;; In an interactive session wait for an explicit answer before implementing the Reserved part. ;; = ;; none ;;
+C x.record-same-change EX GOV-007 MUST ;; Record an accepted decision in the same change that implements it. ;; = ;; none ;; Sequencing obligation not in the oracle.
+C x.adr-record EX GOV-017,GOV-007 MUST ;; Architecture, stack, convention or public-contract decisions are recorded as docs/decisions/NNNN-short-title.md (Status, Context, Decision, Consequences) and the affected decision record is updated. ;; = ;; none ;; ADR convention not in the oracle.
+C gov007.sync-behaviour OL GOV-007 MUST ;; When a new behavioural rule is approved update the durable source of truth, including SPECIFICATION.md when appropriate. ;; = ;; none ;;
+C x.rejected-record EX GOV-017 ALLOWED ;; Record a rejected request only when the rejection is itself a durable decision (e.g. a pattern ruled out). ;; = ;; none ;; Recording practice beyond the oracle.
+C gov006.declared-property OL GOV-006,GOV-004 REQUIRES_APPROVAL ;; An observable declared-property change (e.g. effective string comparison) must not happen silently; treat it as a product decision. ;; = ;; none ;;
+C api022.deprecation OL API-022 MUST ;; Deprecating an external version: mark in versioning metadata, document the replacement, communicate a realistic migration period/removal timing, keep the old version working for the promised period. ;; = ;; none ;;
+C api022.no-removal OL API-022 MUST_NOT ;; Do not remove an externally consumed version without considering its published support contract. ;; = ;; none ;;

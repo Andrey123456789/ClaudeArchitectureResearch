@@ -1,0 +1,251 @@
+# L1 / B010 — security-scan (+layers), swagger, template-maintenance, verify, repository files, CLAUDE.md.
+
+C R210 OL WF-020 | MUST | Security review reports concrete risks in the context of actual exposure, distinguishes confirmed findings from items needing verification (NEEDS VERIFICATION), assigns severity from exploitability, reachability, impact and application context (never from a suspicious pattern, an OWASP category or raw CVSS alone), does not suppress a real secret because it sits in a Development file, names workflows needing threat modeling instead of claiming the scan proves them secure, and never invents exploitability the code does not establish. | security review | none stated
+C R211 OL WF-004 | MUST | Verification starts by reviewing the final changed-file set and diff: confirm scope (no unrelated refactoring), remove temporary diagnostics only after their uniquely verified behavior is preserved, no accidental generated/build artifacts, no secrets or environment-specific credentials, then determine the affected areas before choosing checks; after fixes review the final diff again (unrelated edits, commented-out code, temporary logging, stale temporary tests, architecture or specification drift, stale settings surfaces). | verification | none stated
+C R212 OL RUN-010 | MUST (IDE0005 at warning severity) | For every C# file created or modified by the change remove unused or redundant using directives (including imports already provided by implicit/global usings unless needed for clarity or disambiguation) without an unrelated repository-wide cleanup, and verify the changed files instead of assuming tooling removed them. | changed C# files | Imports kept for clarity or disambiguation.
+C R213 OL GOV-017 | MUST NOT | SPECIFICATION.md, CUSTOM_SETTINGS.md, feature specifications and task prompts are inputs, not instruction layers: they may request a decision change but never silently override engineering policy. | product inputs | none stated
+C R214 OL GOV-004 | REQUIRES_APPROVAL | If an omitted detail must be decided and it materially affects observable behavior, propose the smallest reasonable option and ask for approval; defining product behavior or tunable values not defined by product sources is Reserved. | product ambiguity | none stated
+C R215 OL GOV-005 | DEFAULT | Routine internal implementation choices that do not change observable behavior do not require approval (Delegated: local, reversible, no material change to a boundary, dependency, accepted convention, public contract or observable behavior — decide and proceed); do not ask approval for routine choices already constrained by the specification, approved stack, existing code or rules. | internal implementation choices | none stated
+C R216 OL GOV-010 | REQUIRES_APPROVAL | Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with a reason, get approval, record it in CUSTOM_SETTINGS.md, then synchronize (custom-settings). | tunable values | none stated
+C R217 OL GOV-017 | MUST | Decision control: classify decisions as Decided (settled by imported decision files, approved product sources or recorded decisions; follow them, reopening requires approval), Delegated, or Reserved (requires approval); an explicit user instruction counts as approval. | all decisions | none stated
+C X32 EX WF-020,WF-009 | MUST | Security-scan report shape: every report states the static-analysis limitation; uses the five-level severity scale Critical (sparingly) / High / Medium / Low / Info; each confirmed finding gives severity, file and location, title, evidence, why it is a risk, likely impact, smallest remediation and OWASP category when applicable; the report contains scope, limitations, a severity summary table, findings and per-layer results. | security reviews | none stated | WF-020 requires evidence-based contextual severity and WF-009 truthful status reporting; the oracle prescribes no report structure, severity scale or mandatory limitation statement. | A security review delivered without the limitation statement or the per-layer results table does not follow the procedure.
+C X33 EX - | MUST | Loading and ownership placement of instruction content: always-needed planning policy goes into CLAUDE.md or an imported always rule; path-specific policy into a rule whose paths cover at least its scope; procedure obligations into the owning workflow; each rule has one owner (elsewhere only a pointer or a yes/no check naming the owner); the always-loaded surface (CLAUDE.md, its imports, skill descriptions) stays compact — path or workflow policy is not moved into it and always-needed policy is not moved out of it to save tokens. | template maintenance | none stated | Instruction-system placement rules; the oracle does not regulate where instruction content is loaded or owned. | Copying a path-scoped rule into CLAUDE.md for convenience, or restating a rule in a second owner, violates the maintenance procedure.
+C X34 EX GOV-017,GOV-005 | MUST | Unclear-case test: any 'yes' makes a decision Reserved — does it add, remove or replace a dependency, framework or infrastructure capability; change a project/layer/reference boundary; establish a convention other code must follow; change observable behavior or a public contract; become expensive to reverse once other code depends on it? | decisions whose classification is unclear | none stated | GOV-017 requires a Decided/Delegated/Reserved classification but not this test; under it any unclear dependency addition or removal becomes Reserved, whereas the oracle allows dependencies with a concrete need (DEP-001) and delegates routine internal choices (GOV-005). | An unclear-case addition of a small utility package must go through a Decision Request instead of being added after the add-dependency checks.
+C X35 EX RUN-009,DEP-023 | MUST (repository build configuration) | Repository-wide Directory.Build.props enables nullable reference types and implicit usings for every .NET project (target framework net10.0). | all .NET projects | Project-specific overrides in project files. | DEP-023 places shared settings in Directory.Build.props and DEP-008 fixes the platform; no oracle policy requires nullable reference types or implicit usings. | Every new project compiles with nullable analysis and implicit global usings, which changes warnings and which using directives count as redundant.
+
+FILE .claude/skills/security-scan/references/scan-layers.md | Private reference of security-scan (investigation prompts, EXC-015 class).
+1 NN | header metadata
+3 NN | document heading
+5 OL R210 | Investigation prompts, not automatic vulnerability declarations.
+7 NN | section heading
+9 OL R174 | Do not upgrade packages during a scan unless asked.
+10 NN | frontend dependency audit prompt
+12 NN | section heading
+14 NN | secret search locations
+16-17 NN | secret indicators (investigation heuristics)
+18 DU R93,R210 | prompt restating that Development files are not exempt from secret findings
+19 NN | configuration review prompts (investigation heuristics)
+21 NN | section heading
+23-28 NN | injection and dangerous-pattern prompts (investigation heuristics)
+29 DU R100,R107 | cryptography prompt restating established hashing and reviewed-crypto rules
+31 NN | section heading
+33-38 NN | authentication and access-control prompts (investigation heuristics)
+40 NN | section heading
+42-46 NN | browser and HTTP security prompts (investigation heuristics)
+48 NN | section heading
+50 DU R108,R109 | logging prompt restating sensitive-logging rules
+51 DU R83 | error-response prompt restating the public-error rule
+52 NN | response-data prompt (investigation heuristic)
+53 DU R107 | data-at-rest prompt restating the payload-protection rule
+55 NN | section heading
+57 NN | fail-open prompt (investigation heuristic)
+58 DU R110,R56 | swallowed-exception prompt restating fail-safe and fallback rules
+59 DU R54,R57 | retry prompt restating retry-safety and cancellation rules
+60-61 NN | resource exhaustion and startup-failure prompts
+62 DU R82,R83 | error-exposure prompt restating centralized handling and safe public errors
+64 NN | section heading
+66 OL R210 | instead of claiming the scan proves them secure
+68 NN | section heading
+70-73 NN | severity examples (false-positive examples, EXC-015 class)
+75 NN | section heading
+77-88 NN | finding format examples
+90 OL R210 | Never invent exploitability the code does not establish.
+
+FILE .claude/skills/security-scan/SKILL.md | Workflow skill; on invocation.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 MX R210,X32 | State that limitation in every report. ⟫ Honest scope of a static review is oracle-linked (R210); the mandatory limitation statement in every report is part of the extra report shape X32.
+12 NN | section heading
+14-16 OL R210 | never from a suspicious pattern, an OWASP category, or a raw CVSS score alone
+17 OL R93,R210 | Do not suppress a real secret because it sits in a Development file.
+18 OL R181 | Do not require security mechanisms the project does not need.
+19 OL R99 | Evaluate effective authorization, including global and fallback policies.
+20 OL R196 | The scan must work without any specific MCP server, analyzer, agent, or commercial scanner
+22 NN | section heading
+24 OL R194 | skip irrelevant checks rather than reporting them as failures
+26 OL R194 | For targeted changes, start with the affected layers
+28-38 NN | change-to-layer routing table (EXC-015 class)
+40 NN | section heading
+42 NN | pointer to private reference
+44-52 NN | layer table with OWASP mapping
+54 NN | OWASP awareness taxonomy note
+56 NN | technique pointers
+58 NN | section heading
+60 OL R210 | Weigh exploitability, external exposure, required privileges
+62-66 MX R210,X32 | **Critical** — use sparingly ⟫ Contextual severity is oracle-linked (R210); the fixed five-level scale belongs to the extra report shape X32.
+68 OL R210 | Not automatically findings
+70 NN | section heading
+72 MX X32,R210 | Label uncertain items `NEEDS VERIFICATION`. ⟫ Finding fields are the extra report shape (X32); labeling uncertain items is oracle-linked (R210).
+74-101 EX X32 | Limitations: Static analysis only.
+103 OL R187 | never `PASS` for an uninspected layer
+105 NN | section heading
+107 OL R181,R107,R99 | Recommend the smallest secure change consistent with the architecture.
+109 NN | section heading
+111 OL R210,R187 | no layer is marked `PASS` without being checked
+
+FILE .claude/skills/swagger/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R161 | the developer-facing requirement is the interactive UI
+12 NN | section heading
+14-27 NN | setup code example (Development-only UI)
+29 OL R161 | Do not make `AddOpenApi()`/`MapOpenApi()` the default when the requirement is Swagger UI testing.
+31 NN | section heading
+33-35 NN | launch profile example
+37 NN | launch-profile URL consistency (EXC-008 class)
+39 NN | section heading
+41-46 NN | response metadata code example
+48 OL R141,R83 | Consider the whole pipeline when listing responses
+50 NN | section heading
+52 OL R141 | Do not add a scheme merely because a package is installed
+54 NN | section heading
+56 NN | description, XML comment and document partitioning technique (EXC-008 class)
+58 NN | section heading
+60 OL R141,R88 | keep metadata accurate
+62 NN | section heading
+64 OL R186,R39 | preserve newly verified behavior as tests
+66 NN | section heading
+68 DU R141,R142,R181 | anti-pattern list restating documentation rules
+
+FILE .claude/skills/template-maintenance/SKILL.md | User-invoked workflow (disable-model-invocation).
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 EX X15 | disable-model-invocation: true
+5 NN | front-matter delimiter
+7 NN | header metadata
+9 NN | document heading
+11 NN | pointer to the instruction map
+13 NN | section heading
+15 EX X12 | normative constraint → rule
+16 EX X12 | Core and Architecture name no concrete technology
+17 EX X2,X3 | never implementation names
+18-19 EX X33 | add the rule once
+21 NN | section heading
+23-24 EX X12 | Update `.claude/INSTRUCTION_MAP.md`
+25 EX X5,X4 | record the ADR with `architecture-decision`
+26 EX X12 | Run the checker and fix every reported item:
+28-30 NN | checker command
+32 NN | command location technique note
+34 EX X33 | Keep the always-loaded surface compact
+
+FILE .claude/skills/verify/SKILL.md | Workflow skill; on invocation.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R194 | Do not require optional tooling the repository has not configured.
+12 NN | section heading
+14 OL R211 | Review the final changed-file set and diff before choosing checks.
+16 OL R211,R174 | no unrelated refactoring slipped in
+17 OL R211,R186 | removed only after any behavior they uniquely verified is preserved
+18 OL R211 | no generated/build artifacts were added accidentally
+19 OL R211,R93 | no secrets or environment-specific credentials were introduced
+21 OL R211 | Then determine the affected areas
+23 NN | section heading
+25 OL R38 | A build failure means the implementation is not complete.
+27 NN | section heading
+29 OL R38 | Investigate every newly failing relevant test
+31 NN | section heading
+33 OL R39 | A successful build alone does not prove runtime composition.
+35 NN | section heading
+37 OL R186 |
+39 NN | section heading
+41 OL R194,R35 | Skip the architecture audit for documentation-only or unrelated changes.
+43 NN | section heading
+45 OL R194,R196 | Do not add a formatter or analyzer dependency just to complete ordinary verification.
+47 NN | section heading
+49 OL R194 | A full `security-scan` is not needed for every small business-logic change.
+51 NN | section heading
+53 OL R211,R193,R198,R186 | unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`
+55 OL R212 |
+57 NN | section heading
+59 OL R185 | Never hide a known failure and declare completion.
+61 NN | section heading
+63 OL R187 |
+65-74 OL R187 | Tests: PASS / NOT RUN / NOT APPLICABLE
+
+FILE .editorconfig | Repository formatting and style configuration.
+1 NN | comment describing the file
+2 IM | root marker
+4-18 IM | general formatting settings (charset, newlines, indentation)
+20 IM | C# section marker
+21-25 OL R67 | csharp_style_namespace_declarations = file_scoped:suggestion
+26-27 OL R212 | dotnet_diagnostic.IDE0005.severity = warning
+29-62 IM | suggestion-level var, modern-syntax, brace and naming settings (repository conventions per RUN-009; IDE hints only)
+64-71 OL R67 | dotnet_naming_style.async_suffix.required_suffix = Async
+
+FILE .gitignore | Repository ignore list.
+1 NN | section comment
+2-7 IM | .NET build and IDE artifacts
+9 NN | section comment
+10-12 IM | frontend build artifacts
+14 OL R93,R168 | Development configuration contract files stay tracked
+15-18 OL R93 | appsettings.*.local.json
+20 NN | section comment
+21 IM | hook state directory
+
+FILE CLAUDE.md | Always loaded (entry point).
+1 NN | header metadata
+3 NN | document heading
+5 NN | template description and pointer to the maintainer map
+7 NN | lead-in to imports
+9-11 IM | always-loaded imports of the frame style, decisions and frontend stack rules
+13 NN | section heading
+15 OL R213 |
+17 OL R191 |
+18 OL R193 |
+19 OL R214,R215 |
+20 OL R20 |
+21 OL R192,R197 |
+22 OL R216 |
+23 OL R199 |
+25 NN | section heading
+27 OL R175 |
+28 OL R181 |
+29 OL R174 |
+31 NN | section heading
+33-34 OL R217,R215 | **Delegated** — local, reversible
+35 MX R170,R19,R214,R216,X11,X18,X4 | changing a capability selection (also requires an ADR) ⟫ Most Reserved items are oracle-linked (R170, R19, R214, R216); Reserved reference-graph changes (X11), Reserved adoption of API versioning (X18) and the ADR for selection changes (X4) are extras.
+36 EX X34 | Unclear case: any "yes" makes it Reserved
+37 OL R178,R215 |
+38 MX R217,R179,X19 | record the accepted decision with `architecture-decision` ⟫ Explicit instruction as approval (R217) and headless reporting (R179) are oracle-linked; recording each accepted decision through the ADR procedure is the extra X19.
+40 NN | section heading
+42 OL R201 |
+44 NN | section heading
+46 OL R204 | Work is not complete until its `verify` step has run.
+47 MX R21,X10 | Dependency add/update/remove → `add-dependency` ⟫ Routing additions and updates through add-dependency is oracle-linked (R21); routing removals through the same gate is the extra X10.
+48 EX X13 | A `<slot>.<facet>` reference resolves through the capability selection in the decisions file.
+50 NN | section heading
+52 OL R205 |
+53 OL R206 |
+
+FILE CUSTOM_SETTINGS.md | Product input (outside the instruction hierarchy).
+1 NN | header naming governing policy and procedure
+3 NN | document heading
+5 NN | file purpose statement
+7-8 IM | empty settings table header
+
+FILE Directory.Build.props | Repository build configuration.
+1 IM | project element opening
+2 OL R164 | Project-specific settings stay in their own project files.
+3 IM | property group opening
+4 OL R159 | <TargetFramework>net10.0</TargetFramework>
+5-6 EX X35 | <Nullable>enable</Nullable>
+7-8 IM | closing elements
+
+FILE Directory.Packages.props | Central Package Management configuration.
+1 IM | project element opening
+2-4 OL R18,R21 | Add or update versions only through the add-dependency workflow
+5 IM | property group opening
+6 OL R18 | <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+7-10 IM | closing elements and empty item group
+
+FILE SPECIFICATION.md | Empty product input placeholder (0 lines; EXC-001).
+DONE

@@ -1,0 +1,123 @@
+# Batch B008 — skills: aspnet-error-handling, authentication
+
+@@ output/template/.claude/skills/aspnet-error-handling/SKILL.md ;; Knowledge skill (on demand for ASP.NET Core error handling); self-declared technique only.
+@scope on-demand knowledge skill aspnet-error-handling (backend)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+18 NN ;; Heading.
+20-22 OL [api007.unexpected-propagate]
+24 NN ;; Heading.
+26-28 OL [api021.request-aborted]
+30-63 NN ;; GlobalExceptionHandler code example (illustrative; e.g. 499 status for aborted requests).
+65 NN ;; Lead-in to registration example.
+67-72 NN ;; Registration code example.
+74-75 OL [api008.dev-diagnostics]
+77 NN ;; Heading.
+79-82 NN ;; Definition of expected outcomes (context for API-009; no added requirement).
+84 NN ;; Lead-in ('null may be sufficient') - permissive technique.
+86-90 NN ;; Code example.
+92-95 MX [api009.result-reserved,x.eh-result-typed-errors] ;; Typed outcome/Result adoption as a Reserved project-wide decision ties to API-009/ARC-020; using typed errors instead of strings when adopted is additional.
+97 NN ;; Heading.
+99-125 NN ;; Controller mapping code example.
+127 NN ;; Heading.
+129-131 NN ;; Permissive list of what an error contract 'may contain'.
+133 NN ;; Heading.
+135-139 NN ;; Descriptive account of [ApiController] transport validation and where FluentValidation fits (context for API-010).
+141-150 NN ;; Text diagram illustrating boundary ownership already captured as API-010.
+152-156 MX [dep010.fluentvalidation,x.eh-validation-invocation,x.ts-no-legacy-autovalidation] ;; Registration via FluentValidation.DependencyInjectionExtensions (DEP-010), single established invocation pattern (added) and no deprecated auto-validation package (added).
+158-161 OL [api010.not-replace-business]
+163 NN ;; Heading.
+165-166 OL [api011.typed-exceptions-decision]
+168 NN ;; Heading.
+170-174 MX [api007.unexpected-propagate,x.eh-catch-whitelist] ;; Propagation to centralized handling and no swallowing are API-007; the closed list of local-catch purposes is the added whitelist.
+176 NN ;; Heading.
+178 OL [api007.no-swallow]
+180-188 NN ;; Anti-example code (empty catch).
+190-191 OL [api012.no-log-rethrow]
+193-199 NN ;; Anti-example code (log and rethrow).
+201 NN ;; Heading.
+203-207 NN ;; Heuristics on when Result<T> helps or hurts (context for API-009; descriptive).
+208 EX [x.eh-result-typed-errors] ;; ;; If introduced, prefer typed errors
+210-214 NN ;; Code example of a typed error record.
+216 NN ;; Heading.
+218-220 OL [api002.no-anonymous-errors,arc010.no-minimal-filters,api010.not-only-validators]
+222 NN ;; Heading.
+224 NN ;; Pointer to error-handling.md.
+226-237 DU ;; Decision-guide table restating defaults already owned by error-handling.md/api.md (validation problem response, null→404, typed outcome only if adopted, IExceptionHandler, ProblemDetails, boundary validation, propagate/translate failures, cancellation not 500); owner constraints captured in those rules.
+
+C api007.unexpected-propagate OL API-007 DEFAULT ;; Programming defects and unexpected database/external failures the application cannot handle locally propagate to the global exception handler. ;; = ;; none ;;
+C api021.request-aborted OL API-021 MUST_NOT ;; Treat client-aborted requests (RequestAborted cancellation) separately: neither an unhandled application error nor a 500. ;; = ;; none ;;
+C api008.dev-diagnostics OL API-008 MUST ;; Development tooling may expose more diagnostics but public API contracts stay safe. ;; = ;; Development diagnostics. ;;
+C api009.result-reserved OL API-009,ARC-020 REQUIRES_APPROVAL ;; Use an explicit typed outcome where clearer; adopting a project-wide Result pattern is Reserved and, if adopted, used consistently. ;; = ;; none ;;
+C x.eh-result-typed-errors EX API-009 PREFER ;; If a Result pattern is adopted, use typed errors rather than arbitrary strings passed through every layer. ;; = ;; Only when a Result pattern is adopted. ;; Oracle leaves the Result shape open; typed errors is an added design preference.
+C x.eh-validation-invocation EX API-010,DEP-010 MUST ;; Register validators via AddValidatorsFromAssemblyContaining and follow the project's established validation invocation pattern rather than adding a second competing mechanism. ;; = ;; none ;; Single-invocation-mechanism rule not entailed by API-010/DEP-010.
+C api010.not-replace-business OL API-010,ARC-003 MUST ;; API validation does not replace business rules; CRUD/workflow/orchestration rules stay in Application unless an approved richer Domain design. ;; = ;; Approved richer Domain design. ;;
+C api011.typed-exceptions-decision OL API-011 MUST ;; Typed exceptions for selected cases only as a consistent project-level decision, not a per-feature habit. ;; = ;; none ;;
+C api007.no-swallow OL API-007,RUN-018 MUST_NOT ;; Do not catch Exception simply to continue execution. ;; = ;; none ;;
+C api012.no-log-rethrow OL API-012,API-007 MUST_NOT ;; Do not write catch/log/rethrow boilerplate at every layer when the global handler owns it. ;; = ;; none ;;
+C api002.no-anonymous-errors OL API-002 AVOID ;; Avoid returning inconsistent anonymous error objects. ;; = ;; none ;;
+C arc010.no-minimal-filters OL ARC-010 AVOID ;; Avoid coupling validation to Minimal API endpoint filters in a Controller-based project. ;; = ;; none ;;
+C api010.not-only-validators OL API-010 AVOID ;; Avoid putting business rules only in request validators. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/authentication/SKILL.md ;; Knowledge skill (on demand for login/identity/endpoint protection).
+@scope on-demand knowledge skill authentication (backend, frontend)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-17 NN ;; Pointers to policy owners.
+19-21 EX [x.auth-prefer-policies] ;; ;; Prefer policies when authorization logic is more
+23 NN ;; Heading.
+25-30 EX [x.auth-scheme-choice]
+32-36 OL [gov013.no-speculative-identity,sec016.no-custom-jwt]
+38 NN ;; Heading.
+40-42 OL [sec016.framework-passwords]
+44 NN ;; Heading.
+46-49 OL [sec017.actual-issuer]
+51 NN ;; Heading.
+53-55 OL [sec006.explicit-approach]
+57-64 NN ;; Code example.
+66-67 OL [sec006.fallback-allowanonymous]
+69-71 NN ;; Code example.
+73 NN ;; Heading.
+75-91 NN ;; Policy registration and usage code examples.
+93 EX [x.auth-policy-constants]
+95 NN ;; Heading.
+97-99 EX [x.auth-roles]
+101 NN ;; Heading.
+103-106 OL [sec005.resource-authz]
+108 NN ;; Heading.
+110-113 NN ;; Text illustration of 401/403 mapping (API-005 captured in api.md).
+115-116 NN ;; Hedged description ('normally') of framework middleware producing 401/403.
+O 115-116 NN ;; Checked whether this forbids controllers from manufacturing 401/403; it is a hedged description of framework behaviour without a required outcome, so rejected as an extra rule. ;; ;; rather than controllers manufacturing them manually
+118 NN ;; Heading.
+120 NN ;; Permission: Controllers may use User for purely HTTP-specific information (consistent with ARC-008; no restriction).
+122-131 NN ;; Code example.
+133-136 OL [arc008.current-user-abstraction]
+138-144 NN ;; Code example (ICurrentUser).
+146-147 OL [gov012.no-needless-icurrentuser]
+149 NN ;; Heading.
+151-152 NN ;; Descriptive contrast of CSRF characteristics (context for SEC-011).
+154 NN ;; Heading.
+156-162 EX [x.auth-testing]
+164 OL [tst003.observable-auth]
+166 NN ;; Heading.
+168-170 MX [sec001.no-hardcoded-keys,x.auth-policy-constants,gov013.no-speculative-identity] ;; Hardcoded signing keys (SEC-001) and identity infrastructure without need (GOV-013) are oracle; scattered role/permission magic strings is the added constants rule.
+
+C x.auth-prefer-policies EX SEC-005 PREFER ;; Prefer policy-based authorization when logic is more than a trivial role check. ;; = ;; none ;; Authorization-mechanism preference not in the oracle.
+C x.auth-scheme-choice EX SEC-016,ARC-020 DEFAULT ;; Choose the authentication scheme from the actual application: Bearer/OIDC for SPA→API, cookies for server-rendered apps, ASP.NET Core Identity when owning local users/passwords, external OIDC/OAuth when identity is delegated. ;; = ;; none ;; Scheme-selection mapping is candidate guidance; the oracle only requires platform mechanisms and approval for auth architecture.
+C gov013.no-speculative-identity OL GOV-013,SEC-016 MUST_NOT ;; Do not add ASP.NET Core Identity merely because a User entity or profile management exists; do not add Identity, JWT issuance or OIDC infrastructure without actual need. ;; = ;; Identity when the app owns local accounts and needs its account management. ;;
+C sec016.no-custom-jwt OL SEC-016 MUST_NOT ;; Do not issue custom JWTs when an existing identity provider owns token issuance. ;; = ;; none ;;
+C sec016.framework-passwords OL SEC-016,SEC-001 MUST ;; When the app owns passwords use framework hashing, lockout and reset-token features; never store plaintext passwords or auth secrets in source. ;; = ;; none ;;
+C sec017.actual-issuer OL SEC-017 MUST ;; Configure Bearer validation for the issuer that actually issues the tokens; keys/certificates follow configuration and security rules. ;; = ;; none ;;
+C sec006.explicit-approach OL SEC-006 MUST ;; Secure endpoints via global/fallback policy, attributes or endpoint configuration and keep the chosen approach explicit and reviewable. ;; = ;; none ;;
+C sec006.fallback-allowanonymous OL SEC-006 MUST ;; With a secure global/fallback policy repeated [Authorize] is unnecessary; mark deliberate public endpoints with [AllowAnonymous]. ;; = ;; none ;;
+C x.auth-policy-constants EX - DEFAULT ;; Use stable constants for repeated policy names; avoid role/permission magic strings scattered through the codebase. ;; = ;; none ;; Code-hygiene convention not in the oracle.
+C x.auth-roles EX SEC-005 PREFER ;; Use roles only for genuinely role-oriented models; avoid scattered compound role strings; prefer a policy when several roles/claims represent one capability. ;; = ;; none ;; Authorization-modelling preference not in the oracle.
+C sec005.resource-authz OL SEC-005 MUST ;; Resource-dependent permissions use ASP.NET Core resource authorization or explicit Application authorization logic (server-side). ;; = ;; none ;;
+C arc008.current-user-abstraction OL ARC-008,ARC-007 MUST ;; When use cases repeatedly need caller identity define a small Application abstraction with an outer HTTP adapter; Application never depends on HttpContext, ClaimsPrincipal or IHttpContextAccessor. ;; = ;; none ;;
+C gov012.no-needless-icurrentuser OL GOV-012 MUST_NOT ;; Do not create ICurrentUser when passing an explicit user identifier is simpler. ;; = ;; none ;;
+C x.auth-testing EX TST-003,SEC-005 DEFAULT ;; Test authorization behaviour of important protected operations: unauthenticated→401, unauthorized→403, permitted success, ownership rules, intended anonymous access. ;; = ;; none ;; Specific security test obligations not entailed by the oracle testing policies.
+C tst003.observable-auth OL TST-003 MUST ;; Verify observable authorization behaviour, not merely the presence of [Authorize]. ;; = ;; none ;;
+C sec001.no-hardcoded-keys OL SEC-001 AVOID ;; Avoid hardcoded signing keys. ;; = ;; none ;;

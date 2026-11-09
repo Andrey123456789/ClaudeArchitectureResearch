@@ -1,0 +1,824 @@
+{
+  "unit": "P0002-K0-P003",
+  "batch_input_sha256": "8c910335a935defa7a4a69674efcc7aa6132cdde0d0864d683807b42852bb183",
+  "reviews": [
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-015",
+        "name": "Git mutations require explicit request",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "repo/meta",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Git"
+        ],
+        "normalized_policy": "Do not commit, push, merge, rebase, reset, force-push, delete branches, or perform other repository-changing Git operations unless explicitly requested.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-015",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0031",
+        "primary/K0/constraints.jsonl/RULE-K0-0190",
+        "primary/K0/constraints.jsonl/UNCERTAIN-K0-0001",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0157"
+      ],
+      "boundary_analysis": "Explicit request gate matches. Approved-workflow alternative and protected/shared non-rewritable wording already retained as baseline uncertainty, not adjudicated. Hook asks even after authorization BF0108; indirect commands/quoted token false positives BF0107. Read-only table and conditional forms inspected; adversarial argument precedence belongs to executable pass, no supported new behavioral claim yet.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "8c5e45a0b34511d92c46ece2d261df2f2bcabdde611310e5f4a4dec970080db6",
+          "inspected_ranges": [
+            [
+              181,
+              192
+            ]
+          ],
+          "context_quotes": [
+            "\nHooks run in exec form (`node` + `args`, no shell): `${CLAUDE_PROJECT_DIR}` only locates `hook.cjs`; every check runs against the active repository or linked worktree, resolved from the hook input `cwd` (or the edited file) through Git, and keeps its state per worktree in `.claude/.hook-state/` (ignored by Git). Hook input may carry a UTF-8 byte-order mark; manifests may be UTF-8 or BOM-tagged UTF-16, and unreadable content is reported as a finding.\n\n| Mechanism | Trigger | Checks | Points to |\n|---|---|---|---|\n| Pre-command hook (fail-closed: a missing script, crash, timeout or unreadable input blocks the command) | Bash/PowerShell command, before execution | npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals (global options and `--force`/`--legacy-peer-deps` included) are denied without `# add-dependency: reviewed`; `dotnet` project-reference additions and removals are denied without `# project-references: approved`; repository-changing Git commands (table-driven classifier after global options such as `-C`) ask the user to confirm, read-only Git commands run | `add-dependency`, `project-structure`, `architecture-decision`, `CLAUDE.md` § Git |\n| Post-change hook | Edit/Write of a manifest, instruction file or product input | `check-dependencies.cjs` on that manifest (project-reference changes flagged as Reserved), `check-instructions.cjs`, synchronization reminders | dependency and architecture standards, this map, `custom-settings` |\n| Post-change hook | every Bash/PowerShell command, successful or failed | actual worktree state: the first observation of a worktree validates every tracked manifest and the instruction files; later observations validate only paths Git reports as changed (working tree, index, HEAD transitions) — additions, rewrites, removals and moves of `*.csproj`, `Directory.Packages.props` and `package.json`, project-reference changes, instruction files, product inputs; build output, `node_modules` and nested repositories are not observed | as above |\n| Stop hook | end of a turn (once per material state of the changed files, never on its own continuation) | model change without seeder change, migrations to review, code without test changes, changed custom settings | `development-workflow`, `verify`, `custom-settings` |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` | `verify`, `add-dependency`, `project-structure` | repository-wide manifest scan | dependency and architecture standards |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` | `template-maintenance`, post-change hook | structural predicates of this system, including the Kind direction and the hook configuration | this map |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              1,
+              10
+            ],
+            [
+              183,
+              235
+            ],
+            [
+              237,
+              270
+            ],
+            [
+              282,
+              304
+            ],
+            [
+              584,
+              593
+            ]
+          ],
+          "context_quotes": [
+            "// Kind: ENF | Scope: repo/meta | Owner: Claude Code hook dispatcher — pre-command gates (dependency changes, project-reference graph, repository-changing Git), validation of the actual worktree state after edits and shell commands, product-input reminders, co-change reminders at stop | Loading: hook events configured in .claude/settings.json\n//\n// Launch (exec form, .claude/settings.json): node <launcher root>/.claude/hooks/hook.cjs <event>, hook input JSON on stdin.\n// The launcher root only locates this script. Every check runs against the active repository or worktree, resolved\n// from the hook input `cwd` (or the edited file) through Git; state is kept per worktree in .claude/.hook-state/.\n// Events: pre-tool-use (fail-closed: any error or unreadable input denies the command), post-tool-use,\n// post-tool-use-failure (a failed shell command may still have changed files), stop.\n// Output: Claude Code hook JSON on stdout with exit code 0. Exit code 1 with a message on stderr means a\n// non-critical hook could not run. Messages point to the owning workflow or standard; they do not restate policy.\n'use strict';",
+            "\n// Git: table-driven read-only vs repository-changing classification, after global options such as -C <path>.\nconst GIT_GLOBAL_VALUE_OPTIONS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env', '--exec-path']);\nconst GIT_READ_ONLY = new Set([\n  'status', 'diff', 'log', 'show', 'blame', 'annotate', 'grep', 'ls-files', 'ls-tree', 'ls-remote', 'rev-parse', 'rev-list',\n  'describe', 'shortlog', 'cat-file', 'show-ref', 'for-each-ref', 'merge-base', 'name-rev', 'help', 'version', 'var',\n  'check-ignore', 'check-attr', 'check-ref-format', 'check-mailmap', 'count-objects', 'fsck', 'whatchanged', 'range-diff',\n  'difftool', 'format-patch', 'archive', 'verify-commit', 'verify-tag', 'cherry', 'show-branch', 'diff-tree', 'diff-files',\n  'diff-index', 'request-pull', 'patch-id',\n]);\n// Commands whose effect depends on their arguments: read-only only in the listed forms.\nconst GIT_CONDITIONAL = {\n  branch: (args) => !hasAny(args, ['-d', '-D', '--delete', '-m', '-M', '--move', '-c', '-C', '--copy', '-u', '--set-upstream-to', '--unset-upstream', '--edit-description', '-f', '--force', '-t', '--track', '--no-track'])\n    && (hasAny(args, ['-l', '--list', '-a', '--all', '-r', '--remotes', '--contains', '--no-contains', '--merged', '--no-merged', '--points-at', '--show-current', '-v', '-vv', '--verbose', '--format', '--sort'])\n      || positionalsOf(args, new Set()).length === 0),\n  tag: (args) => !hasAny(args, ['-d', '--delete', '-a', '--annotate', '-s', '--sign', '-u', '--local-user', '-f', '--force', '-m', '--message', '-F', '--file'])\n    && (hasAny(args, ['-l', '--list', '-n', '--contains', '--no-contains', '--merged', '--no-merged', '--points-at', '--sort', '--format', '-v', '--verify'])\n      || positionalsOf(args, new Set()).length === 0),\n  stash: (args) => ['list', 'show'].includes(positionalsOf(args, new Set())[0]),\n  worktree: (args) => positionalsOf(args, new Set())[0] === 'list',\n  remote: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['show', 'get-url'].includes(sub); },\n  config: (args) => hasAny(args, ['--get', '--get-all', '--get-regexp', '--get-urlmatch', '--list', '-l'])\n    || (['get', 'list'].includes(positionalsOf(args, new Set())[0]))\n    || (!hasAny(args, ['--unset', '--unset-all', '--add', '--replace-all', '--rename-section', '--remove-section', '-e', '--edit'])\n      && positionalsOf(args, new Set(['--file', '-f', '--type', '--default'])).length === 1),\n  notes: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['list', 'show'].includes(sub); },\n  reflog: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || !['expire', 'delete'].includes(sub); },\n  submodule: (args) => { const [sub] = positionalsOf(args, new Set()); return sub === undefined || ['status', 'summary'].includes(sub); },\n  'symbolic-ref': (args) => !hasAny(args, ['-d', '--delete']) && positionalsOf(args, new Set(['-m'])).length <= 1,\n  bisect: (args) => ['log', 'visualize', 'view', 'terms'].includes(positionalsOf(args, new Set())[0]),\n  'sparse-checkout': (args) => positionalsOf(args, new Set())[0] === 'list',\n  apply: (args) => hasAny(args, ['--check', '--stat', '--numstat', '--summary']) && !hasAny(args, ['--index', '--cached', '--apply', '-3', '--3way']),\n  checkout: (args) => args.length === 0,\n  'hash-object': (args) => !hasAny(args, ['-w']),\n};\n\nfunction hasAny(args, flags) {\n  return args.some((a) => flags.includes(a) || flags.some((f) => f.startsWith('--') && a.startsWith(`${f}=`)));\n}\n\nfunction classifyGit(args) {\n  let i = 0;\n  while (i < args.length && args[i].startsWith('-')) {\n    if (['--version', '--help', '-h', '--html-path', '--man-path', '--info-path'].includes(args[i])) return null;\n    i += GIT_GLOBAL_VALUE_OPTIONS.has(args[i]) ? 2 : 1;\n  }\n  const sub = (args[i] ?? '').toLowerCase();\n  if (!sub || GIT_READ_ONLY.has(sub)) return null;\n  const rest = args.slice(i + 1);\n  if (GIT_CONDITIONAL[sub] && GIT_CONDITIONAL[sub](rest)) return null;\n  return sub;\n}\n",
+            "\nfunction classifyTokens(tokens, found) {\n  for (let i = 0; i < tokens.length; i += 1) {\n    const tool = baseName(tokens[i]);\n    const args = tokens.slice(i + 1);\n    const text = tokens.slice(i).join(' ');\n    const launch = SHELL_LAUNCHERS[tool] ? args.findIndex((a) => SHELL_LAUNCHERS[tool].includes(a.toLowerCase())) : -1;\n    if (launch >= 0 && args.length > launch + 1) {\n      for (const segment of segmentsOf(args.slice(launch + 1).join(' '))) classifyTokens(tokenize(segment), found);\n    } else if (NODE_PM[tool]) {\n      const hit = classifyNodePackageManager(tool, args);\n      if (hit) found.dependency.push({ text, force: hit.force });\n    } else if (tool === 'ng' || (tool === 'npx' && baseName(positionalsOf(args, new Set(['-p', '--package']))[0] ?? '') === 'ng')) {\n      const ngArgs = tool === 'ng' ? args : args.slice(args.findIndex((a) => baseName(a) === 'ng') + 1);\n      const [sub, ...rest] = positionalsOf(ngArgs, new Set());\n      if (sub === 'add' || (sub === 'update' && rest.length > 0)) found.dependency.push({ text, force: ngArgs.some((a) => FORCE_FLAG.test(a)) });\n    } else if (tool === 'dotnet') {\n      const kind = classifyDotnet(args);\n      if (kind === 'package') found.dependency.push({ text, force: false });\n      if (kind === 'reference') found.reference.push(text);\n    } else if (tool === 'nuget' && ['install', 'update'].includes(String(args[0]).toLowerCase())) {\n      found.dependency.push({ text, force: false });\n    } else if (['install-package', 'update-package', 'uninstall-package'].includes(tool)) {\n      found.dependency.push({ text, force: false });\n    } else if (tool === 'git') {\n      const sub = classifyGit(args);\n      if (sub) found.git.push({ sub, text });\n    } else {\n      continue;\n    }\n    break; // the rest of the segment belongs to the recognized command\n  }\n}\n",
+            "  const deny = [];\n  if (found.reference.length > 0 && !REFERENCE_MARKER.test(command)) {\n    deny.push(\n      `Project-reference graph change: ${found.reference.join(' | ')}`,\n      'Changing the project reference graph is Reserved (CLAUDE.md § Decisions) unless an accepted decision already requires the reference, even when the new reference would be legal.',\n      'Follow `project-structure` § Changing project references (Decision Request: `architecture-decision`), then re-run the command with the trailing comment `# project-references: approved`.',\n    );\n  }\n  if (found.dependency.length > 0 && !DEPENDENCY_MARKER.test(command)) {\n    deny.push(\n      `Dependency change detected: ${found.dependency.map((d) => d.text).join(' | ')}`,\n      'Run the `add-dependency` workflow first; when its checks are complete, re-run the command with the trailing comment `# add-dependency: reviewed`.',\n    );\n    if (found.dependency.some((d) => d.force)) deny.push('The command uses --force or --legacy-peer-deps: resolve the actual peer-dependency conflict instead (`add-dependency` § 5).');\n  }\n  if (deny.length > 0) preDecision('deny', deny);\n  if (found.git.length > 0) {\n    preDecision('ask', [\n      `Repository-changing Git command (${[...new Set(found.git.map((g) => g.sub))].join(', ')}): ${found.git.map((g) => g.text).join(' | ')}`,\n      'Run it only when the user explicitly requested it (CLAUDE.md § Git); procedure: `git-workflow`.',\n    ]);\n  }\n}",
+            "  if (!event) fail(`missing or unknown hook event; expected one of: ${EVENTS.join(', ')}`);\n  if (event === 'pre-tool-use') {\n    try {\n      preToolUse(readInput());\n    } catch (error) {\n      preDecision('deny', [`[hook] the pre-command policy check could not run, so the command was blocked: ${error.message}`]);\n    }\n    process.exit(0);\n  }\n  let input;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/common/dependencies.md",
+          "sha256": "34b08f489889fea3b672b68a9039d57b6c8c539b212ceb52c34a0778685f75e1",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- npm is the package manager for the Angular workspace (D-09) unless the project deliberately adopts another.\n- Commit `package.json` and `package-lock.json`, and keep the lockfile consistent with every dependency change.\n- Put build and test tooling in `devDependencies`, not runtime `dependencies`, unless there is a concrete reason."
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"pre-tool-use\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "362a567d5310086364ca3f34b4f14d548b259f738797be3b96bdc1be592472eb",
+          "inspected_ranges": [
+            [
+              9,
+              13
+            ],
+            [
+              60,
+              70
+            ],
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthorization: repository-changing Git operations happen only when explicitly requested, and parallel work uses separate branches or worktrees (CLAUDE.md § Git). Completing an implementation is not a request to commit, push or merge.\n\nEnforced by: the pre-command hook asks the user to confirm Git commands it classifies as repository-changing, unrecognized subcommands included; read-only commands such as `git status`, `git diff` or `git log` run without a prompt. Git run indirectly by scripts or other programs is not classified.\n",
+            "\nNever force-push a shared branch unless the user explicitly requests history rewriting and the consequences are understood; treat `main`, `master` and other protected or shared branches as non-rewritable.\n\n## Merge and rebase\n\nFollow the repository/team convention or the user's explicit request rather than personal preference. Inspect local uncommitted work first; do not automatically stash, reset or discard work to make the operation proceed. Resolve conflicts from the intended combined behavior, not by mechanically choosing \"ours\" or \"theirs\", and run relevant verification afterwards.\n\n## Pull requests\n\nRun `verify` before preparing a PR. A PR has one focused purpose without accidental unrelated changes. Describe what changed, why, how it was verified and any compatibility or migration notes; never claim checks that were not run.\n",
+            "\n`git reset --hard`, `git clean`, `git push --force`, `git push --force-with-lease`, branch deletion and rebasing shared history are high-risk: run them only when explicitly requested or required by an approved workflow, and inspect what will be lost or rewritten first.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              52,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\n- Do not commit, push, merge, rebase, reset, force-push, delete branches or run any other repository-changing Git operation unless explicitly requested.\n- Parallel implementation work must use separate branches or worktrees; keep unrelated changes out of the current branch."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-016",
+        "name": "Parallel work isolation",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "repo/meta",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Git"
+        ],
+        "normalized_policy": "Parallel implementation work must use separate branches or worktrees; keep unrelated changes out of the current branch.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-016",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0032",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0153"
+      ],
+      "boundary_analysis": "Separate branch/worktree and unrelated-change exclusion match. One branch cannot occupy multiple normal worktrees, focus and preservation before removal are explicit EXTRA0153/0401, not a new atom.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "362a567d5310086364ca3f34b4f14d548b259f738797be3b96bdc1be592472eb",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              34,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthorization: repository-changing Git operations happen only when explicitly requested, and parallel work uses separate branches or worktrees (CLAUDE.md § Git). Completing an implementation is not a request to commit, push or merge.\n",
+            "\n- Keep each worktree focused on its branch's concern; one branch is not checked out in several normal worktrees at once.\n- Before removing a worktree, verify that required changes are committed or otherwise preserved; do not remove a worktree that holds uncommitted user work.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "- Do not commit, push, merge, rebase, reset, force-push, delete branches or run any other repository-changing Git operation unless explicitly requested.\n- Parallel implementation work must use separate branches or worktrees; keep unrelated changes out of the current branch.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-017",
+        "name": "Decision control protocol",
+        "related_groups": [
+          "architecture",
+          "workflows-delivery"
+        ],
+        "origin": "research_shared",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "research/observations/002-candidate-space-analysis.md#S-06"
+        ],
+        "normalized_policy": "Classify decisions as Decided, Delegated, or Reserved; Reserved changes require explicit approval and headless runs must not silently alter architecture.",
+        "status": "shared_construction_constraint"
+      },
+      "policy_id": "GOV-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0015",
+        "primary/K0/constraints.jsonl/RULE-K0-0017",
+        "primary/K0/constraints.jsonl/RULE-K0-0018",
+        "primary/K0/constraints.jsonl/RULE-K0-0028",
+        "primary/K0/constraints.jsonl/RULE-K0-0030",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0074"
+      ],
+      "boundary_analysis": "Decision classes match with stricter local/reversible delegation and any-yes unclear-case test already recorded. Options include current choice and non-Reserved continuation in replica0169; explicit user instruction approval, register propagation, one-import and restatement checks in BF0072/0078/0127 already explicit. No majority-vote interpretation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "8c5e45a0b34511d92c46ece2d261df2f2bcabdde611310e5f4a4dec970080db6",
+          "inspected_ranges": [
+            [
+              13,
+              23
+            ],
+            [
+              181,
+              192
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|\n| OP — Operating Policy | precedence, product governance, decision protocol, challenge obligation, Git safety, workflow routing | `CLAUDE.md` | always | only agent-behavior policy needed at planning time |\n| DEC — Project Decisions | architecture, patterns not adopted, stack, conditional technologies, project defaults | `docs/architecture/decision-register.md` (one register, `D-xx` IDs); optional ADRs in `docs/decisions/` | always (imported by `CLAUDE.md`) | new or changed decision via `architecture-decision` |\n| STD — Standards | normative must/default/prefer rules for one scope | `.claude/rules/<scope>/<topic>.md` with `paths:` | path-scoped | the rule file of the matching scope and topic |\n| KNW — Knowledge | technique, examples, trade-offs | `.claude/skills/<name>/SKILL.md` (+ private `references/`) | on demand | the skill for that technology |\n| WF — Workflows | procedures, steps, stop conditions, outputs | `.claude/skills/<name>/SKILL.md`, `.claude/agents/` | workflow invocation | the workflow that owns the procedure |\n| ENF — Enforcement | hooks, permissions, scripts, build/format assets | `.claude/settings.json`, `.claude/hooks/`, `.claude/scripts/`, root `.editorconfig` and `Directory.*.props` | event or check | the script or setting that checks the owning rule |\n| IN — Product inputs | product behavior and approved tunable values | `SPECIFICATION.md`, `CUSTOM_SETTINGS.md`, feature/task inputs | read as input | product content only — never engineering policy |\n\nConformance dependencies point WF → KNW → STD → DEC → OP, and ENF → STD/DEC; enforcement declares its conformance in its header and in `Conforms to:` comment lines. Routing pointers may point anywhere reliably invocable: references after `See also:`, `Workflow:`, `Technique:`, `Procedure:` or `Enforced by:`, workflow invocations (run, use, invoke, switch to, `→`, slash commands, agent delegation), the `CLAUDE.md` routing table, and the register's **Details in** / **Affects** cells. Every other reference is a conformance dependency, checked for direction and acyclicity by `check-instructions.cjs`; references to product inputs and enforcement files name inputs and tools, not owners. A skill's `references/` files are read only by that skill. Standards cite decision IDs instead of restating decisions; decision summaries exist only in the register.\n",
+            "\nHooks run in exec form (`node` + `args`, no shell): `${CLAUDE_PROJECT_DIR}` only locates `hook.cjs`; every check runs against the active repository or linked worktree, resolved from the hook input `cwd` (or the edited file) through Git, and keeps its state per worktree in `.claude/.hook-state/` (ignored by Git). Hook input may carry a UTF-8 byte-order mark; manifests may be UTF-8 or BOM-tagged UTF-16, and unreadable content is reported as a finding.\n\n| Mechanism | Trigger | Checks | Points to |\n|---|---|---|---|\n| Pre-command hook (fail-closed: a missing script, crash, timeout or unreadable input blocks the command) | Bash/PowerShell command, before execution | npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals (global options and `--force`/`--legacy-peer-deps` included) are denied without `# add-dependency: reviewed`; `dotnet` project-reference additions and removals are denied without `# project-references: approved`; repository-changing Git commands (table-driven classifier after global options such as `-C`) ask the user to confirm, read-only Git commands run | `add-dependency`, `project-structure`, `architecture-decision`, `CLAUDE.md` § Git |\n| Post-change hook | Edit/Write of a manifest, instruction file or product input | `check-dependencies.cjs` on that manifest (project-reference changes flagged as Reserved), `check-instructions.cjs`, synchronization reminders | dependency and architecture standards, this map, `custom-settings` |\n| Post-change hook | every Bash/PowerShell command, successful or failed | actual worktree state: the first observation of a worktree validates every tracked manifest and the instruction files; later observations validate only paths Git reports as changed (working tree, index, HEAD transitions) — additions, rewrites, removals and moves of `*.csproj`, `Directory.Packages.props` and `package.json`, project-reference changes, instruction files, product inputs; build output, `node_modules` and nested repositories are not observed | as above |\n| Stop hook | end of a turn (once per material state of the changed files, never on its own continuation) | model change without seeder change, migrations to review, code without test changes, changed custom settings | `development-workflow`, `verify`, `custom-settings` |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` | `verify`, `add-dependency`, `project-structure` | repository-wide manifest scan | dependency and architecture standards |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` | `template-maintenance`, post-change hook | structural predicates of this system, including the Kind direction and the hook configuration | this map |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              17,
+              20
+            ],
+            [
+              167,
+              183
+            ],
+            [
+              237,
+              270
+            ],
+            [
+              282,
+              303
+            ],
+            [
+              463,
+              478
+            ]
+          ],
+          "context_quotes": [
+            "const EDIT_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'];\nconst DEPENDENCY_MARKER = /#\\s*add-dependency:\\s*reviewed\\b/i;\nconst REFERENCE_MARKER = /#\\s*project-references:\\s*approved\\b/i;\nconst REGISTER = 'docs/architecture/decision-register.md';",
+            "\nconst DOTNET_VALUE_OPTIONS = new Set(['--version', '-v', '--source', '-s', '--framework', '-f', '--package-directory', '--project', '--verbosity']);\n\n// dotnet add/remove [<project>] package|reference …, dotnet package add|remove|update …, dotnet reference add|remove ….\nfunction classifyDotnet(args) {\n  const positionals = positionalsOf(args, DOTNET_VALUE_OPTIONS).map((p) => p.toLowerCase());\n  const [verb, first, second] = positionals;\n  if (verb === 'add' || verb === 'remove') {\n    if (first === 'package' || first === 'reference') return first;\n    if (second === 'package' || second === 'reference') return second;\n    return null;\n  }\n  if (verb === 'package' && ['add', 'remove', 'update'].includes(first)) return 'package';\n  if (verb === 'reference' && ['add', 'remove'].includes(first)) return 'reference';\n  return null;\n}\n",
+            "\nfunction classifyTokens(tokens, found) {\n  for (let i = 0; i < tokens.length; i += 1) {\n    const tool = baseName(tokens[i]);\n    const args = tokens.slice(i + 1);\n    const text = tokens.slice(i).join(' ');\n    const launch = SHELL_LAUNCHERS[tool] ? args.findIndex((a) => SHELL_LAUNCHERS[tool].includes(a.toLowerCase())) : -1;\n    if (launch >= 0 && args.length > launch + 1) {\n      for (const segment of segmentsOf(args.slice(launch + 1).join(' '))) classifyTokens(tokenize(segment), found);\n    } else if (NODE_PM[tool]) {\n      const hit = classifyNodePackageManager(tool, args);\n      if (hit) found.dependency.push({ text, force: hit.force });\n    } else if (tool === 'ng' || (tool === 'npx' && baseName(positionalsOf(args, new Set(['-p', '--package']))[0] ?? '') === 'ng')) {\n      const ngArgs = tool === 'ng' ? args : args.slice(args.findIndex((a) => baseName(a) === 'ng') + 1);\n      const [sub, ...rest] = positionalsOf(ngArgs, new Set());\n      if (sub === 'add' || (sub === 'update' && rest.length > 0)) found.dependency.push({ text, force: ngArgs.some((a) => FORCE_FLAG.test(a)) });\n    } else if (tool === 'dotnet') {\n      const kind = classifyDotnet(args);\n      if (kind === 'package') found.dependency.push({ text, force: false });\n      if (kind === 'reference') found.reference.push(text);\n    } else if (tool === 'nuget' && ['install', 'update'].includes(String(args[0]).toLowerCase())) {\n      found.dependency.push({ text, force: false });\n    } else if (['install-package', 'update-package', 'uninstall-package'].includes(tool)) {\n      found.dependency.push({ text, force: false });\n    } else if (tool === 'git') {\n      const sub = classifyGit(args);\n      if (sub) found.git.push({ sub, text });\n    } else {\n      continue;\n    }\n    break; // the rest of the segment belongs to the recognized command\n  }\n}\n",
+            "  const deny = [];\n  if (found.reference.length > 0 && !REFERENCE_MARKER.test(command)) {\n    deny.push(\n      `Project-reference graph change: ${found.reference.join(' | ')}`,\n      'Changing the project reference graph is Reserved (CLAUDE.md § Decisions) unless an accepted decision already requires the reference, even when the new reference would be legal.',\n      'Follow `project-structure` § Changing project references (Decision Request: `architecture-decision`), then re-run the command with the trailing comment `# project-references: approved`.',\n    );\n  }\n  if (found.dependency.length > 0 && !DEPENDENCY_MARKER.test(command)) {\n    deny.push(\n      `Dependency change detected: ${found.dependency.map((d) => d.text).join(' | ')}`,\n      'Run the `add-dependency` workflow first; when its checks are complete, re-run the command with the trailing comment `# add-dependency: reviewed`.',\n    );\n    if (found.dependency.some((d) => d.force)) deny.push('The command uses --force or --legacy-peer-deps: resolve the actual peer-dependency conflict instead (`add-dependency` § 5).');\n  }\n  if (deny.length > 0) preDecision('deny', deny);\n  if (found.git.length > 0) {\n    preDecision('ask', [\n      `Repository-changing Git command (${[...new Set(found.git.map((g) => g.sub))].join(', ')}): ${found.git.map((g) => g.text).join(' | ')}`,\n      'Run it only when the user explicitly requested it (CLAUDE.md § Git); procedure: `git-workflow`.',\n    ]);\n  }",
+            "      else messages.push('SPECIFICATION.md changed: confirm it stays consistent with CUSTOM_SETTINGS.md and records only approved behavior (CLAUDE.md § Product sources).');\n    } else if (type === 'removed') {\n      messages.push(`[manifest] ${rel} was removed: removing a project or manifest changes the project graph or the dependency set — confirm it was intended and approved (CLAUDE.md § Decisions; \\`project-structure\\`, \\`add-dependency\\`).`);\n      projectRemoved ||= rel.endsWith('.csproj');\n    } else {\n      if (type === 'moved') {\n        messages.push(`[manifest] ${change.from} was moved to ${rel}: update every reference to it (\\`project-structure\\`).`);\n        projectRemoved ||= rel.endsWith('.csproj');\n      }\n      validate(rel);\n      const refsBefore = type === 'changed' ? change.before.refs : [];\n      const graphChanged = type === 'edited' ? graphHint : !sameList(refsBefore, change.after.refs);\n      if (rel.endsWith('.csproj') && type !== 'baseline' && graphChanged) {\n        messages.push(`[manifest] the project references of ${rel} changed: changing the project reference graph is Reserved (CLAUDE.md § Decisions) — confirm it was approved and recorded (\\`architecture-decision\\`), or revert it.`);\n      }\n    }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-instructions.cjs",
+          "sha256": "d7a4aff736b8fa4bd68a0515e1d245ea544d8c8c36122b44ed7682c1d6729f04",
+          "inspected_ranges": [
+            [
+              284,
+              336
+            ]
+          ],
+          "context_quotes": [
+            "\n  const decArtifacts = artifacts.filter((a) => a.kind === 'DEC');\n  if (decArtifacts.length !== 1 || decArtifacts[0].rel !== REGISTER) err(REGISTER, `exactly one decision register (${REGISTER}) must carry Kind DEC; found ${decArtifacts.map((a) => a.rel).join(', ') || 'none'}.`);\n  const imports = exists('CLAUDE.md') ? [...read('CLAUDE.md').matchAll(/^@(\\S+)\\s*$/gm)].map((m) => m[1]) : [];\n  if (imports.length !== 1 || imports[0] !== REGISTER) err('CLAUDE.md', `must import exactly the decision register (\"@${REGISTER}\"); imports make content always-loaded (found: ${imports.join(', ') || 'none'}).`);\n\n  if (exists(REGISTER)) {\n    for (const line of read(REGISTER).split('\\n')) {\n      if (!/^\\| D-/.test(line)) continue;\n      const cells = line.split('|').slice(1, -1).map((c) => c.trim());\n      const [id, decision, details, affects] = cells;\n      if (!/^D-\\d\\d$/.test(id)) { err(REGISTER, `malformed decision ID \"${id}\".`); continue; }\n      if (decisions.has(id)) err(REGISTER, `duplicate decision ID ${id}.`);\n      if (cells.length !== 4) err(REGISTER, `${id}: rows need ID | Decision | Details in | Affects.`);\n      const affectsList = (affects || '').split(',').map((s) => s.trim()).filter((s) => s && s !== '—');\n      const detailsList = (details || '').split(',').map((s) => s.trim().replace(/\\s*§.*$/, '')).filter((s) => s && s !== '—');\n      decisions.set(id, { id, decision: decision || '', affects: affectsList });\n      if (!decision) err(REGISTER, `${id}: decision summary is empty.`);\n      if (new Set(affectsList).size !== affectsList.length) err(REGISTER, `${id}: Affects lists a target twice.`);\n      for (const target of affectsList) {\n        if (!exists(resolveRegisterPath(target))) { err(REGISTER, `${id}: Affects target \"${target}\" does not exist.`); continue; }\n        const kind = registerTargetKind(target);\n        if (kind && !['STD', 'KNW', 'WF', 'ENF'].includes(kind)) err(REGISTER, `${id}: Affects target \"${target}\" is Kind ${kind}; Affects lists dependent STD/KNW/WF/ENF artifacts.`);\n      }\n      for (const target of detailsList) {\n        if (!exists(resolveRegisterPath(target))) err(REGISTER, `${id}: Details in target \"${target}\" does not exist.`);\n        else if (!affectsList.includes(target)) err(REGISTER, `${id}: Details in target \"${target}\" must also be listed in Affects.`);\n      }\n      if (/(rules\\/|skills\\/|scripts\\/)/.test(decision || '')) err(REGISTER, `${id}: the Decision cell must not depend on standards, knowledge or workflows; use Details in / Affects.`);\n    }\n  }\n\n  for (const a of artifacts) {\n    if (a.rel === REGISTER) continue;\n    for (const id of new Set([...a.body.matchAll(/\\bD-\\d\\d\\b/g)].map((m) => m[0]))) {\n      const d = decisions.get(id);\n      if (!d) err(a.rel, `cites unknown decision ${id}.`);\n      else if (!d.affects.includes(registerKey(a.rel))) err(a.rel, `cites ${id} but is not listed in its Affects (${registerKey(a.rel)}).`);\n    }\n  }\n  for (const rel of walk('')) {\n    if (rel !== REGISTER && /\\.md$/.test(rel) && /^\\| D-\\d\\d \\|/m.test(read(rel))) err(rel, 'decision entries are defined only in the decision register.');\n  }\n  const decisionShingles = [...decisions.values()].map((d) => [d.id, shingles(d.decision)]);\n  for (const a of artifacts) {\n    if (a.rel === REGISTER || a.code) continue;\n    const own = shingles(a.prose);\n    for (const [id, set] of decisionShingles) {\n      const overlap = [...set].filter((s) => own.has(s));\n      if (overlap.length > 0) err(a.rel, `restates decision ${id} (\"${overlap[0]}…\"); cite the ID instead.`);\n    }\n  }\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"pre-tool-use\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "efbccf6ad19b5eadae0c887ec6c77ec00d886a159899480abf649ca5bbea47f7",
+          "inspected_ranges": [
+            [
+              13,
+              17
+            ],
+            [
+              19,
+              32
+            ],
+            [
+              37,
+              54
+            ],
+            [
+              56,
+              59
+            ],
+            [
+              62,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\n1. State the decision and the options in one or two sentences.\n2. Apply CLAUDE.md § Decisions. If the decision is Decided, follow the existing entry; if Delegated, decide and proceed. Continue only for Reserved decisions or changes to accepted ones.\n3. Find what it touches: the register entry and its **Affects** list, the relevant standards, knowledge, workflows and enforcement.\n",
+            "\nPresent a Decision Request and wait for approval:\n\n```text\nDecision Request: <title>\nContext: <need, constraints, current decision it would change>\nOptions: <2-3 options with trade-offs, including keeping the current decision>\nRecommendation: <option and reason>\nBlocked: <work that cannot proceed until decided>\nProceeding with: <policy-compliant non-Reserved work continuing meanwhile, or \"nothing\">\n```\n\nAn explicit user instruction to adopt a specific option counts as approval. In an autonomous or headless run, continue only with the \"Proceeding with\" path and report the request as unresolved.\n",
+            "- **Project or architecture decision**\n  1. Add or update the register entry: next free stable ID (never reuse a retired ID), one-sentence decision, **Details in** owner, **Affects** list. Keep the register a summary, not a policy manual.\n  2. When rationale, alternatives or consequences need more than the register sentence, add an ADR `docs/decisions/NNNN-<slug>.md` (template below) and cite it in **Details in**.\n  3. Superseding a decision: mark the old ADR `Superseded by NNNN` and replace the register entry; do not keep two active entries for one choice.\n\n```markdown\n# NNNN: <decision title>\n\nStatus: Accepted | Superseded by NNNN\nDate: YYYY-MM-DD\nRegister: D-xx\n\n## Context\n## Decision\n## Alternatives considered\n## Consequences\n```\n",
+            "\n1. Edit every artifact in the entry's **Affects** list so that each keeps only its own responsibility: standards cite the ID, knowledge adjusts technique, workflows adjust commands, enforcement adjusts checks (for example the deny-lists in `.claude/scripts/check-dependencies.cjs`). Example: replacing the backend test framework touches the testing standard, the testing knowledge skill, scaffolding commands and test-related checks.\n2. Add newly affected artifacts to **Affects**; remove ones that no longer depend on the decision.\n3. Changes to `.claude/` instruction files are instruction-system maintenance: ask the user to run `/template-maintenance` for structural changes, and run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` after any edit.",
+            "\nThe Decision Request (when pending) or the recorded outcome: register entry, ADR path if any, artifacts updated, checker result."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "70296b7f863b17e6799cbf470099c32fb4e830dbb8b86359c2468d857facda0c",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              70,
+              72
+            ],
+            [
+              80,
+              81
+            ]
+          ],
+          "context_quotes": [
+            "2. Check the request against CLAUDE.md § Engineering defaults (challenge obligation) and § Product sources (gaps, string semantics, tunable values).\n3. Classify every decision the plan needs as Decided, Delegated or Reserved (CLAUDE.md § Decisions). For Reserved decisions raise a Decision Request; after approval use `architecture-decision`.\n",
+            "\n- Classify the change as compatible or breaking (technique: `api-versioning`); a breaking change to a relied-on contract follows `rules/backend/api.md` § Versioning; it is Reserved.\n- Deprecating an externally consumed API version: mark the deprecation in versioning metadata, document the replacement version, communicate a realistic migration and removal timeline, and keep the old version working for the promised support period. Do not remove a deprecated version without considering its published support contract.",
+            "\n- What changed and why; Delegated decisions taken; Decision Requests raised or still unresolved; the verification report (see also: `verify` § Report)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "285a7f4df64706f4b18cc9c8b176492709b4a24d6c2767a1135c85a9ea8714d5",
+          "inspected_ranges": [
+            [
+              112,
+              114
+            ],
+            [
+              126,
+              127
+            ]
+          ],
+          "context_quotes": [
+            "\nConfirm the configured language version supports a feature before using it; changing `LangVersion` or the target framework to use newer syntax is a decision, not a silent edit.\n",
+            "\nNewest syntax for its own sake; every class turned into a record; `record struct` merely to avoid allocations; `Span<T>` without a performance reason; deeply nested patterns; mass constructor conversion; language or framework version changes without approval."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ],
+            [
+              33,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples.",
+            "\n1. Classify the change. The layer references listed in `references/backend-layout.md` § Project references (D-01) are decided; any other added or removed reference changes the project reference graph and is Reserved (CLAUDE.md § Decisions) even when it is architecturally legal — raise a Decision Request with `architecture-decision` and wait for approval.\n2. Run the reference command (`dotnet add <project> reference …`, `dotnet remove <project> reference …`, `dotnet reference add|remove …`) with the trailing comment `# project-references: approved`; the pre-command hook stops reference commands without it.\n3. Build the affected projects and run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/template-maintenance/SKILL.md",
+          "sha256": "ef13f879409884f24a464a926643edbf6408b0e408b57b1bc66938d0d59c30bb",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "1. Write the artifact with its one-line header: `> Kind: … | Scope: … | Owner: … | Loading: …` (after any frontmatter).\n2. Decision added or changed: follow `architecture-decision` § 3–4 (ID, Details in, Affects, propagation).\n3. Knowledge skill descriptions stay concise and trigger-first (\"Use when …\" with concrete cues)."
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              10,
+              14
+            ],
+            [
+              33,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "\n- This file and the decision register govern every task. Standards in `.claude/rules/<scope>/` govern the files they cover. Workflows own procedures; knowledge skills supply technique and never override a standard.\n- `SPECIFICATION.md`, `CUSTOM_SETTINGS.md`, feature specifications and task prompts are product inputs: they define product behavior and may request a decision change, but they never silently override this file, the decision register or a standard.\n- Vocabulary: **must / must not** — a violation is a defect; **default** — deviation needs a concrete reason and must be reported; **prefer / avoid** — guidance; **requires approval** — a Reserved decision (below).\n",
+            "\n- **Decided** — recorded in the decision register, the approved product sources or the established project structure. Follow it and do not reopen it without approval; use an approved technology instead of silently selecting an alternative.\n- **Delegated** — local, reversible, and no material change to a boundary, dependency, accepted convention, public contract or observable behavior. Decide and proceed without asking.\n- **Reserved** — requires explicit approval, unless the approved specification or established project structure already requires it. At least:\n  1. changing an accepted project or architecture decision, or replacing an approved baseline technology;\n  2. a new architectural style or pattern: Rich Domain Model or DDD tactical patterns, CQRS, mediators (MediatR, Kommand), Vertical Slice Architecture, event sourcing, microservices;\n  3. a new production project, layer or assembly, or a change to the project reference graph;\n  4. persistence boundaries or persistence technology, including multiple `DbContext`s;\n  5. a new infrastructure category: messaging, background processing, distributed cache, search, external storage, external identity;\n  6. a new major library or framework;\n  7. a project-wide convention or abstraction other code must follow, such as a project-wide Result model;\n  8. authentication or authorization architecture;\n  9. a breaking public API change or adopting API versioning;\n  10. product behavior or tunable values the product sources do not define.\n- Unclear? Any \"yes\" makes it Reserved: Does it add, remove or replace a dependency, framework or infrastructure capability? Change a project, layer or reference boundary? Establish a convention other code must follow? Change observable behavior or a public contract? Become expensive to reverse once other code depends on it?\n- For a Reserved decision raise a **Decision Request** — Context, Options, Recommendation, Blocked, Proceeding with — and wait. An explicit user instruction counts as approval; record every accepted decision (workflow: `architecture-decision`).\n- In an autonomous or headless run, take only a policy-compliant non-Reserved path, never make a Reserved decision silently, and list unresolved Decision Requests in the final report.\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ]
+          ],
+          "context_quotes": [
+            "\nEvery entry is **Decided** (CLAUDE.md § Decisions). Changing an entry is Reserved: run `architecture-decision`, which updates the entry and every artifact in **Affects**. Policy detail stays with the **Details in** owner. Paths are relative to `.claude/` unless they start with `docs/` or name a repository-root file.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-018",
+        "name": "Challenge questionable instructions",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "research_shared",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "research/observations/002-candidate-space-analysis.md#S-16"
+        ],
+        "normalized_policy": "Before implementing a questionable request, identify concrete concerns such as duplication, cohesion, triggering, context, conflicts, or complexity and propose an alternative.",
+        "status": "shared_construction_constraint"
+      },
+      "policy_id": "GOV-018",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0014",
+        "primary/K0/constraints.jsonl/RULE-K0-0349"
+      ],
+      "boundary_analysis": "Material concern requires naming concern and proposing alternative first, never silently rewriting/ignoring. Timing before planning and implementation recorded; Decision Request options and continuation already replica0169.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "efbccf6ad19b5eadae0c887ec6c77ec00d886a159899480abf649ca5bbea47f7",
+          "inspected_ranges": [
+            [
+              19,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\nPresent a Decision Request and wait for approval:\n\n```text\nDecision Request: <title>\nContext: <need, constraints, current decision it would change>\nOptions: <2-3 options with trade-offs, including keeping the current decision>\nRecommendation: <option and reason>\nBlocked: <work that cannot proceed until decided>\nProceeding with: <policy-compliant non-Reserved work continuing meanwhile, or \"nothing\">\n```\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "70296b7f863b17e6799cbf470099c32fb4e830dbb8b86359c2468d857facda0c",
+          "inspected_ranges": [
+            [
+              14,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "1. For a new application or substantial feature, read `SPECIFICATION.md` before planning or implementing, and `CUSTOM_SETTINGS.md` when it holds values.\n2. Check the request against CLAUDE.md § Engineering defaults (challenge obligation) and § Product sources (gaps, string semantics, tunable values).\n3. Classify every decision the plan needs as Decided, Delegated or Reserved (CLAUDE.md § Decisions). For Reserved decisions raise a Decision Request; after approval use `architecture-decision`.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              29,
+              31
+            ],
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "- Keep changes focused on the requested scope and preserve existing behavior unless the task or the approved specification requires a change.\n- Challenge before implementing: when a request raises a material concern — duplication, poor cohesion, trigger or loading problems, context cost, conflict with an accepted decision, unnecessary complexity — name the concern and propose an alternative first. Never silently rewrite or ignore the requirement.\n",
+            "- Unclear? Any \"yes\" makes it Reserved: Does it add, remove or replace a dependency, framework or infrastructure capability? Change a project, layer or reference boundary? Establish a convention other code must follow? Change observable behavior or a public contract? Become expensive to reverse once other code depends on it?\n- For a Reserved decision raise a **Decision Request** — Context, Options, Recommendation, Blocked, Proceeding with — and wait. An explicit user instruction counts as approval; record every accepted decision (workflow: `architecture-decision`).\n- In an autonomous or headless run, take only a policy-compliant non-Reserved path, never make a Reserved decision silently, and list unresolved Decision Requests in the final report."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-019",
+        "name": "Never discard user changes",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "workflow",
+        "scope": "repo/meta",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Safety"
+        ],
+        "normalized_policy": "Never discard, overwrite, reset, clean, or otherwise destroy user work to make a Git operation easier.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0398",
+        "primary/K0/constraints.jsonl/RULE-K0-0401",
+        "primary/K0/constraints.jsonl/RULE-K0-0403"
+      ],
+      "boundary_analysis": "User-work preservation including before worktree removal and no automatic stash/reset/discard before merge or rebase already explicit; authorized high-risk actions do not erase inspection requirement.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "362a567d5310086364ca3f34b4f14d548b259f738797be3b96bdc1be592472eb",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              34,
+              37
+            ],
+            [
+              60,
+              70
+            ],
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\n- Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier.\n- Before any repository-changing operation, inspect the relevant repository state and use the minimum operation required; never silently clean unrelated working-tree changes.",
+            "\nFollow the repository's branch-naming convention. Without one, prefixes such as `feature/`, `fix/`, `refactor/`, `test/`, `docs/`, `chore/` with meaningful names are reasonable defaults. Do not rename an existing user branch to satisfy a convention.\n",
+            "\n- Keep each worktree focused on its branch's concern; one branch is not checked out in several normal worktrees at once.\n- Before removing a worktree, verify that required changes are committed or otherwise preserved; do not remove a worktree that holds uncommitted user work.\n",
+            "\nNever force-push a shared branch unless the user explicitly requests history rewriting and the consequences are understood; treat `main`, `master` and other protected or shared branches as non-rewritable.\n\n## Merge and rebase\n\nFollow the repository/team convention or the user's explicit request rather than personal preference. Inspect local uncommitted work first; do not automatically stash, reset or discard work to make the operation proceed. Resolve conflicts from the intended combined behavior, not by mechanically choosing \"ours\" or \"theirs\", and run relevant verification afterwards.\n\n## Pull requests\n\nRun `verify` before preparing a PR. A PR has one focused purpose without accidental unrelated changes. Describe what changed, why, how it was verified and any compatibility or migration notes; never claim checks that were not run.\n",
+            "\n`git reset --hard`, `git clean`, `git push --force`, `git push --force-with-lease`, branch deletion and rebasing shared history are high-risk: run them only when explicitly requested or required by an approved workflow, and inspect what will be lost or rewritten first.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-020",
+        "name": "Repository-changing Git operations are minimal and state-aware",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "repo/meta",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/git-workflow/SKILL.md#Safety"
+        ],
+        "normalized_policy": "Before a repository-changing Git operation, inspect relevant repository state and use the minimum operation required; do not silently clean unrelated working-tree changes.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-020",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0399",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0156",
+        "primary/K0/constraints.jsonl/RULE-K0-0405"
+      ],
+      "boundary_analysis": "State inspection/minimum operation matches. Before-push branch/staging/verification/unrelated-commit sequence and destructive-loss inspection independently covered. Conflict semantic resolution and subsequent verification replica0253.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "362a567d5310086364ca3f34b4f14d548b259f738797be3b96bdc1be592472eb",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ],
+            [
+              30,
+              42
+            ],
+            [
+              55,
+              60
+            ],
+            [
+              64,
+              66
+            ],
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "- Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier.\n- Before any repository-changing operation, inspect the relevant repository state and use the minimum operation required; never silently clean unrelated working-tree changes.\n",
+            "\nFollow the repository's branch-naming convention. Without one, prefixes such as `feature/`, `fix/`, `refactor/`, `test/`, `docs/`, `chore/` with meaningful names are reasonable defaults. Do not rename an existing user branch to satisfy a convention.\n\n## Parallel work and worktrees\n\n- Keep each worktree focused on its branch's concern; one branch is not checked out in several normal worktrees at once.\n- Before removing a worktree, verify that required changes are committed or otherwise preserved; do not remove a worktree that holds uncommitted user work.\n\n## Commits\n\n- Prefer one logical change per commit; implementation and the tests that protect it belong together. Do not create artificial tiny commits or combine unrelated fixes and refactors.\n- Follow the repository's commit-message convention. Without one, Conventional Commits are a useful default:\n",
+            "\n1. Confirm the intended branch.\n2. Confirm the working and staged state is understood.\n3. Ensure relevant verification has completed.\n4. Avoid pushing unrelated local commits accidentally.\n",
+            "\nFollow the repository/team convention or the user's explicit request rather than personal preference. Inspect local uncommitted work first; do not automatically stash, reset or discard work to make the operation proceed. Resolve conflicts from the intended combined behavior, not by mechanically choosing \"ours\" or \"theirs\", and run relevant verification afterwards.\n",
+            "\n`git reset --hard`, `git clean`, `git push --force`, `git push --force-with-lease`, branch deletion and rebasing shared history are high-risk: run them only when explicitly requested or required by an approved workflow, and inspect what will be lost or rewritten first.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P003",
+      "canonical_policy": {
+        "id": "GOV-021",
+        "name": "Custom settings changes propagate across affected surfaces",
+        "related_groups": [
+          "persistence-data",
+          "frontend",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#When Adding a New Setting",
+          "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#When CUSTOM_SETTINGS.md Changes",
+          "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#Verification"
+        ],
+        "normalized_policy": "When an approved CUSTOM_SETTINGS.md value is added, changed, or removed, identify and update every affected implementation, validation, configuration, test, documentation, and mirrored frontend/backend surface; search for stale references and run the normal verification workflow. Changing one literal alone does not establish synchronization.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-021",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0333",
+        "primary/K0/constraints.jsonl/RULE-K0-0334",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0111",
+        "primary/K0/constraints.jsonl/RULE-K0-0337",
+        "primary/K0/constraints.jsonl/RULE-K0-0338",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0027"
+      ],
+      "boundary_analysis": "Full affected-surface synchronization and verification match; exclude numeric coincidences and prefer single source separately recorded. Stop block once per material state is captured, not a fresh mandatory loop. Backend validation authority crosslink remains for frontend policy sweep.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "8c5e45a0b34511d92c46ece2d261df2f2bcabdde611310e5f4a4dec970080db6",
+          "inspected_ranges": [
+            [
+              183,
+              192
+            ]
+          ],
+          "context_quotes": [
+            "\n| Mechanism | Trigger | Checks | Points to |\n|---|---|---|---|\n| Pre-command hook (fail-closed: a missing script, crash, timeout or unreadable input blocks the command) | Bash/PowerShell command, before execution | npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals (global options and `--force`/`--legacy-peer-deps` included) are denied without `# add-dependency: reviewed`; `dotnet` project-reference additions and removals are denied without `# project-references: approved`; repository-changing Git commands (table-driven classifier after global options such as `-C`) ask the user to confirm, read-only Git commands run | `add-dependency`, `project-structure`, `architecture-decision`, `CLAUDE.md` § Git |\n| Post-change hook | Edit/Write of a manifest, instruction file or product input | `check-dependencies.cjs` on that manifest (project-reference changes flagged as Reserved), `check-instructions.cjs`, synchronization reminders | dependency and architecture standards, this map, `custom-settings` |\n| Post-change hook | every Bash/PowerShell command, successful or failed | actual worktree state: the first observation of a worktree validates every tracked manifest and the instruction files; later observations validate only paths Git reports as changed (working tree, index, HEAD transitions) — additions, rewrites, removals and moves of `*.csproj`, `Directory.Packages.props` and `package.json`, project-reference changes, instruction files, product inputs; build output, `node_modules` and nested repositories are not observed | as above |\n| Stop hook | end of a turn (once per material state of the changed files, never on its own continuation) | model change without seeder change, migrations to review, code without test changes, changed custom settings | `development-workflow`, `verify`, `custom-settings` |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` | `verify`, `add-dependency`, `project-structure` | repository-wide manifest scan | dependency and architecture standards |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` | `template-maintenance`, post-change hook | structural predicates of this system, including the Kind direction and the hook configuration | this map |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              460,
+              464
+            ],
+            [
+              568,
+              579
+            ]
+          ],
+          "context_quotes": [
+            "      instructionsChanged = true;\n    } else if (surface === 'product') {\n      if (rel === 'CUSTOM_SETTINGS.md') messages.push('CUSTOM_SETTINGS.md changed: run the `custom-settings` workflow to synchronize every affected surface (rules: CLAUDE.md § Product sources).');\n      else messages.push('SPECIFICATION.md changed: confirm it stays consistent with CUSTOM_SETTINGS.md and records only approved behavior (CLAUDE.md § Product sources).');\n    } else if (type === 'removed') {",
+            "\n  if (paths.includes('CUSTOM_SETTINGS.md')) {\n    reminders.push({ key: `custom-settings:${identity(['CUSTOM_SETTINGS.md'])}`, text: 'CUSTOM_SETTINGS.md changed: confirm the `custom-settings` workflow synchronized every affected surface.' });\n  }\n\n  if (reminders.length === 0) return;\n  const fingerprint = t.repo.hashText(reminders.map((r) => r.key).sort().join('|'));\n  if (readState(root, 'stop.json')?.fingerprint === fingerprint) return; // this exact state was already reminded\n  writeState(root, 'stop.json', { fingerprint });\n  emit({ decision: 'block', reason: ['Co-change check before finishing:', ...reminders.map((r) => `- ${r.text}`)].join('\\n') });\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              53,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "efbccf6ad19b5eadae0c887ec6c77ec00d886a159899480abf649ca5bbea47f7",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "- **Product behavior** — when a new behavioral rule is approved, update the durable source of truth, including `SPECIFICATION.md` when appropriate.\n- **Tunable value** — record it in `CUSTOM_SETTINGS.md`, then run `custom-settings`.\n- **Project or architecture decision**"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "b4ca7e591bcfa571485d248f255ac8294c604ccb6491774239b1d583107bd9fb",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ],
+            [
+              23,
+              25
+            ],
+            [
+              36,
+              44
+            ]
+          ],
+          "context_quotes": [
+            "\nSearch the repository for the old value, the setting name, validators and DTO constraints, Domain/Application checks, database mapping constraints, frontend validation and UI hints, tests and test data, documentation and examples, and configuration that mirrors the setting. Separate occurrences that express the setting from unrelated numeric coincidences, and change only affected behavior.\n",
+            "\nUpdate every affected implementation, validation, configuration, test, documentation and mirrored frontend/backend surface. Prefer one normal source in code or configuration over the same literal duplicated across layers. Where frontend and backend expose the same constraint, backend validation stays authoritative and frontend validation and messages follow it for user experience (`rules/frontend/angular.md` § Errors and forms).\n",
+            "\n1. Search for stale references to the old value.\n2. Build the affected backend and frontend projects.\n3. Run the relevant tests.\n4. Verify persistence changes when applicable.\n5. Re-check `SPECIFICATION.md` for conflicts.\n6. Run `verify`.\n\nChanging one literal alone does not establish synchronization; do not declare the setting synchronized until every affected surface is updated and verified."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "2df6184c5971f3797c97f5de8e06b346fb50f91aa64305ed925c1271024a614a",
+          "inspected_ranges": [
+            [
+              62,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "- For every C# file created or modified by the task, remove unused or redundant `using` directives, including imports already supplied by implicit/global usings unless needed for clarity or disambiguation. Do not perform an unrelated repository-wide using cleanup. Tooling such as `dotnet format style --verify-no-changes --diagnostics IDE0005 --include <changed files>` helps, but check the changed files rather than assuming the tool removed every import.\n- Also check for: accidental unrelated edits; commented-out code; temporary logging; unintended TODO/FIXME markers; stale temporary tests or scripts; architecture drift; unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md` (CLAUDE.md § Product sources); stale code, tests, docs or configuration after a `CUSTOM_SETTINGS.md` change (`custom-settings`); behavior verified manually but never preserved (step 4).\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "- `CUSTOM_SETTINGS.md` owns approved project-level tunable product limits and defaults (maximum lengths, page sizes, retention periods, numeric thresholds); `SPECIFICATION.md` owns behavioral intent. The two must not contradict each other: if they conflict, stop and ask which source must be corrected.\n- Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with its reason, get approval, record it in `CUSTOM_SETTINGS.md`, then synchronize it (workflow: `custom-settings`).\n- `CUSTOM_SETTINGS.md` must not contain secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers or incidental implementation constants."
+          ]
+        },
+        {
+          "path": "output/template/CUSTOM_SETTINGS.md",
+          "sha256": "5f6dee2f15e57e922d58b5b52ec1ce4e30f681e4e81da970fb46c2a7107a5838",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ]
+          ],
+          "context_quotes": [
+            "\nApproved project-level tunable product limits and defaults. Rules for this file: CLAUDE.md § Product sources. Changes: run `custom-settings`.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+# M / B015 — httpclient-factory, logging/references/serilog.md, logging.
+
+C X21 EX RUN-005 | MUST NOT | Per-request values such as dynamic access tokens are applied to the specific request or through a handler; shared DefaultRequestHeaders are not mutated concurrently for request-specific values. | outbound HTTP | none stated | RUN-005 governs client lifetime; no oracle policy addresses mutation of shared default headers. | Setting a per-user bearer token on a shared client's DefaultRequestHeaders violates the instruction.
+
+FILE .claude/skills/httpclient-factory/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-18 NN | pointers to policy owners and private reference
+20 NN | section heading
+22-24 OL R62 | Outbound API clients normally live in
+26 NN | section heading
+28 OL R44 |
+30-37 NN | abstraction code example
+39 OL R62 |
+41-47 NN | implementation code example
+49 OL R62 |
+51 NN | section heading
+53 NN | typed client technique
+55-60 NN | typed client code example
+62-63 OL R57 | Do not capture a transient typed client inside a singleton without
+65 NN | section heading
+67-68 NN | named client technique
+70-75 NN | named client code example
+77 NN | section heading
+79-81 OL R148 | Do not choose them
+83 NN | section heading
+85-87 OL R43 | signing — never for business decisions.
+89-106 NN | delegating handler code example
+108 NN | section heading
+110 OL R87 |
+112-116 NN | cancellation code example
+118-119 OL R87 | Do not replace request cancellation with `CancellationToken.None` unless the
+121 NN | section heading
+123-125 OL R80 | Choose timeouts from the remote operation and the application's latency budget.
+127 NN | section heading
+129-131 OL R62 | Infrastructure translates remote responses into the abstraction consumed by
+133-140 NN | response mapping code example
+142-145 OL R62 | or Application outcomes. Do not simply expose every upstream status code through
+147 NN | section heading
+149-151 OL R82 | When a remote service returns `429 Too Many Requests`, honor `Retry-After` if
+153 NN | section heading
+155-162 OL R80,R81 | not mandatory for every call. Before enabling retry, determine whether the
+164 NN | section heading
+166-169 EX X21 | through a handler; do not mutate shared `DefaultRequestHeaders` concurrently for
+171 NN | section heading
+173-176 OL R39,R62 | application's defaults, and do not reuse internal Domain entities as remote API
+178 NN | section heading
+180-181 NN | handler-based test technique
+183-188 NN | test client code example
+190-191 OL R89 | lifetime rule concerns production code.
+193 NN | section heading
+195-197 DU R87,R148,R81,X21 | anti-pattern list ('avoid' guidance) restating outbound-call rules and the shared-header rule
+
+FILE .claude/skills/logging/references/serilog.md | Private reference of logging.
+1 NN | header metadata
+3 NN | document heading
+5-7 NN | pointers to policy owners
+9 NN | section heading
+11-14 NN | two-stage bootstrap technique (EXC-013)
+15-16 OL R60 | `builder.Services.AddSerilog()` integrates with DI services through
+17-19 OL R67 | create queryable structured data;
+20-21 OL R60 | Keep log levels, sinks, and overrides in configuration so they can change per
+22-23 OL R60,R67 | Keep direct Serilog APIs such as `Log.Logger` and `LogContext` at composition
+25 NN | section heading
+27-74 NN | bootstrap code example
+76-81 OL R69,R149 | sinks or enrichers shown here are not baseline dependencies: configure only what
+83 NN | section heading
+85-127 NN | appsettings example
+129-130 NN | override technique (EXC-013)
+132 NN | section heading
+134 NN | request logging technique
+136-154 NN | request logging code example
+156 NN | section heading
+158-170 NN | destructuring code examples
+172 OL R121 |
+174-185 OL R121 | // BAD - large object graphs cause memory issues and huge log entries
+187 NN | section heading
+189-196 NN | LogContext code example
+198 NN | enricher requirement note
+200 NN | section heading
+202 NN | OTLP lead-in
+204-215 NN | OTLP sink code example
+217 NN | section heading
+219 NN | package note
+221-228 NN | filtering code example
+230 NN | section heading
+232-233 NN | LoggerMessage technique (EXC-013)
+235-245 NN | LoggerMessage code example
+247 NN | section heading
+249-250 NN | flushing technique
+252-256 NN | flushing code example
+258-259 NN | host-managed logging note
+261 NN | section heading
+263-271 OL R120 | // BAD - passwords and tokens in logs
+273 NN | section heading
+275-277 OL R137 | The `Serilog.Sinks.Elasticsearch` package is deprecated. Use the official
+279-283 NN | Elastic sink code example
+285 NN | section heading
+287-298 DU R60,R67 | decision table restating provider setup (remaining rows are EXC-013 technique)
+
+FILE .claude/skills/logging/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-17 NN | pointers to policy owners and private reference
+19-20 NN | log-level choice guidance
+22 NN | section heading
+24-29 NN | structured logging code example
+31 OL R67 |
+33-36 NN | interpolation code example
+38 OL R67 |
+40 NN | section heading
+42-43 OL R120 | Debug or Trace does not make sensitive data safe.
+44-51 NN | log level definitions
+53 NN | section heading
+55-56 OL R78 | Log an exception where the failure is actually handled or terminated.
+58 NN | section heading
+60 NN | scope technique
+62-71 NN | scope code example
+73-74 NN | provider note
+76 NN | section heading
+78-83 OL R107,R149 | integration or operational requirement needs one; validate or normalize an
+85 NN | section heading
+87-90 OL R121,R120 | request/response bodies. Logging the specific properties needed for operation
+92 NN | section heading
+94-97 OL R95 | do not add them everywhere to avoid
+99 NN | section heading
+101-103 DU R60,R121 | anti-pattern list ('avoid' guidance) restating logging rules; the audit-database item stays guidance
+105 NN | section heading
+107-114 DU R67,R78,R95 | decision table restating logging defaults
+DONE

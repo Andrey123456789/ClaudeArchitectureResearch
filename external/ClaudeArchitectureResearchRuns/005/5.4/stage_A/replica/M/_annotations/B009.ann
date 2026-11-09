@@ -1,0 +1,157 @@
+# M / B009 — build-fix, caching, ci-cd.
+
+C R157 OL WF-013 | MUST | Build-fix starts from reproduction and diagnosis: reproduce and diagnose the actual failure before editing, read the complete output and group errors by root cause, fix the highest-leverage root cause first; for failing tests decide whether production code, setup, expectation, environment or an intentionally changed contract is at fault; determine the authoritative contract for cross-stack failures; update obsolete APIs from verified documentation, never fabricated. | build and test repair | none stated
+C R158 OL WF-014 | MUST | Keep repair iterations small and bounded: start with the narrowest reproducing command, rerun the narrowest failing verification after each meaningful fix, expand only after the focused failure is resolved, do not run unrelated build systems, stop and reassess when progress stalls and do not repeat variants of a failed guess. | build and test repair | none stated
+C R159 OL WF-015 | MUST NOT | Do not weaken, delete, skip or suppress relevant tests or compiler, TypeScript, lint or analyzer failures to make verification pass (no strong-to-weak assertion swaps, no any-casts, no disabled strict mode, no suppressed template diagnostics); update a test only for an actually requested contract change. | build and test repair | Requested contract change.
+C R160 OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003 | MUST NOT | A build fix must not bypass architecture to compile (Application -> Infrastructure references, DbContext leaking into Application, business logic in Controllers, Angular-only authorization, HTTP calls scattered into components); preserve architecture and project conventions. | build and test repair | none stated
+C R161 OL WF-008 | MUST | When verification fails make the smallest appropriate fix and rerun until green or genuine input is required; never claim a problem fixed while a known relevant failure remains; never leave the repository knowingly worse; report an unavailable toolchain instead of editing source or changing declared SDK, Node, framework or language versions. | verification failures | Unrelated pre-existing failures are left alone unless they block verification or the user asks.
+C R162 OL WF-009 | MUST | Report verification state with PASS / NOT RUN / NOT APPLICABLE per area; never imply an unchecked area passed. | completion and repair reports | none stated
+C R163 OL TST-010 | MUST | A temporary probe or new behavioral test used to establish correct behavior is kept covered by maintained automated tests before the probe is removed; build, compiler and static-analysis commands do not themselves require new tests. | behavioral probes | Equivalent coverage exists.
+C R164 OL WF-018 | MUST | Build and test the frontend through the scripts package.json actually defines; never invent script names or assume a test runner; in CI install with npm ci and add test/lint commands only when the project defines them. | frontend builds, tests and CI | none stated
+C R165 OL WF-017 | MUST | CI pipelines reproduce the repository's supported build and test commands: inspect the repository first, add stages for the actual project, do not assume a database, Redis, Docker or frontend tooling, do not hardcode one database provider into a generic pipeline, do not make an unadopted formatter a mandatory gate, do not depend on developer-machine state and keep failures visible. | CI/CD pipelines | Enforced checks the project adopted.
+C R166 OL DEP-018 | MUST NOT | Do not add Docker to a pipeline or project merely because it can be containerized; add container artifacts only when the project or deployment actually needs them. | CI/CD and containers | none stated
+C R167 OL WF-019 | MUST | A deployment that performs database migrations makes the step explicit, uses the project's approved credentials, runs it at a controlled point and fails visibly; production migrations are not applied automatically from normal startup. | deployment | none stated
+C R168 OL WF-003 | MUST | Run the verify workflow before declaring work complete. | all implementation work | none stated
+C X14 EX WF-009 | MUST | The build-fix report states the initial failure, root cause, changes made, backend build / frontend build / tests status (PASS, NOT RUN, NOT APPLICABLE) and remaining issues. | build and test repair | none stated | WF-009 requires reporting actual verification states only; the failure, root-cause, changes and remaining-issues sections are additional reporting duties. | A repair summary without root cause or changes made does not follow the workflow.
+
+FILE .claude/skills/build-fix/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-16 OL R159,R147 | hiding failures, weakening behavior, or introducing unrelated changes.
+18 NN | lead-in
+20-24 NN | role distinction between code-review, verify and build-fix
+26 NN | section heading
+28-30 OL R157 | Reproduce and diagnose the actual failure before editing; do not guess at a
+31-33 OL R158 | Use small, bounded repair iterations: rerun the narrowest failing
+34-35 OL R159 | Do not weaken, delete, skip, or suppress relevant tests or compiler, TypeScript,
+36 OL R160 |
+37 OL R158 |
+39 NN | section heading
+41-46 OL R140,R158 | Do not run unrelated build systems merely because
+48-53 OL R158 | start with the affected .NET project
+55 NN | section heading
+57 OL R158 |
+59 NN | subsection heading
+61-65 NN | reproduction command examples
+67 NN | note on actual paths
+69 NN | subsection heading
+71-75 OL R164 | Do not invent script names or
+77 NN | section heading
+79-81 OL R157 | fix the highest-leverage cause first.
+83-86 NN | common .NET failure categories
+88-92 NN | common Angular failure categories
+94 NN | section heading
+96-102 OL R157,R158 | Expand verification only after the focused failure is resolved.
+104-106 OL R160 | never make Application reference Infrastructure because a missing
+108 NN | section heading
+110-116 OL R157,R158 | Expand to broader frontend verification after the focused failure is fixed.
+118-122 OL R159,R149 | Do not convert code to `any` to silence TypeScript, disable strict mode,
+124 NN | section heading
+126-133 OL R157,R150 | Determine which contract is authoritative;
+135 NN | section heading
+137 NN | lead-in
+139-146 OL R157 | Decide whether the defect is in production code, test setup, the test
+148-152 OL R159 | Do not turn a strong assertion into a weak one to obtain a green test, and do not
+154 NN | section heading
+156-163 OL R157 | Update usage deliberately.
+165-170 OL R5,R70,R71,R4 | goes through `add-dependency`; do not add or swap packages merely to make the
+172 NN | section heading
+174-180 OL R157,R147 | behavior where the upgrade does not require change. Do not fabricate
+182 NN | section heading
+184-191 OL R161 | unavailable and cannot be resolved safely within the task, report that
+193 NN | section heading
+195-205 OL R158 | Do not repeatedly apply variants of the same failed guess.
+207 NN | section heading
+209-213 OL R161,R147 | Do not leave the repository knowingly worse than when the repair
+215 NN | section heading
+217-222 OL R160 | A build fix must not bypass architecture to compile.
+224 NN | section heading
+226-229 OL R163 | tests before the probe is removed. Build, compiler, and static-analysis
+231 NN | section heading
+233-239 OL R161,R168 | no known new regression remains
+241 NN | section heading
+243-251 MX R162,X14 | Backend build: PASS / NOT RUN / NOT APPLICABLE ⟫ PASS/NOT RUN/NOT APPLICABLE reporting is oracle-linked (R162); the fixed failure/root-cause/changes/remaining-issues sections are X14.
+253 OL R161,R162 |
+
+FILE .claude/skills/caching/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-16 NN | pointers to policy owners
+18-19 OL R91,R93 | Measure before adding caching solely for performance.
+21 NN | section heading
+23-31 OL R61,R44 | define an abstraction in Application and implement it in
+33 NN | section heading
+35-37 NN | HybridCache option (technique, explicitly not mandatory)
+39-48 NN | registration code example
+50-51 OL R142,R91 | Add a distributed backend such as Redis only when deployment requirements
+53 NN | section heading
+55 NN | lead-in
+57-72 NN | cache abstraction code example
+74-75 OL R61 | itself does not appear in Application contracts.
+77 NN | section heading
+79-81 OL R92 | Dimensions that commonly affect the result: entity identifier, tenant, user when
+83 NN | section heading
+85-87 OL R94 | Choose expiration from data semantics rather than a universal default:
+89 NN | section heading
+91-94 OL R93 | underlying mutation is known to have succeeded is acceptable only when the
+96 NN | section heading
+98-109 NN | output caching code example
+111-113 OL R92 | Do not cache authenticated or user-specific responses unless
+115 NN | section heading
+117-120 OL R52,R93 | Do not bypass repositories or `IUnitOfWork` to make
+122 NN | section heading
+124-125 OL R91,R83 | Decide whether a cache failure falls back to the source, fails the request, or
+127 NN | section heading
+129-132 OL R128 | unit-test framework cache internals.
+134 NN | section heading
+136-138 DU R93,R149 | anti-pattern list ('avoid' guidance) restating cache rules; the tracked-entity item stays guidance
+140 NN | section heading
+142-149 DU R91,R61,R142 | decision table restating caching placement, need and Reserved distributed caching
+
+FILE .claude/skills/ci-cd/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-16 NN | pointers to policy owners
+18-20 OL R165 | stages for the actual project rather than generic boilerplate.
+22 NN | section heading
+24-27 OL R165 | Do not assume PostgreSQL,
+29 NN | section heading
+31-35 NN | backend CI command example
+37-38 NN | lead-in
+40-42 NN | formatter command example
+44-45 OL R165 | Do not turn an optional local formatter into a mandatory CI gate unless the
+47 NN | section heading
+49 NN | lead-in
+51-53 NN | npm ci command example
+55-56 OL R164 | then the scripts the frontend project defines
+58 NN | section heading
+60 NN | lead-in
+62-104 NN | GitHub Actions example
+106-107 OL R164 | add frontend test/lint commands only when the project defines them.
+109 NN | section heading
+111-114 OL R165,R130 | broker) only when tests actually require them; do not hardcode one database
+116 NN | section heading
+118-120 NN | vulnerability listing command example
+122-125 OL R5,R147 | findings according to the project's security policy, and do not upgrade
+127 NN | section heading
+129-135 NN | publish command example
+137-138 NN | artifact-handling technique (EXC-014)
+140 NN | section heading
+142-144 OL R166 | Do not add Docker to the pipeline merely because this skill
+146 NN | section heading
+148-150 NN | build-once/promote preference (EXC-014)
+152 NN | section heading
+154-156 OL R105,R106 | Use the CI platform's secret/identity mechanism instead of values in pipeline
+158 NN | section heading
+160-163 OL R167 | A deployment that performs migrations makes the step explicit, uses the
+165 NN | section heading
+167-169 NN | deployment protection guidance
+171 NN | section heading
+173-176 OL R165,R105 | configured tests, does not depend on developer-machine state, does not expose
+178 NN | section heading
+180-182 DU R165,R166 | anti-pattern list ('avoid' guidance) restating pipeline rules
+DONE

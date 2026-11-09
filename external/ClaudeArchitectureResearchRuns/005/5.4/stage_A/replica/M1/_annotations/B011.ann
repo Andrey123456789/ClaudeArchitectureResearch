@@ -1,0 +1,155 @@
+# M1 / B011 — aspnet-error-handling, authentication, build-fix.
+
+C R159 OL WF-013 | MUST | Build-fix starts from reproduction and diagnosis: reproduce the actual failure with the narrowest command, read the complete output, group errors by root cause and fix the highest-leverage cause first; for failing tests decide whether production code, setup, expectation, environment or an intentional contract change is at fault; determine the authoritative contract for cross-stack failures; update obsolete APIs from verified documentation, never fabricated. | build and test repair | none stated
+C R160 OL WF-014 | MUST | Keep repair iterations small and bounded: rerun the narrowest failing verification after each meaningful fix, expand only after the focused failure is resolved, do not run unrelated build systems, stop when progress stalls and do not repeat variants of a failed guess. | build and test repair | none stated
+C R161 OL WF-015 | MUST NOT | Do not weaken, delete, skip or suppress relevant tests or compiler, analyzer, TypeScript or lint failures to make verification pass (no strong-to-weak assertion swaps, no any-casts or disabled strict mode, no suppressed template diagnostics); update a test only for an intentionally requested contract change. | build and test repair | Intentionally requested contract change.
+C R162 OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003 | MUST NOT | A build fix must not bypass architecture to compile (Application -> Infrastructure references, persistence-technology types in Application, business logic moved into Controllers, frontend-only authorization, HTTP calls scattered into components); preserve architecture and project conventions. | build and test repair | none stated
+C R163 OL WF-008 | MUST | When verification fails make the smallest appropriate fix and rerun until green or genuine user input is required; never claim the problem fixed while a known relevant failure remains; never leave the repository knowingly worse; report an unavailable toolchain instead of editing source or changing declared SDK/Node/framework versions. | verification failures | Unrelated pre-existing failures are left alone unless they block verification or the user asks.
+C R164 OL WF-009 | MUST | Report verification state with PASS / NOT RUN / NOT APPLICABLE per area; never imply an unchecked area passed. | completion and repair reports | none stated
+C R165 OL TST-010 | MUST | A behavioral test or temporary probe that establishes correct behavior is preserved per verify (Preserve Behavioral Verification) before removal; build, compiler and static-analysis commands do not require new tests. | behavioral probes | Equivalent coverage exists.
+C R166 OL GOV-013 | MUST NOT | Do not introduce frameworks, libraries, infrastructure or architectural patterns without a concrete current need (e.g. Identity, JWT issuance or OIDC infrastructure without an actual need). | all changes | none stated
+C X19 EX DEP-010,API-010 | MUST | Register FluentValidation validators with FluentValidation.DependencyInjectionExtensions and follow the project's established validation invocation pattern rather than a second competing mechanism. | backend validation setup | none stated | DEP-010 fixes FluentValidation as the library and API-010 the validation boundaries; no oracle policy prescribes the registration package. | Registering validators through hand-written scanning deviates from the instruction.
+C X20 EX WF-009 | MUST | The build-fix report states the initial failure, root cause, changes made, backend build / frontend build / tests status (PASS, NOT RUN, NOT APPLICABLE) and remaining issues. | build and test repair | none stated | WF-009 requires reporting actual verification states only; the failure/root-cause/changes sections are additional reporting duties. | A repair summary without root cause or changes made does not follow the workflow.
+
+FILE .claude/skills/aspnet-error-handling/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-17 OL R64 | propagate to the global exception handler.
+19 NN | section heading
+21-22 OL R69 | treats client-aborted requests
+24-57 NN | global exception handler code example
+59 NN | lead-in
+61-66 NN | registration code example
+68-69 OL R68 | public API contracts stay safe.
+71 NN | section heading
+73 NN | lead-in
+75-79 NN | nullable query code example
+81-82 OL R62 | Map Application categories to HTTP in the API layer.
+84 NN | section heading
+86-112 NN | controller mapping code example
+114 NN | section heading
+116-118 NN | error-contract content guidance ('may contain')
+120 NN | section heading
+122-126 OL R70 | FluentValidation fits rules such as required business input
+128-137 OL R70 | Application validator / Application Service
+139-141 MX X19,R51 | Register validators with `FluentValidation.DependencyInjectionExtensions` and ⟫ The registration package is X19; following the established invocation pattern is the repository-convention rule (R51).
+143 NN | section heading
+145-148 OL R70,R32 | API validation does not replace business rules
+150 NN | section heading
+152-156 OL R64,R65 | Do not swallow
+158 NN | section heading
+160 NN | lead-in
+162-178 NN | anti-pattern code examples
+180 OL R66 | The second is redundant when the global handler already logs the failure.
+182 NN | section heading
+184-190 OL R62,R139 | project-wide adoption is Reserved
+192-196 NN | typed error record example
+198 NN | section heading
+200-206 DU R68,R67,R17,R62,R63,R65,R64,R66,R70,R38 | review checklist restating error-handling rules
+208 NN | section heading
+210-222 DU R67,R62,R64,R70,R69 | decision table restating error-handling rules
+
+FILE .claude/skills/authentication/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 OL R139 | Architecture changes: Reserved
+11 NN | document heading
+13-16 OL R31 | keep ASP.NET Core transport/authentication types
+18 NN | section heading
+20-23 NN | scheme selection technique
+25-29 OL R116,R166 | Do not issue custom JWTs when an existing
+31 NN | section heading
+33-35 OL R116,R110 | Never store
+37 NN | section heading
+39-42 OL R117 | configure validation according to the issuer that
+44 NN | section heading
+46-53 NN | authorization attribute code example
+55-56 OL R115 | A secure global/fallback policy may make repeating `[Authorize]` unnecessary.
+58-60 NN | AllowAnonymous example
+62 NN | section heading
+64-80 NN | policy code examples
+82 NN | policy naming technique
+84 NN | section heading
+86-88 NN | roles vs policies technique
+90 NN | section heading
+92-95 NN | resource authorization technique
+97 NN | section heading
+99-106 NN | 401/403 illustration
+108-111 OL R20 | A deliberate, consistent `404` for
+113 NN | section heading
+115 NN | lead-in
+117-126 NN | current-user code example
+128-129 NN | abstraction lead-in
+131-137 NN | ICurrentUser code example
+139-141 OL R37 | Application services do not depend directly on `HttpContext`,
+143 NN | section heading
+145-147 OL R119,R110 | Bearer tokens sent explicitly through the `Authorization` header have different
+149 NN | section heading
+151-155 NN | authorization test targeting (test technique)
+157 NN | section heading
+159-164 DU R116,R117,R110,R114,R37,R20,R124,R166 | review checklist restating authentication rules
+
+FILE .claude/skills/build-fix/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-16 OL R161,R147 | hiding failures, weakening behavior, or introducing unrelated changes.
+18-20 NN | role distinction between code-review, verify and build-fix
+22 NN | section heading
+24 OL R159 |
+25 OL R159 |
+26-28 OL R160 | Keep each repair iteration small and bounded
+29-30 OL R161 | Do not weaken, delete, skip, or suppress relevant tests or compiler, analyzer,
+31 OL R162 |
+32 OL R160 |
+34 NN | section heading
+36-39 OL R160 | Do not run unrelated build
+41-46 OL R160 | start with the affected .NET project
+48 NN | section heading
+50 OL R159 |
+52-56 NN | reproduction command examples
+58 NN | note on actual paths
+60-64 OL R152 | Do not invent
+66 NN | section heading
+68-70 OL R159 | fix the highest-leverage cause first.
+72-75 NN | common .NET failure categories
+77-81 NN | common frontend failure categories
+83 NN | section heading
+85-91 OL R159,R160 | Expand verification only after the focused failure is resolved.
+93-95 OL R162 | do not make Application reference Infrastructure to
+97 NN | section heading
+99-105 OL R159,R160 | Make the smallest correct change.
+107-108 NN | pointers to frontend rules and knowledge skill
+110-116 OL R161,R9 | convert code to `any` merely to silence TypeScript;
+118 NN | section heading
+120-124 OL R159 | Determine which contract is authoritative
+126-129 OL R149 | regenerate
+131 NN | section heading
+133 NN | lead-in
+135-142 OL R159 | decide whether the defect is in production code, test setup, the test
+144-148 OL R161 | Do not turn a strong assertion into a weak one
+150 NN | section heading
+152-155 OL R159 | update usage deliberately.
+157-162 OL R11,R60,R61,R161 | do not delete `package-lock.json`
+164 NN | section heading
+166-172 OL R159,R147 | perform an unrelated additional upgrade while repairing the current one.
+174 NN | section heading
+176-183 OL R163,R147 | report the limitation instead of
+185 NN | section heading
+187-192 OL R149 | Fix or update the
+194 NN | section heading
+196-202 OL R160 | Do not repeat variants of the same
+204 NN | section heading
+206-210 OL R163,R147 | Do not leave the repository knowingly worse than the starting
+212 NN | section heading
+214-219 OL R162 | is not a successful repair.
+221 NN | section heading
+223-226 OL R165 | Build, compiler, and static-analysis commands do not require new
+228 NN | section heading
+230-234 OL R163 | no known new
+236 NN | section heading
+238-246 MX R164,X20 | Backend build: PASS / NOT RUN / NOT APPLICABLE ⟫ PASS/NOT RUN/NOT APPLICABLE reporting is oracle-linked (R164); the fixed failure/root-cause/changes/remaining-issues sections are X20.
+248 OL R163,R164 | Do not claim the problem is fixed while a known relevant failure remains.
+DONE

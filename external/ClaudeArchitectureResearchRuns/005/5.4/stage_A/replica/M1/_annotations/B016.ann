@@ -1,0 +1,155 @@
+# M1 / B016 — health-check, http-api, httpclient-factory/references/resilience.md.
+
+C X26 EX RUN-016 | MUST NOT | Do not wrap normal persistence operations in a generic application-level retry pipeline; use the persistence provider's execution strategy for transient faults and handle transaction/retry interaction per the provider's guidance. | persistence resilience | none stated | RUN-016 limits retries to safe repeats; no oracle policy forbids application-level retry of persistence operations or prescribes the provider execution strategy. | Wrapping repository calls in a Polly retry pipeline violates this rule.
+
+FILE .claude/skills/health-check/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R29 | Distinguish liveness from readiness when the deployment
+17 NN | section heading
+19-25 NN | basic setup code example
+27 NN | endpoint technique (EXC-010)
+29 NN | section heading
+31-32 OL R29 | A liveness probe usually avoids databases and remote APIs:
+34-41 NN | liveness code example
+43 NN | hosting note
+45 NN | section heading
+47-48 NN | readiness tagging technique (EXC-010)
+50-65 NN | readiness code examples
+67-68 OL R29 | Include only dependencies required for meaningful readiness;
+70 NN | section heading
+72-74 OL R29 | Do not use liveness for
+76 NN | section heading
+78-80 OL R28 | no expensive business queries, large scans, or writes.
+82 NN | section heading
+84-87 OL R29 | Check an external dependency only when its availability is important to the
+89 NN | section heading
+91-94 NN | probe status mapping technique (EXC-010)
+96 NN | section heading
+98-99 OL R30 | Keep probe responses small.
+101 NN | section heading
+103-106 NN | exposure topology technique (EXC-010)
+108 NN | section heading
+110-112 OL R28 | Health checks may be called frequently: avoid expensive queries, long external
+114 NN | section heading
+116-120 NN | health test examples (EXC-010)
+122 NN | section heading
+124-127 DU R28,R29,R30 | review checklist restating health-check rules
+
+FILE .claude/skills/http-api/SKILL.md | Knowledge skill (HTTP reference).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 OL R18 | Keep status-code behavior consistent across similar endpoints.
+16 NN | section heading
+18 NN | subsection heading
+20-22 OL R18 | The operation completed and a representation is returned:
+24-26 NN | code example
+28 OL R19 |
+30-34 NN | HTTP example
+36-37 OL R19 | `200` with `[]` preserves the resource representation and is clearer for
+39 NN | subsection heading
+41-42 OL R18 | The request created a new API resource.
+44-49 NN | code example
+51-53 OL R18 | new API resource, not whether a row was inserted.
+55 NN | subsection heading
+57-60 OL R18 | Processing was accepted but is not complete when the response is sent
+62-67 NN | code example
+69 NN | subsection heading
+71-73 OL R18 | A `204` response must
+75-77 NN | code example
+79-81 OL R18 | do not mix conventions between equivalent resources.
+83 NN | section heading
+85 NN | subsection heading
+87-89 NN | 304 reference (EXC-009)
+91 NN | section heading
+93 NN | subsection heading
+95-99 NN | 400 reference (EXC-009)
+101 NN | subsection heading
+103-104 OL R20 | Authentication is missing or failed
+106 NN | subsection heading
+108-112 OL R20 | Authentication succeeded but the principal is not allowed
+114 NN | subsection heading
+116-118 OL R19,R20 | zero matches returns `200 []`.
+120 NN | subsection heading
+122-124 NN | 406 reference (EXC-009)
+126 NN | subsection heading
+128-131 OL R21 | The request is valid but conflicts with the current state:
+133-137 NN | conflict example
+139 OL R21 |
+141 NN | subsection heading
+143-145 OL R21 | generic `409`, because an explicit HTTP precondition failed.
+147 NN | subsection heading
+149-151 NN | 415 reference (EXC-009)
+153 NN | subsection heading
+155-160 NN | 422 reference (EXC-009)
+162-165 NN | 400/422 example
+167 NN | subsection heading
+169-170 NN | 428 reference (EXC-009)
+172-175 NN | precondition example
+177-178 NN | 428 reference (EXC-009)
+180 NN | subsection heading
+182-184 NN | 429 reference (EXC-009)
+186 NN | section heading
+188 NN | subsection heading
+190-192 OL R64,R67,R68 | handled centrally with `ProblemDetails` and no internal details
+194 NN | subsection heading
+196-197 NN | 502 reference (EXC-009)
+199 NN | subsection heading
+201-204 NN | 503 reference (EXC-009)
+206 NN | subsection heading
+208-212 OL R69 | Not for every internal `TaskCanceledException`: distinguish a client that
+214 NN | section heading
+216-221 NN | idempotency reference (EXC-009 detailed HTTP reference)
+223 NN | section heading
+225-226 OL R21 | When HTTP-level optimistic concurrency is part of the contract, prefer standard
+228-234 NN | concurrency example
+236 OL R21 |
+238 NN | section heading
+240 OL R17,R38 |
+242-257 NN | controller code example
+259-260 OL R67 | Machine-readable clients rely on stable error codes or contract fields in
+262 NN | section heading
+264-286 DU R18,R19,R20,R21,R67 | decision table restating status-code semantics (less common rows are EXC-009 reference)
+
+FILE .claude/skills/httpclient-factory/references/resilience.md | Private reference of httpclient-factory.
+1 NN | header metadata
+3 NN | document heading
+5-9 OL R166,R89 | Do not add resilience mechanisms merely because they are
+11-13 OL R140 | the `Microsoft.Extensions` resilience APIs rather than configuring Polly
+15 NN | section heading
+17-23 NN | standard handler code example
+25-27 OL R89 | Review its retry behavior carefully for
+29 NN | section heading
+31-33 OL R88 | Distinguish the attempt timeout from the total operation timeout, especially
+35 NN | section heading
+37-41 OL R89 | non-idempotent operations without a duplicate-prevention strategy.
+43 NN | section heading
+45-46 OL R90 | Prefer the server's retry guidance when the client policy supports it, instead
+48 NN | section heading
+50 NN | lead-in
+52-55 NN | idempotency question example
+57-59 OL R89 | automatic retry is unsafe.
+61 NN | section heading
+63-65 NN | circuit breaker technique (EXC-007)
+67 NN | section heading
+69-71 OL R65 | Acceptable examples: stale cached read data where staleness is explicitly
+73-76 NN | unacceptable fallback example
+78 NN | section heading
+80-82 OL R89 | do not hedge state-changing operations.
+84 NN | section heading
+86-91 EX X26 | Do not wrap normal persistence operations in a generic application-level retry
+93 NN | section heading
+95-99 NN | message publication technique (EXC-007)
+101 NN | section heading
+103-106 NN | inbound rate limiting reference
+108 NN | section heading
+110-111 OL R85,R91 | Propagate cancellation through resilience pipelines; caller cancellation is not
+113 NN | section heading
+115-117 OL R166 | Do not require OpenTelemetry solely because
+119 NN | section heading
+121-127 MX R89,R91,R65,R88,X26 | generic ⟫ Review checklist restating outbound-call rules, plus the persistence retry-wrapper prohibition (X26).
+129 NN | section heading
+131-141 DU R88,R89,R90,R65,X26 | decision table restating resilience defaults
+DONE

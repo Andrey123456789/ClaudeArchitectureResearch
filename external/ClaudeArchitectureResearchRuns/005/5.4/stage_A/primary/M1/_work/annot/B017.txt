@@ -1,0 +1,162 @@
+# Batch B017 — skills: httpclient-factory, logging, logging/references/serilog.md
+
+@@ output/template/.claude/skills/httpclient-factory/SKILL.md ;; Knowledge skill (on demand); owns private reference references/resilience.md.
+@scope on-demand knowledge skill httpclient-factory (outbound HTTP)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner (policy pointers, resilience depth route).
+11 NN ;; Heading.
+13-14 OL [arc025.clients-infra]
+15 OL [run016.retry-when-fits]
+17 NN ;; Heading.
+19 NN ;; Lead-in.
+21-28 NN ;; Application abstraction example.
+30 NN ;; Lead-in.
+32-38 NN ;; Infrastructure implementation example.
+40 OL [arc025.app-unaware]
+42 NN ;; Heading.
+44 NN ;; Descriptive usefulness of typed clients.
+46-51 NN ;; Typed client example.
+53-54 OL [arc022.typed-client-singleton]
+56 NN ;; Heading.
+58-59 NN ;; Descriptive usefulness of named clients.
+61-66 NN ;; Named client example.
+68 NN ;; Heading.
+70-71 OL [gov012.keyed-not-automatic]
+73 NN ;; Heading.
+75-77 EX [x.hcf-handlers]
+79-96 NN ;; DelegatingHandler example.
+98 NN ;; Heading.
+100-104 NN ;; Cancellation example.
+106-107 OL [run003.no-token-none]
+109 NN ;; Heading.
+111-113 MX [x.cfg-operational-values,run015.attempt-total] ;; Timeouts from operation/latency budget is the operational-values extra; per-attempt vs total timeouts is RUN-015.
+115 NN ;; Heading.
+117-119 MX [arc025.translate,x.hcf-response-mapping] ;; Translation into Application abstractions is ARC-025; not blindly calling EnsureSuccessStatusCode is added.
+121-128 NN ;; Response mapping example.
+130-132 MX [arc025.translate,x.hcf-response-mapping] ;; Explicit outcomes (ARC-025) and not exposing every upstream status (added).
+134 NN ;; Heading.
+136-138 OL [run017.honor-retry-after]
+140 NN ;; Heading.
+142-149 OL [run016.before-retry] ;; ;; Before enabling retry
+151 NN ;; Heading.
+153-155 EX [x.hcf-headers]
+157 NN ;; Heading.
+159-162 MX [x.hcf-serialization,arc025.no-domain-contracts] ;; System.Text.Json preference is added; not reusing Domain entities as remote contracts ties to ARC-025.
+164 NN ;; Heading.
+166-167 NN ;; Descriptive: what a controlled handler verifies.
+169-174 NN ;; Test client example.
+176-177 OL [run005.test-scope]
+179 NN ;; Heading.
+181-187 MX [x.hcf-headers,x.hcf-response-mapping,run005.no-per-request,gov012.keyed-not-automatic] ;; Check-by-reference list; shared DefaultRequestHeaders and same-status mapping are the skill's extras; others restate RUN-005/RUN-015/RUN-016/ARC-025/RUN-003.
+
+C arc025.clients-infra OL ARC-025,GOV-012 DEFAULT ;; Named, typed and keyed clients are valid; choose the simplest model; outbound API clients belong in Infrastructure. ;; = ;; none ;;
+C run016.retry-when-fits OL RUN-016,DEP-011 MUST ;; Retry and circuit-breaker behaviour is added only when its semantics fit. ;; = ;; none ;;
+C arc025.app-unaware OL ARC-025 MUST ;; Application does not need to know the external service uses HTTP. ;; = ;; none ;;
+C arc022.typed-client-singleton OL ARC-022 MUST_NOT ;; Do not capture a transient typed client inside a singleton without understanding lifetime implications. ;; = ;; none ;;
+C gov012.keyed-not-automatic OL GOV-012 MUST_NOT ;; Do not choose keyed clients automatically, nor make typed/keyed/named clients mandatory universally. ;; = ;; none ;;
+C x.hcf-handlers EX ARC-025,API-011 MUST_NOT ;; Use DelegatingHandler only for genuine HTTP pipeline concerns, never for business decisions. ;; = ;; none ;; Handler responsibility rule not in the oracle.
+C run003.no-token-none OL RUN-003 MUST_NOT ;; Do not replace request cancellation with CancellationToken.None unless the operation must outlive the request. ;; = ;; Must outlive the request. ;;
+C arc025.translate OL ARC-025 MUST ;; Translate remote responses into the abstraction Application consumes / explicit outcomes. ;; = ;; none ;;
+C x.hcf-response-mapping EX ARC-025,API-003 MUST_NOT ;; Do not blindly call EnsureSuccessStatusCode when remote statuses carry meaning; do not expose every upstream status through your API or map every upstream failure to the same status. ;; = ;; none ;; Response-mapping rules beyond ARC-025.
+C run017.honor-retry-after OL RUN-017 DEFAULT ;; Honor Retry-After on remote 429 when the retry policy supports it; outbound retry and inbound responses are separate decisions. ;; = ;; none ;;
+C run016.before-retry OL RUN-016 MUST ;; Before enabling retry determine transience, repeat safety, idempotency support and duplicate risk; state-changing safety from idempotency keys, idempotent semantics or deduplication; PUT/DELETE not assumed safe by definition. ;; = ;; none ;;
+C x.hcf-headers EX - MUST_NOT ;; Apply per-request values (dynamic tokens) to the request or via a handler; do not mutate shared default headers concurrently. ;; = ;; none ;; Header-safety rule not in the oracle.
+C x.hcf-serialization EX - PREFER ;; Prefer System.Net.Http.Json/System.Text.Json with explicit options when external contracts differ. ;; = ;; none ;; Serializer preference not in the oracle.
+C arc025.no-domain-contracts OL ARC-025,ARC-002 MUST_NOT ;; Do not reuse internal Domain entities as remote API contracts to avoid mapping. ;; = ;; none ;;
+C run005.test-scope OL RUN-005 ALLOWED ;; Constructing HttpClient directly in a focused test is fine; the lifetime rule concerns production code. ;; = ;; Tests. ;;
+C run005.no-per-request OL RUN-005 MUST_NOT ;; No new HttpClient per request. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/logging/SKILL.md ;; Knowledge skill (on demand); owns private reference references/serilog.md.
+@scope on-demand knowledge skill logging (backend)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner (policy pointers, serilog route).
+11 NN ;; Heading.
+13-14 EX [x.log-levels] ;; ;; choose log
+16 NN ;; Heading.
+18-23 NN ;; Structured logging example.
+25 OL [run013.avoid-interpolation] ;; ;; Avoid:
+27-30 NN ;; Interpolated anti-example.
+32 NN ;; Heading.
+34-44 MX [x.log-levels,sec010.all-levels] ;; Level taxonomy is added; sensitive-data rules applying at every level is SEC-010.
+46 NN ;; Heading.
+48-50 OL [api012.log-at-handler]
+52 NN ;; Heading.
+54 EX [x.log-scopes]
+56-65 NN ;; BeginScope example.
+67-68 NN ;; Pointer to serilog LogContext.
+70 NN ;; Heading.
+72-77 MX [x.log-correlation,sec003.normalize-correlation] ;; Correlation technique is added; validating external identifiers is SEC-003.
+79 NN ;; Heading.
+81-85 OL [run014.specific-properties]
+87 NN ;; Heading.
+89-91 OL [run008.loggermessage]
+93 NN ;; Heading.
+95-99 MX [x.log-no-audit-db,api012.log-at-handler,run013.avoid-interpolation] ;; Check-by-reference list; logs as audit database has no owner clause (added); other items restate RUN-013/API-012/API-009/SEC-010/RUN-014/DEP-021.
+101 NN ;; Heading.
+103-110 DU ;; Decision table restating owner defaults.
+
+C x.log-levels EX RUN-013 DEFAULT ;; Log what helps diagnose/operate; choose levels by operational meaning (Trace/Debug troubleshooting; Information meaningful events, not every method call; Warning recovered degraded conditions; Error failed operations needing investigation; Critical subsystem cannot continue). ;; = ;; none ;; Log-level taxonomy not in the oracle.
+C run013.avoid-interpolation OL RUN-013 AVOID ;; Avoid string interpolation in log calls (use message templates). ;; = ;; none ;;
+C sec010.all-levels OL SEC-010 MUST ;; Sensitive-data rules apply at every log level. ;; = ;; none ;;
+C api012.log-at-handler OL API-012 MUST ;; Log an exception at the boundary that handles or terminates it; no extra log when rethrowing without meaningful handling. ;; = ;; none ;;
+C x.log-scopes EX RUN-013 DEFAULT ;; Use ILogger.BeginScope when several entries share contextual data. ;; = ;; none ;; Scope technique (EXC-013).
+C x.log-correlation EX RUN-013 DEFAULT ;; Prefer platform trace identifiers; explicit correlation id only when required; propagate tracing context via the chosen infrastructure. ;; = ;; none ;; Correlation technique (EXC-013).
+C sec003.normalize-correlation OL SEC-003 MUST ;; Validate or normalize a correlation identifier accepted from an external client before propagating it. ;; = ;; none ;;
+C run014.specific-properties OL RUN-014,SEC-010 MUST ;; Avoid logging authorization headers and full sensitive bodies; log specific needed properties. ;; = ;; none ;;
+C run008.loggermessage OL RUN-008 DEFAULT ;; Normal structured ILogger logging suffices; LoggerMessage source generation only for measured high-volume hot paths. ;; = ;; Measured hot path. ;;
+C x.log-no-audit-db EX - AVOID ;; Do not use logs as an audit database without a dedicated audit design. ;; = ;; Adopted audit design. ;; Not in the oracle.
+
+@@ output/template/.claude/skills/logging/references/serilog.md ;; Private reference of the logging knowledge skill.
+@scope private reference of on-demand skill logging (Serilog)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Heading.
+7-10 EX [x.serilog-bootstrap]
+11-13 OL [dep021.addserilog-not-useserilog]
+14-15 OL [run013.templates]
+16-17 OL [dep021.config-in-appsettings]
+18-19 OL [dep021.serilog-apis-boundary]
+21 NN ;; Heading.
+23-70 NN ;; Two-stage bootstrap example.
+72-76 MX [dep001.sinks-needed,x.cfg-operational-values] ;; Configure only needed sinks (DEP-001); illustrative numeric limits are not approved defaults (operational-values extra).
+78 NN ;; Heading.
+80-121 NN ;; appsettings Serilog example.
+123-125 NN ;; Descriptive Override semantics and advisory override for verbose persistence logging.
+127 NN ;; Heading.
+129-130 NN ;; Descriptive: request logging middleware.
+132-150 NN ;; Request logging example.
+152 NN ;; Heading.
+154-166 NN ;; Destructuring operator examples.
+168-171 OL [run014.limit-destructuring]
+173 NN ;; Heading.
+175-181 NN ;; LogContext example.
+183 NN ;; Technical prerequisite.
+185 NN ;; Heading.
+187-198 NN ;; OTLP sink example.
+200 NN ;; Heading.
+202 NN ;; Package prerequisite.
+204-211 NN ;; Expressions filtering example.
+213 NN ;; Heading.
+215-225 NN ;; LoggerMessage example.
+227 NN ;; Heading.
+229-231 EX [x.serilog-flush]
+233-237 NN ;; Flushing example.
+239-240 EX [x.serilog-flush]
+242 NN ;; Heading.
+244-252 NN ;; BAD/GOOD sensitive logging example (SEC-010 captured in security.md).
+254 NN ;; Heading.
+256-258 EX [x.serilog-elastic-sink]
+260-264 NN ;; Elastic sink example.
+266 NN ;; Heading.
+268-280 NN ;; Recommendation table of optional Serilog tooling (sinks optional per lines 72-76).
+O 278 NN ;; 'Audit trails → AuditTo' is a tooling recommendation, not an adoption requirement. ;; ;; | Audit trails | `AuditTo` (synchronous, exceptions propagate) |
+
+C x.serilog-bootstrap EX DEP-021 DEFAULT ;; Use two-stage bootstrap initialization when startup logging matters; simpler apps may use host-managed setup. ;; = ;; Simpler applications. ;; Bootstrap technique not in the oracle.
+C dep021.addserilog-not-useserilog OL DEP-021 DEFAULT ;; Register with builder.Services.AddSerilog() (DI-integrated) rather than builder.Host.UseSerilog(). ;; = ;; none ;;
+C run013.templates OL RUN-013 DEFAULT ;; Use message templates; interpolation breaks structure. ;; = ;; none ;;
+C dep021.config-in-appsettings OL DEP-021 DEFAULT ;; Keep levels, sinks and overrides in appsettings to vary per environment. ;; = ;; none ;;
+C dep021.serilog-apis-boundary OL DEP-021,DEP-010 MUST ;; Keep direct Serilog APIs (Log.Logger, LogContext) at composition or provider-specific boundaries. ;; = ;; none ;;
+C dep001.sinks-needed OL DEP-001 MUST ;; Sinks/enrichers beyond Console are not baseline; configure only what the project needs. ;; = ;; none ;;
+C run014.limit-destructuring OL RUN-014 MUST ;; Limit destructuring or destructure specific properties; large object graphs cause memory issues and massive entries. ;; = ;; none ;;
+C x.serilog-flush EX - DEFAULT ;; Flush the static/bootstrap Log.Logger on shutdown; for host-managed logging follow the provider lifetime instead. ;; = ;; none ;; Serilog lifecycle technique.
+C x.serilog-elastic-sink EX DEP-004 DEFAULT ;; Serilog.Sinks.Elasticsearch is deprecated; use Elastic.Serilog.Sinks for Elasticsearch. ;; = ;; Only when Elasticsearch is used. ;; Package guidance not in the oracle.

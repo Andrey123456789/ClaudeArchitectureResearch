@@ -1,0 +1,66 @@
+# K0 / B002 — Run 2 replica annotation (blind). hook.cjs: single hook dispatcher.
+
+C R3 OL DEP-003,DEP-004,DEP-005 | MUST (PreToolUse: permissionDecision deny; fails closed) | Dependency addition/update commands (npm/pnpm/yarn install|add naming a package, update/upgrade/dedupe, npm audit fix, ng add, ng update <pkg>, dotnet add package, dotnet package add|update, nuget install|update, Install-Package/Update-Package, and restores carrying a force flag) are denied until the add-dependency workflow has been completed; the command is then re-run with the trailing comment `# add-dependency: reviewed`. | Bash/PowerShell commands incl. bash -c / cmd /c / pwsh -Command wrappers | The marker comment is self-certified by the agent; bare restores from the lockfile (npm ci, yarn) pass.
+C X1 EX DEP-001,DEP-003 | MUST (PreToolUse deny; PostToolUse confirmation message on removed manifests) | Dependency-removal commands (npm uninstall|remove|rm|r|un|unlink, pnpm/yarn remove, dotnet remove package, dotnet package remove, Uninstall-Package) are likewise denied until the add-dependency workflow has been completed and the command carries `# add-dependency: reviewed`; a removed package manifest is reported for confirmation that the removal was intended and approved. | Bash/PowerShell commands; package manifests | Marker comment after review. | The oracle's dependency policies (DEP-001..DEP-005) govern additions and updates; no oracle policy subjects dependency removal to a review workflow or approval confirmation. | `npm uninstall lodash` is denied until the add-dependency removal checklist was run and the marker is added.
+C R4 OL DEP-025 | MUST NOT (PreToolUse deny message) | A dependency command using --force or --legacy-peer-deps (npm -f included) receives the instruction to resolve the actual peer-dependency conflict instead. | npm/pnpm/yarn/ng dependency commands | The force message is attached only while the review marker is absent; with `# add-dependency: reviewed` a forced command is not denied by the hook.
+C X2 EX ARC-001,ARC-020,ARC-028,GOV-017 | MUST (Reserved; PreToolUse deny; PostToolUse finding) | Changing the project reference graph (dotnet add|remove reference, dotnet reference add|remove, or a .csproj ProjectReference change) is Reserved unless an accepted decision already requires the reference, even when the new reference would be legal: commands are denied unless they carry `# project-references: approved` after the Decision Request; post-change findings ask to confirm the change was approved and recorded, or revert it. | .NET project references | Reference already required by an accepted decision; marker comment after approval. | ARC-001 already permits inward references and ARC-020 gates consequential changes such as new projects/layers; no oracle policy makes every legal reference edge a Reserved decision. | Adding the standard Api -> Application reference is denied until a Decision Request is approved and the marker is added.
+C R5 OL GOV-015 | MUST NOT (PreToolUse: permissionDecision ask) | Repository-changing Git commands (every subcommand not in the read-only list or read-only argument forms, e.g. commit, push, merge, rebase, reset, add, fetch, pull, checkout <target>, stash push, branch/tag changes, config writes) trigger a permission prompt stating they may run only when the user explicitly requested them; procedure git-workflow. | Bash/PowerShell git commands | Read-only forms (status, diff, log, branch --list, stash list, ...) pass.
+C X3 EX - | MUST (PostToolUse feedback, decision block) | When instruction files change (CLAUDE.md, the decision register, .claude/** except .hook-state and settings.local.json), check-instructions runs and its errors are fed back to the agent. | Edits/shell commands touching instruction files | Only errors are fed back. | Structural self-validation of the instruction system; not derived from any V2 policy. | Breaking an instruction header or reference is reported immediately after the edit.
+C R6 OL GOV-021 | MUST (PostToolUse message; Stop reminder) | A CUSTOM_SETTINGS.md change triggers the instruction to run the custom-settings workflow to synchronize every affected surface, and at Stop a reminder to confirm the synchronization. | CUSTOM_SETTINGS.md changes | Stop reminder once per exact state; Git work trees only.
+C R7 OL GOV-009,GOV-003 | MUST (PostToolUse message) | A SPECIFICATION.md change triggers the instruction to confirm it stays consistent with CUSTOM_SETTINGS.md and records only approved behavior. | SPECIFICATION.md changes | none stated
+C R8 OL ARC-020,GOV-017 | MUST (PostToolUse message) | Removing a project file is reported as a project-graph change to confirm as intended and approved (CLAUDE.md Decisions; project-structure). | .csproj removal | none stated
+C R9 OL WF-005,GOV-014 | MUST (PostToolUse message) | A moved manifest/project is reported so that every reference to it is updated (project-structure). | Moved .csproj / package manifests | none stated
+C R10 OL PST-008 | SHOULD (Stop: decision block once per exact state) | When Domain .cs files or Infrastructure/Persistence Configurations/AppDbContext change without any Seeding/DbSeeder change (and a DbSeeder.cs exists), the agent is stopped once to confirm seeded entities are unaffected or update the development seeder. | Stop in a Git work tree | Only when a DbSeeder.cs exists under backend/; once per exact state.
+C R11 OL PST-010 | SHOULD (Stop: decision block once per exact state) | When migration files (excluding .Designer.cs and ModelSnapshot.cs) are added or changed, the agent is stopped once to review them before committing. | Stop in a Git work tree | once per exact state
+C R12 OL TST-009,TST-010 | SHOULD (Stop: decision block once per exact state) | When production code (backend .cs or frontend .ts, excluding tests, .spec.ts and migrations) changed without any test change, the agent is stopped once to confirm existing coverage or add tests. | Stop in a Git work tree | once per exact state; outside Git the Stop check fails visibly (exit 1) instead.
+
+FILE .claude/hooks/hook.cjs | Hook dispatcher registered in settings.json (pre-tool-use, post-tool-use, post-tool-use-failure, stop).
+1-2 NN | header comment: kind/scope/owner/loading metadata
+3-9 IM | comment on launch form, active-root resolution, hook-state location, fail-closed pre-tool-use and the output protocol; enforcement semantics recorded in the gate constraints and the orphan ledger
+10 IM | strict-mode directive
+12-20 IM | imports, event/tool lists and the two marker-comment regexes used by the gates (marker semantics captured in R3, X1 and X2)
+22-66 IM | script loader, exit helpers, PreToolUse decision and PostToolUse feedback emitters, hook-input decoding (errors propagate to the fail-closed handler)
+68-70 IM | section comment
+72-121 IM | command tokenization, segment splitting at shell separators, basename normalization and positional parsing
+123 OL R4 |
+125-153 IM | package-manager subcommand tables (change/spec/restore/fix) defining which npm/pnpm/yarn verbs count as dependency changes; trigger scope of R3, X1 and R4
+155-166 MX R3,X1,R4 | if (kind === 'change' || (kind === 'spec' && rest.length > 0) ⟫ classification of Node package-manager commands into dependency changes (additions/updates: oracle; removals: EXTRA) and force usage (oracle DEP-025)
+168-182 MX R3,X1,X2 | dotnet add/remove [<project>] package|reference ⟫ dotnet package commands (additions/updates oracle, removals EXTRA) and reference commands (EXTRA reference gate)
+184-234 OL R5 | Git: table-driven read-only vs repository-changing classification
+236 IM | shell-launcher table for unwrapping bash -c / cmd /c / pwsh -Command
+238-269 MX R3,X1,X2,R5 | ['install-package', 'update-package', 'uninstall-package'] ⟫ token classification routing ng, dotnet, nuget, PowerShell package cmdlets (dependency gates incl. removals) and git (permission prompt)
+271-275 IM | command classification entry point
+277-282 IM | preToolUse setup: only Bash/PowerShell tool calls are classified
+283-289 EX X2 | Changing the project reference graph is Reserved (CLAUDE.md § Decisions) unless an accepted decision already requires the reference, even when the new reference would be legal.
+290-296 MX R3,X1,R4 | Run the `add-dependency` workflow first; when its checks are complete, re-run the command with the trailing comment `# add-dependency: reviewed`. ⟫ dependency gate for additions/updates (oracle) and removals (EXTRA X1), with the force-flag message (oracle DEP-025)
+297 IM | emits the deny decision when any gate fired
+298-303 OL R5 | Run it only when the user explicitly requested it (CLAUDE.md § Git); procedure: `git-workflow`.
+304 IM | function end
+306-308 IM | section comment
+310-346 IM | tool loader, surface classification (product, instructions, manifests) and per-worktree hook-state persistence
+348-425 IM | snapshot entries (hash plus csproj references), surface listing (Git index/untracked or bounded walk; very large non-Git roots throw) and worktree observation against the previous snapshot
+427-441 IM | detection of moved manifests and list comparison helpers
+443-460 IM | reactToChanges setup: manifest validation through check-dependencies (checks captured in check-dependencies.cjs)
+461-463 OL R6,R7 |
+464-466 MX R8,X1 | was removed: removing a project or manifest changes the project graph or the dependency set — confirm it was intended and approved ⟫ project removal approval (oracle ARC-020) and dependency-set removal confirmation (EXTRA X1)
+467-472 OL R9 | update every reference to it
+473-477 EX X2 | changing the project reference graph is Reserved (CLAUDE.md § Decisions) — confirm it was approved and recorded
+478-482 IM | after a project removal re-validates all project files
+483-485 EX X3 |
+486-487 IM | return of collected messages
+489-525 IM | active-root resolution and PostToolUse wiring for shell commands (whole worktree) and edits (edited file, ProjectReference hint), emitting feedback with decision block
+527-540 IM | section comment and bounded DbSeeder file search used by the seed reminder
+542-550 IM | Stop setup: skips its own continuation; outside a Git work tree the check fails visibly (exit 1); collects changed paths
+552-557 OL R10 |
+559-562 OL R11 |
+564-567 OL R12 |
+569-571 OL R6 | confirm the `custom-settings` workflow synchronized every affected surface
+573-578 OL R10,R11,R12,R6 | Co-change check before finishing:
+580-612 IM | main(): pre-tool-use errors become a deny decision (fail closed); other events exit 1 with a message on failure; module exports
+
+O .claude/hooks/hook.cjs 585-591 DU R3,X1,X2,R5 - | the pre-command policy check could not run, so the command was blocked | Fail-closed operation of the pre-command gates (any internal error denies the shell command); a property of the gates already captured in their modality, not a separate engineering-outcome rule. | Any hook failure on PreToolUse blocks the command.
+O .claude/hooks/hook.cjs 290-296 PL R3 DEP-003,DEP-004,DEP-005 | Run the `add-dependency` workflow first | Suspected EXTRA (mandatory workflow + self-certifying marker before every dependency command). Kept oracle-linked for additions/updates: DEP-003..DEP-005 require registry verification, due diligence and license approval before installation, which is what the workflow gate enforces; the marker is the gate's mechanism. Removals are registered separately as X1. | Dependency additions/updates are blocked until the agent declares the review complete.
+O .claude/hooks/hook.cjs 184-234 PL R5 GOV-015 | Git: table-driven read-only vs repository-changing classification | Suspected EXTRA because the permission prompt also covers git add/fetch/pull/checkout. Kept oracle-linked: GOV-015 covers 'other repository-changing Git operations' and the prompt only asks for confirmation instead of forbidding them. | Every repository-changing git command raises a permission prompt.
+O .claude/hooks/hook.cjs 467-472 PL R9 WF-005,GOV-014 | update every reference to it | Suspected EXTRA maintenance duty. Kept oracle-linked: a moved project/manifest left unreferenced breaks the build that WF-005 requires to pass; the message adds no outcome restriction. | References to a moved project must be updated.
+O .claude/hooks/hook.cjs 564-567 PL R12 TST-009,TST-010 | Production code changed without test changes | The reminder also covers frontend .ts files although oracle TST policies are scoped to backend tests. Kept oracle-linked: it only asks to confirm coverage or add tests (stack-neutral TST-009/TST-010 wording) and allows finishing after confirmation. | Stop is blocked once when production code changed without test changes.
+DONE

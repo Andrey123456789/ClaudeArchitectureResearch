@@ -1,0 +1,98 @@
+# Batch B015 (part 2) — skills: logging, logging/references/serilog.md
+
+@@ output/template/.claude/skills/logging/SKILL.md ;; Knowledge skill (on demand when adding/reviewing logging); owns private reference references/serilog.md.
+@scope on-demand knowledge skill logging (backend)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-17 IM ;; Pointers to policy owners and loading route to the private reference references/serilog.md.
+19-20 EX [x.log-levels] ;; ;; choose levels by
+22 NN ;; Heading.
+24-29 NN ;; Structured logging code example.
+31 OL [run013.structured-logging] ;; ;; Avoid:
+33-36 NN ;; Anti-example of interpolated log message.
+38 OL [run013.structured-logging]
+40 NN ;; Heading.
+42-51 MX [x.log-levels,sec010.level-not-safe] ;; Level taxonomy (Trace/Debug/Information/Warning/Error/Critical meanings, no logging every method call) is additional; 'Debug or Trace does not make sensitive data safe' is SEC-010.
+53 NN ;; Heading.
+55-56 OL [api012.log-where-handled]
+58 NN ;; Heading.
+60 EX [x.log-scopes]
+62-71 NN ;; BeginScope code example.
+73-74 NN ;; Pointer to serilog reference for LogContext.
+76 NN ;; Heading.
+78-83 MX [x.log-correlation,sec003.validate-correlation-id] ;; Correlation approach is technique (added); validating/normalizing an externally supplied identifier is SEC-003.
+85 NN ;; Heading.
+87-90 OL [run014.specific-properties]
+92 NN ;; Heading.
+94-97 OL [run008.loggermessage-measured]
+99 NN ;; Heading.
+101-103 MX [dep010.no-provider-apis-in-app,run014.specific-properties,x.log-no-audit-db] ;; Provider APIs out of Application (DEP-010/DEP-021) and no unreviewed full-object dumps (RUN-014) are oracle; logs as audit database is an added anti-pattern.
+105 NN ;; Heading.
+107-114 DU ;; Decision-guide table restating ILogger<T>, BeginScope, log-once, no Error log for expected rejections, serilog reference, LoggerMessage defaults.
+
+C x.log-levels EX RUN-013 DEFAULT ;; Log information that helps diagnose/operate and choose levels by operational meaning: Trace/Debug troubleshooting detail; Information normal meaningful events (not every method call); Warning recovered degraded conditions; Error failed operations needing attention; Critical subsystem cannot continue safely. ;; = ;; none ;; Log-level taxonomy not in the oracle.
+C sec010.level-not-safe OL SEC-010 MUST_NOT ;; Debug or Trace level does not make sensitive data safe to log. ;; = ;; none ;;
+C api012.log-where-handled OL API-012 MUST ;; Log an exception where the failure is handled or terminated; do not add another log entry when rethrowing without meaningful handling. ;; = ;; none ;;
+C x.log-scopes EX RUN-013 DEFAULT ;; Use ILogger.BeginScope when several entries need shared context. ;; = ;; none ;; Scope technique outside the oracle (EXC-013).
+C x.log-correlation EX RUN-013 DEFAULT ;; Prefer platform/runtime trace identifiers for correlation; add an explicit correlation id only when an integration/operational requirement needs it; propagate tracing context across outbound calls with the chosen infrastructure. ;; = ;; none ;; Correlation implementation is technique outside the oracle (EXC-013).
+C sec003.validate-correlation-id OL SEC-003 MUST ;; Validate or normalize a correlation identifier accepted from an external client before propagating it. ;; = ;; none ;;
+C run014.specific-properties OL RUN-014,SEC-010 MUST ;; Watch for authorization headers and full request/response bodies; log specific needed properties instead of whole objects; avoid dumping full objects without review. ;; = ;; none ;;
+C run008.loggermessage-measured OL RUN-008 DEFAULT ;; Normal structured ILogger logging suffices; source-generated LoggerMessage only for measured high-volume hot paths, not everywhere. ;; = ;; Measured hot path. ;;
+C dep010.no-provider-apis-in-app OL DEP-010,DEP-021 AVOID ;; Avoid provider-specific logging APIs throughout Application code (application code depends on ILogger<T>). ;; = ;; none ;;
+C x.log-no-audit-db EX - AVOID ;; Avoid using logs as an audit database unless a dedicated audit design has been adopted. ;; = ;; Adopted audit design. ;; Anti-pattern not in the oracle.
+
+@@ output/template/.claude/skills/logging/references/serilog.md ;; Private reference read only by the logging knowledge skill.
+@scope private reference of on-demand knowledge skill logging (Serilog)
+1 NN ;; Ownership/scope/loading banner.
+3 NN ;; Heading.
+5-7 NN ;; Pointers to policy owners.
+9 NN ;; Heading.
+11-14 EX [x.serilog-bootstrap]
+15-16 NN ;; Descriptive: AddSerilog integrates DI services through ReadFrom.Services.
+17-19 OL [run013.structured-logging]
+20-21 OL [dep021.config-levels-sinks]
+22-23 OL [dep021.serilog-apis-at-boundary]
+25 NN ;; Heading.
+27-74 NN ;; Two-stage bootstrap code example.
+76-81 MX [dep001.sinks-only-when-required,x.cfg-operational-values] ;; Sinks configured only when needed / Console sufficient is DEP-001; example numeric limits/retention not being approved defaults is the operational-values extra.
+83 NN ;; Heading.
+85-127 NN ;; appsettings Serilog configuration example.
+129-130 NN ;; Descriptive: Override prefix matching.
+132 NN ;; Heading.
+134 NN ;; Descriptive: request logging middleware.
+136-154 NN ;; Request logging code example.
+156 NN ;; Heading.
+158-170 NN ;; Destructuring operator examples.
+172 OL [run014.limit-destructuring]
+174-185 NN ;; Destructuring limit code example.
+187 NN ;; Heading.
+189-196 NN ;; LogContext code example.
+198 NN ;; Technical prerequisite of the example (Enrich.FromLogContext).
+200 NN ;; Heading.
+202 NN ;; Descriptive lead-in.
+204-215 NN ;; OpenTelemetry sink code example.
+217 NN ;; Heading.
+219 NN ;; Package prerequisite of the example.
+221-228 NN ;; Serilog.Expressions filtering example.
+230 NN ;; Heading.
+232-233 NN ;; Descriptive: LoggerMessage source generator.
+235-245 NN ;; LoggerMessage code example.
+247 NN ;; Heading.
+249-250 EX [x.serilog-flush]
+252-256 NN ;; Flushing code example.
+258-259 EX [x.serilog-flush]
+261 NN ;; Heading.
+263-271 NN ;; BAD/GOOD sensitive-value logging example (SEC-010 captured in security.md).
+273 NN ;; Heading.
+275-277 EX [x.cm-note-es-sink,x.serilog-elastic-sink]
+279-283 NN ;; Elastic sink code example.
+285 NN ;; Heading.
+287-298 NN ;; Recommendation table of optional Serilog tooling (storage, request logging, filtering, audit, OTLP); sinks/enrichers are explicitly optional (lines 76-81).
+
+C x.serilog-bootstrap EX DEP-021 DEFAULT ;; Use two-stage (bootstrap logger) Serilog initialization when startup logging matters; simpler apps may use host-managed setup. ;; = ;; Simpler applications without startup-logging needs. ;; Bootstrap technique not in the oracle.
+C dep021.config-levels-sinks OL DEP-021 DEFAULT ;; Keep log levels, sinks and overrides in configuration so they change per environment without redeployment. ;; = ;; none ;;
+C dep021.serilog-apis-at-boundary OL DEP-021,DEP-010 MUST ;; Keep direct Serilog APIs (Log.Logger, LogContext) at composition or provider-specific boundaries. ;; = ;; none ;;
+C run014.limit-destructuring OL RUN-014 MUST ;; Limit destructuring of large object graphs in logs. ;; = ;; none ;;
+C x.serilog-flush EX - DEFAULT ;; When using Serilog's static/bootstrap Log.Logger flush it on shutdown; for purely host-managed logging follow the provider lifetime instead of static lifecycle code. ;; = ;; none ;; Serilog lifecycle technique not in the oracle.
+C x.serilog-elastic-sink EX DEP-004 DEFAULT ;; Use the official Elastic.Serilog.Sinks package instead of the deprecated Serilog.Sinks.Elasticsearch when writing to Elasticsearch. ;; = ;; Only when Elasticsearch is used. ;; Package-specific replacement guidance not in the oracle.

@@ -1,0 +1,692 @@
+{
+  "unit": "P0002-M1-P010",
+  "batch_input_sha256": "f5614d88e589bb07381d0eb894871c9a9b0f2911ad9fae0171bf4c2dd1399679",
+  "reviews": [
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-006",
+        "name": "Conflict and precondition semantics",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#409 Conflict"
+        ],
+        "normalized_policy": "Use 409 for valid requests conflicting with current state; use 412 when an explicit HTTP precondition such as If-Match fails.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0108"
+      ],
+      "boundary_analysis": "409/412 distinction matches; missing mandatory precondition428EXTRA0183, standard conditional semantics0512 already priorBF0105/0106; no custom-concurrency new atom.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/api.md",
+          "sha256": "17e82d4a80dfe314d7124e21c113187acc8022205be7ee54bdf4b5972415d9b0",
+          "inspected_ranges": [
+            [
+              27,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "  resources requires a deliberate, consistent security policy.\n- Use `409` for a valid request that conflicts with the current state; use\n  `412` when an explicit HTTP precondition such as `If-Match` fails.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              119,
+              185
+            ],
+            [
+              193,
+              237
+            ],
+            [
+              263,
+              286
+            ]
+          ],
+          "context_quotes": [
+            "\n### 406 Not Acceptable\n\nThe server cannot produce a representation acceptable under the client's\ncontent negotiation. It concerns the response representation; do not confuse\nit with `415`.\n\n### 409 Conflict\n\nThe request is valid but conflicts with the current state: a duplicate where\nuniqueness is part of the resource state, an incompatible state transition, a\nconflicting concurrent operation, or an idempotency key reused with a different\npayload.\n\n```text\nOrder already completed\n    + request asks to cancel it\n    → 409 Conflict\n```\n\nNot for malformed syntax.\n\n### 412 Precondition Failed\n\nA supplied conditional precondition is false — for example `If-Match:\n\"version-7\"` while the current version is `\"version-8\"`. That is `412`, not a\ngeneric `409`, because an explicit HTTP precondition failed.\n\n### 415 Unsupported Media Type\n\nThe server does not support the request representation, for example\n`Content-Type: application/xml` on a JSON-only endpoint. `415` concerns the\nrequest body format; `406` concerns acceptable response formats.\n\n### 422 Unprocessable Content\n\nThe request is syntactically and structurally valid but its semantic or\nbusiness content is invalid — impossible business values, a business-rule\nrejection that is not a state conflict, or a semantically invalid combination\nsuch as `startDate > endDate`. Some APIs deliberately use `400` for both\ntransport and semantic validation; follow an established project convention.\nFor new APIs that distinguish them:\n\n```text\n400 → invalid HTTP/request contract\n422 → structurally valid request, invalid semantics/business input\n```\n\n### 428 Precondition Required\n\nThe API contract requires a precondition the client did not provide, for\nexample a `PUT /api/orders/123` that requires `If-Match`:\n\n```text\nmissing required If-Match → 428\nprovided but stale If-Match → 412\n```\n\nUse `428` for other mandatory preconditions only when the contract explicitly\ndefines them.\n\n### 429 Too Many Requests\n\nRate limiting rejected the request. Include `Retry-After` when the server knows\nwhen another attempt is appropriate. Do not represent validation failure as\nrate limiting.\n",
+            "\n### 502 Bad Gateway\n\nThis API acts as an intermediary and receives an invalid or unusable upstream\nresponse. Do not convert every dependency failure into `502`.\n\n### 503 Service Unavailable\n\nThe service is temporarily unable to handle the request — maintenance, a\ncritical dependency unavailable for this operation, or overload when the service\nchooses `503` semantics. Include `Retry-After` when a meaningful retry time is\nknown.\n\n### 504 Gateway Timeout\n\nThis API acts as an intermediary and an upstream service did not respond in\ntime. Not for every internal `TaskCanceledException`: distinguish a client that\ncancelled the incoming request, an operation of our own that timed out, and an\nupstream timeout; the external response depends on which occurred and the role\nthis API plays.\n\n## Idempotency\n\n`GET` is safe and idempotent, `PUT` is idempotent, `DELETE` is idempotent in\nintended state semantics, `POST` is generally not idempotent. When a repeated\n`POST` must not create duplicate effects, consider an `Idempotency-Key` header\nwhose key the server associates with the request and result; reusing a key with\na materially different payload is reasonably a `409`. Do not claim idempotency\nmerely because duplicate requests are unlikely.\n\n## Optimistic Concurrency\n\nWhen HTTP-level optimistic concurrency is part of the contract, prefer standard\nconditional semantics:\n\n```text\nGET            → ETag: \"v7\"\nPUT/PATCH      → If-Match: \"v7\"\ncurrent is v7  → update succeeds\ncurrent is v8  → 412 Precondition Failed\nIf-Match absent but required → 428 Precondition Required\n```\n\nDo not replace well-defined precondition semantics with custom status codes.\n",
+            "\n| Situation | Default response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable response representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid request structure but invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid/failed upstream response while acting as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout while acting as intermediary | `504` |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-007",
+        "name": "Unexpected exceptions handled centrally",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Unexpected Exceptions",
+          "templates/v2-baseline/.claude/rules/error-handling.md#Unexpected Exceptions"
+        ],
+        "normalized_policy": "Unexpected failures normally propagate to centralized IExceptionHandler handling; avoid repetitive catch/log/rethrow blocks.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0169"
+      ],
+      "boundary_analysis": "Centralized default and enumerated meaningful catches including required cleanup alreadyEXTRA0078/BF0030. Bootstrap swallowed fatal-exit ambiguity alreadyBF0109. Source does not add cannot-clean-up-otherwise restriction.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              33,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "\nBy default, unexpected failures propagate to centralized handling at the outer\nboundary; in ASP.NET Core APIs use `IExceptionHandler`. Avoid repetitive\ncatch/log/rethrow blocks in Controllers, Application Services, or repositories.\n\nCatch an exception only when the current layer can meaningfully recover,\ntranslate it into its own abstraction-level outcome, perform a defined fallback,\nadd useful context while preserving the original exception, or perform required\ncleanup. Never swallow exceptions to continue execution.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              14,
+              18
+            ],
+            [
+              151,
+              157
+            ],
+            [
+              159,
+              161
+            ],
+            [
+              199,
+              207
+            ],
+            [
+              209,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nTypical unexpected failures — programming defects, unexpected database or\nexternal-service failures, violated assumptions the application cannot handle\nlocally — propagate to the global exception handler.\n",
+            "\nCatch an external-service exception locally only when the layer can translate\nit into an Application-level outcome, add useful context, perform a defined\nfallback, or apply an appropriate retry policy at the infrastructure boundary;\notherwise let it propagate to centralized handling. Do not swallow\nexternal-service failures.\n",
+            "\nAvoid both of these shapes:\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Explicit Application outcome, often `null`; API maps to `404` |\n| Multiple expected business outcomes | Consider typed outcome / Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validation / Application Service |\n| Non-trivial invariant genuinely owned by Domain | Domain enforcement |\n| Transport validation | API/request validation |\n| Recoverable external failure | Handle or translate at the appropriate boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client/request cancellation | Propagate cancellation; not a generic 500 |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              189,
+              193
+            ]
+          ],
+          "context_quotes": [
+            "\nAn unexpected failure inside the application when no more specific controlled\noutcome exists; handled centrally with `ProblemDetails` and no internal details\n(`error-handling.md` § HTTP Error Contracts).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "e2ec57d45a57a084ad57ff99d5a104f25e76266c2fcbeeda92845bee28615194",
+          "inspected_ranges": [
+            [
+              61,
+              69
+            ]
+          ],
+          "context_quotes": [
+            "}\ncatch (Exception ex)\n{\n    Log.Fatal(ex, \"Application terminated unexpectedly\");\n}\nfinally\n{\n    await Log.CloseAndFlushAsync();\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              260,
+              264
+            ],
+            [
+              286,
+              289
+            ]
+          ],
+          "context_quotes": [
+            "\nReview empty `catch (Exception) { }` blocks and broad catches that continue\nwithout a deliberate fallback. Not every swallowed exception is a\nvulnerability, but security-relevant failures must not silently become success.\n",
+            "\nConfirm unexpected exceptions follow the centralized error-handling policy and\ndo not reveal sensitive information.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-008",
+        "name": "Do not leak failure internals",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Global Exception Handler",
+          "templates/v2-baseline/.claude/rules/error-handling.md#HTTP Errors"
+        ],
+        "normalized_policy": "Do not expose stack traces, SQL details, connection strings, internal paths, secret values, or sensitive exception details in public API errors.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0174"
+      ],
+      "boundary_analysis": "Public error confidentiality and raw messages explicit; development-tool diagnostics exception0302, Swagger example prohibition0651 and inspect serialized fields0625/EXTRA0216 covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              55,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "  human-readable exception messages the machine-readable contract.\n- Do not expose stack traces, SQL details, connection strings, internal paths,\n  secret values, raw exception messages, or other sensitive exception details in\n  public API errors.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              67,
+              70
+            ],
+            [
+              199,
+              207
+            ]
+          ],
+          "context_quotes": [
+            "\nDevelopment diagnostics may expose more through development tooling, but\npublic API contracts stay safe.\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              189,
+              193
+            ]
+          ],
+          "context_quotes": [
+            "\nAn unexpected failure inside the application when no more specific controlled\noutcome exists; handled centrally with `ProblemDetails` and no internal details\n(`error-handling.md` § HTTP Error Contracts).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "2d36ae051cf2531af10cc7bd2bcb257632c236dbd2b1b8e369e29d07dc9b55e1",
+          "inspected_ranges": [
+            [
+              228,
+              232
+            ],
+            [
+              234,
+              239
+            ],
+            [
+              286,
+              289
+            ]
+          ],
+          "context_quotes": [
+            "\nReview public errors for stack traces, SQL, connection strings, internal\nfilesystem paths, secret values, and internal exception details\n(`error-handling.md` § HTTP Error Contracts).\n",
+            "\nLook for database/domain entities returned directly, password hashes, internal\nsecurity fields, unnecessary personal information, and secret metadata. Prefer\nexplicit response contracts where needed; inspect the actual serialized fields\nrather than assuming a returned entity is vulnerable.\n",
+            "\nConfirm unexpected exceptions follow the centralized error-handling policy and\ndo not reveal sensitive information.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "ceabb98792f653174dc8009590caed3eb72e626744a681961a98cda7927d2f7a",
+          "inspected_ranges": [
+            [
+              79,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen failures use `ProblemDetails` or `ValidationProblemDetails`, describe those\ncontracts where useful. Swagger examples and descriptions never show internal\nexception types, stack traces, SQL, connection strings, or filesystem paths.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-009",
+        "name": "Expected outcomes are not system failures",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Expected Application Outcomes",
+          "templates/v2-baseline/.claude/rules/error-handling.md#Expected Outcomes"
+        ],
+        "normalized_policy": "Represent common expected outcomes explicitly when useful, but do not force a generic Result<T> pattern or use HTTP-named outcome categories in Application.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0165"
+      ],
+      "boundary_analysis": "Simplest explicit outcome where clearer, no forced wrapper and business-vs-HTTP categories explicit0165..0167. Result consider-when conjunction is recommendation, not an only-if adoption ban; avoid-wrapper and typed-error preference0308/EXTRA0100 prior. No new prohibition inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              14,
+              31
+            ],
+            [
+              44,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "\n- Do not use exceptions casually for normal expected control flow. Represent\n  common expected outcomes (not found, transition not allowed, duplicate,\n  concurrency conflict, rejected business operation) explicitly when that\n  improves clarity, using the simplest contract that communicates the use case:\n  `null`, `bool`, an explicit typed outcome, or a deliberately adopted\n  `Result<T>` pattern.\n- Do not force a generic `Result<T>` pattern: it is not mandatory and is not\n  introduced throughout the project merely because an operation can fail.\n- Application outcome categories describe Application or business semantics\n  (`Validation`, `NotFound`, `Conflict`, `BusinessRuleViolation`), not HTTP\n  transport semantics; do not use HTTP-named categories such as `BadRequest`,\n  `Unauthorized`, or `InternalServerError` in Application.\n- Do not establish custom business exceptions as the default architecture, and\n  do not throw and catch exceptions merely to jump between normal branches of a\n  use case. Typed exceptions for selected cases are a consistent project-level\n  decision when used.\n",
+            "\nLog an unexpected exception once, at the boundary that handles it. Do not log\nthe same exception repeatedly across repository, Application, Controller, and\nthe global exception handler. Expected outcomes such as not found or validation\nrejection are not logged as application errors.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              80,
+              83
+            ],
+            [
+              183,
+              191
+            ],
+            [
+              199,
+              207
+            ],
+            [
+              209,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nFor a command with several meaningful outcomes, an explicit typed outcome may\nbe clearer. Map Application categories to HTTP in the API layer.\n",
+            "\n`Result<T>` is optional. Consider it when an operation has several expected\nfailure modes, callers benefit from explicit typed outcomes, exception-based\ncontrol flow would otherwise be common, and the project is willing to use the\npattern consistently. Avoid it when `null`, `bool`, or a simple typed response\nis clear, when it adds wrapper noise around straightforward CRUD, or when it\nwould make every method return `Result<T>` without need. If adopted\n(project-wide adoption is Reserved), prefer typed errors over string arrays:\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Explicit Application outcome, often `null`; API maps to `404` |\n| Multiple expected business outcomes | Consider typed outcome / Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validation / Application Service |\n| Non-trivial invariant genuinely owned by Domain | Domain enforcement |\n| Transport validation | API/request validation |\n| Recoverable external failure | Handle or translate at the appropriate boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client/request cancellation | Propagate cancellation; not a generic 500 |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "99d4a418e4be517c87940745cc3287bad6bd3f2634c23fd4570886f4c6a78dcd",
+          "inspected_ranges": [
+            [
+              76,
+              89
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck `.claude/rules/architecture.md` and `persistence-technology.md`:\n\n- Does Domain stay independent of Application, Infrastructure, and Api?\n- Does Application avoid Infrastructure and persistence-technology types?\n- Do Controllers stay thin, with Application Services orchestrating use cases?\n- Is persistence reached through specific repository abstractions, without\n  queryable or persistence-technology types leaking out of Infrastructure?\n- Do repositories avoid committing normal use cases, with `IUnitOfWork` as the\n  commit boundary?\n- Is complexity proportional — no Rich Domain Model, DDD tactical patterns,\n  patterns listed as not adopted, extra layers, or project-wide Result model\n  without an approved need (`CLAUDE.md` § Decision Control)?\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-010",
+        "name": "Validation stays at owning boundary",
+        "related_groups": [
+          "architecture",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Request Validation",
+          "templates/v2-baseline/.claude/rules/error-handling.md#Validation Boundaries"
+        ],
+        "normalized_policy": "Use FluentValidation for explicit request/use-case validation where appropriate; keep transport validation, Application rules and Domain invariants at their owning boundaries.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0176"
+      ],
+      "boundary_analysis": "Owner boundaries and no mechanical duplicate validation covered0176..0178. Exact registrar package is explicitreplicaEXTRA0019; established invocation/no competing mechanismEXTRA0099 covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              67,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nValidate each concern at the layer that owns it. Use FluentValidation for\nexplicit request and use-case validation where appropriate.\n\n- API validates transport and request-contract concerns.\n- Application enforces use-case rules and straightforward workflow rules.\n- Domain protects non-trivial domain invariants when the Domain genuinely owns\n  that behavior; do not move Domain invariants into FluentValidation merely\n  because the library is available.\n- Infrastructure validates assumptions about external systems when needed.\n\nDo not duplicate the same validation mechanically at every layer."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              121,
+              142
+            ],
+            [
+              144,
+              149
+            ],
+            [
+              199,
+              207
+            ],
+            [
+              209,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nWith `[ApiController]`, ASP.NET Core handles transport-level concerns such as\nmodel-binding failures and can produce validation problem responses.\nFluentValidation fits rules such as required business input, string or\ncollection constraints, ranges, cross-property and conditional validation, and\nother request/use-case rules that read better as explicit validators.\n\n```text\nAPI transport/request-contract concern\n    -> API boundary validation where appropriate\n\nApplication use-case input or straightforward workflow rule\n    -> Application validator / Application Service\n\nNon-trivial domain invariant that genuinely belongs to Domain\n    -> Domain model\n```\n\nRegister validators with `FluentValidation.DependencyInjectionExtensions` and\nfollow the project's established validation invocation pattern rather than\nadding a second competing mechanism.\n",
+            "\nAPI validation does not replace business rules: a request can be syntactically\nvalid yet violate an application or domain rule. Keep ordinary CRUD rules,\nstraightforward workflow/state rules, and orchestration rules in Application\nunless the approved design explicitly chooses a richer Domain model.\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Explicit Application outcome, often `null`; API maps to `404` |\n| Multiple expected business outcomes | Consider typed outcome / Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validation / Application Service |\n| Non-trivial invariant genuinely owned by Domain | Domain enforcement |\n| Transport validation | API/request validation |\n| Recoverable external failure | Handle or translate at the appropriate boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client/request cancellation | Propagate cancellation; not a generic 500 |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "6fc29e22beed0fa1baa8ce363a8cc5bc537ab55d877b3f249c8ade7d3e00f484",
+          "inspected_ranges": [
+            [
+              46,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "  dumping ground.\n- `Validation` — FluentValidation validators for Application-level input and\n  use-case validation when required.\n- `DependencyInjection.cs` — registers Application-owned services and"
+          ]
+        },
+        {
+          "path": "output/template/docs/technology-stack.md",
+          "sha256": "58ec2a08956b2c0f899ea009f1b67d9b05fb85d935a0a0c59bdf8559a3fab993",
+          "inspected_ranges": [
+            [
+              28,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "\n- FluentValidation (`FluentValidation`,\n  `FluentValidation.DependencyInjectionExtensions`) is the standard library for\n  explicit request and use-case validation.\n- Application logging uses `ILogger<T>` with Serilog as the provider"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-011",
+        "name": "Exceptions are not normal branch control",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Exceptions for Domain or Application Rules"
+        ],
+        "normalized_policy": "Do not establish business exceptions as the default architecture or throw/catch exceptions merely to jump between normal expected branches.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0168"
+      ],
+      "boundary_analysis": "No normal exception-flow architecture; selected typed-exception consistency already0168/BF0029. Interceptor and HTTP handler business-placement restrictionsEXTRA0151/0187 covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              14,
+              21
+            ],
+            [
+              26,
+              31
+            ],
+            [
+              37,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "\n- Do not use exceptions casually for normal expected control flow. Represent\n  common expected outcomes (not found, transition not allowed, duplicate,\n  concurrency conflict, rejected business operation) explicitly when that\n  improves clarity, using the simplest contract that communicates the use case:\n  `null`, `bool`, an explicit typed outcome, or a deliberately adopted\n  `Result<T>` pattern.\n- Do not force a generic `Result<T>` pattern: it is not mandatory and is not",
+            "  `Unauthorized`, or `InternalServerError` in Application.\n- Do not establish custom business exceptions as the default architecture, and\n  do not throw and catch exceptions merely to jump between normal branches of a\n  use case. Typed exceptions for selected cases are a consistent project-level\n  decision when used.\n",
+            "\nCatch an exception only when the current layer can meaningfully recover,\ntranslate it into its own abstraction-level outcome, perform a defined fallback,\nadd useful context while preserving the original exception, or perform required\ncleanup. Never swallow exceptions to continue execution.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              151,
+              157
+            ],
+            [
+              199,
+              207
+            ]
+          ],
+          "context_quotes": [
+            "\nCatch an external-service exception locally only when the layer can translate\nit into an Application-level outcome, add useful context, perform a defined\nfallback, or apply an appropriate retry policy at the infrastructure boundary;\notherwise let it propagate to centralized handling. Do not swallow\nexternal-service failures.\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "525cf3a7b08e10d66d0e8734d0f24d85796a42778bf8095c45e84a343efa6b46",
+          "inspected_ranges": [
+            [
+              296,
+              298
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not hide business behavior in persistence interceptors.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "c5c47fad8ebaed5cb81360ace0af3528db27f000de59a0125d4b284ab5a72021",
+          "inspected_ranges": [
+            [
+              74,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nUse a `DelegatingHandler` for genuine HTTP pipeline concerns — authorization\nheader acquisition, correlation/context propagation, specialized request\nsigning — and never for business decisions.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P010",
+      "canonical_policy": {
+        "id": "API-012",
+        "name": "Log unexpected exceptions once",
+        "related_groups": [
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#Error Logging",
+          "templates/v2-baseline/.claude/rules/error-handling.md#Logging"
+        ],
+        "normalized_policy": "Unexpected exceptions should normally be logged once at the boundary that handles them; do not repeatedly log the same exception across repository, application, controller and global handler.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0171"
+      ],
+      "boundary_analysis": "Once at handling boundary, rethrow no duplicate log0529, and expected-outcome noError0172/BF0031 all prior. Ordinary failed-probe log restrictionBF0103 not novel.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              44,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "\nLog an unexpected exception once, at the boundary that handles it. Do not log\nthe same exception repeatedly across repository, Application, Controller, and\nthe global exception handler. Expected outcomes such as not found or validation\nrejection are not logged as application errors.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              159,
+              161
+            ],
+            [
+              179,
+              181
+            ],
+            [
+              199,
+              207
+            ]
+          ],
+          "context_quotes": [
+            "\nAvoid both of these shapes:\n",
+            "\nThe second is redundant when the global handler already logs the failure.\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "55d832a245a07dde050131eaa4a1fb49aeca525e4380959fd11c58320563d99f",
+          "inspected_ranges": [
+            [
+              109,
+              113
+            ]
+          ],
+          "context_quotes": [
+            "\nHealth checks may be called frequently: avoid expensive queries, long external\ntimeouts, large allocations, full business workflows, and Error-level logs for\nevery normal failed probe.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "fd04a4772e3a8b7d3f261a9151a510200a1a4368cd4640b9d8c54b409f17937b",
+          "inspected_ranges": [
+            [
+              47,
+              51
+            ],
+            [
+              94,
+              100
+            ],
+            [
+              102,
+              110
+            ]
+          ],
+          "context_quotes": [
+            "\nLog an exception at the boundary that actually handles or terminates the\nfailure; when rethrowing without meaningful handling, do not add another log.\nException-flow technique: `aspnet-error-handling` skill.\n",
+            "\nCheck-by-reference against the policy owners above: string interpolation in\nstructured logs; duplicate exception logging; expected business outcomes logged\nas errors; credentials or secrets logged; full objects dumped without review;\nprovider-specific APIs spread through Application code; logs used as an audit\ndatabase without a dedicated audit design.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Application logging API | `ILogger<T>` |\n| Context shared across logs | `BeginScope` |\n| Unexpected handled exception | Log once at the handling boundary |\n| Expected business rejection | No Error log |\n| Serilog provider setup | `references/serilog.md` |\n| High-volume measured hot path | Consider `LoggerMessage` |"
+          ]
+        }
+      ]
+    }
+  ]
+}

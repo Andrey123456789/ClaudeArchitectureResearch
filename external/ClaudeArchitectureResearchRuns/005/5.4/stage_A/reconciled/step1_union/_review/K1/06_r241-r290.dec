@@ -1,0 +1,228 @@
+# K1 batch 6: regions r241-r290 (protocol v1.2.1)
+# r241-r243 .claude/skills/caching/SKILL.md
+RD OVERLAP R:RULE-K1-0090 P:RULE-K1-0309 | P enumerates key dimensions (identifier, tenant, user, locale, query/filter parameters).
+SPLIT X:BF-K1-0117 | a@48-48: Key construction is centralized when duplication becomes hard to maintain. | b@56-56: Pre-success invalidation is allowed only when explicitly accepted by the workflow.
+SD P:EXTRA-K1-0096 X:BF-K1-0117#a | S: cache key construction M: P DEFAULT, X no modality E: none in either T: once duplication is hard to maintain
+SD P:UNCERTAIN-K1-0001 X:BF-K1-0117#b | S: pre-success cache invalidation M: P ALLOWED, X 'allowed only when' E: deliberate workflow acceptance (both) T: before the mutation succeeds
+RD OVERLAP R:RULE-K1-0091 P:RULE-K1-0310 | P: expiration chosen from data semantics; avoid unbounded entries.
+RD OVERLAP R:RULE-K1-0092 P:RULE-K1-0311 | P: enumerated invalidation strategies.
+RD OVERLAP R:RULE-K1-0092 P:UNCERTAIN-K1-0001 | P: pre-success invalidation exception when deliberately accepted (shared line L56).
+RD OVERLAP R:RULE-K1-0090 P:RULE-K1-0312 | P: authenticated/user-specific responses cached only with user/authorization isolation.
+SPLIT X:BF-K1-0118 | a@73-73: Tracked entities are not cached across Unit-of-Work boundaries. | b@73-73: Cache outage behavior must be decided. | c@77-77: Cache tests target observable cache correctness.
+SD P:EXTRA-K1-0099 R:EXTRA-K1-0035 X:BF-K1-0118#a | S: caching persistence data M: MUST_NOT both, X no modality E: none in either T: none
+SPLIT R:RULE-K1-0202 | a: With caching, Application Services keep their repository/Unit of Work workflow and coordinate required invalidation through an abstraction rather than bypassing repositories or IUnitOfWork. | b: Decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data.
+SD P:RULE-K1-0313 R:RULE-K1-0202#a | S: backend caching M: MUST both E: none in either T: none
+SD P:EXTRA-K1-0098 R:RULE-K1-0202#b X:BF-K1-0118#b | S: cache failure behavior M: MUST (P, R), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:EXTRA-K1-0100 X:BF-K1-0118#c | S: cache tests M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0104 P:EXTRA-K1-0100 | P: cache-specific test topics; no unit tests of framework cache internals.
+# r244-r248 .claude/skills/ci-cd/SKILL.md
+SPLIT X:BF-K1-0059 | a@13-13: Deployable artifacts are built reproducibly with deployment configuration kept outside them where practical. | b@17-21: A formatting gate runs only if the project adopted it; the shown commands use the Release configuration.
+SD P:EXTRA-K1-0101 X:BF-K1-0059#a | S: CI artifacts M: P DEFAULT, X no modality E: where practical (both) T: none
+RD OVERLAP X:BF-K1-0059#b P:RULE-K1-0346 | P: enforced formatting/analyzer gates only when adopted (delivery-change).
+SPLIT P:RULE-K1-0314 | a: Frontend CI runs npm ci and npm run build. | b: Frontend unit-test and lint steps only when package.json defines those scripts.
+SD P:RULE-K1-0314#b R:RULE-K1-0203 | S: frontend CI M: MUST both E: none in either T: none
+SPLIT R:RULE-K1-0204 | a: Provide CI integration-test services (database, cache, broker) only when tests require them; do not hardcode a database provider into a generic pipeline. | b: CI test services are isolated from Development and Production data.
+RD DETAIL_DIFFERENCE P:EXTRA-K1-0103 R:RULE-K1-0204#a | P adds providing them as service containers or Testcontainers.
+SD P:RULE-K1-0315 R:RULE-K1-0204#b | S: CI test services M: MUST both E: none in either T: none
+SD P:RULE-K1-0316 R:RULE-K1-0205 | S: CI container images M: MUST_NOT both E: none in either T: none
+RD OVERLAP P:RULE-K1-0316 P:RULE-K1-0347 | same artifact condition in ci-cd knowledge and delivery-change workflow; P0316 is container-specific.
+SPLIT X:BF-K1-0060 | a@89-89: Only downstream-needed artifacts are published. | b@93-93: Tested artifacts are promoted where supported. | c@97-97: Federated identity is preferred. | d@101-101: Migration artifacts are generated in CI with controlled execution.
+SD P:EXTRA-K1-0105 X:BF-K1-0060#a | S: CI artifacts M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0106 X:BF-K1-0060#b | S: artifact promotion M: P DEFAULT, X no modality E: where supported (both) T: none
+SD P:EXTRA-K1-0107 X:BF-K1-0060#c | S: deployment credentials M: P PREFER, X 'preferred' E: none in either T: none
+SPLIT R:RULE-K1-0206 | a: Generate database migration scripts/artifacts in CI and execute them at a controlled deployment step with approved credentials. | b: The deployment migration step fails visibly on error.
+SD P:RULE-K1-0318 R:RULE-K1-0206#a X:BF-K1-0060#d | S: deployment of migrations M: MUST (P, R), X no modality E: none in either T: none
+SD P:EXTRA-K1-0108 R:RULE-K1-0206#b | S: deployment migration failure M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+RD OVERLAP R:RULE-K1-0115 P:RULE-K1-0317 | P: CI platform secret/identity mechanism.
+SD P:RULE-K1-0317 P:RULE-K1-0351 | S: CI pipeline secrets M: MUST both E: none in either T: none
+RD OVERLAP P:EXTRA-K1-0109 P:EXTRA-K1-0121 | same environment-protection guidance in ci-cd and delivery-change; P0109 adds that CI and CD may be separate workflows.
+# r249-r255 .claude/skills/code-review/SKILL.md
+SD P:RULE-K1-0319 R:RULE-K1-0207 | S: code review M: MUST both E: edits when explicitly asked (both) T: none
+SPLIT X:BF-K1-0061 | a@16-16: Review may edit if asked. | b@20-20: Findings follow an explicit priority order. | c@20-20: Tooling-owned formatting findings are excluded. | d@24-24: Isolated-line review is forbidden.
+RD OVERLAP X:BF-K1-0061#a P:RULE-K1-0319 | X reports tension between the edit-if-asked allowance and the read-only reviewer-agent contract.
+AC P:RULE-K1-0319 R:RULE-K1-0002 | X BF-K1-0061 reports a possible conflict: the workflow allows edits when asked, while the code-reviewer agent contract is read-only.
+SPLIT R:RULE-K1-0208 | a: Prioritize findings (correctness; security/authorization; data integrity/persistence; architecture boundaries; concurrency/integration; missing meaningful tests; maintainability; credible performance); never elevate style above behavioral defects. | b: Do not report formatting owned by tooling.
+SD P:RULE-K1-0320 R:RULE-K1-0208#a X:BF-K1-0061#b | S: review priorities M: MUST (P, R), X no modality E: none in either T: none
+SD P:EXTRA-K1-0110 R:RULE-K1-0208#b X:BF-K1-0061#c | S: review formatting findings M: MUST_NOT (P) = MUST + 'do not' (R) (F7), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT R:RULE-K1-0209 | a: Establish the review scope and read enough surrounding code (callers, contracts, dependencies); never review isolated lines. | b: Read the governing standards and relevant knowledge to understand changed behavior; check architecture against the loaded owners rather than a private checklist.
+SD P:RULE-K1-0321 R:RULE-K1-0209#a X:BF-K1-0061#d | S: review scope M: MUST (P, R), X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0209#b P:RULE-K1-0322 | P adds identifying intended behavior, error cases and effects; R adds checking against loaded owners.
+SPLIT R:RULE-K1-0210 | a: Do not introduce or enforce patterns the repository has not adopted; differing from an unadopted pattern is not a finding. | b: Report only correctness failures with a plausible execution path.
+SD P:RULE-K1-0323 R:RULE-K1-0210#a | S: review criteria M: MUST_NOT both E: none in either T: none
+RD COMPOUND_PART P:RULE-K1-0325 R:RULE-K1-0210#b | P adds the correctness checklist.
+SPLIT X:BF-K1-0062 | a@43-43: Unadopted patterns are not review criteria. | b@51-51: Findings need a plausible execution path. | c@66-66: A full security scan runs only on request, for material sensitivity or a concrete finding.
+SD P:RULE-K1-0323 X:BF-K1-0062#a | S: review criteria M: P MUST_NOT, X no modality E: none in either T: none
+SD R:RULE-K1-0210#b X:BF-K1-0062#b | S: correctness findings M: R MUST, X no modality E: none in either T: none
+# [revised before K1 checkpoint: full source line code-review/SKILL.md L47 checked in inputs/K1; it contains 'Do not confuse internal implementation details with product behavior', so the R clause is shared cited text (F6); RD DETAIL_DIFFERENCE replaced by SD]
+SD P:RULE-K1-0324 R:RULE-K1-0211 | S: specification conformance review M: MUST both E: approved synchronized details are not drift (both); R also states that internal implementation details are not product behavior, which is in the shared cited line L47 (F6) T: SPECIFICATION.md non-empty
+SPLIT R:RULE-K1-0212 | a: Architecture review checks role/dependency rules, the repository/persistence boundary and proportionality (consequential patterns only with approved need). | b: When the persistence model changed, check that persistence-change steps including the development seeder were followed. | c: Check frontend code against frontend rules without mechanically applying backend project-boundary rules.
+RD OVERLAP R:RULE-K1-0212#a P:RULE-K1-0030 | P: no patterns without a concrete current need.
+RD OVERLAP R:RULE-K1-0212#a P:RULE-K1-0015 | P: Reserved choices require approval.
+SD P:RULE-K1-0326 R:RULE-K1-0212#b | S: persistence-change review M: MUST both E: none in either T: when the persistence model changed
+SD P:EXTRA-K1-0111 R:RULE-K1-0212#c | S: frontend review M: MUST_NOT (P) = MUST + 'without mechanically applying' (R) (F7) E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT R:RULE-K1-0213 | a: Review data and security aspects (commit behavior, destructive changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive logging, concurrency, migrations, cache consistency). | b: Run the full security-scan only when an audit was requested, the change is materially security-sensitive, or a concrete finding justifies it.
+SD P:RULE-K1-0327 R:RULE-K1-0213#a | S: data/security review M: MUST both E: none in either T: none
+SD P:EXTRA-K1-0112 R:RULE-K1-0213#b X:BF-K1-0062#c | S: full security scan M: MUST_NOT (P) = MUST 'only when' (R), X no modality E: requested audit, material sensitivity or concrete finding (all) T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0328 R:RULE-K1-0214 | S: external-call review M: MUST both E: none in either T: none
+SD P:RULE-K1-0329 R:RULE-K1-0215 | S: test-coverage review M: MUST both E: equivalent coverage exists (both) T: none
+SD P:RULE-K1-0330 R:RULE-K1-0216 | S: performance findings M: MUST both E: none in either T: none
+SPLIT R:RULE-K1-0217 | a: Review must not require an MCP server or specific analyzer; tool output is evidence, not authority. | b: Read the code before turning a warning into a finding.
+SD P:RULE-K1-0331 R:RULE-K1-0217#a | S: review tooling M: MUST_NOT both E: none in either T: none
+SPLIT X:BF-K1-0063 | a@86-91: Findings carry severity, location, impact and minimal fix with four severity definitions. | b@93-93: No filler praise. | c@82-82: Diagnostics require source reading before promotion to findings.
+SD P:EXTRA-K1-0113 R:RULE-K1-0218 X:BF-K1-0063#a | S: review output M: MUST (P, R), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED
+SD R:RULE-K1-0217#b X:BF-K1-0063#c | S: analyzer warnings M: R MUST_NOT (record-level), X no modality E: none in either T: before promoting a warning
+SPLIT R:RULE-K1-0219 | a: Never invent findings to populate a category; when there are no meaningful findings say so and name important areas that could not be verified. | b: No filler praise.
+SD P:RULE-K1-0332 R:RULE-K1-0219#a | S: review output M: MUST_NOT both E: none in either T: none
+SD P:EXTRA-K1-0114 R:RULE-K1-0219#b X:BF-K1-0063#b | S: review output M: MUST_NOT (P, R), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+# r256-r259 .claude/skills/configuration/SKILL.md
+CX X:BF-K1-0064@17-17 | Ordinary services consume typed options instead of configuration keys and parsing (reported: stronger than a general preference against scattered IConfiguration use).
+SD P:RULE-K1-0333 X:BF-K1-0064 | S: configuration access M: P DEFAULT, X no modality E: composition root, provider setup and infrastructure registration (P) T: none
+RD OVERLAP R:RULE-K1-0060 P:RULE-K1-0333 | P: direct IConfiguration only in composition/provider/infrastructure setup.
+SPLIT P:EXTRA-K1-0115 | a: Numeric example values are illustrative, not approved defaults; choose retry counts, timeouts and limits from actual integration and deployment requirements. | b: Complex rules use a validation delegate.
+SD P:EXTRA-K1-0115#a R:RULE-K1-0221 | S: configuration values M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED
+SPLIT X:BF-K1-0065 | a@53-53: ValidateOnStart is preferred generically. | b@43-49: Example JWT key-length/expiry validation values are illustrative, not approved defaults.
+SD P:RULE-K1-0334 X:BF-K1-0065#a | S: options validation M: P PREFER, X 'preferred' E: none in either T: none
+RD OVERLAP X:BF-K1-0065#b P:EXTRA-K1-0115#a | X flags the example's 32-character key restriction as a possible unapproved limit.
+RD OVERLAP R:RULE-K1-0060 P:RULE-K1-0334 | P: AddOptions/ValidateOnStart over Configure<T>.
+RD OVERLAP R:RULE-K1-0115 P:RULE-K1-0335 | P: appsettings.json holds non-secret defaults only; Key Vault only on Azure.
+RD OVERLAP R:RULE-K1-0114 P:RULE-K1-0335 | P: secrets kept out of appsettings.json.
+# r260-r264 .claude/skills/custom-settings/SKILL.md
+SD P:RULE-K1-0336 R:RULE-K1-0222 | S: custom-settings approval M: REQUIRES_APPROVAL both E: none in either T: before synchronization
+SPLIT X:BF-K1-0066 | a@19-19: A settings conflict stops until the user decides. | b@20-20: Untouched framework defaults are excluded. | c@24-24: Each recorded setting needs a stable descriptive name and purpose.
+SD P:RULE-K1-0337 R:RULE-K1-0223 X:BF-K1-0066#a | S: settings conflict M: REQUIRES_APPROVAL (P, R), X no modality E: none in either T: none
+SPLIT R:RULE-K1-0224 | a: Only values that belong in CUSTOM_SETTINGS.md per CLAUDE.md product-source rules are recorded there. | b: Framework defaults the project has not intentionally overridden are not recorded.
+SD P:RULE-K1-0338 R:RULE-K1-0224#a | S: custom-settings scope M: MUST both E: none in either T: none
+SD P:EXTRA-K1-0116 R:RULE-K1-0224#b X:BF-K1-0066#b | S: framework defaults M: MUST_NOT (P) = MUST + 'not' (R) (F7), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT R:RULE-K1-0225 | a: Record the setting in CUSTOM_SETTINGS.md with a stable descriptive name, its value and its purpose. | b: Avoid duplicating the same literal across many layers when a single source in code or configuration is appropriate.
+SD P:RULE-K1-0339 R:RULE-K1-0225#a X:BF-K1-0066#c | S: setting record M: MUST (P, R), X no modality E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-K1-0225#b P:EXTRA-K1-0117 | same literal-duplication statement; R record-level MUST, P PREFER.
+SD P:RULE-K1-0340 R:RULE-K1-0226 | S: setting change synchronization M: MUST both E: coincidental numbers left alone (both) T: none
+SD P:RULE-K1-0341 R:RULE-K1-0227 | S: schema-relevant settings M: MUST both E: none in either T: none
+SD P:RULE-K1-0342 R:RULE-K1-0228 | S: mirrored constraints M: MUST both E: none in either T: none
+SD P:RULE-K1-0343 R:RULE-K1-0229 | S: custom-settings completion M: MUST both E: none in either T: before completion
+SPLIT X:BF-K1-0067 | a@40-40: Settings completion requires a renewed specification conflict check. | b@44-44: The report lists old/new values, every updated surface and migration status.
+RD COMPOUND_PART P:RULE-K1-0343 X:BF-K1-0067#a | P adds stale-reference search, builds, tests, persistence verification and verify.
+SD P:EXTRA-K1-0118 R:EXTRA-K1-0036 X:BF-K1-0067#b | S: custom-settings report M: MUST (P, R), X no modality E: none in either T: end of run
+# r265-r269 .claude/skills/delivery-change/SKILL.md
+SD P:EXTRA-K1-0119 R:RULE-K1-0231 | S: pipeline/container authoring M: MUST both E: none in either T: before writing | labels: P EXTRA, R ORACLE_LINKED
+SD P:RULE-K1-0344 R:RULE-K1-0232 | S: CI pipelines M: MUST both E: none in either T: none
+SD P:RULE-K1-0345 R:RULE-K1-0233 | S: frontend CI M: MUST both E: maintained lockfile (both) T: none
+SPLIT R:RULE-K1-0234 | a: Enforced formatting/analyzer gates only when the project has adopted them. | b: Dependency vulnerability inspection per the project's security policy. | c: No automatic package upgrades unless the project adopted automated updates.
+SPLIT X:BF-K1-0068 | a@25-25: Formatting/analyzer gates need project adoption. | b@25-25: Automated package upgrades are forbidden unless automated updates were adopted.
+SD P:RULE-K1-0346 R:RULE-K1-0234#a X:BF-K1-0068#a | S: CI gates M: MUST (P, R), X no modality E: adopted gates (all) T: none
+RD DETAIL_DIFFERENCE P:EXTRA-K1-0104 R:RULE-K1-0234#b | P adds specific audit commands (dotnet package list --vulnerable, restore auditing, npm audit).
+SD P:EXTRA-K1-0120 R:RULE-K1-0234#c X:BF-K1-0068#b | S: automatic upgrades M: MUST_NOT (P) = MUST + 'no' (R) (F7), X 'forbidden' E: adopted automation (all) T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT R:RULE-K1-0230 | a: Containers are optional infrastructure: do not introduce Docker merely because the application can be containerized. | b: Build images and deployable artifacts only when the project deploys them.
+SD P:RULE-K1-0347 R:RULE-K1-0230#b | S: deployable artifacts M: MUST_NOT both E: none in either T: none
+RD OVERLAP R:RULE-K1-0114 P:RULE-K1-0348 | P: images, build arguments and committed Compose files are source-controlled surfaces.
+SPLIT X:BF-K1-0069 | a@30-30: Delivery publishes reproducible necessary artifacts. | b@39-39: Federated identity is preferred. | c@39-39: Supported environment protection is used. | d@43-43: Clean-environment restore, backend/frontend build, tests and artifacts are validated before completion.
+SD P:EXTRA-K1-0105 X:BF-K1-0069#a | S: published artifacts M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0107 X:BF-K1-0069#b | S: deployment credentials M: P PREFER, X 'preferred' E: none in either T: none
+SD P:EXTRA-K1-0121 X:BF-K1-0069#c | S: environment protection M: P DEFAULT, X no modality E: platform support (both) T: none
+SPLIT R:RULE-K1-0235 | a: Production database migrations must not run automatically from normal application startup by default; a production migration is an explicit deployment step at a controlled point with approved credentials. | b: The production migration fails visibly on error. | c: Development seeding never runs in Production (unchanged by container deployment).
+SD P:RULE-K1-0349 R:RULE-K1-0235#a | S: production migrations M: MUST_NOT both E: by default (both) T: none
+SD P:EXTRA-K1-0108 R:RULE-K1-0235#b | S: deployment migration failure M: MUST (P), R record-level MUST_NOT phrased positively E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0350 R:RULE-K1-0235#c | S: development seeding M: MUST_NOT both E: none in either T: none
+RD OVERLAP R:RULE-K1-0115 P:RULE-K1-0351 | P: CI platform secret/identity mechanism.
+SPLIT R:RULE-K1-0236 | a: Before considering a pipeline complete verify clean-environment restore, backend and (when present) frontend builds, configured tests, no developer-machine dependence, no exposed secrets and expected artifacts. | b: Report each pipeline verification item as PASS / NOT RUN / NOT APPLICABLE.
+SD P:EXTRA-K1-0122 R:RULE-K1-0236#a X:BF-K1-0069#d | S: pipeline verification M: MUST (P, R), X no modality E: none in either T: before completion | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0352 R:RULE-K1-0236#b | S: pipeline verification report M: MUST both E: none in either T: none
+# r270-r272 .claude/skills/dependency-injection/SKILL.md
+CX X:BF-K1-0070@18-18 | Abstractions are used at Application-service as well as repository/external boundaries; concrete registration is allowed for implementation helpers.
+SD P:EXTRA-K1-0123 X:BF-K1-0070 | S: DI abstractions M: P DEFAULT, X no modality E: implementation-only helpers (both) T: none
+RD OVERLAP R:RULE-K1-0038 P:EXTRA-K1-0123 | P adds Application-service abstractions and concrete helper registration.
+SPLIT R:RULE-K1-0237 | a: Prefer explicit DI registration in small and medium applications; add assembly scanning, keyed services, factories or decorators only when they solve an actual composition problem. | b: No Scrutor for a single decoration. | c: Assembly scanning only for genuine registration boilerplate and over the assembly that owns the services.
+RD DIFFERENT_STRENGTH R:RULE-K1-0237#a P:EXTRA-K1-0124 | same statement; R DEFAULT, P PREFER.
+RD OVERLAP R:RULE-K1-0237#a P:EXTRA-K1-0125 | P: keyed services for several implementations selected by a known key.
+RD DIFFERENT_STRENGTH R:RULE-K1-0237#b P:EXTRA-K1-0126 | same statement; R DEFAULT, P MUST_NOT.
+SD P:EXTRA-K1-0127 R:RULE-K1-0237#c | S: assembly scanning M: DEFAULT both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT X:BF-K1-0071 | a@49-49: Explicit registration is preferred for small/medium applications. | b@60-60: Singleton scoped work creates a scope per operation and resolves orchestration, not Infrastructure internals.
+SD P:EXTRA-K1-0124 X:BF-K1-0071#a | S: DI registration M: P PREFER, X 'preferred' E: none in either T: none
+SD P:RULE-K1-0353 X:BF-K1-0071#b | S: DI lifetimes M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0048 P:RULE-K1-0353 | P: Application services with scoped repositories never singleton; scope per operation.
+SPLIT X:BF-K1-0072 | a@76-76: Keyed services require a meaningful selection problem. | b@106-106: Scrutor is not added for one simple decoration. | c@110-110: Scanning is limited to real registration volume and owning assemblies.
+SD P:EXTRA-K1-0125 X:BF-K1-0072#a | S: keyed services M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0126 X:BF-K1-0072#b | S: Scrutor M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0127 X:BF-K1-0072#c | S: assembly scanning M: P DEFAULT, X no modality E: none in either T: none
+# r273-r280 .claude/skills/development-workflow/SKILL.md
+RD COMPOUND_PART P:RULE-K1-0354 R:RULE-K1-0238 | P adds handling gaps and conflicts per CLAUDE.md.
+SPLIT R:RULE-K1-0239 | a: Before any non-trivial change inspect the relevant existing code, read the applicable standards and load the relevant knowledge skills. | b: Route specialized work to its workflow (persistence-change, custom-settings, project-structure, delivery-change).
+SD P:RULE-K1-0355 R:RULE-K1-0239#a | S: pre-change inspection M: MUST both E: none in either T: before any non-trivial change
+SD P:RULE-K1-0356 R:RULE-K1-0240 | S: questionable requests M: MUST both E: none in either T: before implementing
+RD OVERLAP R:RULE-K1-0176 P:RULE-K1-0357 | P: per-choice classification routing Reserved choices to architecture-decision.
+SD P:RULE-K1-0358 R:RULE-K1-0241 | S: change scope M: MUST both E: none in either T: none
+SPLIT X:BF-K1-0073 | a@42-42: Regression tests must fail before and pass after the fix. | b@48-48: Durable behavior sources update in the same change. | c@52-52: Confirmed review findings are fixed before final verification.
+SD P:RULE-K1-0359 R:RULE-K1-0242 X:BF-K1-0073#a | S: regression tests M: DEFAULT (P, R), X 'must' E: equivalent coverage (both); R's unrealistic-recurrence exception mirrors P's plausible-recurrence trigger T: none
+RD DIFFERENT_STRENGTH R:RULE-K1-0242 P:RULE-K1-0378 | same regression-test statement; R DEFAULT, P DEFINITION.
+SD P:RULE-K1-0360 R:RULE-K1-0243 | S: performance changes M: MUST both E: none in either T: none
+SD P:RULE-K1-0361 R:RULE-K1-0244 | S: API deprecation M: MUST both E: none in either T: none
+RD OVERLAP P:RULE-K1-0258 P:RULE-K1-0361 | api-versioning vs development-workflow deprecation; P0361 adds the support-period obligation.
+SD P:RULE-K1-0362 R:RULE-K1-0245 X:BF-K1-0073#b | S: approved behavioral rules M: MUST (P, R), X no modality E: none in either T: same change
+SD P:RULE-K1-0363 R:RULE-K1-0246 X:BF-K1-0073#c | S: code review before verification M: MUST (P, R), X no modality E: none in either T: before final verification
+SD P:RULE-K1-0364 R:RULE-K1-0247 | S: completion verification M: MUST both E: none in either T: before completion
+SPLIT R:EXTRA-K1-0037 | a: The final report summarizes what changed and why, the verify report and approvals obtained. | b: The final report lists every unresolved Decision Request.
+SD P:EXTRA-K1-0128 R:EXTRA-K1-0037#a | S: final report M: MUST both E: none in either T: end of work
+SD P:RULE-K1-0365 R:EXTRA-K1-0037#b | S: final report M: MUST both E: none in either T: end of work | labels: P ORACLE_LINKED, R EXTRA (whole record)
+# r281-r283 .claude/skills/docker/SKILL.md
+SPLIT X:BF-K1-0074 | a@13-13: All build tooling is excluded from production images. | b@13-13: Configuration is external, images are reproducible and Docker concerns stay out of Domain/Application.
+RD OVERLAP X:BF-K1-0074#a P:RULE-K1-0367 | X reads the exclusion as absolute; P records DEFAULT.
+SD P:EXTRA-K1-0129 X:BF-K1-0074#b | S: container images M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-K1-0366 R:RULE-K1-0230#a | S: optional containers M: MUST_NOT both E: none in either T: none
+RD OVERLAP R:RULE-K1-0061 P:RULE-K1-0367 | P: build tooling out of production images.
+SPLIT X:BF-K1-0075 | a@46-46: Project files are copied explicitly preserving layout. | b@50-50: An appropriate named runtime image and user with correct directory ownership. | c@58-58: Local password files are ignored.
+SD P:EXTRA-K1-0130 X:BF-K1-0075#a | S: Docker restore layout M: P MUST, X no modality E: none in either T: none
+SD P:RULE-K1-0368 X:BF-K1-0075#b | S: runtime images M: P DEFAULT, X no modality E: when the non-root user fits (P) T: none
+SD P:RULE-K1-0370 X:BF-K1-0075#c | S: local passwords M: P MUST, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0061 P:RULE-K1-0368 | P: ASP.NET runtime image and non-root app user with directory ownership.
+RD OVERLAP R:RULE-K1-0114 P:RULE-K1-0369 | P: container secret mechanisms; check Dockerfile, Compose, build arguments, appsettings.
+RD OVERLAP R:RULE-K1-0115 P:RULE-K1-0369 | P: platform/container secret mechanisms.
+RD OVERLAP R:RULE-K1-0230#a P:EXTRA-K1-0132 | P: Compose only when beneficial and only used services.
+RD OVERLAP R:RULE-K1-0114 P:RULE-K1-0370 | P: local passwords in an ignored .env.
+SPLIT X:BF-K1-0076 | a@75-75: Native HTTP probes are preferred and probe executables are verified. | b@83-83: An explicit ignore list is given. | c@87-87: Specialized images require compatibility testing. | d@95-95: Image, startup, port and probe validation is required.
+SD P:EXTRA-K1-0133 X:BF-K1-0076#a | S: health probes M: P DEFAULT, X 'preferred' E: none in either T: none
+SD P:EXTRA-K1-0135 X:BF-K1-0076#b | S: Docker ignore list M: P MUST, X no modality E: files restore/build needs (P) T: none
+SD P:EXTRA-K1-0136 X:BF-K1-0076#c | S: specialized images M: P DEFAULT, X no modality E: compatibility/deployment requirements (both) T: none
+RD DIFFERENT_STRENGTH R:RULE-K1-0248 P:EXTRA-K1-0137 | same container-verification statement; R SHOULD, P MUST.
+RD OVERLAP X:BF-K1-0076#d P:EXTRA-K1-0137 | P MUST and R SHOULD differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0076#d R:RULE-K1-0248 | no single merge target (convention).
+# r284-r289 .claude/skills/dotnet-testing/SKILL.md
+SPLIT R:RULE-K1-0249 | a: Do not build test infrastructure without a concrete testing need (no enterprise-sized harness for a small project). | b: No generic test-data framework for a few simple objects. | c: No snapshot library by default.
+RD DIFFERENT_STRENGTH R:RULE-K1-0249#a P:EXTRA-K1-0138 | same statement; R MUST_NOT, P DEFAULT.
+RD DIFFERENT_STRENGTH R:RULE-K1-0249#b P:EXTRA-K1-0144 | same statement; R MUST_NOT, P DEFAULT.
+RD DIFFERENT_STRENGTH R:RULE-K1-0249#c P:EXTRA-K1-0146 | same statement; R MUST_NOT, P DEFAULT.
+SPLIT P:EXTRA-K1-0139 | a: Arrange/Act/Assert is a useful default; comments optional when obvious. | b: Use the NUnit constraint model (Assert.That).
+SPLIT X:BF-K1-0077 | a@39-39: Constraint assertions are mandated. | b@43-43: Explicit TestCase rows are favored. | c@57-57: One observable scenario per test, with multi-step exceptions when the sequence is the scenario.
+RD DIFFERENT_STRENGTH P:EXTRA-K1-0139#b X:BF-K1-0077#a | X reads constraint assertions as mandated; P records DEFAULT.
+SD P:RULE-K1-0371 X:BF-K1-0077#b | S: explicit test cases M: P DEFAULT, X 'favored' E: none in either T: none
+RD OVERLAP R:RULE-K1-0109 P:RULE-K1-0371 | P: [TestCase] rows with the expected value as an argument.
+SD P:EXTRA-K1-0140 X:BF-K1-0077#c | S: test scope M: P PREFER, X 'favored' E: sequence is the scenario (both) T: none
+RD OVERLAP R:RULE-K1-0104 P:RULE-K1-0372 | P: Application Service tests with controlled doubles.
+RD OVERLAP R:RULE-K1-0105 P:RULE-K1-0372 | P: prefer integration tests when persistence/DI/serialization/HTTP matter.
+RD OVERLAP R:RULE-K1-0107 P:RULE-K1-0373 | P: Testing environment with isolated resources.
+SPLIT X:BF-K1-0078 | a@101-101: Tests use a Testing environment. | b@109-109: FakeTimeProvider is prescribed. | c@118-118: Slow or unreliable external integrations are kept out of ordinary fast runs.
+RD OVERLAP X:BF-K1-0078#a P:RULE-K1-0373 | P adds isolated resources that can never reach Development/Production databases.
+SD P:RULE-K1-0375 X:BF-K1-0078#b | S: time-dependent tests M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0143 X:BF-K1-0078#c | S: external-system tests M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0106 P:EXTRA-K1-0142 | P: database strategy chosen by what the test must prove.
+RD OVERLAP R:RULE-K1-0108 P:RULE-K1-0374 | P: reset database, unique identifiers, never modify production data.
+RD OVERLAP R:RULE-K1-0081 P:RULE-K1-0375 | P: FakeTimeProvider in tests.
+RD OVERLAP R:RULE-K1-0107 P:RULE-K1-0376 | P: fakes, stub handlers or local fake servers; sandbox only when targeted.
+SPLIT X:BF-K1-0079 | a@122-122: Test-data machinery is limited. | b@134-134: Snapshot libraries are not a default. | c@130-130: Probes are reviewed before promotion. | d@138-138: Arbitrary timing delays are excluded. | e@138-138: Assertion-free tests are excluded except for no-throw behavior. | f@138-138: Testcontainers are discouraged without a provider-fidelity need.
+RD OVERLAP X:BF-K1-0079#a P:EXTRA-K1-0144 | P DEFAULT and R MUST_NOT differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0079#a R:RULE-K1-0249#b | no single merge target (convention).
+RD OVERLAP X:BF-K1-0079#b P:EXTRA-K1-0146 | P DEFAULT and R MUST_NOT differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0079#b R:RULE-K1-0249#c | no single merge target (convention).
+RD COMPOUND_PART P:RULE-K1-0379 X:BF-K1-0079#c | P adds converting temporary checks into maintained tests.
+SD P:RULE-K1-0382 X:BF-K1-0079#d | S: timing-sensitive tests M: P AVOID, X 'excluded' E: none in either T: none
+SD P:EXTRA-K1-0147 X:BF-K1-0079#e | S: assertion-free tests M: P AVOID, X 'excluded' E: does-not-throw behavior (both) T: none
+SD P:RULE-K1-0383 X:BF-K1-0079#f | S: Testcontainers M: P AVOID, X 'discouraged' E: none in either T: none
+RD OVERLAP R:RULE-K1-0110 P:RULE-K1-0377 | P: specific naming pattern unless an established convention exists.
+SD P:RULE-K1-0379 R:RULE-K1-0250 | S: temporary behavioral checks M: MUST both E: equivalent existing coverage (both) T: none
+RD OVERLAP R:RULE-K1-0111 P:RULE-K1-0380 | P: coverage is diagnostic, not a target.
+RD OVERLAP R:RULE-K1-0104 P:RULE-K1-0381 | P: avoid assertions repeating the implementation.
+RD OVERLAP R:RULE-K1-0107 P:RULE-K1-0382 | P: avoid arbitrary delays.
+RD OVERLAP R:RULE-K1-0106 P:RULE-K1-0383 | P: avoid Testcontainers without a provider-fidelity need.
+# r290 .claude/skills/ef-core/SKILL.md
+RD OVERLAP R:RULE-K1-0063 P:RULE-K1-0384 | P: persistence contracts in Application; IUnitOfWork over the same scoped DbContext.
+RD OVERLAP R:RULE-K1-0069 P:RULE-K1-0384 | P: specific repositories defined by Application.
+REVIEWED r241-r290

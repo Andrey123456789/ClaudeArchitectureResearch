@@ -1,0 +1,159 @@
+# M / B007 — add-dependency, angular, api-versioning, architecture-decision.
+
+C R140 OL WF-001 | MUST | Inspect the relevant existing code and read the owning rules before a non-trivial change; rules that have not loaded yet (e.g. dependencies.md before a manifest is opened) are read explicitly. | non-trivial changes | none stated
+C R141 OL DEP-002 | MUST NOT | When the approved stack defines a technology for a capability use it rather than silently selecting an alternative; never silently replace a requested package with an alternative. | technology and package choice | none stated
+C R142 OL ARC-020,GOV-017 | REQUIRES_APPROVAL (Reserved) | Reserved decisions need explicit approval unless already required by the specification or established structure: changing an accepted project or architecture decision; a new architectural style or pattern (Rich Domain Model or DDD tactical patterns, CQRS/MediatR/Vertical Slice Architecture, event sourcing, microservices); a new production project, layer or assembly or an additional DbContext/persistence boundary; changed persistence boundaries or technology; a new infrastructure category (messaging, background processing, distributed caching, search, external storage, external identity); a major library or framework or replacing an approved baseline technology; a project-wide convention or abstraction (e.g. a project-wide Result model); a new or changed authentication/authorization architecture; a breaking public API change. | consequential decisions | Already required by the specification or established project structure.
+C R143 OL DEP-017 | DEFAULT | When Controller API versioning has been explicitly adopted use the Controller integration of Asp.Versioning (Asp.Versioning.Mvc plus Asp.Versioning.Mvc.ApiExplorer for versioned OpenAPI); do not add the package before the project adopts versioning. | API versioning packages | none stated
+C R144 OL DEP-004 | MUST | Before installation check whether the selected package/version is deprecated, check known vulnerability information and verify the license of the exact selected version from official registry metadata (and upstream when necessary). | dependency additions and updates | none stated
+C R145 OL DEP-005 | REQUIRES_APPROVAL | Do not install automatically a dependency requiring payment or a commercial license, or one whose license has material obligations or cannot be confidently classified; explain the concern, present reasonable alternatives and wait for approval; say so explicitly when no free alternative exists. | dependency additions | Approval given.
+C R146 OL WF-007 | MUST | After a dependency change run the manifest check, restore and build the affected projects and inspect vulnerability information for the changed dependency set. | dependency changes | none stated
+C R147 OL GOV-014 | MUST | Keep changes focused on the requested scope and preserve existing behavior unless the task or approved specification requires a change (e.g. no automatic replacement or upgrade of unrelated packages because a scanner reports a finding; no unrelated dependency cleanup). | all changes | Task or approved specification requires the change.
+C R148 OL GOV-012 | DEFAULT | Prefer simple, maintainable solutions and avoid speculative abstractions (e.g. no custom abstraction around every UI-library component without a concrete reason). | all code | none stated
+C R149 OL GOV-013 | MUST NOT | Do not introduce frameworks, libraries, infrastructure or architectural patterns without a concrete current need (e.g. Angular Material is not added automatically to a project that has not chosen it). | all changes | none stated
+C R150 OL WF-016 | DEFAULT | Treat generated code as generated: keep it separate from handwritten logic and regenerate it when the source contract changes. | generated clients and outputs | none stated
+C R152 OL API-022 | MUST | Deprecating a published API version is a migration process (metadata marking plus the development-workflow deprecation obligations), not merely an attribute. | published API versions | none stated
+C R153 OL GOV-017 | MUST | Classify a decision before acting on it: Decided (settled by the product sources, CLAUDE.md, the technology stack, rules, an accepted decision record or established structure; reopening it requires approval), Delegated (local, reversible, no boundary, dependency, convention, contract or observable-behavior change; decide without asking), Reserved (explicit approval). | all consequential choices | none stated
+C R154 OL GOV-017 | MUST | For a Reserved decision stop that part of the work and issue a Decision Request (Context, Options, Recommendation, Blocked, Proceeding with) through architecture-decision; continue only with compliant non-Reserved work; an explicit user instruction counts as approval. | Reserved decisions | none stated
+C R155 OL GOV-017 | MUST | In an autonomous or headless run never make a Reserved decision: proceed only with the policy-compliant non-Reserved 'Proceeding with' work and report every unresolved Decision Request. | headless runs | none stated
+C R156 OL GOV-007 | MUST | When a new behavioral rule or product value is approved, update the durable source of truth in the same change (SPECIFICATION.md, or CUSTOM_SETTINGS.md through custom-settings). | approved product behavior | none stated
+C X10 EX DEP-001,GOV-014 | MUST | Remove dependencies that are no longer used when doing so is part of the current change and safe to verify; do not leave dead package references behind. | dependency changes | Unrelated cleanup in a narrowly scoped task. | DEP-001 governs adding dependencies and GOV-014 limits scope; no oracle policy requires removing unused dependencies. | A change that makes a package unused is incomplete until the package reference is removed.
+C X11 EX DEP-004,DEP-005,WF-009 | MUST | The add-dependency report states the package, selected version, license, checks performed and approval status (approved / awaiting approval / not needed). | dependency changes | none stated | DEP-004/DEP-005 require the checks and approval gate and WF-009 truthful verification reporting; no oracle policy prescribes the dependency report contents. | A dependency change reported without its license or approval status does not follow the workflow.
+C X12 EX GOV-017,GOV-007 | MUST | An approved Reserved decision (including an explicit instruction in the original request) is recorded before its Reserved part is implemented: a record docs/decisions/NNNN-short-title.md with Status, Date, Context, Decision, Alternatives considered and Consequences, plus an update of the planning-time owner (CLAUDE.md Architecture Defaults or docs/technology-stack.md); new path-rule constraints are edited into the owning rule; rejected or deferred decisions worth keeping are recorded with that status. | approved decisions | Product behavior and tunable values go to SPECIFICATION.md / CUSTOM_SETTINGS.md. | GOV-017 requires approval for Reserved decisions but no recording artifact; no oracle policy requires decision records or planning-owner updates. | After approval to adopt a new library the change is incomplete without the decision record and the technology-stack update.
+
+FILE .claude/skills/add-dependency/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R140 | Read `.claude/rules/dependencies.md` first
+17 NN | section heading
+19-20 OL R69,R141 | Is there a concrete current requirement?
+21-23 OL R142 | replacement of an approved technology is Reserved (CLAUDE.md § Decision
+24 NN | list label
+25-31 MX R136,X9 | Do not add the deprecated `Microsoft.Extensions.Http.Polly` or ⟫ The Microsoft resilience packages as default with documented Polly exceptions are DEP-020 (R136); the categorical prohibition of the deprecated integrations is X9.
+32-35 OL R143 | package before the project actually adopts versioning.
+37 NN | section heading
+39-47 OL R139 | Verify the current version from the package registry rather than relying on
+49-50 OL R139 | means the latest stable compatible version, not the latest version of
+52 NN | section heading
+54-63 OL R144 | Check whether the selected package/version is deprecated.
+65 NN | section heading
+67-74 OL R145 | Do not install automatically — explain the concern, present reasonable
+76-78 OL R141,R145 | Never silently replace the requested package with an alternative.
+80-90 NN | approval request example
+92 NN | section heading
+94 NN | subsection heading
+96-99 OL R70 | Add a versionless `PackageReference` to the narrowest project that needs the
+101-111 NN | CPM example
+113 NN | subsection heading
+115-116 OL R71 | `--save-dev` for build and test tooling.
+117 LU U1 | Commit `package.json` and `package-lock.json` together. ⟫ Keeping the manifests together is DEP-007; whether 'commit' instructs a Git commit despite GOV-015 is uncertain.
+118-120 OL R4 | Do not use `--force` or `--legacy-peer-deps` merely to bypass incompatible
+122 NN | section heading
+124-129 OL R146 | Inspect vulnerability information for the changed dependency set:
+131-134 NN | vulnerability command example
+136-137 OL R147 | Do not automatically replace or upgrade
+139 NN | section heading
+141-143 MX X10,R147 | do not leave dead package references behind. ⟫ Removing no-longer-used dependencies is X10; avoiding unrelated cleanup is GOV-014 (R147).
+145 NN | section heading
+147-148 EX X11 | Report the package, selected version, license, checks performed, and approval
+
+FILE .claude/skills/angular/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-17 NN | pointers to policy owners
+19 NN | section heading
+21-48 NN | suggested directory tree (EXC-018)
+50-52 OL R13 | and the frontend-specific data access it needs; do not move feature-specific code
+54 NN | section heading
+56-63 NN | standalone component code example
+65 NN | section heading
+67-68 NN | page and presentation component technique (EXC-018)
+70 NN | section heading
+72-79 NN | signals code example
+81-83 NN | computed vs effect technique (EXC-018)
+85 NN | section heading
+87-90 OL R23 | `takeUntilDestroyed` and the `async` pipe are the
+92 NN | section heading
+94-103 NN | data-access service code example
+105 OL R17 |
+107 NN | section heading
+109 NN | lead-in
+111-118 NN | interceptor configuration code example
+120 OL R18 |
+122 NN | section heading
+124-126 OL R110 | all UI/UX concerns.
+128 NN | section heading
+130-132 OL R19 | When backend errors use `ProblemDetails`, parse and map them in one reusable
+134 NN | section heading
+136-137 OL R21 | Do not duplicate complex Domain rules
+139 NN | section heading
+141-150 NN | routing code example
+152 NN | loadComponent note
+154 NN | section heading
+156-159 OL R16,R5 | Introduce a dedicated state-management library only when
+161 NN | section heading
+163-165 OL R13 | not a dumping ground.
+167 NN | section heading
+169-172 OL R148,R149 | Do not add Angular
+174 NN | section heading
+176-178 OL R150 | treat generated code as generated,
+180 NN | section heading
+182-187 NN | frontend test targeting (EXC-018)
+189 NN | section heading
+191-194 OL R85 | Do not prematurely optimize normal Angular code.
+196 NN | section heading
+198-200 DU R13,R15 | anti-pattern list restating structure and state rules
+
+FILE .claude/skills/api-versioning/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-17 NN | pointers to policy owners
+19-20 OL R24,R63 | Versioning belongs to the API contract, not to Domain or Application.
+22 NN | section heading
+24-28 OL R29 | do not add `v1` automatically.
+30 NN | section heading
+32 NN | lead-in
+34-37 NN | URL example
+39-42 OL R31 | query-string versioning are the alternatives; when each may be chosen is owned
+44 NN | section heading
+46-60 NN | Asp.Versioning setup code example
+62 NN | section heading
+64-87 NN | versioned controller code example
+89 NN | lead-in
+91-100 NN | second version code example
+102-103 OL R63 | Different API versions may map the same Application result into different HTTP
+105 NN | section heading
+107-110 OL R30 | Changes that commonly justify a new version:
+112 NN | section heading
+114-117 NN | compatible change reference
+119 NN | section heading
+121-124 OL R152 | Deprecation is a migration process, not merely an attribute.
+126 NN | section heading
+128-131 OL R32 | the documented version must match
+133 NN | section heading
+135-139 NN | versioning test targeting (EXC-012 class)
+141 NN | section heading
+143-145 DU R46,R30,R31 | anti-pattern list restating Controller and versioning rules
+
+FILE .claude/skills/architecture-decision/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-14 NN | pointer to CLAUDE.md Decision Control
+16 NN | section heading
+18-19 OL R153 | Decided → follow it; reopening it is itself Reserved.
+21 NN | section heading
+23-35 OL R154 | Stop the Reserved part of the work and present:
+37-39 OL R155 | In an autonomous or headless run, do not wait and do not decide: continue only
+41 NN | section heading
+43-48 EX X12 | is recorded before the Reserved part is implemented:
+49-55 MX X12,R156 | product behavior or tunable values → `SPECIFICATION.md`, or ⟫ Planning-owner updates for architecture and technology decisions are X12; synchronizing approved product behavior into the product sources is GOV-007 (R156).
+56-57 EX X12,X4 | owning `.claude/rules/` file in place — one owner, no copies elsewhere.
+58 NN | routing pointer to development-workflow
+60 NN | section heading
+62-63 EX X12 | When the discussion is worth keeping, record it with Status Rejected or
+65 NN | section heading
+67-68 MX R154,X12 | The Decision Request (or the recorded decision and the files updated), and the ⟫ Presenting the Decision Request is R154; reporting the recorded decision and updated files is X12.
+DONE

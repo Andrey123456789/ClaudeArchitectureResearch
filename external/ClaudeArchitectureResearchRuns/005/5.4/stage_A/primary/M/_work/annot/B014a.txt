@@ -1,0 +1,122 @@
+# Batch B014 (part 1) — skills: health-check, httpclient-factory/references/resilience.md
+
+@@ output/template/.claude/skills/health-check/SKILL.md ;; Knowledge skill (on demand when implementing health endpoints).
+@scope on-demand knowledge skill health-check (backend)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-14 NN ;; Pointer to policy owner.
+16-18 OL [api019.distinguish-when-beneficial]
+20 NN ;; Heading.
+22-28 NN ;; Basic setup code example.
+30 NN ;; Advisory: more specific endpoints 'when appropriate'.
+32 NN ;; Heading.
+34-35 NN ;; Definition of liveness.
+37-44 NN ;; Liveness endpoint code example.
+46 NN ;; States probe configuration varies by hosting environment.
+48 NN ;; Heading.
+50-51 EX [x.hc-readiness-tags]
+53-59 NN ;; Tagged readiness check registration example.
+61-68 NN ;; Readiness endpoint mapping example.
+70-71 OL [api019.required-deps-only]
+73 NN ;; Heading.
+75-77 MX [api018.db-check-light,x.hc-framework-integration] ;; Lightweight non-mutating DB check is API-018; using provider/framework health-check integration is additional.
+79 NN ;; Heading.
+81-84 OL [api019.no-cascades]
+86 NN ;; Heading.
+88-91 EX [x.hc-status-mapping]
+93 NN ;; Heading.
+95-97 OL [api020.small-protected]
+99 NN ;; Heading.
+101-104 EX [x.hc-exposure]
+106 NN ;; Heading.
+108-109 OL [api019.startup-readiness]
+111 NN ;; Heading.
+113-115 MX [api018.cheap-probes,x.hc-no-error-logs] ;; Avoiding expensive queries/timeouts/allocations/workflows is API-018; not logging every normal failed probe at Error level is additional.
+117 NN ;; Heading.
+119-123 EX [x.hc-testing]
+125 NN ;; Heading.
+127-128 MX [x.hc-no-grading,api019.no-cascades] ;; Remote dependency chains without justification is API-019; using health checks as a code-quality grading system is an added anti-pattern.
+
+C api019.distinguish-when-beneficial OL API-019 DEFAULT ;; Health checks answer alive/ready; distinguish liveness from readiness when the deployment infrastructure benefits. ;; = ;; When infrastructure benefits. ;;
+C x.hc-readiness-tags EX API-019 DEFAULT ;; Register readiness checks with tags (and map readiness endpoints by tag). ;; = ;; none ;; Tagging/endpoint technique outside the oracle (EXC-010).
+C api019.required-deps-only OL API-019 MUST ;; Include only dependencies required for meaningful readiness; an optional external service does not necessarily make the app unready. ;; = ;; none ;;
+C api018.db-check-light OL API-018 MUST ;; Database health is a lightweight connectivity/availability check without expensive business queries, large scans or data modification. ;; = ;; none ;;
+C x.hc-framework-integration EX API-018 DEFAULT ;; Use provider/framework health-check integration where suitable. ;; = ;; Where suitable. ;; Implementation preference not in the oracle.
+C api019.no-cascades OL API-019 AVOID ;; Check external dependencies only when they matter to readiness; avoid readiness cascades and remote dependency chains without operational justification; prefer a lightweight check of the needed capability. ;; = ;; none ;;
+C x.hc-status-mapping EX API-019 MUST_NOT ;; Health endpoints return success when healthy and non-success when unhealthy per the probe policy; do not reuse business API status semantics mechanically for orchestrator probes. ;; = ;; none ;; Probe status-mapping rule outside the oracle (EXC-010).
+C api020.small-protected OL API-020 MUST ;; Keep probe responses small; protect detailed diagnostics endpoints with network or authorization controls. ;; = ;; none ;;
+C x.hc-exposure EX API-020,SEC-006 DEFAULT ;; Choose health endpoint exposure from the deployment topology (internal network, management port, host restrictions, or authorization where probes support it). ;; = ;; none ;; Exposure-mechanics guidance outside the oracle (EXC-010).
+C api019.startup-readiness OL API-019 MUST ;; When initialization is asynchronous or slow keep readiness unhealthy until required startup work completes. ;; = ;; none ;;
+C api018.cheap-probes OL API-018 AVOID ;; Avoid expensive queries, long external timeouts, large allocations and full business workflows in frequently run health checks. ;; = ;; none ;;
+C x.hc-no-error-logs EX RUN-013,API-018 AVOID ;; Avoid Error-level logs for every normal failed probe. ;; = ;; none ;; Logging-level rule for probes not in the oracle.
+C x.hc-testing EX TST-003 DEFAULT ;; Test meaningful health configuration when deployment relies on it (live endpoint, readiness vs required dependency, no sensitive leakage, optional-dependency semantics); no elaborate tests of uncustomized framework behaviour. ;; = ;; When deployment relies on it. ;; Health-check test obligations beyond the oracle.
+C x.hc-no-grading EX API-018 AVOID ;; Avoid using health checks as a code-quality grading system. ;; = ;; none ;; Anti-pattern not stated in API-018..API-020.
+
+@@ output/template/.claude/skills/httpclient-factory/references/resilience.md ;; Private reference read only by the httpclient-factory knowledge skill (on demand).
+@scope private reference of on-demand knowledge skill httpclient-factory (outbound resilience)
+1 NN ;; Ownership/scope/loading banner.
+3 NN ;; Heading.
+5-8 NN ;; Pointers to policy owners.
+10 NN ;; Heading.
+12 OL [run016.match-semantics]
+13-14 NN ;; Descriptive: when circuit breakers help.
+15 OL [gov013.no-resilience-by-default]
+16-17 EX [x.res-observe]
+19-20 OL [dep020.mex-apis]
+22 NN ;; Heading.
+24-25 NN ;; Describes Microsoft.Extensions.Http.Resilience.
+27-33 NN ;; Standard resilience handler code example.
+35-37 OL [run016.standard-handler-review]
+39 NN ;; Heading.
+41-43 MX [run015.attempt-vs-total,x.cfg-operational-values] ;; Distinguishing attempt and total timeouts is RUN-015; choosing values from requirements instead of copying examples is the operational-values extra.
+45 NN ;; Heading.
+47-49 NN ;; Descriptive list of plausibly transient failures.
+51-53 MX [run016.no-unsafe-retry,x.res-not-retried] ;; Non-idempotent operations without duplicate prevention are RUN-016; the explicit no-retry list (validation, auth, permanent 404, deterministic rejections) is additional.
+55-56 OL [run017.follow-retry-after]
+58 NN ;; Heading.
+60 NN ;; Lead-in to idempotency question.
+62-65 NN ;; Idempotency thought-experiment text block.
+67-70 MX [run016.duplicate-unsafe,x.res-no-invented-idempotency-key] ;; Duplicate side effect makes retry unsafe (RUN-016); not inventing an unsupported client-side Idempotency-Key is additional.
+72 NN ;; Heading.
+74-76 EX [x.res-circuit-breaker]
+78 NN ;; Heading.
+80-81 NN ;; Examples of acceptable fallbacks (illustrate RUN-018).
+83 NN ;; Lead-in to bad-fallback example.
+85-88 NN ;; Bad-fallback text example.
+90 NN ;; Heading.
+92-95 OL [run016.hedging-safe-only]
+97 NN ;; Heading.
+99-104 EX [x.res-db-resilience]
+106 NN ;; Heading.
+108-111 EX [x.res-messaging]
+113 NN ;; Heading.
+115-118 EX [x.res-inbound-429]
+120 NN ;; Heading.
+122-123 OL [run019.propagate-cancellation]
+125 NN ;; Heading.
+127-129 OL [gov013.no-otel-requirement] ;; ;; Do not require OpenTelemetry solely because
+131 NN ;; Heading.
+133-136 MX [run016.no-unsafe-retry,x.res-circuit-breaker,x.res-db-resilience,run015.no-overlap] ;; Retrying everything, hedging writes, overlapping/unbounded strategies are RUN-015/RUN-016; circuit breakers without scenarios and generic EF resilience wrappers are the added technique rules.
+138 NN ;; Heading.
+140-150 DU ;; Decision-guide table restating resilience defaults (bounded time, safe retry, Retry-After, circuit breaker, fallback, hedging, EF execution strategy, rate limiter).
+
+C run016.match-semantics OL RUN-016,RUN-018 MUST ;; Match resilience policies to the failure and operation semantics. ;; = ;; none ;;
+C gov013.no-resilience-by-default OL GOV-013,DEP-011 MUST_NOT ;; Do not add resilience mechanisms merely because they are available. ;; = ;; none ;;
+C x.res-observe EX - DEFAULT ;; Observe retries, timeouts and circuit behaviour when they materially affect operations; give important production circuit breakers operational visibility. ;; = ;; When material. ;; Observability obligation for resilience not in the oracle.
+C dep020.mex-apis OL DEP-020 DEFAULT ;; Application code uses the Microsoft.Extensions resilience APIs (built on Polly v8) rather than Polly directly. ;; = ;; none ;;
+C run016.standard-handler-review OL RUN-016 MUST ;; The standard resilience handler is optional; review its retry behaviour carefully for state-changing requests. ;; = ;; none ;;
+C run015.attempt-vs-total OL RUN-015 MUST ;; Distinguish attempt timeout from total operation timeout, especially with retries. ;; = ;; none ;;
+C run016.no-unsafe-retry OL RUN-016 MUST_NOT ;; Do not retry non-idempotent operations without duplicate prevention, retry every exception/status, or hedge writes. ;; = ;; none ;;
+C x.res-not-retried EX RUN-016 MUST_NOT ;; Do not retry validation errors, authentication/authorization failures, permanent 404 outcomes or deterministic business rejections. ;; = ;; none ;; Explicit non-retryable categories beyond RUN-016's safety criterion.
+C run017.follow-retry-after OL RUN-017 DEFAULT ;; When a remote endpoint returns Retry-After let the policy follow it instead of an independent aggressive schedule. ;; = ;; none ;;
+C run016.duplicate-unsafe OL RUN-016 MUST ;; If repeating a write could duplicate side effects automatic retry is unsafe; use an API-supported idempotency mechanism when appropriate. ;; = ;; none ;;
+C x.res-no-invented-idempotency-key EX RUN-016 MUST_NOT ;; Do not invent a client-side Idempotency-Key unless the remote service supports that contract. ;; = ;; none ;; Specific prohibition not stated in RUN-016.
+C x.res-circuit-breaker EX RUN-015 DEFAULT ;; Use a circuit breaker only when repeated calls to a failing dependency would add load/latency (not without a repeated-failure pattern). ;; = ;; none ;; Circuit-breaker technique is outside the oracle (EXC-007).
+C run016.hedging-safe-only OL RUN-016 MUST_NOT ;; Use hedging only for operations safe to execute multiple times (idempotent reads on interchangeable endpoints), never for state-changing operations by default. ;; = ;; none ;;
+C x.res-db-resilience EX RUN-016 MUST_NOT ;; Do not wrap normal EF Core operations in a generic application-level retry pipeline by default; prefer EF Core execution strategies/provider configuration and follow provider transaction/retry guidance; HTTP retry policies are not automatically appropriate for databases. ;; = ;; none ;; Database-retry technique outside the oracle (EXC-007).
+C x.res-messaging EX RUN-016 DEFAULT ;; Retrying publication can duplicate delivery; use idempotent consumers, broker deduplication or outbox when required; retry does not give exactly-once delivery. ;; = ;; When the business requirement needs it. ;; Message-delivery technique outside the oracle (EXC-007).
+C x.res-inbound-429 EX API-003 DEFAULT ;; Inbound ASP.NET Core rate limiting is distinct from outbound resilience; rejected requests normally return 429 with Retry-After when a useful delay is known. ;; = ;; none ;; HTTP rate-limiting semantics not in the oracle.
+C run019.propagate-cancellation OL RUN-019,RUN-003 MUST ;; Propagate cancellation through resilience pipelines so a cancelled caller ends the pipeline instead of triggering further attempts. ;; = ;; none ;;
+C gov013.no-otel-requirement OL GOV-013,DEP-002 MUST_NOT ;; Do not require OpenTelemetry solely because resilience handlers are present; use the adopted telemetry stack. ;; = ;; none ;;
+C run015.no-overlap OL RUN-015,RUN-017 AVOID ;; Avoid stacked handlers with overlapping strategies and unbounded retry/timeout combinations. ;; = ;; none ;;

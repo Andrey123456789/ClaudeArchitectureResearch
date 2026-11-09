@@ -1,0 +1,9 @@
+# Experiment 005 / Phase 5.4 / Stage A — Codex independent blind sweep, ALL SIX
+
+Start a NEW Codex Astra High session in `<005>/5.4` in the morning. Read `_STAGE_A_KIT/04_CODEX_STAGE_A_BLIND_SWEEP_EN.md` as the definitive evidence/findings schema for one candidate; this document sets the SIX-candidate schedule.
+
+Sequentially run the **independent BLIND source-first sweep** for M, M1, L0, L1, K0, K1, on every immutable candidate snapshot. DO NOT READ `stage_A/primary/**`, `stage_A/reconciled/**`, `STAGE_A_SIX_CANDIDATES_STATUS.md`, or any Claude chat report before all six blind reviews are finalized. Do not read reports by a prior audit, prior 5.3 or other candidates while examining each one. No cross-candidate conclusions or 5.4 corrections.
+
+For each candidate, search all active files for obligations/conditions/exceptions/defaults/strictnesses and especially effective constraints not entailed by its 196 policies. Extract every plausible orphan clause, verify verbatim evidence and source scope. Write exclusively in `stage_A/independent/<candidate>/blind/` using the per-candidate filenames and schema (`BLIND_FINDINGS.jsonl`, `BLIND_REPORT.md`, `BLIND_COMPLETE.json`). Include independent orphan hypotheses even when uncertain; state unreadable/unexamined files honestly.
+
+After finalizing each candidate's blind artifacts, post a concise user-visible intermediate note containing files inspected, potential extras, uncertain items and whether blind review was finalized. Advance to next candidate without asking the user. If interrupted, resume from finalized candidates. NEVER modify original blind results after seeing primary findings. Reconciliation is a DIFFERENT later job, only after all evidence to be compared is finalized and the primary's two validators pass per candidate.

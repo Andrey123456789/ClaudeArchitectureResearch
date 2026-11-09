@@ -1,0 +1,127 @@
+# M / B011 — dependency-injection, development-workflow, docker.
+
+C R184 OL GOV-002 | MUST | For a new application or a substantial feature read SPECIFICATION.md (and CUSTOM_SETTINGS.md) before planning or implementing. | new applications and substantial features | none stated
+C R185 OL GOV-018 | MUST | If a request looks questionable, identify the concrete concern and raise it with an alternative before implementing; this never permits silently rewriting or ignoring the user's requirement. | requests | none stated
+C R186 OL PST-008 | MUST | Whenever a Domain or persistence change affects seeded entities (new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new states, changed invariants) update DbSeeder in the same change so recreating the Development database yields valid representative data; review DbSeeder together with migrations that change seeded entities. | seed data co-change | Already seeded rows of an existing database are not patched.
+C R187 OL PST-010 | MUST | Treat EF Core migrations as source code: review every generated migration before committing it (destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, delete behavior). | EF Core migrations | none stated
+C R188 OL RUN-012 | MUST | A performance-motivated change identifies the actual bottleneck or cost, preserves observable behavior, uses the simplest optimization that addresses it, adds or preserves tests for affected behavior and benchmarks or profiles non-obvious or complex optimizations. | performance changes | none stated
+C R189 OL WF-002 | MUST | For substantial feature work or a newly implemented application run code-review (or the code-reviewer agent) and address the findings before final verification. | substantial work | none stated
+C R190 OL WF-005,WF-006 | MUST | Verify Docker changes by building the image and verifying application startup, required ports and configuration, non-root behavior when relevant and health-probe integration, reviewing the image for accidental secrets or files, and running meaningful application tests. | Docker changes | none stated
+C X17 EX WF-009 | MUST | The development-workflow output reports what changed, Delegated choices worth noting, unresolved Decision Requests, the verify report and every change-specific obligation that was not applicable with the reason. | implementation reports | none stated | WF-009 requires truthful verification reporting and GOV-017 reporting of unresolved Decision Requests; no oracle policy requires reporting delegated choices or non-applicable obligations. | A completion report that omits why the seed-data obligation did not apply does not follow the workflow.
+
+FILE .claude/skills/dependency-injection/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-15 NN | pointers to policy owners
+17 NN | section heading
+19-22 NN | registration style technique (EXC-005)
+23-25 OL R148 | scanning, keyed services, factories, or decorators when they solve an actual
+27 NN | section heading
+29 OL R58 |
+31-42 NN | Application registration code example
+44 OL R58 |
+46-64 NN | Infrastructure registration code example
+66 OL R48 |
+68-72 NN | composition code example
+74 NN | section heading
+76-78 NN | keyed services technique (EXC-005)
+80-94 NN | keyed services code example
+96 NN | section heading
+98-99 NN | decorator technique (EXC-005)
+101-153 NN | decorator code example
+155 NN | lead-in
+157-160 NN | Scrutor decoration code example
+162-163 OL R69,R148,R5 | Do not add Scrutor solely for one decoration when normal composition is simpler
+165 NN | section heading
+167-169 NN | assembly scanning technique (EXC-005)
+171-180 NN | scanning code example
+182 NN | section heading
+184 NN | lead-in
+186-197 NN | factory code example
+199 NN | section heading
+201-211 NN | options registration code example
+213 NN | section heading
+215-220 OL R57 | // BAD - singleton captures a scoped application service
+222-224 OL R57 | When a singleton or hosted service genuinely needs scoped work, create a scope
+226-243 NN | scope factory code example
+245-251 OL R57 | // BAD - application service depends on scoped repositories/UoW
+253 NN | section heading
+255-265 DU R57,R148,R59 | decision table restating lifetime and registration guidance
+
+FILE .claude/skills/development-workflow/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-15 NN | policy-owner pointer
+17 NN | section heading
+19-20 OL R184 | For a new application or a substantial feature, read `SPECIFICATION.md`
+21 OL R140 |
+22-26 OL R140 | Apply the applicable rules and skills: read every `.claude/rules/*.md` whose
+27-28 OL R153,R154 | Classify open decisions with CLAUDE.md § Decision Control.
+29-30 OL R185 | If the request looks questionable, raise the concern and an alternative
+32 NN | section heading
+34-36 OL R5,R177 | Route sub-tasks to their workflows: dependency changes → `add-dependency`;
+37-39 OL R156 | When a new behavioral rule is approved, update the durable source of truth —
+41 NN | section heading
+43 NN | subsection heading
+45-52 OL R186 | update the development seeder
+53-58 OL R187,R186 | Treat EF Core migrations as source code: review every generated migration
+60 NN | subsection heading
+62-64 OL R176 | For a meaningful bug with plausible recurrence, add by default a regression
+66 NN | subsection heading
+68-72 OL R188 | Identify the actual bottleneck or cost.
+74 NN | subsection heading
+76-84 OL R150 | regenerate, then review the regenerated changes.
+86 NN | subsection heading
+88-92 OL R152 | version working for the promised support period.
+94 NN | subsection heading
+96-97 OL R165 | CI definitions stay in source control, reproduce the repository's supported
+98-100 OL R164 | do not invent npm scripts or
+101-105 OL R167,R99 | Do not apply production database migrations automatically from normal
+107 NN | section heading
+109-111 OL R189 | findings before the final verification.
+112-113 OL R168 | Before declaring any implementation work complete, run `verify` at the depth
+114-115 OL R161 | Build or test failures that need diagnosis go through `build-fix`, then back
+117 NN | section heading
+119-121 MX R155,R162,X17 | Report what changed, Delegated choices worth noting, unresolved Decision ⟫ Reporting unresolved Decision Requests (R155) and the verify report (R162) is oracle-linked; reporting Delegated choices and non-applicable obligations is X17.
+
+FILE .claude/skills/docker/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-17 NN | pointers to policy owners
+19-22 OL R124 | Keep build tooling out of production runtime images, keep images reproducible
+24 NN | section heading
+26 NN | multi-stage build technique (EXC-006)
+28-59 NN | Dockerfile example
+61-63 NN | Dockerfile copy technique (EXC-006)
+65 NN | section heading
+67-70 NN | restore layer caching technique (EXC-006)
+72 NN | section heading
+74-75 OL R124 | Use the ASP.NET runtime image for ASP.NET Core applications and an appropriate
+77 NN | section heading
+79 OL R124 |
+81-83 NN | USER example
+85-86 OL R124 | find out why permissions are wrong instead of switching users.
+88 NN | section heading
+90-95 OL R105,R106 | Places where real credentials must never go: the
+97 NN | section heading
+99-100 NN | Compose lead-in
+102-113 NN | Compose example
+115-117 OL R149,R106 | Add only infrastructure the project actually uses
+119 NN | section heading
+121-126 NN | health-probe mechanics (EXC-006)
+128 NN | section heading
+130-134 NN | Angular container hosting technique
+136 NN | section heading
+138 NN | lead-in
+140-148 NN | .dockerignore example
+150-151 NN | build-context exclusion technique (EXC-006)
+153 NN | section heading
+155-159 NN | image-size optimization options (EXC-006)
+161 NN | section heading
+163-166 OL R190,R105 | For Docker changes: build the image; verify application startup, required ports
+168 NN | section heading
+170-172 DU R149,R39 | anti-pattern list ('avoid' guidance) restating speculative-infrastructure and Domain-independence rules
+DONE

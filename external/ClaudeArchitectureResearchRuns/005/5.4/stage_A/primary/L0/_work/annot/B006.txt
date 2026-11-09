@@ -1,0 +1,372 @@
+# L0 — B006 skills: authentication, caching, ci-cd, configuration (knowledge); build-fix, code-review, custom-settings, delivery-pipeline (workflows)
+
+@@ output/template/.claude/skills/authentication/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill authentication (backend, frontend)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 NN ;; Policy-owner pointers, definitions of authentication/authorization, technique-only status.
+14 NN ;; Heading.
+16-19 MX [x.auth-scheme-choice,sec016.no-custom-jwt] ;; Scheme selection by application type is added; not issuing custom JWTs when a provider already issues tokens is SEC-016.
+21 NN ;; Heading.
+23 OL [sec016.identity-features]
+25 NN ;; Heading.
+27-35 NN ;; JwtBearer registration example.
+37 OL [sec017.authority-metadata]
+39 NN ;; Heading.
+41-48 NN ;; [Authorize] controller example.
+50 OL [sec006.fallback-allowanonymous]
+52-55 NN ;; Fallback policy example.
+57 NN ;; Heading.
+59-68 NN ;; Policy registration example.
+70 EX [x.auth-policies-roles]
+72 NN ;; Heading.
+74 OL [sec005.resource-authz]
+76 NN ;; Heading.
+78 EX [x.auth-middleware-statuses]
+80 NN ;; Heading.
+82 NN ;; Permissive statement (controllers may read User for API-level information).
+84-89 NN ;; Current-user endpoint example.
+91 MX [x.auth-icurrentuser,arc008.auth-transport-in-api] ;; A small Application abstraction for repeated caller identity is added technique; keeping HttpContext/ClaimsPrincipal/IHttpContextAccessor in Api is ARC-008.
+93-99 NN ;; ICurrentUser interface example.
+101 EX [x.auth-icurrentuser]
+103 NN ;; Heading.
+105 OL [sec011.antiforgery,sec012.storage-threat-model]
+107 NN ;; Heading.
+109 MX [x.auth-testing,tst003.auth-observable] ;; Required authorization test cases are added; verifying observable behaviour rather than [Authorize] presence is TST-003.
+111 NN ;; Heading.
+113 EX [x.auth-policies-roles]
+
+C x.auth-scheme-choice EX SEC-016,ARC-020 DEFAULT ;; Bearer/OIDC for SPA→API, cookies for server-rendered apps, Identity for owned local accounts (not merely because an entity is called User), external OIDC/OAuth provider when identity is delegated. ;; = ;; none ;; Scheme-selection guidance not in the oracle.
+C sec016.no-custom-jwt OL SEC-016 MUST_NOT ;; Do not issue custom JWTs when the delegated identity provider already issues tokens. ;; = ;; none ;;
+C sec016.identity-features OL SEC-016 MUST ;; With ASP.NET Core Identity use its password hashing, lockout and reset-token features. ;; = ;; Owned local accounts. ;;
+C sec017.authority-metadata OL SEC-017,SEC-001 MUST ;; Authority/metadata configuration validates issuer, signature and lifetime; add TokenValidationParameters only when the issuer requires it; signing keys follow the secrets rules. ;; = ;; none ;;
+C sec006.fallback-allowanonymous OL SEC-006 MUST ;; A secure fallback policy can make repeated [Authorize] unnecessary; mark deliberately public endpoints with [AllowAnonymous]. ;; = ;; none ;;
+C x.auth-policies-roles EX SEC-005 PREFER ;; Prefer policies over trivial role checks; keep repeated policy names in stable constants; roles only for role-oriented models; no compound role strings or role/permission magic strings scattered through the code. ;; = ;; none ;; Authorization-modelling conventions not in the oracle.
+C sec005.resource-authz OL SEC-005 MUST ;; Resource-based permissions via IAuthorizationService with an AuthorizationHandler or explicit Application authorization logic. ;; = ;; none ;;
+C x.auth-middleware-statuses EX API-005 DEFAULT ;; The authentication/authorization middleware produces 401/403 (challenge/forbid) instead of controllers manufacturing them. ;; = ;; none ;; Mechanism preference not in API-005.
+C x.auth-icurrentuser EX ARC-007 DEFAULT ;; When use cases repeatedly need caller identity define a small Application abstraction implemented at an outer boundary; skip it when passing an explicit user identifier is simpler. ;; = ;; Repeated need. ;; Technique not in the oracle.
+C arc008.auth-transport-in-api OL ARC-008 MUST ;; HttpContext, ClaimsPrincipal and IHttpContextAccessor stay in Api. ;; = ;; none ;;
+C sec011.antiforgery OL SEC-011 MUST ;; Cookie-carried credentials need antiforgery protection for state-changing requests (ASP.NET Core antiforgery, Angular XSRF support); explicit bearer headers differ. ;; = ;; none ;;
+C sec012.storage-threat-model OL SEC-012 MUST ;; Choose browser token storage per the application's threat model. ;; = ;; none ;;
+C x.auth-testing EX TST-003,SEC-005 DEFAULT ;; Authorization integration cases: unauthenticated→401, unauthorized→403, permitted success, ownership rules, intended anonymous endpoints reachable. ;; = ;; none ;; Required test cases not in the oracle.
+C tst003.auth-observable OL TST-003 MUST ;; Verify observable authorization behaviour, not just the presence of [Authorize]. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/build-fix/SKILL.md ;; Workflow skill routed from CLAUDE.md for failing builds/tests.
+@scope workflow build-fix (failing build or tests)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 OL [wf015.bf-goal]
+14 NN ;; Heading.
+16 OL [wf013.reproduce-root-cause]
+17 OL [wf014.bounded]
+18 OL [wf015.no-weakening]
+19 OL [wf014.stalled,arc001.bf-preserve-architecture]
+21 NN ;; Heading.
+23 OL [wf007.bf-scope]
+25 NN ;; Heading.
+27 OL [wf014.bf-narrowest-command]
+28 OL [wf013.bf-actual-scripts]
+30 NN ;; Heading.
+32 OL [wf013.bf-full-output]
+34 NN ;; Heading.
+36 OL [wf014.bf-backend-loop]
+38 OL [arc001.bf-no-invalid-ref]
+40 NN ;; Heading.
+42 OL [wf014.bf-frontend-loop]
+44 OL [wf015.bf-frontend-no-silencing]
+46 NN ;; Heading.
+48 OL [wf016.bf-contract]
+50 NN ;; Heading.
+52 OL [wf013.bf-test-failures]
+54 NN ;; Heading.
+56 OL [dep004.bf-package-repair]
+57 OL [wf013.bf-upgrade]
+58 OL [wf013.bf-toolchain]
+60 NN ;; Heading.
+62 OL [wf016.bf-generated]
+64 NN ;; Heading.
+66 OL [wf014.bf-limits,wf008.bf-regressions]
+68 OL [wf015.bf-arch-not-success,tst010.bf-probes]
+70 NN ;; Heading.
+72 OL [wf005.bf-completion]
+74-82 OL [wf009.bf-report]
+84 OL [wf009.bf-no-false-fixed]
+
+C wf015.bf-goal OL WF-015,WF-008,GOV-014 MUST ;; Restore the affected scope to green without hiding failures, weakening behaviour or introducing unrelated changes. ;; = ;; none ;;
+C wf013.reproduce-root-cause OL WF-013 MUST ;; Reproduce and diagnose the actual failure before editing; fix root causes before downstream symptoms. ;; = ;; none ;;
+C wf014.bounded OL WF-014 MUST ;; Small bounded iterations; rerun the narrowest failing verification after each meaningful fix; expand only after the focused failure is resolved. ;; = ;; none ;;
+C wf015.no-weakening OL WF-015 MUST_NOT ;; Never weaken, delete, skip or suppress relevant tests or compiler/TypeScript/lint/analyzer failures to pass; no strong-to-weak assertion swaps. ;; = ;; none ;;
+C wf014.stalled OL WF-014 MUST ;; Stop when progress has clearly stalled rather than making speculative edits. ;; = ;; none ;;
+C arc001.bf-preserve-architecture OL ARC-001,RUN-009 MUST ;; Preserve architecture and project conventions while fixing. ;; = ;; none ;;
+C wf007.bf-scope OL WF-007,WF-014 MUST_NOT ;; Determine the affected scope first; do not run unrelated build systems merely because they exist. ;; = ;; none ;;
+C wf014.bf-narrowest-command OL WF-014 MUST ;; Reproduce .NET failures with the narrowest command using the repository's actual .slnx and configuration. ;; = ;; none ;;
+C wf013.bf-actual-scripts OL WF-013,WF-018 MUST_NOT ;; Inspect the workspace package.json first and use scripts that exist; never invent script names or assume a runner. ;; = ;; none ;;
+C wf013.bf-full-output OL WF-013 MUST ;; Read the complete relevant output, group errors by root cause and fix the highest-leverage cause first. ;; = ;; none ;;
+C wf014.bf-backend-loop OL WF-014,WF-013 MUST ;; Backend loop: reproduce narrowest, identify cause, inspect sources/references/packages, smallest change, rerun, compare failure sets, expand afterwards. ;; = ;; none ;;
+C arc001.bf-no-invalid-ref OL ARC-001,WF-015 MUST_NOT ;; Never fix a dependency problem with an invalid project reference (e.g. Application → Infrastructure). ;; = ;; none ;;
+C wf014.bf-frontend-loop OL WF-014,WF-013 MUST ;; Frontend loop: inspect package.json and Angular config, reproduce, read diagnostics, inspect affected code, smallest change, rerun, broaden afterwards. ;; = ;; none ;;
+C wf015.bf-frontend-no-silencing OL WF-015,FE-001,DEP-015 MUST_NOT ;; Do not convert to any, disable strict mode, suppress template diagnostics without understanding, add NgModules to bypass standalone configuration, replace framework APIs speculatively or add another state/HTTP library to bypass a local issue. ;; = ;; none ;;
+C wf016.bf-contract OL WF-016,WF-013 MUST ;; Determine the authoritative contract; do not patch both sides into inconsistent shapes; regenerate OpenAPI clients through the normal workflow and review before fixing handwritten code. ;; = ;; none ;;
+C wf013.bf-test-failures OL WF-013,GOV-014 MUST ;; For failing tests decide where the defect lies, make the smallest correct change, rerun affected then broader tests; update a test for an intentionally changed contract only after confirming the change was requested. ;; = ;; none ;;
+C dep004.bf-package-repair OL DEP-004,DEP-006,DEP-007,DEP-025,WF-013 MUST_NOT ;; After package changes inspect versions/compatibility/peers and migration notes; any package addition or version change goes through add-dependency; never add or swap packages to get green; respect central versions and the lockfile; do not delete package-lock.json reflexively. ;; = ;; none ;;
+C wf013.bf-upgrade OL WF-013,GOV-014 MUST ;; After a framework upgrade distinguish compile from runtime changes, update obsolete APIs from verified documentation and do not perform another unrelated upgrade. ;; = ;; none ;;
+C wf013.bf-toolchain OL WF-013,DEP-008,GOV-014 MUST_NOT ;; Check the toolchain; never change the declared SDK/Node/framework/language version because the local machine differs; report an unavailable toolchain instead of editing source to compensate. ;; = ;; none ;;
+C wf016.bf-generated OL WF-016 DEFAULT ;; Fix generated output at its authoritative source and regenerate; do not patch disposable generated output unless the repository treats it as maintained source. ;; = ;; none ;;
+C wf014.bf-limits OL WF-014 MUST ;; Use several focused attempts, not an unlimited loop; stop and reassess on surviving root failures, growing unrelated failures, incompatible toolchains, unavailable infrastructure, unsafe package resolution or undeterminable behaviour. ;; = ;; none ;;
+C wf008.bf-regressions OL WF-008,GOV-014 MUST ;; Revert or correct fixes introducing new failures unless legitimately dependent; never leave the repository knowingly worse; leave unrelated pre-existing failures unless blocking or requested. ;; = ;; none ;;
+C wf015.bf-arch-not-success OL WF-015,ARC-001,ARC-008,ARC-011,SEC-005,FE-003 MUST_NOT ;; A green build obtained by violating the architecture (outward references, persistence types in Application, business logic in Controllers, Angular-only authorization, scattered HTTP calls) is not a successful repair. ;; = ;; none ;;
+C tst010.bf-probes OL TST-010 MUST ;; Behaviour established with a temporary diagnostic probe is preserved as verify step 4 requires. ;; = ;; none ;;
+C wf005.bf-completion OL WF-005,WF-007,WF-003 MUST ;; Complete when the affected scope is green (builds, affected tests, consistent contracts, no new regression, no workaround); no unrelated frontend/backend build; then run verify when appropriate. ;; = ;; none ;;
+C wf009.bf-report OL WF-009 MUST ;; Report initial failure, root cause, changes, backend/frontend build and tests as PASS / NOT RUN / NOT APPLICABLE, remaining issues. ;; = ;; none ;;
+C wf009.bf-no-false-fixed OL WF-009,WF-008 MUST_NOT ;; Never claim the problem is fixed while a known relevant failure remains. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/caching/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill caching (backend)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 OL [run007.cache-semantics-first]
+14 NN ;; Heading.
+16 EX [x.cache-layers]
+17 OL [arc024.cache-abstraction]
+18 EX [x.cache-layers]
+20 NN ;; Heading.
+22 OL [gov013.cache-no-redis]
+24-30 NN ;; HybridCache registration example.
+32 NN ;; Heading.
+34-41 NN ;; Cache abstraction example.
+43 OL [run021.cache-after-commit]
+45 NN ;; Heading.
+47 MX [run020.cache-keys,x.cache-centralize-keys] ;; Key dimensions are RUN-020; centralizing key construction when formats duplicate is added.
+49 NN ;; Heading.
+51 OL [run023.cache-expiration]
+53 NN ;; Heading.
+55-64 NN ;; Output caching example.
+66 MX [x.cache-output-metadata,run020.cache-user-isolation] ;; Applying output-cache policies through metadata is technique (added); not caching user-specific responses without isolating keys/authorization is RUN-020.
+68 NN ;; Heading.
+70 EX [x.cache-failure-policy]
+72 NN ;; Heading.
+74 MX [x.cache-tests,tst003.cache-no-internals] ;; Caching test obligations are added; not unit-testing framework cache internals restates TST-003.
+76 NN ;; Heading.
+78 MX [x.cache-no-tracked-entities,gov013.cache-no-redis] ;; Caching tracked EF entities across Unit of Work boundaries is an added prohibition; Redis merely because the application caches restates GOV-013/ARC-020.
+80 NN ;; Heading.
+82-88 DU ;; Decision table restating the technique and owner rules above.
+
+C run007.cache-semantics-first OL RUN-007,RUN-023 MUST ;; Define consistency semantics (allowed staleness, invalidation) before choosing a caching technology. ;; = ;; none ;;
+C x.cache-layers EX ARC-024,RUN-007 DEFAULT ;; Output caching belongs in Api when the entire response is reusable; Infrastructure adapters may cache expensive operations when the contract to Application is preserved. ;; = ;; none ;; Layer placement technique not in the oracle.
+C arc024.cache-abstraction OL ARC-024 MUST ;; When a use case needs cache-aware behaviour define the abstraction in Application and implement it in Infrastructure; skip it when caching stays an Infrastructure detail. ;; = ;; none ;;
+C gov013.cache-no-redis OL GOV-013,ARC-020 MUST_NOT ;; HybridCache is optional; add a distributed backend such as Redis only when deployment requires it, never merely because the application caches. ;; = ;; none ;;
+C run021.cache-after-commit OL RUN-021,ARC-024 MUST ;; Mutations follow the normal repository/Unit of Work flow; remove or update the affected cache entry after the commit succeeded; HybridCache stays behind the abstraction. ;; = ;; none ;;
+C run020.cache-keys OL RUN-020 MUST ;; Include every result-affecting dimension in cache keys (entity id, tenant, user when user-specific, locale, query/filter parameters). ;; = ;; none ;;
+C x.cache-centralize-keys EX RUN-020 PREFER ;; Centralize key construction when duplicated formats become hard to maintain. ;; = ;; none ;; Not in the oracle.
+C run023.cache-expiration OL RUN-023,RUN-021 MUST ;; Choose expiration from data semantics; invalidate by removing keys after successful mutations, short TTL with tolerated staleness, tags/groups or versioned keys. ;; = ;; none ;;
+C x.cache-output-metadata EX RUN-007 DEFAULT ;; Apply output-cache policies through controller/action metadata. ;; = ;; none ;; Technique not in the oracle.
+C run020.cache-user-isolation OL RUN-020,SEC-005 MUST_NOT ;; Do not cache authenticated or user-specific responses unless key and policy isolate users and authorization context. ;; = ;; none ;;
+C x.cache-failure-policy EX RUN-018 MUST ;; Decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data. ;; = ;; none ;; Explicit cache-failure policy not in the oracle.
+C x.cache-tests EX TST-003 DEFAULT ;; Test caching when it affects correctness: invalidation after mutation, tenant/user isolation, miss fallback, outage behaviour. ;; = ;; Caching affects observable correctness. ;; Test obligations not in the oracle.
+C tst003.cache-no-internals OL TST-003 MUST_NOT ;; Do not unit-test framework cache internals. ;; = ;; none ;;
+C x.cache-no-tracked-entities EX ARC-016,RUN-021 MUST_NOT ;; Do not cache EF tracked entities across Unit of Work boundaries. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/ci-cd/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill ci-cd (delivery)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Policy-owner pointers; technique-only; versions to be adapted to the repository.
+15 NN ;; Heading.
+17-52 NN ;; GitHub Actions example.
+54 OL [wf018.cicd-scripts,wf007.cicd-format-adopted]
+56 NN ;; Heading.
+58 OL [wf017.cicd-services]
+60 NN ;; Heading.
+62 OL [dep004.cicd-vuln]
+64 NN ;; Heading.
+66-69 NN ;; Publish commands example.
+71 EX [x.cicd-artifacts]
+73 NN ;; Heading.
+75 IM ;; Routing to delivery-pipeline and docker skill.
+77 NN ;; Heading.
+79 MX [sec002.cicd-secret-store,x.cicd-federated] ;; CI secret store is SEC-002/SEC-001; preferring workload/federated identity over long-lived credentials is added.
+81 NN ;; Heading.
+83 OL [wf019.cicd-explicit-step]
+85-87 NN ;; Migration bundle command example.
+89 NN ;; Heading.
+91 MX [wf017.cicd-generic,x.cicd-same-source,dep018.cicd-no-docker-assumption] ;; Project-specific database infrastructure in a generic pipeline (WF-017) and assuming Docker (DEP-018) are oracle-linked; rebuilding different source per environment is an added anti-pattern.
+
+C wf018.cicd-scripts OL WF-018 MUST ;; Add frontend test/lint CI steps only for scripts the workspace defines. ;; = ;; none ;;
+C wf007.cicd-format-adopted OL WF-007,WF-017 DEFAULT ;; Add dotnet format verification to CI only when formatting is an adopted enforced gate. ;; = ;; none ;;
+C wf017.cicd-services OL WF-017,TST-004 MUST ;; Provide integration-test services only when tests require them, without hardcoding one provider into a generic pipeline; keep tests isolated from Development/Production data. ;; = ;; none ;;
+C dep004.cicd-vuln OL DEP-004,WF-020 MUST ;; Use dotnet package list --vulnerable --include-transitive / NuGet audit and npm audit; treat findings per the project's security policy. ;; = ;; none ;;
+C x.cicd-artifacts EX WF-017 DEFAULT ;; Store or publish only the artifacts later stages need. ;; = ;; none ;; Not in the oracle.
+C sec002.cicd-secret-store OL SEC-002,SEC-001 MUST ;; Use the CI platform's secret store for credentials. ;; = ;; none ;;
+C x.cicd-federated EX SEC-002 PREFER ;; Prefer workload/federated identity (e.g. OIDC to the cloud) over long-lived deployment credentials when supported. ;; = ;; Supported by the platform. ;; Not in the oracle.
+C wf019.cicd-explicit-step OL WF-019 MUST ;; Generate migration scripts or bundles in CI and execute them as an explicit visible deployment step. ;; = ;; none ;;
+C wf017.cicd-generic OL WF-017 AVOID ;; Avoid project-specific database infrastructure in a generic pipeline. ;; = ;; none ;;
+C x.cicd-same-source EX WF-017 AVOID ;; Avoid rebuilding different source per environment without a reason. ;; = ;; none ;; Not in the oracle.
+C dep018.cicd-no-docker-assumption OL DEP-018 MUST_NOT ;; Do not assume Docker deployment. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/code-review/SKILL.md ;; Workflow skill; preloaded by the code-reviewer agent.
+@scope workflow code-review (reviews of completed changes; also the code-reviewer agent)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 OL [wf011.cr-concrete]
+15 NN ;; Heading.
+17 OL [wf011.priorities]
+19 NN ;; Heading.
+21 OL [wf011.cr-scope]
+23 NN ;; Heading.
+25 OL [wf001.cr-read-owners]
+27 NN ;; Heading.
+29 OL [gov003.cr-conformance]
+31 NN ;; Heading.
+33 OL [wf012.cr-plausible]
+35 NN ;; Heading.
+37 OL [wf011.cr-architecture,wf012.not-unadopted]
+39 NN ;; Heading.
+41 MX [wf011.cr-frontend,x.cr-no-backend-rules-on-angular] ;; Frontend review checks restate FE/SEC policies; not applying backend project-boundary rules mechanically to Angular code is added.
+43 NN ;; Heading.
+45 OL [wf011.cr-data-security,wf007.cr-scan-when-warranted]
+47 NN ;; Heading.
+49 OL [wf011.cr-integrations]
+51 NN ;; Heading.
+53 OL [tst009.cr-tests]
+55 NN ;; Heading.
+57 OL [wf011.cr-performance]
+59 NN ;; Heading.
+61 OL [wf021.cr-tooling]
+63 NN ;; Heading.
+65 EX [x.cr-findings-format]
+67-70 EX [x.cr-severity-scale]
+72 OL [wf012.no-manufactured,wf011.cr-no-rewrite]
+
+C wf011.cr-concrete OL WF-011 MUST ;; Review actual changed behaviour and identify concrete defects or risks; review is not the completion checklist (verify is). ;; = ;; none ;;
+C wf011.priorities OL WF-011 MUST ;; Priority order: correctness, security/authorization, data integrity/persistence, architecture, concurrency/integration, meaningful tests, maintainability, credible performance; never style over defects; tooling-owned formatting is not a defect. ;; = ;; none ;;
+C wf011.cr-scope OL WF-011,WF-001 MUST ;; Establish the reviewed scope and read changed code plus enough surrounding code; never review isolated lines. ;; = ;; none ;;
+C wf001.cr-read-owners OL WF-001 MUST ;; Identify intended behaviour and read the governing rule files (they may not have loaded); use knowledge skills only when relevant. ;; = ;; none ;;
+C gov003.cr-conformance OL GOV-003,GOV-006,GOV-007 MUST ;; Check specification conformance both ways: required behaviour not missing/weakened and no unapproved behaviour (limits, reserved values, required fields, workflow restrictions, validation, observable string semantics incl. via database configuration or defaults); approved synchronized details are not defects. ;; = ;; none ;;
+C wf012.cr-plausible OL WF-012,WF-011 MUST_NOT ;; Check correctness issues but do not invent failures without a plausible execution path. ;; = ;; none ;;
+C wf011.cr-architecture OL WF-011,ARC-001,ARC-008,ARC-010,ARC-006,ARC-013,ARC-016,GOV-012,ARC-020 MUST ;; Check changes against the Level 1 rules and bindings and proportionality; no consequential pattern without approval. ;; = ;; none ;;
+C wf011.cr-frontend OL WF-011,FE-002,FE-003,FE-012,FE-009,SEC-005,FE-006 MUST ;; For Angular changes check feature boundaries, component responsibility, data-access boundaries, subscription lifetime, error handling, guards not as authorization, shared state and meaningful tests. ;; = ;; none ;;
+C x.cr-no-backend-rules-on-angular EX WF-012 MUST_NOT ;; Do not apply backend project-boundary rules mechanically to Angular code. ;; = ;; none ;; Not in the oracle.
+C wf011.cr-data-security OL WF-011,SEC-004,SEC-003,SEC-010,PST-008,PST-010,RUN-021 MUST ;; Review transactions, destructive changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive logging, concurrency, migrations, seed consistency and cache consistency. ;; = ;; none ;;
+C wf007.cr-scan-when-warranted OL WF-007,WF-020 MUST ;; Use the full security-scan only on request, for materially security-sensitive changes or when a concrete finding justifies it. ;; = ;; none ;;
+C wf011.cr-integrations OL WF-011,RUN-003,RUN-015,RUN-016 MUST ;; Check cancellation, timeouts, idempotency, retry safety, failure translation and lifetimes for external calls; do not demand retries for unsafe operations. ;; = ;; none ;;
+C tst009.cr-tests OL TST-009,TST-010,TST-011 MUST ;; Check useful behavioural coverage (not line count), regression tests for plausible recurrence, preserved probes; no duplicate tests when equivalent coverage exists. ;; = ;; none ;;
+C wf011.cr-performance OL WF-011,RUN-008 MUST_NOT ;; Report performance only for a credible reason; do not recommend caching, compiled queries, pooling or ValueTask speculatively. ;; = ;; none ;;
+C wf021.cr-tooling OL WF-021,WF-012 MUST ;; Compiler/analyzer/IDE tooling and search are evidence, not authority; no MCP server or analyzer required; read code before turning a warning into a finding. ;; = ;; none ;;
+C x.cr-findings-format EX WF-011 MUST ;; Report findings ordered by severity with severity, file/location, problem, why it matters and smallest reasonable fix. ;; = ;; none ;; Findings format not in the oracle.
+C x.cr-severity-scale EX WF-011 DEFINITION ;; Review severity scale: Critical (blocks use/merge), High (fix before merge), Medium, Low. ;; = ;; none ;; Not in the oracle.
+C wf012.no-manufactured OL WF-012 MUST_NOT ;; Never invent findings to populate categories; when none exist say so and state important unverifiable areas. ;; = ;; none ;;
+C wf011.cr-no-rewrite OL WF-011,RUN-011 MUST_NOT ;; During review do not rewrite working code unless asked, demand personal style, assume every warning is a bug or add filler praise. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/configuration/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill configuration (backend)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 OL [gov008.cfg-not-runtime]
+14 OL [run022.cfg-direct-access]
+16 NN ;; Heading.
+18 NN ;; Descriptive provider precedence.
+20 NN ;; Heading.
+22-38 NN ;; Options pattern example.
+40 EX [x.cfg-operational-values]
+42 NN ;; Heading.
+44-51 NN ;; Options injection example.
+53 NN ;; Heading.
+55-60 NN ;; Custom validation example.
+62 NN ;; Heading.
+64-67 NN ;; user-secrets commands.
+69 OL [sec001.cfg-structure-only]
+71-76 NN ;; appsettings.json example.
+78 OL [sec002.cfg-deployed-injection]
+80-86 NN ;; Azure Key Vault example (explicitly conditional on Azure).
+88 NN ;; Heading.
+90-103 NN ;; Named options example.
+105 NN ;; Heading.
+107-116 NN ;; Anti-example code illustrating RUN-022 (captured at line 14 and csharp.md).
+118 NN ;; Heading.
+120-129 DU ;; Decision table restating the technique above.
+
+C gov008.cfg-not-runtime OL GOV-008,GOV-011 MUST ;; Tunable product values belong in CUSTOM_SETTINGS.md, not runtime configuration. ;; = ;; none ;;
+C run022.cfg-direct-access OL RUN-022 MUST_NOT ;; Direct IConfiguration access is normal in Program.cs, provider setup and infrastructure registration; ordinary services must not parse configuration keys. ;; = ;; none ;;
+C x.cfg-operational-values EX GOV-010,RUN-015 MUST ;; Numbers in examples are illustrative, not approved defaults; choose retry counts, timeouts and limits from the actual integration and deployment. ;; = ;; none ;; Not in the oracle.
+C sec001.cfg-structure-only OL SEC-001,SEC-002 MUST ;; appsettings.json keeps structure and non-secret defaults only. ;; = ;; none ;;
+C sec002.cfg-deployed-injection OL SEC-002 DEFAULT ;; Deployed environments inject values via environment variables or the actual host's managed secret store; a cloud-specific provider only when the project runs there. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/custom-settings/SKILL.md ;; Workflow skill routed from CLAUDE.md and the hook.
+@scope workflow custom-settings (adding, changing, removing or applying a CUSTOM_SETTINGS.md value)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 NN ;; Ownership statement and pointer to CLAUDE.md Product governance.
+14 NN ;; Heading.
+16 OL [gov009.cs-confirm]
+17 EX [x.cs-naming]
+19 NN ;; Heading.
+21 OL [gov021.cs-search]
+23 NN ;; Heading.
+25 MX [gov021.cs-update-all,x.cs-single-source,fe010.cs-backend-authoritative] ;; Updating every surface is GOV-021; avoiding duplicated literals when a single source is appropriate is added; backend validation authoritative with frontend kept in sync is FE-010.
+27 NN ;; Heading.
+29-34 OL [pst009.cs-db-impact]
+36 NN ;; Heading.
+38-42 OL [gov021.cs-verify]
+44 OL [gov021.cs-not-one-constant]
+
+C gov009.cs-confirm OL GOV-009,GOV-010 MUST ;; Confirm the value is approved and consistent with SPECIFICATION.md before changing it. ;; = ;; none ;;
+C x.cs-naming EX GOV-008 MUST ;; Use a stable descriptive setting name and record value and purpose in the table. ;; = ;; none ;; Naming/recording convention not in the oracle.
+C gov021.cs-search OL GOV-021 MUST ;; Search for the old value, setting name, validators, DTO constraints, Domain/Application checks, mapping constraints, frontend validation/hints, tests, docs and mirrored configuration; separate unrelated numeric coincidences. ;; = ;; none ;;
+C gov021.cs-update-all OL GOV-021 MUST ;; Update every affected implementation, validation, configuration, test, documentation and mirrored surface; one literal alone is not synchronization. ;; = ;; none ;;
+C x.cs-single-source EX GOV-021,RUN-009 AVOID ;; Avoid duplicating the setting literal across layers when a normal single source in code or configuration is appropriate. ;; = ;; none ;; Not in the oracle.
+C fe010.cs-backend-authoritative OL FE-010 MUST ;; Backend validation stays authoritative; frontend validation and messages are kept in sync for UX. ;; = ;; none ;;
+C pst009.cs-db-impact OL PST-009,PST-010 MUST ;; For schema-affecting settings update the EF mapping, create the appropriate migration per the workflow (edit uncommitted ones only when normal; do not casually alter existing migrations), verify seeding validity, update provider-sensitive tests. ;; = ;; none ;;
+C gov021.cs-verify OL GOV-021,WF-005,GOV-009,WF-003 MUST ;; Verify: search stale references, build and test affected projects, verify persistence, re-check SPECIFICATION.md, run verify. ;; = ;; none ;;
+C gov021.cs-not-one-constant OL GOV-021 MUST_NOT ;; Do not declare a setting synchronized because one constant changed. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/delivery-pipeline/SKILL.md ;; Workflow skill routed from CLAUDE.md and containers-ci.md.
+@scope workflow delivery-pipeline (CI/CD, Dockerfiles, Compose, deployment, production migrations)
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 OL [wf001.dp-read-first]
+14 NN ;; Heading.
+16 OL [wf017.dp-discover]
+18 NN ;; Heading.
+20 OL [wf017.dp-truthful]
+21 MX [x.dp-backend-flow,wf007.dp-format-adopted] ;; The fixed restore → build --no-restore → test --no-build Release sequence is added; formatting/analyzer gates only when adopted is WF-007.
+22 OL [wf018.dp-npm]
+23 OL [wf017.dp-services]
+24 MX [sec002.dp-ci-secrets,x.cicd-federated] ;; CI secret/identity mechanism is SEC-002; preferring federated identity is added.
+25 OL [wf020.dp-no-auto-upgrade]
+27 NN ;; Heading.
+29 MX [x.dp-container-practices,dep018.dp-publish-only-when] ;; Multi-stage builds, project-file copy for restore caching, runtime configuration and health probes are added container practices; publishing images only when container deployment is part of the project is DEP-018.
+31 NN ;; Heading.
+33 OL [wf019.dp-no-auto-migrate]
+34 MX [wf019.dp-explicit-step,x.dp-migration-fail-visibly] ;; Explicit deployment operation with approved credentials is WF-019; a controlled point that fails visibly on error is added.
+35 OL [pst004.dp-no-dev-seed]
+37 NN ;; Heading.
+39 EX [x.dp-deployment]
+41 NN ;; Heading.
+43 MX [x.dp-verify,wf003.dp-run-verify] ;; The pipeline/container verification checklist is added; running verify afterwards is WF-003.
+
+C wf001.dp-read-first OL WF-001 MUST ;; Read decisions.md (Docker adoption), containers-ci.md and security-principles.md first. ;; = ;; none ;;
+C wf017.dp-discover OL WF-017,WF-001 MUST ;; Inspect what actually exists before writing a pipeline or container definition; do not assume PostgreSQL, Redis, Docker or frontend tooling; add stages only for the actual project. ;; = ;; none ;;
+C wf017.dp-truthful OL WF-017 MUST ;; CI definitions stay in source control, reproduce supported build/test commands and never hide failures (no continue-on-error on build/test, suppressed exit codes or skipped failing tests). ;; = ;; none ;;
+C x.dp-backend-flow EX WF-017 DEFAULT ;; Backend CI flow: dotnet restore → dotnet build --no-restore --configuration Release → dotnet test --no-build --configuration Release. ;; = ;; none ;; Concrete command sequence not in the oracle.
+C wf007.dp-format-adopted OL WF-007,WF-017 DEFAULT ;; Run formatting/analyzer gates only when the project adopted them as enforced checks. ;; = ;; none ;;
+C wf018.dp-npm OL WF-018 MUST ;; Install with npm ci when a maintained lockfile supports it (not reflexively npm install); run only scripts that exist; never invent npm scripts. ;; = ;; none ;;
+C wf017.dp-services OL WF-017,TST-004 MUST ;; Provide external services in CI only when tests require them, isolated from Development and Production data. ;; = ;; none ;;
+C sec002.dp-ci-secrets OL SEC-002,SEC-001 MUST ;; Supply credentials through the CI platform's secret/identity mechanism. ;; = ;; none ;;
+C wf020.dp-no-auto-upgrade OL WF-020,GOV-014 MUST_NOT ;; Do not let CI upgrade packages automatically unless the project adopted automated dependency updates. ;; = ;; Automated updates adopted. ;;
+C x.dp-container-practices EX DEP-019,API-019 DEFAULT ;; Container deployments use multi-stage builds, explicit project-file copy for restore caching, runtime configuration passed at run time and health probes per the health-check skill. ;; = ;; Container deployment. ;; Not in the oracle.
+C dep018.dp-publish-only-when OL DEP-018 MUST_NOT ;; Build and publish images from CI only when container deployment is part of the project. ;; = ;; none ;;
+C wf019.dp-no-auto-migrate OL WF-019 MUST_NOT ;; Do not apply production migrations automatically from normal application startup by default, in containers or elsewhere. ;; = ;; none ;;
+C wf019.dp-explicit-step OL WF-019 MUST ;; Production migration is an explicit deployment operation using approved credentials; scripts/bundles may be generated earlier in CI. ;; = ;; none ;;
+C x.dp-migration-fail-visibly EX WF-019 MUST ;; The migration step runs at a controlled point and fails visibly on error. ;; = ;; none ;; Not in WF-019.
+C pst004.dp-no-dev-seed OL PST-004,WF-019 MUST_NOT ;; Deployment never runs Development seeding in Production. ;; = ;; none ;;
+C x.dp-deployment EX WF-017 PREFER ;; CI and CD may be separate; a green build does not imply every branch deploys; use environment protection/approval where supported; promote the same tested artifact/image with runtime configuration differences. ;; = ;; none ;; Deployment practices not in the oracle.
+C x.dp-verify EX WF-017,SEC-001 MUST ;; Confirm the pipeline restores cleanly, builds backend/frontend, runs configured tests, does not depend on developer state, exposes no secrets and produces expected artifacts; for containers build the image and verify startup, port/configuration, non-root, health probes and no secrets/stray files. ;; = ;; none ;; Verification checklist not in the oracle.
+C wf003.dp-run-verify OL WF-003 MUST ;; Run verify after delivery changes. ;; = ;; none ;;

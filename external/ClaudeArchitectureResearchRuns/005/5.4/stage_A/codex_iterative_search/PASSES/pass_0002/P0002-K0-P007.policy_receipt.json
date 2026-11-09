@@ -1,0 +1,915 @@
+{
+  "unit": "P0002-K0-P007",
+  "batch_input_sha256": "8c2b664411355cca65c8c41c66dc3fdcd1b74800c84bebd3af3faa0fbcf0db86",
+  "reviews": [
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "ARC-025",
+        "name": "Remote HTTP transport does not leak into Application",
+        "related_groups": [
+          "runtime-code-performance",
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Infrastructure translates remote HTTP responses into Application-facing abstractions; do not leak HttpResponseMessage or remote transport concerns into Application.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-025",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0137",
+        "primary/K0/constraints.jsonl/RULE-K0-0433",
+        "primary/K0/constraints.jsonl/RULE-K0-0436",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0176"
+      ],
+      "boundary_analysis": "Remote translation boundary matches; semantic statuses require explicit mapping rather than EnsureSuccessStatusCode alone, richer failures not every upstream code and Domain not remote contracts separately captured.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/integrations.md",
+          "sha256": "dfdd1d9b314a82a57a75c5e428a07705a40461eaaa2bff1cc920fbb40e916084",
+          "inspected_ranges": [
+            [
+              12,
+              14
+            ]
+          ],
+          "context_quotes": [
+            "- Never create and dispose a new `HttpClient` per request; use `IHttpClientFactory` or another appropriate long-lived client strategy.\n- Infrastructure translates remote HTTP responses into Application-facing abstractions; `HttpResponseMessage` and other remote transport concerns must not leak into Application.\n- External I/O calls must have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "fdbc5374a5df9419eaf03a7f3a885b561dda92cc07cd72a53cf2f6603bfabb3b",
+          "inspected_ranges": [
+            [
+              42,
+              44
+            ]
+          ],
+          "context_quotes": [
+            "\nFor external calls check cancellation propagation, time limits, idempotency, retry safety, failure translation and disposal/lifetime against `rules/backend/integrations.md`. Do not demand retries for operations that are not safe to retry.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              58,
+              60
+            ],
+            [
+              91,
+              93
+            ],
+            [
+              102,
+              104
+            ],
+            [
+              114,
+              116
+            ],
+            [
+              131,
+              132
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication may define an abstraction that Infrastructure implements with `HttpClient`; Application does not need to know the service uses HTTP.\n",
+            "\nFor genuine HTTP pipeline concerns — authorization header acquisition, correlation/context propagation, request signing — not business decisions:\n",
+            "\nResponse translation boundary: `rules/backend/integrations.md`. `EnsureSuccessStatusCode()` is too blunt when specific remote statuses carry contract meaning:\n",
+            "\nFor richer failure semantics, translate into explicit Infrastructure/Application outcomes rather than exposing every upstream status code through your own API.\n",
+            "\nStable headers (media types) can be configured on the client; per-request values such as dynamic access tokens go on the request or through a handler — mutating shared `DefaultRequestHeaders` concurrently for request-specific values is a race. Prefer `System.Net.Http.Json`/`System.Text.Json`, with explicit serializer options when the remote contract differs from the application's defaults. Internal Domain entities are not remote API contracts.\n",
+            "\nNew `HttpClient` per request; mandating one client model everywhere; retrying unsafe operations without idempotency analysis; unbounded retries; leaking `HttpResponseMessage` across boundaries; ignoring cancellation; dynamic tokens in shared default headers; mapping every upstream failure to the same status; resilience pipelines added without understanding them."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "ARC-026",
+        "name": "API versioning does not duplicate inner models by default",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Controller Versions"
+        ],
+        "normalized_policy": "Do not create separate Domain or persistence models merely because the external API has multiple versions; isolate version-specific transport contracts at the API boundary when practical.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-026",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0118",
+        "primary/K0/constraints.jsonl/RULE-K0-0249"
+      ],
+      "boundary_analysis": "No version-shaped Domain/persistence model split matches; same Application result to distinct HTTP contracts captured0249. When-practical exception remains in replica0022.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/api.md",
+          "sha256": "be4c7b886307d98c8e744c295d23d9571fc6eb0fc1bc421878fdccfe41b5080f",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Default: when explicit versioning is required, use one strategy consistently — URL-segment versioning unless project requirements justify another.\n- Do not create separate Domain or persistence models merely because the external API has multiple versions; isolate version-specific transport contracts at the API boundary when practical.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "bd3dcf58b745785edbf12de195063c8223852f97f2b36997017eed9d0fa31072",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              84,
+              86
+            ],
+            [
+              102,
+              103
+            ]
+          ],
+          "context_quotes": [
+            "\nVersioning belongs to the API contract (`rules/backend/api.md` § Versioning).\n",
+            "\nDifferent versions map the same Application result into different HTTP contracts.\n",
+            "\nVersioning without a compatibility requirement; Minimal API version-group examples in a Controller project; Domain models duplicated per version; an existing version changed incompatibly; a new version for every implementation change; deprecated versions removed silently; URL, header and query versioning mixed without reason."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "ARC-027",
+        "name": "Physical structure follows actual responsibilities",
+        "related_groups": [
+          "dependencies-stack"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/SKILL.md#Goals",
+          "templates/v2-baseline/.claude/skills/project-structure/references/solution-layout.md#Top-Level Layout"
+        ],
+        "normalized_policy": "Do not create speculative projects, infrastructure, empty directory trees, or generic Common/Helpers/Utils buckets solely to make the repository look architectural.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-027",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0075",
+        "primary/K0/constraints.jsonl/RULE-K0-0076",
+        "primary/K0/constraints.jsonl/RULE-K0-0465",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0032"
+      ],
+      "boundary_analysis": "Real cohesive content versus architecture-looking directories matches. Naming/subdirectory detailsBF0046 already recorded. Wider empty-directory checker traversal remains existing CIS-K0-0007, not counted anew.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K0-0007"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/common/repository-layout.md",
+          "sha256": "cbe872566373073e8344878d8fe7e06f6b57049d91ff4bce0d661a7535635ff8",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "\n- Physical structure must follow actual responsibilities: do not create speculative projects, infrastructure, empty directory trees, or generic `Common`, `Helpers` or `Utils` buckets solely to make the repository look architectural.\n- Create a project, directory or documentation folder when it holds real content with a cohesive, nameable responsibility."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-instructions.cjs",
+          "sha256": "d7a4aff736b8fa4bd68a0515e1d245ea544d8c8c36122b44ed7682c1d6729f04",
+          "inspected_ranges": [
+            [
+              130,
+              132
+            ]
+          ],
+          "context_quotes": [
+            "    const entries = fs.readdirSync(abs, { withFileTypes: true });\n    if (entries.length === 0) err(relDir, 'empty directory; create directories only for real content.');\n    for (const entry of entries) {"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "33f712ffbb5d91abf1543ca1158eab923da0a3fa7d41adf156e87f9cb53bec9f",
+          "inspected_ranges": [
+            [
+              38,
+              40
+            ]
+          ],
+          "context_quotes": [
+            "\nCreate directories only when they contain meaningful code. A feature owns its UI and frontend-specific data access.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              19,
+              31
+            ],
+            [
+              39,
+              45
+            ],
+            [
+              47,
+              57
+            ],
+            [
+              63,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "\n1. **Determine scope.** Decide what the request needs: backend, Angular frontend, test projects, documentation, external integrations, mapping, containerization. Do not scaffold optional infrastructure because it may be useful later.\n2. **Read the decisions.** Use the decided stack; conditional technologies only when the project needs their capability now.\n3. **Repository-level structure.** Create only the required top-level directories and repository-wide files (`references/solution-layout.md`): `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `.editorconfig`, `.gitignore`, `README.md`.\n4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples.\n7. **Test projects.** Create only useful test projects beside production projects under `backend/` (typically `Application.Tests` and `IntegrationTests`; `Domain.Tests` only when Domain has non-trivial behavior; `Infrastructure.Tests` only for a concrete need). Angular unit/component tests stay in the Angular workspace; E2E tests, when adopted, under `frontend/<Name>.Web/e2e/`.\n8. **Angular application.** When frontend scope exists, create the workspace under `frontend/<Name>.Web/` with the Angular CLI and the decided frontend options (`references/baseline-setup.md`). Frontend structure: `rules/frontend/angular.md`.\n9. **Internal directories.** Create only directories the initial implementation needs.\n10. **Development persistence.** Configure the Development database and seeding entry point (`references/baseline-setup.md`; `rules/backend/persistence.md`). Add no Production credentials and no automatic production migration step (`delivery-pipeline` § 3).\n11. **Verify.** Restore backend dependencies, build the .NET solution, build the Angular application when present, run relevant tests when present, run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`, inspect the final tree, confirm the Development configuration is usable, then run `verify`. Never report successful scaffolding for a solution that does not build.\n",
+            "\n1. Confirm a new assembly is justified (a new production project is Reserved — CLAUDE.md § Decisions).\n2. Identify its architectural or technical responsibility.\n3. Add only the minimum required references, preserving dependency direction.\n4. Update shared build or package configuration when necessary.\n5. Build and test the affected solution.\n",
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior.\n4. Move code in small, reviewable steps.\n5. Update namespaces and references consistently.\n6. Avoid unrelated feature work.\n7. Verify after restructuring.\n\nDo not force an established project to match this template when doing so provides no concrete value.\n",
+            "\nThe physical structure matches the requested scope; project references respect the architecture; the decided stack is used; no unnecessary projects or speculative directories exist; the backend builds; the frontend builds when present; relevant tests pass; the Development configuration is usable; no unrelated code was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              14,
+              16
+            ],
+            [
+              30,
+              34
+            ],
+            [
+              38,
+              54
+            ],
+            [
+              92,
+              94
+            ]
+          ],
+          "context_quotes": [
+            "\nDefault physical structure of the ASP.NET Core backend. Create only directories that contain real code.\n",
+            "\nPossible later additions when an approved design justifies them: `ValueObjects/`, `DomainServices/`, `Events/`, `Exceptions/`. Business rules or workflow behavior alone do not justify DDD-oriented directories.\n",
+            "- `Abstractions/Persistence` — inward-facing persistence contracts: `ITaskRepository.cs`, `IOrderRepository.cs`, `IUnitOfWork.cs`; no EF Core types.\n- `Abstractions/ExternalServices` — Application-owned abstractions implemented by outer layers: `IEmailSender.cs`, `ICurrentUser.cs`, `IFileStorage.cs`, `IPaymentGateway.cs`. Create it when such a dependency exists.\n- `Services` — Application Services and useful public service contracts: `ITaskService.cs`, `TaskService.cs`. No handler, CQRS or MediatR structures.\n- `DTOs` — Application-level operation/data models when useful; not a dumping ground.\n- `Validation` — FluentValidation validators for Application-level input and use-case validation.",
+            "\nWithin a feature or service area, make each supporting type's responsibility clear from its name, its directory or both. Useful suffixes:\n\n```text\nService            use-case orchestration\nDto                data-transfer model\nRequest/Response   Application operation contracts (HTTP contracts belong to Api)\nResult/Outcome     operation results\nValidator          validation\nRules/Policy       decision or workflow rules\nFactory            object creation\nMapper             mapping\nAdapter            boundary adaptation\n```\n\nPrefer `TaskWorkflowRules`, `TaskWorkflowPolicy` or `TaskWorkflowService` over an ambiguous `TaskWorkflow`. Add responsibility-specific subdirectories when a flat feature directory becomes hard to navigate, not to classify one or two obvious files. Avoid generic `Models`, `Helpers`, `Common` or `Utils` buckets when a specific responsibility can be named.\n",
+            "- `Contracts` — API request/response contracts, when used (`rules/backend/architecture.md` § API layer).\n- `Middleware` — only when custom middleware exists.\n- `Extensions` — cohesive API/composition extension methods; do not move arbitrary code out of `Program.cs` just to shorten it."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "9bed7bd2b78663f45796f03e94e56e47d1c4a153faf4cf626ff3d165cf551fed",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nTarget repository shape for scaffolding. Create optional directories and projects only when needed; do not make the repository match the diagram for its own sake.\n",
+            "\n`docs/` holds maintained project documentation. Possible subdirectories: `architecture/` (the decision register lives in `docs/architecture/decision-register.md`), `decisions/` (ADRs), `api/`. Create them only when the corresponding documentation exists.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "ARC-028",
+        "name": "Test-project production references stay narrow",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/backend-layout.md#Test References"
+        ],
+        "normalized_policy": "Do not give backend test projects broader production-project references than their test scope requires; preserve the same inward dependency discipline used by the production architecture.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-028",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0173",
+        "primary/K0/constraints.jsonl/RULE-K0-0205",
+        "primary/K0/constraints.jsonl/RULE-K0-0505"
+      ],
+      "boundary_analysis": "Scope-limited test references match; test-role tables and notice rather than error already0205/replica0151/BF0121. IntegrationTests Api permission already0505.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "8c5e45a0b34511d92c46ece2d261df2f2bcabdde611310e5f4a4dec970080db6",
+          "inspected_ranges": [
+            [
+              181,
+              192
+            ]
+          ],
+          "context_quotes": [
+            "\nHooks run in exec form (`node` + `args`, no shell): `${CLAUDE_PROJECT_DIR}` only locates `hook.cjs`; every check runs against the active repository or linked worktree, resolved from the hook input `cwd` (or the edited file) through Git, and keeps its state per worktree in `.claude/.hook-state/` (ignored by Git). Hook input may carry a UTF-8 byte-order mark; manifests may be UTF-8 or BOM-tagged UTF-16, and unreadable content is reported as a finding.\n\n| Mechanism | Trigger | Checks | Points to |\n|---|---|---|---|\n| Pre-command hook (fail-closed: a missing script, crash, timeout or unreadable input blocks the command) | Bash/PowerShell command, before execution | npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals (global options and `--force`/`--legacy-peer-deps` included) are denied without `# add-dependency: reviewed`; `dotnet` project-reference additions and removals are denied without `# project-references: approved`; repository-changing Git commands (table-driven classifier after global options such as `-C`) ask the user to confirm, read-only Git commands run | `add-dependency`, `project-structure`, `architecture-decision`, `CLAUDE.md` § Git |\n| Post-change hook | Edit/Write of a manifest, instruction file or product input | `check-dependencies.cjs` on that manifest (project-reference changes flagged as Reserved), `check-instructions.cjs`, synchronization reminders | dependency and architecture standards, this map, `custom-settings` |\n| Post-change hook | every Bash/PowerShell command, successful or failed | actual worktree state: the first observation of a worktree validates every tracked manifest and the instruction files; later observations validate only paths Git reports as changed (working tree, index, HEAD transitions) — additions, rewrites, removals and moves of `*.csproj`, `Directory.Packages.props` and `package.json`, project-reference changes, instruction files, product inputs; build output, `node_modules` and nested repositories are not observed | as above |\n| Stop hook | end of a turn (once per material state of the changed files, never on its own continuation) | model change without seeder change, migrations to review, code without test changes, changed custom settings | `development-workflow`, `verify`, `custom-settings` |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` | `verify`, `add-dependency`, `project-structure` | repository-wide manifest scan | dependency and architecture standards |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` | `template-maintenance`, post-change hook | structural predicates of this system, including the Kind direction and the hook configuration | this map |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              167,
+              183
+            ],
+            [
+              237,
+              270
+            ],
+            [
+              282,
+              290
+            ],
+            [
+              472,
+              478
+            ]
+          ],
+          "context_quotes": [
+            "\nconst DOTNET_VALUE_OPTIONS = new Set(['--version', '-v', '--source', '-s', '--framework', '-f', '--package-directory', '--project', '--verbosity']);\n\n// dotnet add/remove [<project>] package|reference …, dotnet package add|remove|update …, dotnet reference add|remove ….\nfunction classifyDotnet(args) {\n  const positionals = positionalsOf(args, DOTNET_VALUE_OPTIONS).map((p) => p.toLowerCase());\n  const [verb, first, second] = positionals;\n  if (verb === 'add' || verb === 'remove') {\n    if (first === 'package' || first === 'reference') return first;\n    if (second === 'package' || second === 'reference') return second;\n    return null;\n  }\n  if (verb === 'package' && ['add', 'remove', 'update'].includes(first)) return 'package';\n  if (verb === 'reference' && ['add', 'remove'].includes(first)) return 'reference';\n  return null;\n}\n",
+            "\nfunction classifyTokens(tokens, found) {\n  for (let i = 0; i < tokens.length; i += 1) {\n    const tool = baseName(tokens[i]);\n    const args = tokens.slice(i + 1);\n    const text = tokens.slice(i).join(' ');\n    const launch = SHELL_LAUNCHERS[tool] ? args.findIndex((a) => SHELL_LAUNCHERS[tool].includes(a.toLowerCase())) : -1;\n    if (launch >= 0 && args.length > launch + 1) {\n      for (const segment of segmentsOf(args.slice(launch + 1).join(' '))) classifyTokens(tokenize(segment), found);\n    } else if (NODE_PM[tool]) {\n      const hit = classifyNodePackageManager(tool, args);\n      if (hit) found.dependency.push({ text, force: hit.force });\n    } else if (tool === 'ng' || (tool === 'npx' && baseName(positionalsOf(args, new Set(['-p', '--package']))[0] ?? '') === 'ng')) {\n      const ngArgs = tool === 'ng' ? args : args.slice(args.findIndex((a) => baseName(a) === 'ng') + 1);\n      const [sub, ...rest] = positionalsOf(ngArgs, new Set());\n      if (sub === 'add' || (sub === 'update' && rest.length > 0)) found.dependency.push({ text, force: ngArgs.some((a) => FORCE_FLAG.test(a)) });\n    } else if (tool === 'dotnet') {\n      const kind = classifyDotnet(args);\n      if (kind === 'package') found.dependency.push({ text, force: false });\n      if (kind === 'reference') found.reference.push(text);\n    } else if (tool === 'nuget' && ['install', 'update'].includes(String(args[0]).toLowerCase())) {\n      found.dependency.push({ text, force: false });\n    } else if (['install-package', 'update-package', 'uninstall-package'].includes(tool)) {\n      found.dependency.push({ text, force: false });\n    } else if (tool === 'git') {\n      const sub = classifyGit(args);\n      if (sub) found.git.push({ sub, text });\n    } else {\n      continue;\n    }\n    break; // the rest of the segment belongs to the recognized command\n  }\n}\n",
+            "  const deny = [];\n  if (found.reference.length > 0 && !REFERENCE_MARKER.test(command)) {\n    deny.push(\n      `Project-reference graph change: ${found.reference.join(' | ')}`,\n      'Changing the project reference graph is Reserved (CLAUDE.md § Decisions) unless an accepted decision already requires the reference, even when the new reference would be legal.',\n      'Follow `project-structure` § Changing project references (Decision Request: `architecture-decision`), then re-run the command with the trailing comment `# project-references: approved`.',\n    );\n  }\n  if (found.dependency.length > 0 && !DEPENDENCY_MARKER.test(command)) {",
+            "      validate(rel);\n      const refsBefore = type === 'changed' ? change.before.refs : [];\n      const graphChanged = type === 'edited' ? graphHint : !sameList(refsBefore, change.after.refs);\n      if (rel.endsWith('.csproj') && type !== 'baseline' && graphChanged) {\n        messages.push(`[manifest] the project references of ${rel} changed: changing the project reference graph is Reserved (CLAUDE.md § Decisions) — confirm it was approved and recorded (\\`architecture-decision\\`), or revert it.`);\n      }\n    }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "8a8062be53ce5d104ae5a6bebf732f32c8977963b51ce94c4373102e22f0767d",
+          "inspected_ranges": [
+            [
+              33,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n- Test projects must not reference production projects more broadly than their test scope requires; they follow the same inward dependency discipline as production code."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-dependencies.cjs",
+          "sha256": "2a14aa061c2daf224843190038869f58610824a953b362dd8b2ab1aa37be7942",
+          "inspected_ranges": [
+            [
+              37,
+              44
+            ],
+            [
+              132,
+              157
+            ]
+          ],
+          "context_quotes": [
+            "};\nconst TYPICAL_TEST_REFERENCES = {\n  'Domain.Tests': ['Domain'],\n  'Application.Tests': ['Application', 'Domain'],\n  'Infrastructure.Tests': ['Infrastructure', 'Application', 'Domain'],\n  IntegrationTests: ['Api'],\n};\n",
+            "\n  const self = classifyProject(projectName);\n  for (const reference of projectReferences(text)) {\n    const target = path.basename(reference, '.csproj');\n    if (!reference.includes('$(') && !fs.existsSync(path.resolve(rootDir, path.dirname(rel), reference))) {\n      result.errors.push(`${rel}: ProjectReference ${reference} points to a project that does not exist (project-structure).`);\n    }\n    const targetLayer = layerOf(target);\n    if (self.kind === 'production') {\n      if (targetLayer === 'test') {\n        result.errors.push(`${rel}: production project references test project ${target} (rules/backend/architecture.md § Dependency direction).`);\n      } else if (targetLayer !== 'unknown' && !ALLOWED_PRODUCTION_REFERENCES[self.role].includes(targetLayer)) {\n        result.errors.push(`${rel}: ${self.role} must not reference ${targetLayer} (${target}); dependencies point inward (rules/backend/architecture.md § Dependency direction, D-01).`);\n      } else if (targetLayer === 'unknown') {\n        result.notices.push(`${rel}: reference to ${target}, which is not a recognized layer project; new production projects are Reserved (CLAUDE.md § Decisions).`);\n      }\n    } else if (self.kind === 'test' && TYPICAL_TEST_REFERENCES[self.role]) {\n      const typical = TYPICAL_TEST_REFERENCES[self.role];\n      if (targetLayer !== 'unknown' && targetLayer !== 'test' && !typical.includes(targetLayer)) {\n        result.notices.push(`${rel}: ${self.role} references ${target}; confirm the test scope requires it (rules/backend-tests/testing.md § Test project references).`);\n      }\n    }\n  }\n  if (self.kind === 'unknown' && rel.startsWith('backend/')) {\n    result.notices.push(`${rel}: project name does not follow backend/<Name>.<Layer> (D-18); new production projects are Reserved (CLAUDE.md § Decisions).`);\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"pre-tool-use\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ],
+            [
+              33,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples.",
+            "\n1. Classify the change. The layer references listed in `references/backend-layout.md` § Project references (D-01) are decided; any other added or removed reference changes the project reference graph and is Reserved (CLAUDE.md § Decisions) even when it is architecturally legal — raise a Decision Request with `architecture-decision` and wait for approval.\n2. Run the reference command (`dotnet add <project> reference …`, `dotnet remove <project> reference …`, `dotnet reference add|remove …`) with the trailing comment `# project-references: approved`; the pre-command hook stops reference commands without it.\n3. Build the affected projects and run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              123,
+              139
+            ]
+          ],
+          "context_quotes": [
+            "\n```text\nProjectName.Domain.Tests              # optional\n    -> ProjectName.Domain\n\nProjectName.Application.Tests\n    -> ProjectName.Application\n    -> ProjectName.Domain as needed\n\nProjectName.IntegrationTests\n    -> ProjectName.Api\n\nProjectName.Infrastructure.Tests      # optional\n    -> ProjectName.Infrastructure\n    -> narrower references as required\n```\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "9bed7bd2b78663f45796f03e94e56e47d1c4a153faf4cf626ff3d165cf551fed",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "\nIntegration tests may reference the API project for `WebApplicationFactory<Program>`.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              38,
+              40
+            ]
+          ],
+          "context_quotes": [
+            "  2. a new architectural style or pattern: Rich Domain Model or DDD tactical patterns, CQRS, mediators (MediatR, Kommand), Vertical Slice Architecture, event sourcing, microservices;\n  3. a new production project, layer or assembly, or a change to the project reference graph;\n  4. persistence boundaries or persistence technology, including multiple `DbContext`s;"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "API-001",
+        "name": "HTTP semantics belong to API",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "HTTP status codes and transport response semantics belong to the API layer; Application/Domain must not return IActionResult or ASP.NET Core status codes.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0109",
+        "primary/K0/constraints.jsonl/RULE-K0-0257",
+        "primary/K0/constraints.jsonl/RULE-K0-0427"
+      ],
+      "boundary_analysis": "API transport ownership matches including extra ProblemDetails exclusion in Application/Domain explicitly0109. Outcome meaning translated only at API0257.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/api.md",
+          "sha256": "be4c7b886307d98c8e744c295d23d9571fc6eb0fc1bc421878fdccfe41b5080f",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "\n- HTTP status codes and transport response semantics belong to the API layer; Application and Domain must not return `IActionResult`, `ProblemDetails` or ASP.NET Core status codes.\n- Default: `ProblemDetails` for non-validation HTTP failures and `ValidationProblemDetails` for request validation; keep machine-readable error contracts stable and safe."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "4e8e206f402218763ae350144cb974909a2e7a8616c331e640eabd6156e4c105",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ],
+            [
+              159,
+              161
+            ],
+            [
+              165,
+              175
+            ]
+          ],
+          "context_quotes": [
+            "\nFor a command with several meaningful outcomes, an explicit typed outcome can be clearer. Outcome categories with Application or business meaning — `Validation`, `NotFound`, `Conflict`, `BusinessRuleViolation` — map to HTTP in the API layer (`rules/backend/error-handling.md` § Expected outcomes).\n",
+            "\nRaw exception messages or inconsistent anonymous error objects returned to clients; Application depending on HTTP status codes; every method returning `Result<T>`; exceptions for every negative branch; swallowed exceptions; catch/log/rethrow at every layer; the same failure logged repeatedly; sensitive details in `ProblemDetails`; business rules only in request validators; validation coupled to Minimal API endpoint filters in a Controller-based project.\n",
+            "|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Application returns `null`; API maps to `404` |\n| Several expected business outcomes | Typed outcome or Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validator / Application Service |\n| Non-trivial invariant owned by Domain | Domain enforcement |\n| Recoverable external failure | Handle or translate at the boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client cancellation | Propagate; not a generic `500` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "4be88938366ec54bf5911ec40338a421949bde8633f98775f7c7ae53099b41a8",
+          "inspected_ranges": [
+            [
+              102,
+              104
+            ]
+          ],
+          "context_quotes": [
+            "\nControllers translate Application outcomes into HTTP outcomes:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "API-002",
+        "name": "Use structured error contracts",
+        "related_groups": [
+          "frontend",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Core Principles",
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#ProblemDetails"
+        ],
+        "normalized_policy": "Use ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request validation; keep machine-readable contracts stable and safe.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0110",
+        "primary/K0/constraints.jsonl/RULE-K0-0428",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0226"
+      ],
+      "boundary_analysis": "Default contract wording already BF0083; machine-readable vs human messages0428. Optional code and correlation fields remain existing CIS-K0-U0007/U0008; no newly surfaced hypothesis.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K0-U0007",
+        "CIS-K0-U0008"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/api.md",
+          "sha256": "be4c7b886307d98c8e744c295d23d9571fc6eb0fc1bc421878fdccfe41b5080f",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "- HTTP status codes and transport response semantics belong to the API layer; Application and Domain must not return `IActionResult`, `ProblemDetails` or ASP.NET Core status codes.\n- Default: `ProblemDetails` for non-validation HTTP failures and `ValidationProblemDetails` for request validation; keep machine-readable error contracts stable and safe.\n- Choose 200/201/202/204 by actual HTTP semantics: do not return 200 for every outcome, 201 merely because a row was inserted internally, or 202 for work that already completed. Keep status behavior consistent across similar endpoints."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "4e8e206f402218763ae350144cb974909a2e7a8616c331e640eabd6156e4c105",
+          "inspected_ranges": [
+            [
+              103,
+              105
+            ],
+            [
+              159,
+              161
+            ],
+            [
+              163,
+              175
+            ]
+          ],
+          "context_quotes": [
+            "\nA useful error contract may contain the HTTP status, a stable machine-readable error code when clients need one, a human-readable title, a safe detail, and a correlation or trace identifier when appropriate. The human-readable message is not the machine-readable contract.\n",
+            "\nRaw exception messages or inconsistent anonymous error objects returned to clients; Application depending on HTTP status codes; every method returning `Result<T>`; exceptions for every negative branch; swallowed exceptions; catch/log/rethrow at every layer; the same failure logged repeatedly; sensitive details in `ProblemDetails`; business rules only in request validators; validation coupled to Minimal API endpoint filters in a Controller-based project.\n",
+            "\n| Scenario | Technique |\n|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Application returns `null`; API maps to `404` |\n| Several expected business outcomes | Typed outcome or Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validator / Application Service |\n| Non-trivial invariant owned by Domain | Domain enforcement |\n| Recoverable external failure | Handle or translate at the boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client cancellation | Propagate; not a generic `500` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "4be88938366ec54bf5911ec40338a421949bde8633f98775f7c7ae53099b41a8",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ],
+            [
+              61,
+              63
+            ],
+            [
+              71,
+              73
+            ],
+            [
+              77,
+              83
+            ],
+            [
+              121,
+              123
+            ],
+            [
+              127,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\n**400 Bad Request** — the HTTP request itself is invalid: malformed JSON, invalid shape, model-binding failure, invalid formatting, missing transport-level input. `[ApiController]` produces many of these automatically. Authentication failures are not `400`.\n",
+            "\n**406 Not Acceptable** — the server cannot produce a representation the client accepts (response content negotiation). **415 Unsupported Media Type** — the server does not support the request body format (for example `Content-Type: application/xml` on a JSON-only endpoint).\n",
+            "\n**429 Too Many Requests** — rate limiting rejected the request; include `Retry-After` when the next acceptable attempt is known. Validation failures are not rate limiting.\n",
+            "\n**502 Bad Gateway** — this API acts as an intermediary and received an invalid or unusable upstream response. Not every dependency failure is `502`.\n\n**503 Service Unavailable** — temporarily unable to handle the request: maintenance, a critical dependency unavailable for this operation, temporary overload. Include `Retry-After` when meaningful.\n\n**504 Gateway Timeout** — acting as an intermediary, an upstream service did not respond in time. Not every internal `TaskCanceledException` is `504`: distinguish a client-cancelled request, our own operation timing out, and an upstream dependency timing out — the right response depends on which occurred and the role this API plays.\n",
+            "\nMachine-readable clients rely on stable error codes or contract fields in `ProblemDetails`, not on human-readable exception messages.\n",
+            "|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid structure, invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid upstream response as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout as intermediary | `504` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "072cc822bc468391ccc8ce7fc59d63bcb926c33f90b66ba5a2df5d6f36b1acc1",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen failures use `ProblemDetails`/`ValidationProblemDetails`, describe those contracts where useful. Keep internal exception types, stack traces, SQL, connection strings and filesystem paths out of Swagger examples and descriptions (`rules/backend/error-handling.md` § Unexpected failures).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "API-003",
+        "name": "Use semantic success statuses",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Successful Responses"
+        ],
+        "normalized_policy": "Choose 200/201/202/204 according to actual HTTP semantics; do not return 200 for every outcome, 201 merely for an internal row insert, or 202 for already-completed work.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0111",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0014",
+        "primary/K0/constraints.jsonl/RULE-K0-0416",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0167",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0170",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0171"
+      ],
+      "boundary_analysis": "Actual status semantics match. Consistency, Location/progress, repeated-delete convention, richer status taxonomy and established400 exception all independently captured. 304 no-representation remains CIS-K0-0009; no duplicate discovery.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K0-0009"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/api.md",
+          "sha256": "be4c7b886307d98c8e744c295d23d9571fc6eb0fc1bc421878fdccfe41b5080f",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "- Default: `ProblemDetails` for non-validation HTTP failures and `ValidationProblemDetails` for request validation; keep machine-readable error contracts stable and safe.\n- Choose 200/201/202/204 by actual HTTP semantics: do not return 200 for every outcome, 201 merely because a row was inserted internally, or 202 for work that already completed. Keep status behavior consistent across similar endpoints.\n- Default: a successful collection query with zero matches returns 200 with an empty collection, not 404."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "bd3dcf58b745785edbf12de195063c8223852f97f2b36997017eed9d0fa31072",
+          "inspected_ranges": [
+            [
+              94,
+              96
+            ]
+          ],
+          "context_quotes": [
+            "\nGenerate separate or clearly grouped documents per supported version when clients need them (technique: `swagger`); the documented version matches runtime routing and Controller metadata. Versioning does not change normal HTTP semantics (`http-api`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "ea8bc3874aaffcf58843a04480cf0ae3a0ca332305a2764a698b782556408d8b",
+          "inspected_ranges": [
+            [
+              63,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "\nHealth endpoints return success when healthy and a non-success status when unhealthy under the probe policy; `HealthCheckOptions` maps statuses. Business API status semantics do not transfer mechanically to orchestrator probes. Keep probe responses small; operator-level diagnostic detail goes behind network or authorization controls appropriate to the environment.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "4be88938366ec54bf5911ec40338a421949bde8633f98775f7c7ae53099b41a8",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              21,
+              47
+            ],
+            [
+              49,
+              51
+            ],
+            [
+              53,
+              55
+            ],
+            [
+              61,
+              63
+            ],
+            [
+              67,
+              69
+            ],
+            [
+              71,
+              73
+            ],
+            [
+              77,
+              83
+            ],
+            [
+              125,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\n**200 OK** — completed with a response representation: successful `GET`, `PUT`/`PATCH` returning the updated representation, a `POST` that performs an operation without creating a resource, a query returning data.\n",
+            "\n**201 Created** — the request created a new API resource. Include `Location` when a stable resource URI exists. `PUT` may also return `201` when it creates a resource at a previously non-existing URI. An internal row insert alone is not \"creation\" in HTTP terms (`rules/backend/api.md` § HTTP semantics).\n\n```csharp\nreturn CreatedAtAction(\n    nameof(GetById),\n    new { id = created.Id },\n    created);\n```\n\n**202 Accepted** — accepted but not complete when the response is sent: long-running operations, background jobs, asynchronous imports, queued processing. Return an operation identifier or a `Location` where progress can be observed.\n\n```csharp\nreturn AcceptedAtAction(\n    nameof(GetOperation),\n    new { id = operationId },\n    response);\n```\n\n**204 No Content** — completed and no body is needed: successful `DELETE`, or an update whose representation adds no value. A `204` carries no body.\n\n```csharp\nreturn NoContent();\n```\n\nRepeated `DELETE` of an absent resource may return `204` (the desired final state holds) or `404` (the addressed resource does not exist); pick one convention and apply it consistently across equivalent resources.\n",
+            "\n**304 Not Modified** — only for a conditional request (`If-None-Match`/ETag, `If-Modified-Since`) when the client's cached representation is still valid; it carries no representation. It is not a generic \"nothing changed\" business response.\n",
+            "\n**400 Bad Request** — the HTTP request itself is invalid: malformed JSON, invalid shape, model-binding failure, invalid formatting, missing transport-level input. `[ApiController]` produces many of these automatically. Authentication failures are not `400`.\n",
+            "\n**406 Not Acceptable** — the server cannot produce a representation the client accepts (response content negotiation). **415 Unsupported Media Type** — the server does not support the request body format (for example `Content-Type: application/xml` on a JSON-only endpoint).\n",
+            "\n**422 Unprocessable Content** — syntactically and structurally valid, but semantically or business-invalid content: impossible values, a business-rule rejection that is not a state conflict, incompatible fields such as `startDate > endDate`. Some APIs use `400` for both transport and semantic validation; follow an established convention. New APIs that distinguish them use `400` for an invalid HTTP/request contract and `422` for a valid structure with invalid semantics.\n",
+            "\n**429 Too Many Requests** — rate limiting rejected the request; include `Retry-After` when the next acceptable attempt is known. Validation failures are not rate limiting.\n",
+            "\n**502 Bad Gateway** — this API acts as an intermediary and received an invalid or unusable upstream response. Not every dependency failure is `502`.\n\n**503 Service Unavailable** — temporarily unable to handle the request: maintenance, a critical dependency unavailable for this operation, temporary overload. Include `Retry-After` when meaningful.\n\n**504 Gateway Timeout** — acting as an intermediary, an upstream service did not respond in time. Not every internal `TaskCanceledException` is `504`: distinguish a client-cancelled request, our own operation timing out, and an upstream dependency timing out — the right response depends on which occurred and the role this API plays.\n",
+            "\n| Situation | Response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid structure, invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid upstream response as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout as intermediary | `504` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "072cc822bc468391ccc8ce7fc59d63bcb926c33f90b66ba5a2df5d6f36b1acc1",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\nAccuracy rule: `rules/backend/api.md` § OpenAPI and Swagger — for example, not `201` for an endpoint that returns `200`, not `204` for one that returns a body. Possible responses come from the whole pipeline: model binding, validation, authentication/authorization, rate limiting, centralized exception handling and other middleware, not only explicit action branches; a status that is merely theoretically possible is not documented. For creation, document `201 Created` with `CreatedAtAction`/`CreatedAtRoute` when a canonical URL exists.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P007",
+      "canonical_policy": {
+        "id": "API-004",
+        "name": "Empty collections return success",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#200 OK"
+        ],
+        "normalized_policy": "A successful collection query with zero matches normally returns 200 with an empty collection, not 404.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0112",
+        "primary/K0/constraints.jsonl/RULE-K0-0415"
+      ],
+      "boundary_analysis": "Successful empty collection200 and loss of representation with204 match; resource-absence distinction0421. No new mandatory body outside collection scope inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/api.md",
+          "sha256": "be4c7b886307d98c8e744c295d23d9571fc6eb0fc1bc421878fdccfe41b5080f",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "- Choose 200/201/202/204 by actual HTTP semantics: do not return 200 for every outcome, 201 merely because a row was inserted internally, or 202 for work that already completed. Keep status behavior consistent across similar endpoints.\n- Default: a successful collection query with zero matches returns 200 with an empty collection, not 404.\n- Use 401 when authentication is missing or failed and 403 when an authenticated principal is not permitted. Returning 404 to hide a protected resource must be a deliberate, consistent security policy."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "4be88938366ec54bf5911ec40338a421949bde8633f98775f7c7ae53099b41a8",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ],
+            [
+              59,
+              61
+            ],
+            [
+              125,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\nEmpty collections: `rules/backend/api.md` § HTTP semantics; `204` for an empty collection loses the representation and is less clear to clients.\n",
+            "\n**404 Not Found** — the addressed resource does not exist, or the API deliberately hides it. A collection query with zero matches (`GET /api/orders?customerId=...`) follows the empty-collection rule in `rules/backend/api.md` § HTTP semantics.\n",
+            "\n| Situation | Response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid structure, invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid upstream response as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout as intermediary | `504` |"
+          ]
+        }
+      ]
+    }
+  ]
+}

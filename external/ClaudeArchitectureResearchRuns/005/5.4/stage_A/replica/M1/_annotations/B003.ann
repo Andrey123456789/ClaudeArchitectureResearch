@@ -1,0 +1,224 @@
+# M1 / B003 — map, rules: api, architecture, coding-style, composition, dependencies.
+
+C R12 OL DEP-025 | MUST NOT (PreToolUse deny unless the user-approval marker is present) | Do not use npm --force/-f/--legacy-peer-deps (pnpm/yarn --force) to bypass incompatible peer dependencies; resolve the actual compatibility problem; the PreToolUse hook denies such commands. | Bash and PowerShell package-manager commands | Only when the user explicitly approved the override, the command may be re-run with '# peer-override: approved-by-user'.
+C R17 OL API-001 | MUST | HTTP status codes and transport response semantics belong to the API layer; Application and Domain must not return IActionResult or ASP.NET Core status codes. | backend layers | none stated
+C R18 OL API-003 | MUST | Choose 200/201/202/204 by actual HTTP semantics: not 200 for every outcome, not 201 merely for an internal insert (201 means a new API resource, with Location when a stable URI exists), not 202 for completed work. | HTTP API | none stated
+C R19 OL API-004 | DEFAULT | A successful collection query with zero matches returns 200 with an empty collection, not 404. | HTTP API | none stated
+C R20 OL API-005 | MUST | 401 when authentication is missing or failed, 403 when an authenticated principal is not permitted; hiding protected resources with 404 requires a deliberate, consistent security policy. | HTTP API | none stated
+C R21 OL API-006 | MUST | 409 for a valid request conflicting with current state; 412 when an explicit HTTP precondition such as If-Match fails. | HTTP API | none stated
+C R22 OL API-013 | MUST NOT | Do not introduce API versioning merely because an API exists; add it when published compatibility or coexisting client generations create a concrete need. | HTTP API versioning | none stated
+C R23 OL API-014 | MUST | Once external clients rely on an API version avoid silent breaking changes; a breaking contract change requires a new version or another explicitly approved compatibility strategy. | published APIs | Approved compatibility strategy.
+C R24 OL API-015 | DEFAULT | When explicit versioning is required use one strategy consistently; URL-segment versioning unless project requirements justify another. | HTTP API versioning | Project requirements.
+C R25 OL API-022 | MUST | Deprecating or removing a published API version follows the architecture-decision deprecation procedure (deprecation metadata, documented replacement, realistic timeline, old version kept working for the promised support period). | published API versions | none stated
+C R26 OL API-016 | MUST | Swagger/OpenAPI metadata describes the API that actually runs (routes, important response statuses, schemas, authentication behavior); no speculative responses. | API documentation | none stated
+C R27 OL API-017 | DEFAULT | Enable Swagger UI in Development; expose it elsewhere only when deployment requirements explicitly justify it. | API documentation | Deployment requirements.
+C R28 OL API-018 | MUST | Health checks remain cheap and deterministic; no full business workflows, expensive or mutating database work. | health checks | none stated
+C R29 OL API-019 | MUST | Liveness must not depend on external dependencies whose unavailability could cause restart loops; readiness may depend on capabilities required to serve traffic and reflects startup and dependency availability. | health checks | none stated
+C R30 OL API-020 | MUST NOT | Do not expose secrets, credentials, connection details, stack traces or unnecessary internal diagnostics through publicly reachable health responses. | health responses | none stated
+C R31 OL ARC-002 | MUST | Keep Domain independent of the persistence technology, ASP.NET Core, HTTP, persistence and external-service implementation concerns. | Domain | none stated
+C R32 OL ARC-003 | DEFAULT | Simple domain entities are the default; for CRUD-oriented applications and straightforward workflows enforce use-case and workflow rules in Application Services; validation rules, immutable fields, status transitions or allowed/forbidden edits do not by themselves justify a Rich Domain Model. | Domain and Application | none stated
+C R33 OL ARC-004 | REQUIRES_APPROVAL | Move behavior into Domain entities only when non-trivial invariants materially benefit from domain-level encapsulation independently of a use case; otherwise a Rich Domain Model or DDD tactical pattern requires explicit approval unless the approved specification already requires it. | Domain | Approved specification requires it.
+C R34 OL ARC-005 | MUST NOT | Do not add factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar constructs merely to make a simple model appear domain-driven. | Domain | none stated
+C R35 OL ARC-006 | DEFAULT | Application Services are the default orchestration mechanism for use cases (coordinating Domain objects, repositories, external-service abstractions and the Unit of Work); a service becoming too large signals a responsibility review, not automatic adoption of another pattern. | Application | none stated
+C R36 OL ARC-007 | MUST | Persistence and external-service abstractions are defined in Application when use cases require them (repository interfaces are inward-facing contracts defined in Application and implemented in Infrastructure); infrastructure details stay out of Application. | Application | none stated
+C R37 OL ARC-008 | MUST NOT | Application must not depend on persistence-technology types or ASP.NET Core transport types. | Application | none stated
+C R38 OL ARC-010 | MUST | ASP.NET Core Controllers are the default HTTP entry point and stay thin: bind and validate HTTP input, invoke Application services, translate outcomes into HTTP responses. | Api | none stated
+C R39 OL ARC-011 | MUST NOT | Controllers contain no business logic, do not access the persistence session or concrete repositories, and do not construct infrastructure services manually. | Api | none stated
+C R40 OL ARC-012 | DEFAULT | Program.cs is the application composition root and may register Infrastructure implementations; Controllers do not consume Infrastructure implementation types directly. | composition | none stated
+C R41 OL ARC-013 | DEFAULT | Prefer specific repository interfaces representing cohesive use-case persistence needs over table-mirroring generic CRUD contracts; Aggregate Roots of an approved DDD design are natural repository boundaries. | repositories | none stated
+C R42 OL ARC-014 | MUST NOT | Repository interfaces must not expose IQueryable<T>, persistence-technology types or query expressions, or provider-specific types; query construction stays in Infrastructure and contracts return materialized results. | repository contracts | none stated
+C R43 OL ARC-015 | MUST NOT | Application must not depend on IGenericRepository<T> or another generic CRUD contract; a generic repository or Repository<TEntity> base class may exist only in Infrastructure to remove genuine duplication, never replacing the persistence technology's query capabilities; use-case-specific queries belong in concrete repositories. | repositories | none stated
+C R44 OL ARC-016 | DEFAULT | IUnitOfWork is the default commit boundary of an Application use case, implemented in Infrastructure over the scoped persistence session; repositories stage changes and do not commit independently; Application Services decide when to commit. | use-case commits | none stated
+C R45 OL ARC-017 | MUST | Repositories in one use case share the same scoped Unit of Work and persistence session; inject repositories explicitly; IUnitOfWork must not act as a repository container or service locator. | repositories and Unit of Work | none stated
+C R46 OL ARC-024 | MUST | Keep cache technology out of Domain and do not leak infrastructure cache APIs into Application without a deliberate boundary abstraction. | caching boundaries | none stated
+C R47 OL ARC-025 | MUST | Infrastructure translates remote HTTP responses into Application-facing abstractions; do not leak HttpResponseMessage or remote transport concerns into Application. | outbound HTTP boundaries | none stated
+C R48 OL ARC-023 | DEFAULT | Keep dependency registration close to the owning layer: Application registers Application services, Infrastructure persistence and adapters, Api remains the composition root. | DI registration | none stated
+C R49 OL ARC-026 | MUST NOT | Do not create separate Domain or persistence models merely because the external API has several versions; isolate version-specific transport contracts at the API boundary when practical. | API versioning | none stated
+C R50 OL ARC-029 | MUST NOT | Do not duplicate equivalent DTOs across Api and Application merely to create layer-shaped types; introduce transport-specific contracts when separation provides a concrete boundary benefit. | contracts | none stated
+C R51 OL RUN-009 | DEFAULT | Follow the repository's existing conventions and .editorconfig; prefer modern C# when it improves clarity but do not rewrite working code solely to use newer syntax (e.g. no mechanical constructor conversion). | C# code | none stated
+C R52 OL RUN-024 | DEFAULT | For new code prefer file-scoped namespaces when consistent, keep one primary top-level type per file with a matching file name, and use the Async suffix for Task/ValueTask-returning methods unless an existing contract or framework API would break. | new C# code | Existing contracts.
+C R53 OL RUN-011 | MUST NOT | Do not perform style-only rewrites outside the requested change unless explicitly asked; avoid mixing large formatting or modernization changes with functional work; do not reorganize an existing file merely to satisfy a preferred member ordering. | C# code | Explicit request.
+C R54 OL ARC-021 | DEFAULT | Constructor injection is the default for required dependencies; avoid service-locator and property-injection patterns. | DI | none stated
+C R55 OL ARC-022 | MUST | Respect service lifetimes: never capture a shorter-lived dependency in a longer-lived service; singletons or hosted services needing scoped work create a scope per operation and resolve a scoped orchestration service. | DI | none stated
+C R56 OL RUN-022 | DEFAULT | Prefer strongly typed options for structured configuration consumed by services (direct IConfiguration access is appropriate in the composition root, provider setup and infrastructure registration) and validate settings at startup when missing or invalid values prevent correct or secure operation. | configuration | none stated
+C R57 OL RUN-013 | DEFAULT | Use ILogger<T> with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text. | logging | none stated
+C R58 OL DEP-021 | DEFAULT | When Serilog is configured use the DI-integrated AddSerilog() approach with provider configuration in environment-aware configuration; application code keeps depending on ILogger<T>. | logging provider | none stated
+C R59 OL DEP-001 | MUST | Add a dependency only when it solves a concrete current requirement; do not install packages for hypothetical future use. | dependencies | none stated
+C R60 OL DEP-006 | MUST | NuGet Central Package Management: versions in Directory.Packages.props; PackageReference entries versionless by default (VersionOverride needs a concrete, documented reason); no duplicated central versions; package references in the narrowest project that needs them. | NuGet manifests | VersionOverride with documented reason.
+C R61 OL DEP-007 | MUST | Use npm for the frontend workspace unless the project deliberately adopts another package manager; keep package-lock.json consistent when adding packages; put build and test tooling in devDependencies unless there is a reason. | frontend packages | Deliberately adopted other package manager.
+C U1 LU GOV-015,DEP-007 | MUST | Maintain and commit package.json and package-lock.json (the manifest check also warns 'maintain and commit the lockfile' when package-lock.json is missing). | frontend workspace manifests | none stated | Read as a version-control content convention the clause is entailed by DEP-007; read as an instruction to perform commits it conflicts with GOV-015, which allows commits only on explicit request. The text does not settle which reading is meant. | Under the commit reading an agent could commit lockfile changes without an explicit request.
+C X7 EX DEP-001,DEP-003 | MUST (PreToolUse deny until the add-dependency marker) | Dependency removals follow the add-dependency workflow: removal commands (npm/pnpm uninstall/remove, yarn remove, dotnet remove package, dotnet package remove, nuget delete, Uninstall-Package) are denied until re-run with '# add-dependency: checked'. | Bash and PowerShell package-manager commands | The marker is self-certified. | DEP-001..DEP-005 govern additions and updates; no oracle policy routes removals through a workflow gate. | 'npm uninstall lodash' requested by the user is denied until the agent runs add-dependency and adds the marker.
+C X11 EX - | MUST | Ownership of instruction content: every rule has exactly one owner and other files point to it; knowledge skills are technique only and never sole policy owners; implementation-specific content goes only into the module facets. | template maintenance | none stated | Instruction-system ownership rule; the oracle does not regulate instruction ownership. | Restating a rule in a second file instead of pointing to its owner violates the maintenance rules.
+C X12 EX - | MUST (checker-enforced) | Hook registration form: hooks are wired in exec form (command node plus script path through ${CLAUDE_PROJECT_DIR}, no shell); the critical PreToolUse hook fails closed (onFailure block); failed shell commands are post-checked (PostToolUseFailure); post and Stop hooks report failures visibly without blocking. | .claude/settings.json (template maintenance) | none stated | Hook-configuration design of the template; no oracle policy regulates hook registration. | Wiring a hook as a shell command string or removing the PostToolUseFailure registration fails the checker.
+C X13 EX API-013,ARC-020 | REQUIRES_APPROVAL (Reserved) | Adopting API versioning is Reserved and needs explicit approval, even when a concrete compatibility need exists. | HTTP API versioning | none stated | API-013 allows introducing versioning when a real compatibility need exists without requiring approval; the oracle's consequential-change list does not name versioning adoption. | With published clients needing coexistence the agent must still send a Decision Request before adding versioning.
+
+FILE .claude/MAP.md | Maintainer map; not auto-loaded.
+1 NN | header metadata
+3 NN | document heading
+5-8 EX X11 | every rule has exactly one owner and other files point
+10-15 NN | loading value definitions
+17-21 NN | capability view pointer and checker command
+23 NN | section heading
+25-29 NN | always-loaded surface table
+31-32 NN | pointer to capability view
+34 NN | section heading
+36-47 NN | path rule navigation table
+49-50 NN | pointer to capability-owned rule facets
+52 NN | section heading
+54-68 NN | workflow skill navigation table
+70-72 NN | pointer to capability-owned workflow facets
+74 NN | section heading
+76-93 NN | knowledge skill navigation table
+95-96 NN | pointer to capability-owned knowledge skills
+98 NN | section heading
+100-102 NN | agent table
+104 NN | section heading
+106-109 NN | product input table
+111 NN | section heading
+113-119 IM | operational notes on Node.js, launcher and active roots
+121-122 NN | table header
+123 EX X12 | the critical pre-tool hook fails closed (`onFailure: "block"`)
+124 DU R11,R12,X8,X7 | description of the pre-tool gate; constraints recorded at the command classifier
+125 DU R11,X8,R13,R14,X9 | description of the post-tool hook; constraints recorded at the hook code
+126 DU R15,R16,X10,R13,R14 | description of the Stop hook; constraints recorded at the hook code
+127-135 IM | descriptions of checker scripts, libraries and repository configuration files
+137 NN | section heading
+139-144 EX X1,X3 | never to the selected implementation's name
+146 NN | section heading
+148-154 NN | architecture capability view table
+156-158 NN | binds and properties note
+160 NN | section heading
+162-169 NN | persistence capability view table
+171-175 IM | binds, declared property and provider-variant notes (recorded at the manifest)
+177 NN | section heading
+179-185 NN | backend-testing capability view table
+187 NN | binds note
+189 NN | section heading
+191-197 NN | frontend capability view table
+199-200 NN | removal pointer
+
+FILE .claude/rules/api.md | Path rule (backend).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11-12 NN | pointers to error-handling rule and status reference
+14 NN | section heading
+16-18 OL R17 | Application and Domain must not return `IActionResult` or ASP.NET Core status
+19-22 OL R18 | Do not return `200` for every outcome
+23-24 OL R19 | a successful collection query with zero matches returns `200`
+25-27 OL R20 | requires a deliberate, consistent security policy.
+28-29 OL R21 | Use `409` for a valid request that conflicts with the current state
+31 NN | section heading
+33-35 MX R22,X13 | Adopting versioning is Reserved. ⟫ Need-based introduction of versioning is oracle-linked (R22); Reserved status of adopting versioning is X13.
+36-38 OL R23 | avoid silent breaking
+39-41 OL R24 | URL-segment versioning is the default
+42-43 OL R25 | Deprecating or removing a published version
+45 NN | section heading
+47-49 OL R26 | Do not
+50-51 OL R27 | Enable Swagger UI in Development by default
+53 NN | section heading
+55-56 OL R28 | Health checks must remain cheap and deterministic.
+57-60 OL R29 | Liveness must not depend on external dependencies
+61-62 OL R30 | Do not expose secrets, credentials, connection details, stack traces, or
+
+FILE .claude/rules/architecture.md | Capability architecture/clean-architecture; path rule (backend).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11-13 NN | pointers to role map and persistence rule
+15 NN | section heading
+17-25 OL R5 | Dependencies must point inward.
+27 NN | section heading
+29-30 OL R31,R32 | Simple domain entities are the default.
+32-33 OL R31 | Keep Domain independent of the persistence technology
+34-37 OL R32 | Validation rules, immutable fields, status transitions, or allowed/forbidden
+38-42 OL R33 | requires explicit approval, unless the approved specification already
+43-46 OL R34 | Do not add factory methods, private setters, transition methods, Aggregate
+48 NN | section heading
+50-52 OL R35 | Application Services are the default orchestration mechanism for use cases.
+53-55 OL R36 | Define persistence and external-service abstractions in Application when use
+56-57 OL R37 | Application must not depend on persistence-technology types
+58-59 OL R35 | A service becoming too large is a signal to reconsider its responsibilities,
+61 NN | section heading
+63-65 OL R38 | Controllers must
+67-68 OL R39 | Controllers must not contain business logic
+70-72 OL R40 | `Program.cs` is the application composition root
+74 NN | section heading
+76 OL R36 | Repository interfaces are inward-facing persistence contracts.
+78-81 OL R41 | Prefer specific repository interfaces that represent actual, cohesive
+82-83 OL R36,R42 | query construction stays inside Infrastructure.
+84-86 OL R42 | Repository interfaces must not expose `IQueryable<T>`
+88-99 NN | repository interface code example
+101 NN | section heading
+103-108 OL R43 | Application must not depend on `IGenericRepository<T>`
+110 NN | section heading
+112 OL R44 | `IUnitOfWork` is the default commit boundary for an Application use case.
+114-120 NN | IUnitOfWork code example
+122 OL R44,R45 | Infrastructure implements `IUnitOfWork` over the scoped persistence session.
+123-124 OL R44 | Repositories stage changes and do not independently commit
+125-127 OL R45 | Repositories participating in one use case must share the same scoped Unit of
+128-129 OL R45 | `IUnitOfWork` must not act as a repository container or service locator that
+131 NN | section heading
+133-134 OL R46 | Keep cache technology out of Domain
+135-137 OL R47 | Infrastructure translates remote HTTP responses into Application-facing
+138-140 OL R48 | keep dependency registration close to the owning layer
+141-143 OL R49 | Do not create separate Domain or persistence models merely because the
+144-146 OL R50 | Do not duplicate equivalent DTOs across Api and Application merely to create
+148 NN | section heading
+150-152 OL R6 | Do not give backend test projects broader production-project references than
+
+FILE .claude/rules/coding-style.md | Path rule (backend .cs).
+1-4 NN | path front matter
+6 NN | header metadata
+8 NN | document heading
+10 NN | section heading
+12-15 OL R51 | Follow the repository's existing conventions and `.editorconfig`.
+17 NN | section heading
+19-24 OL R52 | prefer file-scoped namespaces when consistent with the project;
+26-27 OL R53 | Do not reorganize an existing file merely to satisfy a preferred member
+29 NN | section heading
+31-34 OL R52 | use the `Async` suffix by default
+36 NN | section heading
+38-39 NN | primary constructor guidance (EXC-003 class)
+41-47 NN | primary constructor code example
+49-52 OL R51 | not convert constructors mechanically
+54 NN | section heading
+56-59 NN | records vs classes preference (EXC-003 class)
+61 NN | section heading
+63-66 NN | visibility and sealed preference (EXC-003 class)
+68 NN | section heading
+70-74 NN | modern syntax and var preference (EXC-003 class)
+76 NN | section heading
+78-81 NN | .NET naming conventions (EXC-003 class; repository conventions per RUN-009)
+83 NN | section heading
+85-87 OL R53 | Do not perform style-only rewrites outside the requested change unless
+
+FILE .claude/rules/composition.md | Path rule (backend .cs, appsettings).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11-13 NN | pointers to placement, security and error-handling rules
+15 NN | section heading
+17-18 OL R54 | Constructor injection is the default for required dependencies
+19-21 OL R55 | never capture a shorter-lived dependency inside a
+23 NN | section heading
+25-29 OL R56 | Prefer strongly typed options for structured configuration consumed by
+30-31 OL R56 | Validate settings at startup
+33 NN | section heading
+35-36 OL R57 | Use `ILogger<T>` with structured message templates and stable property names;
+37-40 OL R58 | When Serilog is configured, use the modern DI-integrated `AddSerilog()`
+
+FILE .claude/rules/dependencies.md | Path rule (manifests).
+1-8 NN | path front matter
+10 NN | header metadata
+12 NN | document heading
+14-17 MX R11,X7 | Adding, updating, or removing a NuGet or npm dependency follows the ⟫ Additions and updates through add-dependency are oracle-linked (R11); routing removals through the same workflow gate is X7.
+19 NN | section heading
+21-22 OL R59 | Add a dependency only when it solves a concrete current requirement.
+24 NN | section heading
+26-29 OL R60 | Package versions belong in
+31-41 NN | CPM XML example
+43-45 OL R60 | Keep package references in the narrowest project that actually requires them;
+47 NN | section heading
+49-53 MX R61,U1 | Maintain and commit ⟫ npm, lockfile consistency and dependency categories are oracle-linked (R61); the commit clause is the uncertain link U1.
+DONE

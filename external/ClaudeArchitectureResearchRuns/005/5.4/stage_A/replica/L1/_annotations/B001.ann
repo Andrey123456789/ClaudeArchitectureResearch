@@ -1,0 +1,304 @@
+# L1 / B001 — Run 2 replica annotation (blind). Paths are relative to output/template/.
+
+# ---------------- constraints first defined in this batch ----------------
+C R1 OL WF-010 | MUST (tool-enforced: disallowedTools) | The code-reviewer subagent performs an independent read-only review and never edits files; Write, Edit, MultiEdit and NotebookEdit are disallowed tools. | code-reviewer subagent (PR review, diff review, pre-merge review, second-pass review of completed work) | Bash is not tool-disallowed; the no-edit duty for shell use rests on the instruction text.
+C R2 OL WF-010 | MUST | The code-reviewer uses the code-review skill as the canonical procedure (preloaded; load it first if not loaded) and follows its scope, priorities and output format instead of redefining review criteria. | code-reviewer subagent | none stated
+C R3 OL WF-001,WF-010 | MUST | The code-reviewer reads the rule files that govern the changed paths before judging them, because the delegated context does not inherit the main session's loaded rules. | code-reviewer subagent | none stated
+C R4 OL WF-007 | MUST (conditional) | The code-reviewer runs the full security-scan only when the user asked for a security audit, the change is materially security-sensitive, or a concrete finding justifies broader investigation. | code-reviewer subagent | none stated
+C R5 OL WF-012 | MUST | The reviewer returns the code-review output: findings ordered by severity, or an explicit statement that no meaningful findings exist plus the areas that could not be verified. | code-reviewer subagent | none stated
+C R6 OL ARC-001 | MUST (architecture check: check-architecture.mjs exit 1; manifest hook reports architecture findings after .csproj changes) | Project references point inward: domain model references no application project; use-case layer references only the domain model; implementation layer references the use-case layer and domain model; the entry point references the use-case layer and the implementation layer (the latter only for composition); never Domain -> Application, Domain -> Infrastructure or Application -> Infrastructure; a production project never references a test project. If a feature seems to need an outward reference, reconsider the abstraction boundary. | backend .csproj projects matched to roles by name pattern | The check spec also allows entry point -> domain model; projects matching no role and unresolved references only produce warnings.
+C R7 OL ARC-002,ARC-008 | MUST (architecture check violation) | Inner roles (domain model, use-case layer) must not reference the web-framework shared framework Microsoft.AspNetCore.App, whether through FrameworkReference, the Web SDK (implicit reference) or Microsoft.AspNetCore.* packages. | inner-role production projects | Test projects are not checked.
+C R8 OL ARC-028 | MUST NOT (architecture check: warning) | Do not give a backend test project broader production references than its test scope needs; keep the inward discipline (typical: Application.Tests -> Application and Domain as needed; IntegrationTests -> Api; optional Domain.Tests -> Domain; optional Infrastructure.Tests -> Infrastructure); the architecture check warns about references beyond the typical set of the test role. | backend test projects | The mechanical check reports warnings only, not violations.
+C R9 OL DEP-024 | MUST NOT (architecture check violation) | A separate top-level tests/ directory is not created; backend tests live under backend/. | repository root | none stated
+C R10 OL ARC-009,ARC-020 | REQUIRES_APPROVAL (manifest hook finding) | MediatR and Kommand packages require approval because mediator-based organization is not adopted; the manifest hook reports them and asks to remove them unless the user approved them. | NuGet manifests (.csproj, Directory.Packages.props) | Approved additions are allowed.
+C R11 OL ARC-027 | MUST NOT | Physical structure follows actual responsibilities: create only directories and projects that contain real code (layout trees are targets, not checklists); no speculative projects, infrastructure, empty directory trees, or generic Common/Helpers/Utils/Models buckets; optional folders (external-service abstractions, Middleware, Extensions, test projects) appear only once real need exists. | backend and repository structure | none stated
+C R12 OL DEP-024,DEP-013 | DEFAULT | Keep backend production and test projects (backend/<Name>.<Layer>/), the frontend workspace (frontend/<Name>.Web/) and documentation (docs/) clearly separated in the approved layout; frontend tests stay inside the frontend workspace. | solution and repository layout | none stated
+C R13 OL ARC-004,ARC-005 | MUST NOT | DDD-oriented directories (ValueObjects, DomainServices, Events, Exceptions) appear only when an approved design needs them; business rules or workflow behavior alone do not justify them. | Domain project structure | Approved designs.
+C R14 OL ARC-007 | MUST | Persistence and external-service abstractions (repository interfaces, IUnitOfWork, IEmailSender etc.) are defined in the use-case layer (Application) when use cases need them; implementation details stay out of Application. | Application project | none stated
+C R15 OL ARC-008 | MUST NOT | Application must not use persistence-implementation types or APIs (persistence context and entity-set types, ORM APIs, database-provider types) or web-framework/transport implementation types. | Application project | none stated
+C R16 OL ARC-023 | DEFAULT | Keep registration near the owning layer: AddApplication() registers Application services and validation only; AddInfrastructure(configuration) registers persistence (incl. the persistence context), repositories, the commit boundary, adapters, outbound HTTP integrations and resilience handlers; Api composes them. | backend dependency registration | none stated
+C R17 OL ARC-012 | DEFAULT | Program.cs in the entry-point project is the composition root; it calls the layer registration methods and may register implementation-layer implementations. | backend composition | none stated
+C R18 OL DEP-006 | MUST (manifest hook finding) | NuGet Central Package Management: versions live only in Directory.Packages.props; project PackageReference entries are versionless (never duplicate a central version; generated versions are moved), VersionOverride only for a concrete reported reason; packages sit in the narrowest project that needs them; ManagePackageVersionsCentrally stays true. | .csproj and Directory.Packages.props files | VersionOverride with a concrete reported reason.
+C R19 OL ARC-020,DEP-002,GOV-017 | REQUIRES_APPROVAL (Reserved) | Changing a capability selection (changing the architecture frame, replacing a leaf implementation, changing the database provider inside persistence, clearing the optional frontend) or replacing approved baseline technology is Reserved and needs explicit approval through a Decision Request. | capability selection and approved technology | none stated
+C R20 OL GOV-006 | REQUIRES_APPROVAL | String semantics are product behavior when observable (case sensitivity, collation, culture vs ordinal comparison, normalization, trimming, uniqueness, lookup); when approved sources do not define them, ask for approval before choosing, including choices made implicitly through database or framework defaults; relying on the provider's default collation for observable behavior and changing observable string comparison (e.g. through a provider change) need approval. | product behavior, persistence provider choice | none stated
+C R21 OL DEP-001,DEP-003,DEP-004,DEP-005 | MUST (PreToolUse hook: first attempt denied, fails closed) | Package additions and updates go only through the add-dependency workflow (concrete need, approved technology, latest stable compatible version, deprecation, vulnerability and license checks, approval for commercial or unclear licenses); the PreToolUse hook denies dependency-changing shell commands (dotnet add/remove package, dotnet package add/remove/update, dotnet tool install/update/uninstall, npm/pnpm/yarn mutations, the frontend CLI's ng add/update, PowerShell *-Package cmdlets) once with a pointer to the workflow. | Bash and PowerShell commands; package installation in backend and frontend | The identical command is allowed when retried within 30 minutes (the hook cannot verify that the workflow ran); file edits of manifests are not gated before execution.
+C R22 OL TST-001 | DEFAULT (manifest hook finding: approval required) | NUnit is the default .NET test framework; in an established project that deliberately uses another framework follow that convention; do not introduce a second test framework without a concrete reason; xunit, MSTest and TUnit packages are reported as requiring approval and to be removed unless approved. | backend test projects and NuGet manifests | The hook escalates 'concrete reason' to user approval.
+C R23 OL DEP-014 | DECIDED | Frontend baseline: current stable Angular created with the current Angular CLI, which selects compatible TypeScript and RxJS versions (TypeScript is not upgraded beyond Angular's supported range independently); standalone APIs, strict mode, routing, zoneless when supported, SCSS, Angular Material and CDK, Vitest. | frontend workspace scaffolding and stack | none stated
+C R24 OL WF-018,DEP-007 | MUST | Use npm ci for clean installs from the maintained lockfile (CI, fresh clone). | frontend installs in CI and fresh clones | none stated
+C R25 OL WF-018 | MUST | Inspect package.json before running frontend commands; use scripts that exist (lint only when configured) and never invent script names. | frontend build/test/lint commands, CI | none stated
+C R26 OL DEP-016 | DEFAULT | Playwright is the approved E2E tool when frontend E2E coverage is required; it is not part of the minimal baseline scaffold. | frontend E2E | none stated
+C R27 OL WF-015,WF-013 | MUST NOT | Repairs must not weaken verification or bypass the root cause: no converting code to any to silence the compiler, disabling strict mode, suppressing diagnostics or tests without understanding them, or speculative framework workarounds. | build-fix and verification repairs | none stated
+C R28 OL DEP-015 | MUST NOT (manifest hook finding: concrete need and approval) | Do not add NgRx, Axios, Lodash, Bootstrap, Tailwind or additional form, component or state-management libraries by default (or to bypass a local issue); use built-in Angular capabilities first and add an overlapping library only for a concrete need; the manifest hook reports listed packages (@ngrx/, @ngxs/, axios, lodash, bootstrap, @ng-bootstrap/, ngx-bootstrap, primeng, tailwindcss) as requiring a concrete need and approval. | frontend package.json files | Concrete need with approval.
+C R29 OL TST-007,DEP-013 | DEFAULT | Use the actual database provider when relational or provider behavior matters; real-provider test containers (Testcontainers.MsSql) are optional and added only when isolated real-provider tests justify them; never claim provider fidelity from a different provider (EF Core InMemory, SQLite). | backend persistence and integration tests | none stated
+C R30 OL PST-009 | MUST | When an approved CUSTOM_SETTINGS.md change affects schema constraints, indexes, column lengths or other persistence metadata: update the mapping, create a new migration when the schema changes (regenerate or edit only an unapplied, uncommitted migration per the normal workflow; do not casually alter existing migrations), verify Development seeding remains valid, and add or update persistence/integration tests when provider-specific behavior matters. | schema-affecting settings changes | none stated
+C R31 OL WF-019 | MUST NOT | Production schema changes are an explicit deployment step; local database update/drop commands are for Development only and never point at Production. | database migration commands and deployment | none stated
+C R32 OL PST-006 | MUST NOT | When representative Development data already exists it is left unchanged: migrating an existing Development database does not require the seeder to patch rows, and developers recreate the local database explicitly when they need a fresh dataset. | Development database and seeder | none stated
+C R33 OL ARC-002,ARC-008,ARC-019 | MUST (architecture check violation) | Inner roles (domain model, use-case layer) must not reference persistence-implementation packages (Microsoft.EntityFrameworkCore*). | inner-role production projects | none stated
+C R34 OL WF-001 | MUST | Before non-trivial changes inspect the relevant code and apply the governing rules; workflow facets direct reading the applicable rule files first when they have not loaded with the touched paths. | implementation workflows | none stated
+C R35 OL PST-008 | MUST (Stop hook reminder: blocks stopping once per change state) | Whenever a domain-model or persistence change affects seeded entities (new required or removed/renamed properties, relationships, enum/status values, states, invariants), update the maintained DbSeeder in the same change and review it together with migrations touching seeded entities; the Stop hook reminds when model files changed without a seeder change. | domain-model and persistence changes | Reminder is Git-only and shown once per material state.
+C R36 OL PST-010 | MUST | Treat migrations as source code: review every generated migration before committing it, especially destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys and delete behavior. | EF Core migrations | none stated
+C R37 OL PST-007 | MUST | Seed data must stay valid for the migrated schema and current domain model: seed entities preserve current domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations. | Development seeding | none stated
+C R38 OL WF-005 | MUST | Build the affected projects and run relevant tests (for persistence changes list or script pending migrations to confirm the expected schema change); a build failure means the implementation is not complete. | verification | none stated
+C R39 OL WF-006 | DEFAULT | For persistence/startup changes verify Development composition at runtime: apply migrations to a local Development database explicitly, start the API in Development and confirm the seeder populates an empty database or leaves an existing one unchanged. | persistence and startup changes | none stated
+C R40 OL DEP-020 | DEFAULT (manifest hook finding: approval required for Polly) | When resilience is required use Microsoft.Extensions.Http.Resilience for HttpClient or Microsoft.Extensions.Resilience for other pipelines; direct Polly usage is an explicit, documented exception and the Polly package is reported as requiring approval. | outbound HTTP and resilience packages | Documented exception with approval.
+C R41 OL DEP-011,DEP-002 | DEFAULT (manifest hook finding: approval required for AutoMapper) | Manual mapping for simple cases; Mapster (+ Mapster.DependencyInjection) is the approved mapping library when mapping volume warrants it; another mapping framework (AutoMapper) is a Reserved library addition reported as requiring approval. | mapping libraries | Approved addition.
+C R42 OL DEP-003 | MUST (manifest hook finding) | Select the latest stable compatible version verified from the registry; never floating versions (*, latest, x, empty) and no prerelease versions unless explicitly requested; the manifest hook reports floating and prerelease versions in Directory.Packages.props and package.json. | NuGet and npm additions and updates | Prerelease explicitly requested; MSBuild-property versions are only flagged for manual confirmation.
+C X1 EX - | MUST | Slot contract completeness: a slot implementation supplies every required facet of its slot contract with the stated form, level, loading and content (architecture: style, boundaries, layout, check; backend-testing: framework rule, commands, enforcement adapter, knowledge skill; frontend when selected: framework, stack, commands, enforcement, knowledge; persistence: access, seeding, dev-config, workflow, commands, enforcement, knowledge) and the frame expresses every role of roles.md without contradicting a role-level rule; a missing required facet is a conformance failure raised as a Decision Request instead of shipping the module. | creating or replacing a slot implementation (template maintenance, architecture-decision) | none stated | Template capability-contract structure; no oracle policy requires an implementation to ship enforcement data, command facets or knowledge skills, or defines conformance of instruction modules. | A replacement test-framework module without an enforcement adapter or commands facet is non-conformant and must be raised as a Decision Request rather than shipped.
+C X2 EX - | MUST | Leak rule: outside an implementation module (its manifest-listed facet files and module directory), instruction artifacts refer to slot concerns only by slot name, facet role (<slot>.<facet>) and the stable role vocabulary; implementation names appear only in the selection record and the instruction map; workflows reach implementation-specific steps through facet roles and must not hardcode selected implementations; leaf slots depend on roles, not frame terms. | authoring or changing instruction artifacts | Module-owned facets; the selection record (decisions.md capability selection) and INSTRUCTION_MAP.md. | Instruction-authoring vocabulary rule of the L1 capability design; no oracle policy restricts which technology names may appear in which instruction files. | A workflow edit that writes 'run the NUnit tests' or 'update the EF Core mapping' outside the owning module is a leak and is flagged by the instruction checker.
+C X3 EX - | MUST | Content ownership in the capability model: placement belongs to the architecture frame and technique to leaf modules; implementation-independent policy (test policy, frontend structure, browser security, package-manager conventions) stays outside modules in neutral rules; frame facets keep leaf technology out; leaf bindings that cannot be expressed through roles are declared as binds: in the leaf manifest (persistence requires a binds: declaration to the selected frame). | template content placement during maintenance or capability replacement | none stated | Template-structure ownership rule; the oracle prescribes no ownership location for instruction content. | Maintenance must put test-project placement in the frame and framework technique in the backend-testing module, and an undeclared leaf-to-frame binding is non-conformant.
+C X4 EX ARC-020,DEP-002,GOV-017 | MUST | A capability-selection change (changing the frame, replacing a leaf implementation or provider, clearing or adding the optional frontend) requires an ADR recorded with architecture-decision in addition to Reserved approval. | capability selection changes | none stated | ARC-020/DEP-002/GOV-017 require explicit approval for replacing approved technology but no oracle policy requires an ADR artifact for the change. | After the user approves replacing NUnit, the change is still incomplete until an ADR is written.
+C X5 EX - | MUST | Replacement and removal procedure: replacing a slot implementation replaces all of its facets together (rule facet, commands, enforcement data, knowledge content, selection row; for the frame also the CLAUDE.md style import) and keeps neutral rules such as roles.md unchanged unless the role vocabulary itself changes (Reserved); workflows refer only to facets and need no edits; removing the optional frontend sets its selection row to none, deletes every manifest-listed file and the module directory, removes the frontend-stack import from CLAUDE.md and the module rows from the instruction map; every replacement or removal ends with a passing check-instructions run. | template maintenance: capability replacement and removal | none stated | Template maintenance procedure of the capability model; no oracle policy governs how instruction files change when a technology is replaced or removed. | Replacing the test framework by editing only the commands facet, or removing Angular without clearing the selection row and import, is non-conformant.
+C X6 EX DEP-009,ARC-020,GOV-006 | MUST | Persistence semantics on change: the persistence selection records declared properties (provider variant, default string-comparison/case-sensitivity semantics, migration mechanism, seeding mechanism); replacing the implementation (e.g. an ORM by a micro-ORM) must not silently lose migration or seeding semantics and the new module states its mechanisms explicitly; a database-provider change is a variation inside the persistence slot that updates the declared properties, persistence.dev-config, the relational-fidelity binding and commands. | persistence implementation or provider changes | none stated | ARC-020 requires approval for new persistence technology and GOV-006 for observable string semantics, but no oracle policy requires preserving migration/seeding mechanisms or maintaining a declared-property record when persistence changes. | A proposal to replace EF Core with Dapper that omits how migrations and seeding work is non-conformant even if approved.
+C X7 EX PST-009,PST-010 | MUST (workflow step) / SHOULD (Stop hook reminder, blocks stopping once per change state) | When the schema changes, add a migration from the implementation-layer project with the entry-point project as startup project; the Stop hook reminds when domain-model or persistence-configuration files changed without a migration change and asks to confirm that no schema change is needed. | domain-model and persistence changes | Git-only; once per material state; continuation caused by the hook is not re-blocked. | The oracle requires a migration only for schema-affecting CUSTOM_SETTINGS changes (PST-009) and review of generated migrations (PST-010); it has no general duty to pair every schema change with a migration or to confirm schema impact at stop time. | Editing a Domain entity without a migration blocks the stop once until the agent confirms whether the schema changed.
+C X8 EX WF-009 | MUST | The persistence change procedure reports model changes, migration names with review notes (destructive operations called out), whether DbSeeder was updated or unaffected, and the tests added or updated. | persistence changes | none stated | WF-009 requires reporting the actual verification state; it does not prescribe persistence-specific report contents. | A persistence change summary that omits migration review notes or the seeder status does not satisfy the workflow.
+C X9 EX DEP-004,DEP-020,DEP-010 | MUST NOT (manifest hook finding after the change; no approval path) | Packages Microsoft.Extensions.Http.Polly, Polly.Extensions.Http (deprecated resilience integrations), FluentValidation.AspNetCore (deprecated automatic-validation integration) and Serilog.Sinks.Elasticsearch (deprecated sink) must not be added; the manifest hook reports them as 'must not be added'. | NuGet manifests | none stated | DEP-004 requires checking deprecation and DEP-020 treats direct Polly integration as an explicit exception, but no oracle policy forbids specific packages outright regardless of approval. | Adding FluentValidation.AspNetCore or Microsoft.Extensions.Http.Polly produces 'must not be added' feedback even when the user requested it.
+
+# ---------------- files ----------------
+FILE .claude/agents/code-reviewer.md
+1-2 NN | YAML front-matter delimiter and subagent name (identity metadata)
+3 NN | subagent description: routing text for delegation; states no outcome constraint
+4 OL R2 | skills: code-review
+5 OL R1 | disallowedTools: Write, Edit, MultiEdit, NotebookEdit
+6 NN | YAML front-matter closing delimiter
+8 NN | Level/Owns/Loading header (classification metadata)
+10 NN | document heading
+12 OL R1,R2 | Perform an independent, read-only review: never edit files.
+14 OL R3,R4 | Read the rule files that govern the changed paths before judging them
+16 OL R5 | or an explicit statement that no meaningful findings exist plus the areas that could not be verified
+
+FILE .claude/capabilities/architecture/clean-architecture/check.json | Enforcement data of the architecture.check facet; read by check-architecture.mjs and the hooks.
+1 IM | JSON object opening
+2 IM | $comment naming the facet, its consumers and the owning rule file
+3 IM | backend root location consumed by the checker
+4 OL R9 | "forbiddenTopLevelDirectories": ["tests"]
+5 IM | roles object opening
+6-9 OL R6 | "mayReference": ["domain-model"]
+10 IM | closing brace
+11-12 OL R7 | "forbiddenFrameworkReferencesInInnerRoles": ["Microsoft.AspNetCore.App"]
+13-18 OL R8 | "typicalReferences": ["entry-point"]
+19-25 IM | role path globs consumed by the Stop hook to classify changed files (production, tests); no rule of its own
+26-29 OL R10 | "reason": "mediator-based organization is not adopted"
+30 IM | JSON object closing
+
+FILE .claude/capabilities/architecture/clean-architecture/layout.md | Workflow-read layout facet.
+1 NN | header metadata (Level, Capability, Facet, Owns, Scope, Loading)
+3 NN | document heading
+5 OL R11 | Create only directories that contain real code; every tree below is a target, not a checklist.
+7 NN | section heading
+9-17 OL R12 | <Name>.IntegrationTests/
+19 NN | section heading
+21-25 NN | illustrative Domain directory tree (layout example, EXC-004 class)
+27 OL R13 | appear only when an approved design needs them; business rules or workflow behavior alone do not justify DDD-oriented directories
+29 NN | section heading
+31-33 NN | illustrative Application tree lines (fence, project, Abstractions)
+34 OL R14,R15 | repository interfaces, IUnitOfWork — no persistence-implementation types
+35 OL R11 | only once such dependencies exist
+36 NN | illustrative Services directory (Application Services)
+37-38 OL R11 | not a dumping ground
+39 OL R16 | AddApplication(): Application services and validation only
+40 NN | code fence
+42 OL R11 | avoid generic `Models`/`Helpers`/`Common`/`Utils` buckets
+44 NN | section heading
+46-54 NN | illustrative Infrastructure tree (persistence context, configurations, repositories, migrations, seeding, services)
+55 OL R16 | AddInfrastructure(configuration): persistence, repositories, the commit boundary, adapters
+56 NN | code fence
+58 NN | optional subdirectory technique (EXC-004 class)
+60 NN | section heading
+62-67 NN | illustrative Api tree (entry-point adapters, contracts)
+68-69 OL R11 | only when custom middleware exists
+70-73 NN | illustrative Api tree entries (Program.cs, appsettings files) and fence
+75 OL R16,R17 | `Program.cs` calls the layer registration methods
+77 NN | pointer to technique skill
+79 NN | section heading
+81-86 OL R6 | -> (no application project references)
+88 OL R6 | Never `Domain -> Application`, `Domain -> Infrastructure`, or `Application -> Infrastructure`.
+90 NN | section heading
+92-97 OL R8,R11 | Typical references
+99 OL R11,R8,R12 | A simple Domain of entities and enums needs no dedicated test project.
+
+FILE .claude/capabilities/architecture/clean-architecture/MODULE.md | Implementation manifest; never auto-loaded.
+1 NN | header metadata (maintainer metadata, never auto-loaded)
+3 NN | document heading
+5 NN | module description (what the frame implementation covers)
+7-10 IM | manifest data (binds, leak tokens, frame terms, placement examples) consumed by check-instructions.mjs
+12 NN | section heading
+14-19 IM | facet table (facet, file, level, loading) consumed by the checker
+21 NN | section heading
+23 EX X5 | Replace all four facets together
+
+FILE .claude/capabilities/architecture/CONTRACT.md | Slot contract; maintainer metadata, never auto-loaded.
+1 NN | header metadata
+3 NN | document heading
+5 EX X3,X2 | Placement belongs to the frame; technique belongs to the leaf.
+7 NN | section heading
+9-14 EX X1 | Must provide
+16 NN | section heading
+18 EX X1 | Express every role in `roles.md`; never contradict a role-level rule.
+19 EX X3 | Keep leaf technology out of frame facets
+20 EX X3 | must be declared by the leaf as `binds:` in its manifest
+22 NN | section heading
+24 MX R19,X4,X5 | Changing the frame is Reserved and requires an ADR ⟫ Reserved approval is oracle-linked (R19); the ADR, the facet-completeness duties and the checker run are template-structure extras (X4, X5).
+
+FILE .claude/capabilities/backend-testing/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 EX X3 | Implementation-independent test policy stays outside the module
+7 NN | section heading
+9-14 EX X1 | Must provide
+16 NN | section heading
+18 MX X5,X2,X4,R19 | Workflows refer only to `backend-testing.*` facets and need no edits. Changing the selection is Reserved and requires an ADR. ⟫ Replacement procedure and facet-only references are extras (X5, X2), the ADR is extra (X4), Reserved approval is oracle-linked (R19).
+
+FILE .claude/capabilities/backend-testing/nunit/commands.md | Workflow-read commands facet.
+1 NN | header metadata
+3 NN | document heading
+5 OL R21 | Install packages only through `add-dependency`.
+7 NN | section heading
+9-13 NN | scaffold commands (scaffolding procedure, EXC-017 class)
+15 OL R18 | keep the `PackageReference` entries versionless
+17-22 NN | scaffold package table (framework, adapter, analyzer, test-host packages): reference data
+24 NN | section heading
+26-32 NN | test run and filter commands (technique)
+
+FILE .claude/capabilities/backend-testing/nunit/enforcement.json | Enforcement adapter data.
+1 IM | JSON object opening
+2 IM | $comment naming the facet and consumers
+3 IM | test-project marker packages used by the architecture check to recognize test projects
+4-8 OL R22 | second test framework needs a concrete reason
+9 IM | JSON object closing
+
+FILE .claude/capabilities/backend-testing/nunit/MODULE.md | Implementation manifest.
+1 NN | header metadata
+3 NN | document heading
+5 NN | module description
+7-8 IM | manifest data (binds, leak tokens) for the checker
+10 NN | section heading
+12-17 IM | facet table consumed by the checker
+
+FILE .claude/capabilities/frontend/angular/commands.md | Workflow-read commands facet.
+1 NN | header metadata
+3 NN | document heading
+5 OL R12,R21 | Install packages only through `add-dependency`.
+7 NN | section heading
+9 OL R23 | standalone APIs, routing, SCSS, strict mode, zoneless mode when supported
+11-14 NN | scaffold commands (EXC-017 class)
+16 OL R23 | do not upgrade TypeScript beyond Angular's supported range independently
+18 NN | section heading
+20-21 NN | table header
+22 OL R24 | clean install from lockfile (CI, fresh clone)
+23-24 NN | build and unit-test command rows (reference)
+25 OL R25 | the `lint` script, only when configured
+26 NN | dependency audit command row (reference)
+27 OL R26 | E2E (only when required)
+29 OL R25 | never invent script names
+31 NN | section heading
+33 NN | build-failure category list (diagnostic technique)
+35 OL R27,R28 | Invalid shortcuts
+
+FILE .claude/capabilities/frontend/angular/enforcement.json | Enforcement data for frontend manifests and CLI commands.
+1 IM | JSON object opening
+2 IM | $comment naming consumers
+3 IM | manifest glob data
+4-5 IM | framework CLI dependency-command data used by the PreToolUse hook (rule: R21)
+6-16 OL R28 | "reason": "state-management library is not added by default"
+17 IM | JSON object closing
+
+FILE .claude/capabilities/frontend/angular/MODULE.md | Implementation manifest.
+1 NN | header metadata
+3 NN | document heading
+5 NN | module description (workspace location and tooling)
+7-8 IM | manifest data (binds, leak tokens)
+10 NN | section heading
+12-18 IM | facet table consumed by the checker
+20 NN | section heading
+22 EX X5 | Delete every file in the table plus this directory
+
+FILE .claude/capabilities/frontend/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 EX X3 | Framework-neutral frontend structural policy stays outside the module
+7 NN | section heading
+9-15 EX X1 | Must provide
+17 NN | section heading
+19 MX X5,X4,R19 | Changing the selection is Reserved and requires an ADR. ⟫ Removal procedure (X5) and ADR (X4) are extras; Reserved approval for changing the selection is oracle-linked (R19).
+
+FILE .claude/capabilities/persistence/CONTRACT.md | Slot contract; maintainer metadata.
+1 NN | header metadata
+3 NN | document heading
+5 EX X1,X3 | Placement comes from the architecture frame; this slot supplies technique.
+7 NN | section heading
+9-17 EX X1 | Must provide
+19 NN | section heading
+21 EX X6 | Provider variant, default string-comparison/case-sensitivity semantics, migration mechanism, seeding mechanism.
+23 NN | section heading
+25 EX X3 | requires-binds: architecture
+26 EX X1 | A missing required facet is a conformance failure
+27 EX X6 | must not silently lose migration or seeding semantics
+28 MX X6,R19,R20 | It is Reserved and observable string-comparison changes need approval. ⟫ Provider change as a slot variation with declared-property updates is extra (X6); Reserved approval (R19) and approval of observable string-comparison changes (R20) are oracle-linked.
+
+FILE .claude/capabilities/persistence/ef-core/commands.md | Workflow-read commands facet.
+1 NN | header metadata
+3 NN | document heading
+5 OL R21,R18 | Install packages only through `add-dependency`
+7 NN | section heading
+9-13 NN | scaffold package table (provider, design-time, tool): reference data
+14 OL R29 | only when isolated real-provider tests justify it
+16 OL R16 | Register the context in `AddInfrastructure`
+18 NN | section heading
+20-22 NN | migration add/list commands (technique)
+23 OL R30 | only for an unapplied, uncommitted migration
+24-25 NN | idempotent script command and fence
+27 NN | section heading
+29 NN | code fence
+30 OL R31 | # Development only
+31 OL R32 | explicit recreation for a fresh seed dataset
+32 NN | code fence
+34 OL R31 | Never point these commands at Production; production migration is a deployment step.
+
+FILE .claude/capabilities/persistence/ef-core/enforcement.json | Enforcement data.
+1 IM | JSON object opening
+2 IM | $comment naming consumers and the frame binding
+3-5 OL R33 | "forbiddenInRoles": ["domain-model", "use-case-layer"]
+6-12 IM | co-change path data consumed by the Stop hook (rules: R35, X7)
+13 IM | JSON object closing
+
+FILE .claude/capabilities/persistence/ef-core/MODULE.md | Implementation manifest.
+1 NN | header metadata
+3 NN | document heading
+5 NN | module description (EF Core with SQL Server provider)
+7-8 IM | manifest data (binds declaration, leak tokens) for the checker
+10 NN | section heading
+12-20 IM | facet table consumed by the checker
+22 NN | section heading
+24 IM | copy of the declared properties; the always-loaded record is the decisions.md selection row
+
+FILE .claude/capabilities/persistence/ef-core/workflow.md | Workflow-read persistence procedure.
+1 NN | header metadata
+3 NN | document heading
+5 OL R34 | first when they have not loaded with backend files
+7 NN | section heading
+9 NN | procedure step: update configurations and repositories affected by the change (technique)
+10 OL R35 | update the maintained `DbSeeder` in the same change
+11 EX X7 | When the schema changes, add a migration
+12 OL R36 | Treat migrations as source code: review every generated migration before committing it
+13 OL R35,R37,R32 | review `DbSeeder` together with it
+15 NN | section heading
+17-22 OL R30 | do not casually alter existing migrations
+24 NN | section heading
+26 OL R38 | Build the affected projects
+27 OL R39 | start the API in Development and confirm the seeder populates an empty database
+28 OL R31 | Production schema changes stay an explicit deployment step
+30 NN | section heading
+32 EX X8 | Report model changes, migration names with review notes
+
+FILE .claude/hooks/manifest-policy.json | Package data for the manifest hook.
+1 IM | JSON object opening
+2 IM | $comment naming consumers
+3-4 IM | NuGet section keys
+5-8 EX X9 | "reason": "deprecated sink package; use Elastic.Serilog.Sinks"
+9-10 IM | list delimiters
+11 OL R40 | direct Polly usage is a documented exception
+12 OL R41 | another mapping framework is a Reserved library addition
+13-15 IM | list delimiters and npm section key
+16 OL R42 | "floatingVersions": ["*", "latest", "x", ""]
+17-18 IM | JSON closing braces
+DONE

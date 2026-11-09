@@ -1,0 +1,214 @@
+# L0 / B008 — ef-core, git-workflow, health-check, http-api, httpclient-factory (+resilience).
+
+C R203 OL GOV-015 | MUST NOT | Do not commit, push, merge, rebase, reset, force-push, delete or rename branches or perform other repository-changing Git operations unless explicitly requested; never force-push a shared branch unless the user explicitly requests history rewriting. | Git operations | Explicit request.
+C R204 OL GOV-016 | MUST | Parallel implementation streams use separate branches and worktrees (one branch is not checked out in several normal worktrees); keep unrelated changes out of the current branch. | parallel work | none stated
+C R205 OL GOV-019 | MUST NOT | Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier; never remove a worktree containing uncommitted user work; do not automatically stash, reset or discard local work for a merge or rebase. | Git operations | none stated
+C R206 OL GOV-020 | MUST | Before any repository-changing operation inspect the relevant state (status, diffs, what a high-risk operation would lose or rewrite) and use the minimum operation required; do not silently clean up unrelated working-tree changes. | Git operations | none stated
+C R207 OL WF-022 | MUST | Before committing inspect the staged diff and include only the requested logical change; do not stage unrelated modified files; one logical change per commit with its tests, no artificial tiny commits or combined unrelated fixes; before pushing confirm branch and state, ensure relevant verification completed and avoid pushing unrelated local commits. | commits and pushes | none stated
+C U2 LU GOV-015 | MUST NOT (conditional) | git reset --hard, git clean, git push --force / --force-with-lease, branch deletion and rebasing shared history are performed only when explicitly requested or clearly required by an approved workflow, after inspecting what will be lost or rewritten. | high-risk Git operations | 'clearly required by an approved workflow' | GOV-015 permits repository-changing Git operations only on explicit request; 'clearly required by an approved workflow' names no workflow and may authorize high-risk operations without an explicit request, or may only refer to an explicitly approved procedure. | Under the broad reading an agent could force-push or delete a branch because a workflow requires it, without an explicit request.
+C X18 EX GOV-015,GOV-019 | MUST NOT | Treat main, master and other protected/shared branches as non-rewritable. | Git history rewriting | none stated | GOV-015 allows repository-changing operations, including history rewriting, on explicit request; this rule forbids rewriting these branches without an approval path. | Even when the user explicitly asks to force-push a rewritten main, the instruction tells the agent not to rewrite it.
+C X19 EX WF-009 | MUST | A pull request has a focused purpose and its description explains what changed, why, how it was verified, and compatibility/migration notes. | pull request preparation | none stated | No oracle policy prescribes PR description contents; WF-009 only requires truthful verification reporting. | A PR description without the verification and migration notes does not follow the workflow.
+C X20 EX RUN-002,ARC-017 | MUST NOT | Do not make fire-and-forget EF Core async calls (named anti-pattern). | EF Core usage | none stated | RUN-002 concerns blocking on async I/O and ARC-017 the shared scoped context; no oracle policy names unawaited (fire-and-forget) EF calls, which is EF technique turned into a prohibition. | Starting an EF Core SaveChangesAsync or query without awaiting it violates the instruction.
+C X21 EX RUN-016,DEP-020 | MUST NOT | Do not wrap normal EF Core operations in a generic application-level retry pipeline; prefer the provider's EF Core execution strategy (e.g. EnableRetryOnFailure for SQL Server) and follow provider guidance for transaction/retry interaction. | database access resilience | none stated | RUN-016 governs when retries are safe and the oracle treats database-retry examples as conditional technique (EXC-007); no oracle policy forbids an application-level retry pipeline around EF Core operations. | Wrapping repository calls in a generic resilience retry pipeline violates the instruction even for idempotent reads.
+C X22 EX RUN-005 | MUST NOT | Never mutate a shared HttpClient's DefaultRequestHeaders concurrently; apply per-request values such as dynamic tokens per request or through a handler. | outbound HTTP clients | none stated | RUN-005 governs client lifetime only; thread-safe header handling is client technique not stated by any oracle policy. | Setting a per-user token on DefaultRequestHeaders of a shared typed client per call violates the instruction.
+
+FILE .claude/skills/ef-core/SKILL.md | Knowledge skill (technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | policy owner pointers; technique only
+15 OL R118 | `IUnitOfWork` is the Application-facing abstraction over that commit boundary
+17 NN | section heading
+19-40 NN | context and configuration code example
+42 NN | section heading
+44-60 NN | registration code example
+62 OL R181,R141 | do not add a provider because it appears in an example
+64 NN | section heading
+66-87 NN | repository and Unit of Work code example
+89 OL R119 | Repositories share the scoped `AppDbContext`
+91 NN | section heading
+93-99 NN | projection code example
+101 OL R30 | avoid loading a whole aggregate to return two scalars
+103 NN | section heading
+105-106 NN | tracking and key-lookup technique (EXC-011 class)
+108 NN | section heading
+110 OL R30 | Avoid lazy loading by default — it hides database access and invites N+1 queries.
+112 NN | section heading
+114-126 NN | pagination code example
+128 NN | keyset pagination technique
+130 NN | section heading
+132-136 NN | bulk delete code example
+138 NN | bulk-operation technique (EXC-011 class)
+140 NN | section heading
+142 OL R120 | When a concrete use case needs several operations or several saves to succeed atomically
+144 NN | section heading
+146 OL R29 | helps only on a measured hot path
+148 OL R74 | not hidden business behavior
+150-173 NN | auditing interceptor code example
+175 NN | section heading
+177 OL R150,R149 | populates an already migrated, empty schema
+179-214 NN | seeder and initialization code example
+216 OL R145,R150 | Migrating an existing Development database does not require the seeder to patch rows already seeded.
+218 NN | section heading
+220-223 NN | migration command example
+225 NN | deployment artifact technique (EXC-014 class)
+227 NN | section heading
+229 OL R28,R30 | optimize after identifying a real problem
+231 NN | section heading
+233 OL R29,R47 | over string concatenation
+235 NN | section heading
+237 MX R30,X20 | fire-and-forget EF async calls ⟫ Lazy loading by default restates the efficiency rule (R30); fire-and-forget EF calls is the named prohibition X20.
+
+FILE .claude/skills/git-workflow/SKILL.md | Workflow skill.
+1-6 NN | front matter (name, routing description)
+8 NN | header metadata
+10 NN | document heading
+12 OL R203,R204 | are owned by CLAUDE.md → Git safety
+14 NN | section heading
+16 OL R205 |
+17 OL R206 |
+19 NN | section heading
+21 OL R207 |
+22 OL R207 | Do not create artificial tiny commits or combine unrelated fixes.
+23 NN | commit-message convention suggestion (technique)
+25 NN | section heading
+27 OL R203 | Do not rename an existing user branch to satisfy a convention.
+28 OL R204 |
+29 OL R205 | never remove a worktree containing uncommitted user work
+31 NN | section heading
+33 MX R203,R206,R207,X18 | treat `main`, `master`, and other protected/shared branches as non-rewritable ⟫ Push preconditions and explicit-request force-push are oracle-linked (R203, R206, R207); non-rewritable main/master is the extra X18.
+35 NN | section heading
+37 OL R205,R206,R24 | do not automatically stash, reset, or discard it
+39 NN | section heading
+41 MX R197,R180,X19 | Never claim checks that were not run. ⟫ Verify before PR and truthful check reporting are oracle-linked (R197, R180); the PR description contents are X19.
+43 NN | section heading
+45 MX R203,R206,U2 | clearly required by an approved workflow ⟫ Explicit request and prior inspection are oracle-linked (R203, R206); the alternative trigger 'clearly required by an approved workflow' is the uncertain link U2.
+47 NN | section heading
+49 NN | optional ('when useful') state report
+
+FILE .claude/skills/health-check/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 NN | policy owner pointers; technique only
+14 NN | section heading
+16-21 NN | setup code example
+23 NN | section heading
+25 NN | liveness question
+27-32 NN | liveness mapping code example
+34 OL R42 | A temporarily unavailable database or remote API should not restart the application.
+36 NN | section heading
+38 NN | readiness question
+40-49 NN | readiness tagging code example
+51 OL R42 | liveness is not the mechanism for this, because failing it triggers restarts
+53 NN | section heading
+55 OL R41,R42 | no business queries, large scans, or writes
+57 NN | section heading
+59 OL R61 | put them on a protected endpoint (network or authorization controls)
+61 NN | section heading
+63 NN | probe exposure technique (EXC-010 class)
+65 NN | section heading
+67 OL R41 | avoid expensive queries, long external timeouts
+69 NN | section heading
+71 NN | health-check test examples (EXC-010 class)
+73 NN | section heading
+75 DU R41,R42 | anti-pattern list restating health-check rules
+
+FILE .claude/skills/http-api/SKILL.md | Knowledge skill (status-code reference).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 OL R90 | Keep status-code behavior consistent across similar endpoints.
+15 NN | section heading
+17-27 NN | success response code example
+29 NN | PUT 201 reference entry (EXC-009 class)
+30 OL R90 | 202 fits long-running operations
+31 OL R90 | use it consistently across equivalent resources
+32 OL R91 |
+34 NN | section heading
+36-38 NN | table header and 304 entry (EXC-009 class)
+39 OL R92 | (not for authentication failure)
+40-44 NN | 406/415/422/428/429 reference entries (EXC-009 class)
+45 OL R109,R89 | `500` via centralized handling and ProblemDetails
+46-48 NN | 502/503/504 reference entries (EXC-009 class)
+50 OL R92 | The client generally cannot fix `403` by resending the same credentials.
+52 OL R40 | Not every `TaskCanceledException` is a 504.
+54 NN | section heading
+56 OL R93 | 409 is never for malformed syntax.
+58 NN | section heading
+60 NN | idempotency-key technique (EXC-009 class)
+62 NN | section heading
+64-70 NN | conditional request example
+72 OL R93 | Use standard conditional-request semantics instead of custom status codes.
+74 NN | section heading
+76-85 NN | controller translation code example
+87 OL R87 | the Controller maps them
+89 NN | section heading
+91 OL R89,R105 | never on human-readable exception messages
+
+FILE .claude/skills/httpclient-factory/references/resilience.md | Private reference of httpclient-factory.
+1 NN | header metadata
+3 NN | document heading
+5 OL R181 | do not add mechanisms merely because they are available
+7 NN | section heading
+9-12 NN | standard handler code example
+14 OL R36 | Review its retry behavior carefully for state-changing requests.
+16 NN | section heading
+18 OL R35 | Choose values from actual latency requirements, not from examples.
+20 NN | section heading
+22 OL R36 | non-idempotent operations without duplicate prevention
+24 OL R36 | automatic retry is unsafe
+26 OL R37 |
+28 NN | section heading
+30 NN | circuit breaker technique (EXC-007 class)
+32 NN | section heading
+34 OL R38 | pretend payment succeeded
+36 NN | section heading
+38 OL R36 | Do not hedge state-changing operations.
+40 NN | section heading
+42 EX X21 | Do not wrap normal EF Core operations in a generic application-level retry pipeline.
+44 NN | section heading
+46 OL R36 | a retry policy does not provide exactly-once delivery
+48 NN | section heading
+50 NN | inbound rate limiting technique
+52 NN | section heading
+54 NN | telemetry technique
+56 NN | section heading
+58 DU R36,R35 | anti-pattern list restating retry and timeout rules
+60 NN | section heading
+62-68 NN | decision table (EXC-007 technique rows)
+69 DU X21 | decision row restating the database-retry restriction
+
+FILE .claude/skills/httpclient-factory/SKILL.md | Knowledge skill (technique).
+1-6 NN | front matter (name, trigger description)
+8 NN | header metadata
+10 NN | document heading
+12 NN | policy owner pointers; technique only
+14 NN | section heading
+16 OL R75,R77 | Application defines the abstraction; Infrastructure implements it with `HttpClient`
+18-28 NN | adapter code example
+30 OL R77 | Application does not need to know the external service uses HTTP.
+32 NN | section heading
+34 NN | client style technique
+36-44 NN | client registration code example
+46 OL R82 | Do not capture a transient typed client inside a singleton
+48 NN | section heading
+50 OL R74 | never for business decisions
+52-63 NN | delegating handler code example
+65 NN | section heading
+67 OL R135,R35 | Pass the caller's token to every outbound call
+69 NN | section heading
+71 OL R77 | Translate remote responses into the abstraction Application consumes.
+73-78 NN | response mapping code example
+80 OL R77 | do not pass every upstream status through to your own API
+82 NN | section heading
+84 OL R36 | are not retried automatically unless
+86 NN | section heading
+88 MX X22,R77 | never mutate shared `DefaultRequestHeaders` concurrently ⟫ The shared-header prohibition is X22; not reusing Domain entities as remote contracts is the transport-boundary rule (R77).
+90 NN | section heading
+92 NN | adapter test lead-in
+94-96 NN | test client code example
+98 NN | test lifetime note
+100 NN | section heading
+102 DU X22,R77 | anti-pattern list restating outbound HTTP rules
+DONE

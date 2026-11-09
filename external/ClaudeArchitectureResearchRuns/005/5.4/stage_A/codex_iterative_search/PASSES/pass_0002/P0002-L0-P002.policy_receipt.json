@@ -1,0 +1,1022 @@
+{
+  "unit": "P0002-L0-P002",
+  "batch_input_sha256": "92196fe42f8d65b05330cea169a1fa21ee3388a24ccfde6cab7e1226c1f39a48",
+  "reviews": [
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-008",
+        "name": "CUSTOM_SETTINGS owns tunable values",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Custom Settings",
+          "templates/v2-baseline/CUSTOM_SETTINGS.md"
+        ],
+        "normalized_policy": "Use CUSTOM_SETTINGS.md for approved project-level tunable product limits and defaults; SPECIFICATION.md owns behavioral intent.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0006",
+        "primary/L0/constraints.jsonl/RULE-L0-0038",
+        "primary/L0/constraints.jsonl/RULE-L0-0350",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0075"
+      ],
+      "boundary_analysis": "Approved tunable ownership, behavior-versus-runtime configuration distinction, every-change workflow and stable name/value/purpose are explicit; BF0071 already registers table fields.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "fbaf76c2e7f000280f872efd3bcf20e8bd4ca2bdb34c94efca69e17d8c76f9b1",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: typed options and startup validation → `.claude/rules/2-technology/csharp.md`; secrets → `0-core/security-principles.md`; required security configuration failing visibly → same file; local Development database → `3-project/data-lifecycle.md`; tunable product values → `CUSTOM_SETTINGS.md` (not runtime configuration). This skill is technique only.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "7ad728703176437fff36498ceecec07902397d697741a3b133ddf3ff2cddcac9",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "1. Confirm the value is approved and consistent with `SPECIFICATION.md` (CLAUDE.md → Product governance).\n2. Use a stable descriptive setting name and record the value and its purpose in the table.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "81740b792987f91db4121a6d5e675d5e6d800b9cbe77a4a3e1619b641e26dfeb",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "1. Determine the requested scope and which areas it touches (backend, frontend, tests, delivery, documentation).\n2. For a new application or a substantial feature, read `SPECIFICATION.md` (and any feature specification) before planning or implementing, and read `CUSTOM_SETTINGS.md` when tunable values are involved.\n3. Check the request against CLAUDE.md → Challenge questionable requests and → Decision control. Raise concerns and Decision Requests now, before writing code (headless runs: CLAUDE.md → Decision control)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/tools/check-instructions.mjs",
+          "sha256": "c0a5dc2f8ca7c2927002517bc397275627ddd719c2506058a5eb99a32efbe8b5",
+          "inspected_ranges": [
+            [
+              237,
+              278
+            ]
+          ],
+          "context_quotes": [
+            "\n  // ---- dependency direction and acyclicity ----\n  const graph = new Map();\n  for (const [file, entry] of meta) {\n    const targets = [];\n    for (const dep of entry.header.dependsOn) {\n      if (PRODUCT_INPUTS.includes(dep)) {\n        errors.push(`${file}: engineering policy must not depend on product input ${dep}`);\n        continue;\n      }\n      if (dep.endsWith('/**')) {\n        const prefix = dep.slice(0, -2);\n        targets.push(...[...meta.keys()].filter(other => other.startsWith(prefix) && other !== file));\n        continue;\n      }\n      if (!meta.has(dep)) {\n        errors.push(`${file}: 'Depends on' target ${dep} is not an instruction artifact`);\n        continue;\n      }\n      targets.push(dep);\n    }\n    for (const target of targets) {\n      const targetLevel = meta.get(target).header.level;\n      if (targetLevel > entry.header.level) {\n        errors.push(`${file}: Level ${entry.header.level} must not depend on more volatile Level ${targetLevel} (${target})`);\n      }\n    }\n    graph.set(file, targets);\n  }\n  const state = new Map();\n  const visit = (node, trail) => {\n    if (state.get(node) === 'done') return;\n    if (state.get(node) === 'active') {\n      errors.push(`dependency cycle: ${[...trail, node].join(' → ')}`);\n      return;\n    }\n    state.set(node, 'active');\n    for (const next of graph.get(node) ?? []) visit(next, [...trail, node]);\n    state.set(node, 'done');\n  };\n  for (const node of graph.keys()) visit(node, []);\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ],
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Engineering policy lives in this instruction system. A more volatile level may refine a more stable level but must not contradict it; report a contradiction instead of choosing a side.\n- `SPECIFICATION.md` and `CUSTOM_SETTINGS.md` are product inputs, as are feature specifications and task prompts. They define product behavior and approved values; they are not instruction layers. They may request an engineering decision change, but they never silently override engineering policy.\n- An explicit user instruction may approve a Reserved decision; record the accepted decision with `architecture-decision`.",
+            "- String semantics are product behavior when observable: case sensitivity, collation, culture vs. ordinal comparison, normalization/canonicalization, trimming, uniqueness, and lookup. When the product sources do not define them and the choice affects equality, uniqueness, lookup, or accepted input, do not choose silently — ask for approval.\n- `CUSTOM_SETTINGS.md` holds approved project-level tunable limits and defaults (for example maximum lengths, page-size defaults and maximums, retention periods, numeric thresholds); `SPECIFICATION.md` owns behavioral intent.\n- The two files must not contradict each other. If they conflict, stop and resolve which source must be corrected before continuing."
+          ]
+        },
+        {
+          "path": "output/template/CUSTOM_SETTINGS.md",
+          "sha256": "20d7d3e96d28ae3949d1d08cadaea401bc870caa8e53d27360e45a76bfd70080",
+          "inspected_ranges": [
+            [
+              2,
+              4
+            ]
+          ],
+          "context_quotes": [
+            "\nProduct input — approved project-level tunable limits and defaults. Governed by CLAUDE.md → Product governance; every change follows the `custom-settings` workflow.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-009",
+        "name": "Specification/settings conflict stops work",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Custom Settings",
+          "templates/v2-baseline/CUSTOM_SETTINGS.md"
+        ],
+        "normalized_policy": "SPECIFICATION.md and CUSTOM_SETTINGS.md must not contradict each other; if they conflict, stop and resolve which source must be corrected.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0007",
+        "primary/L0/constraints.jsonl/RULE-L0-0226",
+        "primary/L0/constraints.jsonl/RULE-L0-0354",
+        "primary/L0/constraints.jsonl/RULE-L0-0359"
+      ],
+      "boundary_analysis": "Stop/resolve on conflict and pre/post consistency checks match; post-edit reminder and content-sensitive Stop repetition already in replica0008.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/INSTRUCTION_MAP.md",
+          "sha256": "f9d3c6fce26cba3e21211cba468677347fee34156bba8b6e1a10b50731959a10",
+          "inspected_ranges": [
+            [
+              96,
+              98
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/settings.json` | registers the hooks in exec form — `\"command\": \"node\"`, `\"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/claude-hook.mjs\", \"<event>\"]` — so each hook starts from any working directory without shell expansion: PreToolUse `Bash\\|PowerShell` → `pre-bash` with `\"onFailure\": \"block\"`; PostToolUse and PostToolUseFailure `Bash\\|PowerShell` → `post-bash`; PostToolUse `Edit\\|MultiEdit\\|Write` → `post-edit`; Stop → `stop` |\n| `.claude/hooks/claude-hook.mjs` | `pre-bash` (fails closed): blocks npm/pnpm/yarn force/legacy-peer flags and `dotnet add/remove … reference` / `dotnet reference add/remove` before they run, also behind global options such as `--prefix`, `--dir`, `--cwd` · `post-bash`, after successful and failed shell calls: compares the active worktree's manifests (tracked and untracked, not ignored) with a per-worktree snapshot kept in the Git directory, validates added and changed manifests, reports removals and moves, routes dependency and project-reference changes; the first observation of a worktree validates every manifest · `post-edit`: manifest checks, dependency and reference-change routing, product-input reminder, structure check after instruction edits · `stop`: co-change reminders (seed, migrations, tests, custom settings) repeated only when the changed files or their content differ, never loops |\n| `.claude/hooks/manifest-checks.mjs` | central versions, `VersionOverride`, floating/prerelease versions, deny/review package lists (approved exceptions are read from the \"Accepted\" sections of the decision summaries), npm tooling category, `.npmrc` bypass, outward project references; reads UTF-8, UTF-8 with BOM, and BOM-tagged UTF-16 files and reports undecodable ones |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/claude-hook.mjs",
+          "sha256": "aba46da946b8025641cf6b493dd3dda6df5f571359c909465e71cbf8e67ff2e7",
+          "inspected_ranges": [
+            [
+              557,
+              564
+            ],
+            [
+              675,
+              679
+            ]
+          ],
+          "context_quotes": [
+            "\n  if (relative === 'SPECIFICATION.md' || relative === 'CUSTOM_SETTINGS.md') {\n    feedback([\n      `${relative} changed (product input).`,\n      `Keep SPECIFICATION.md and CUSTOM_SETTINGS.md consistent (CLAUDE.md → Product governance). CUSTOM_SETTINGS.md changes run ${CUSTOM_SETTINGS}; approved behavior changes follow ${DEVELOPMENT} (Implement → approved product decisions).`,\n    ]);\n  }\n",
+            "  }\n  if (paths.includes('CUSTOM_SETTINGS.md')) {\n    reminders.push(`CUSTOM_SETTINGS.md changed: run ${CUSTOM_SETTINGS} to synchronize every affected surface.`);\n  }\n  if (reminders.length === 0) return;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "7ad728703176437fff36498ceecec07902397d697741a3b133ddf3ff2cddcac9",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              37,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Confirm the value is approved and consistent with `SPECIFICATION.md` (CLAUDE.md → Product governance).\n2. Use a stable descriptive setting name and record the value and its purpose in the table.",
+            "\n1. Search for stale references to the old value.\n2. Build the affected backend/frontend projects and run the relevant tests.\n3. Verify persistence changes when applicable.\n4. Re-check `SPECIFICATION.md` for conflicts.\n5. Run `verify`.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "- `CUSTOM_SETTINGS.md` holds approved project-level tunable limits and defaults (for example maximum lengths, page-size defaults and maximums, retention periods, numeric thresholds); `SPECIFICATION.md` owns behavioral intent.\n- The two files must not contradict each other. If they conflict, stop and resolve which source must be corrected before continuing.\n- Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with the reason, ask for approval, record it in `CUSTOM_SETTINGS.md`, and synchronize every affected surface (`custom-settings`)."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-010",
+        "name": "Do not invent tunable values",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Custom Settings"
+        ],
+        "normalized_policy": "Do not silently invent a tunable value that materially changes accepted input or observable behavior; propose, approve, record and synchronize it.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0008",
+        "primary/L0/constraints.jsonl/RULE-L0-0025",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0074"
+      ],
+      "boundary_analysis": "Material tunable proposal/approval/record/synchronization matches. Illustrative numbers explicitly not approved defaults, while precision/index example uncertainty already BF0078.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "fbaf76c2e7f000280f872efd3bcf20e8bd4ca2bdb34c94efca69e17d8c76f9b1",
+          "inspected_ranges": [
+            [
+              39,
+              41
+            ]
+          ],
+          "context_quotes": [
+            "\nNumbers in examples are illustrative, not approved defaults; choose retry counts, timeouts, and limits from the actual integration and deployment.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "7ad728703176437fff36498ceecec07902397d697741a3b133ddf3ff2cddcac9",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Confirm the value is approved and consistent with `SPECIFICATION.md` (CLAUDE.md → Product governance).\n2. Use a stable descriptive setting name and record the value and its purpose in the table."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "989bd9a518542dcf32d9210eba887fd4edb1c4a2bb4c032dd0d58d62a2769dc8",
+          "inspected_ranges": [
+            [
+              34,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "    {\n        builder.HasKey(x => x.Id);\n        builder.Property(x => x.Total).HasPrecision(18, 2);\n        builder.HasIndex(x => x.CreatedAt);\n    }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "39ec7602a1ba48fe96cc82fbe15e82c7ae5e82f7c9c796ad092a84cc6c4e16c7",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "\nDistinguish the **attempt timeout** from the **total operation timeout**, especially with retries. Choose values from actual latency requirements, not from examples.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "2e79cb400c4240681f6c880d98549f1545cb6fad144ccb667276c8fc99925639",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "\nAn example `appsettings*.json` section. It deliberately shows several optional sinks; File, Seq, OpenTelemetry, and Elasticsearch are not baseline dependencies, and the numbers are illustrative, not approved defaults:\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              29,
+              31
+            ],
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- The two files must not contradict each other. If they conflict, stop and resolve which source must be corrected before continuing.\n- Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with the reason, ask for approval, record it in `CUSTOM_SETTINGS.md`, and synchronize every affected surface (`custom-settings`).\n- Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers, or incidental implementation constants in `CUSTOM_SETTINGS.md`.",
+            "  9. making a breaking public API change or adopting API versioning;\n  10. defining product behavior or tunable values that the product sources do not define (Product governance above).\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-011",
+        "name": "CUSTOM_SETTINGS exclusions",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Custom Settings"
+        ],
+        "normalized_policy": "Do not store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers, or incidental implementation constants in CUSTOM_SETTINGS.md.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0010"
+      ],
+      "boundary_analysis": "Full exclusions match including incidental constants, ports and migration identifiers; runtime settings distinction separately represented0350.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "fbaf76c2e7f000280f872efd3bcf20e8bd4ca2bdb34c94efca69e17d8c76f9b1",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: typed options and startup validation → `.claude/rules/2-technology/csharp.md`; secrets → `0-core/security-principles.md`; required security configuration failing visibly → same file; local Development database → `3-project/data-lifecycle.md`; tunable product values → `CUSTOM_SETTINGS.md` (not runtime configuration). This skill is technique only.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              30,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "- Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with the reason, ask for approval, record it in `CUSTOM_SETTINGS.md`, and synchronize every affected surface (`custom-settings`).\n- Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers, or incidental implementation constants in `CUSTOM_SETTINGS.md`.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-012",
+        "name": "Prefer proportional simplicity",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Core Defaults",
+          "templates/v2-baseline/.claude/rules/architecture.md#Architectural Simplicity"
+        ],
+        "normalized_policy": "Prefer simple maintainable solutions; keep architectural complexity proportional to current requirements and avoid speculative abstractions.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0030",
+        "primary/L0/constraints.jsonl/RULE-L0-0340",
+        "primary/L0/constraints.jsonl/RULE-L0-0374",
+        "primary/L0/constraints.jsonl/RULE-L0-0375"
+      ],
+      "boundary_analysis": "Proportional complexity and explicit small/medium DI registration preference match. Single-decoration Scrutor restriction explicit0375. Material consistency/wrapping condition covered replica0169; DI table remains conditional technique, not automatically new mandatory lifetimes.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "0b3c6a0e57672053b2a3fb7959e8600d237b31e4a176a54c41da873260e6ac80",
+          "inspected_ranges": [
+            [
+              121,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the project uses Angular Material, use its components consistently for common UI primitives; do not wrap every Material component in a custom abstraction without a concrete reason.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "0eeca88e51001ec6d7ed1692ca0ed210b7890ee0b4e4622f8a749f5dbdebf13a",
+          "inspected_ranges": [
+            [
+              36,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck the changed code against the Level 1 rules (`backend-layers.md`, `persistence-boundary.md`, `entry-points.md`, `outcomes.md`) and their Level 2 bindings: Domain independence, Application free of Infrastructure and persistence-framework types, thin entry points, Application Services orchestrating use cases, specific repository abstractions, the Unit of Work as commit boundary. Also check proportionality: abstraction count justified by actual complexity, and no consequential pattern without approval. Never report a violation merely because the code differs from a pattern this architecture has not adopted (`1-architecture/overview.md`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dependency-injection/SKILL.md",
+          "sha256": "3cb3dbc0e2b0ce64e009dda6b52928c72bc11af33f79e4b3f331ec3660c55ef5",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              88,
+              90
+            ],
+            [
+              133,
+              144
+            ]
+          ],
+          "context_quotes": [
+            "\nUse interface-to-implementation registration at architectural boundaries (Application services, repositories, external adapters); concrete registration is fine for implementation-only helpers. Prefer explicit registration in small applications; add scanning, keyed services, factories, or decorators when they solve an actual composition problem.\n",
+            "\nPrefer explicit registrations in small and medium projects; scan when registration volume creates genuine boilerplate, and scan the assembly that owns the services (not accidentally only the Api assembly):\n",
+            "\n| Scenario | Technique |\n|---|---|\n| Application service using repositories/UoW | scoped |\n| Stateless helper without scoped dependencies | transient or concrete registration |\n| Immutable shared configuration | singleton-compatible |\n| `DbContext` | scoped (`AddDbContext`) |\n| Several implementations selected by key | keyed services |\n| Cross-cutting wrapper | decorator |\n| Many repetitive registrations | Scrutor scanning |\n| Runtime implementation selection | factory delegate |\n| Strongly typed configuration | `AddOptions<T>().BindConfiguration()` (`configuration` skill) |"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              62,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "\n- Prefer simple, maintainable solutions; keep architectural complexity proportional to current requirements and avoid speculative abstractions (default).\n- Do not introduce frameworks, libraries, infrastructure, or architectural patterns without a concrete current need."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-013",
+        "name": "No speculative frameworks/infrastructure",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Core Defaults",
+          "templates/v2-baseline/.claude/rules/architecture.md#Architectural Simplicity"
+        ],
+        "normalized_policy": "Do not introduce frameworks, libraries, infrastructure, or architectural patterns without a concrete current need.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-013",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0031",
+        "primary/L0/constraints.jsonl/RULE-L0-0320",
+        "primary/L0/constraints.jsonl/RULE-L0-0396",
+        "primary/L0/constraints.jsonl/RULE-L0-0398",
+        "primary/L0/constraints.jsonl/RULE-L0-0408",
+        "primary/L0/constraints.jsonl/RULE-L0-0456",
+        "primary/L0/constraints.jsonl/RULE-L0-0468",
+        "primary/L0/constraints.jsonl/RULE-L0-0536",
+        "primary/L0/constraints.jsonl/RULE-L0-0588"
+      ],
+      "boundary_analysis": "Concrete-need constraints include caches, test infrastructure/snapshots, retries, telemetry, security and verification tooling. BF0065 already retains scheme-selection scope. No universal optional tool dependency inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "4c1c9285be7beb3565709037efe922091cfcad094a0e8a8310bc2a9e43674f09",
+          "inspected_ranges": [
+            [
+              15,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n- Bearer/OIDC for an SPA calling an API;\n- cookies for server-rendered interactive applications;\n- ASP.NET Core Identity when the application owns local accounts, passwords, and needs account management — not merely because a business entity is called `User`;\n- an external OpenID Connect/OAuth provider when identity is delegated — do not issue custom JWTs when that provider already issues tokens.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "08a6d5989635ca9431b0b57cce9812ac13b9106ab21aabc8093e372e454676a2",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ],
+            [
+              77,
+              79
+            ]
+          ],
+          "context_quotes": [
+            "\nA strong option for local in-memory caching with optional distributed L2, stampede protection, and cache-aside behavior; not mandatory for every project. Add a distributed backend such as Redis only when deployment requires it.\n",
+            "\nCaching EF tracked entities across Unit of Work boundaries; Redis added merely because the application caches.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "59a776b42a80de206fb890f8caf14f3a0b4cc3e5725c6d8859dd556847a9631d",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ],
+            [
+              90,
+              91
+            ]
+          ],
+          "context_quotes": [
+            "\nProvide SQL Server, Redis, a broker, etc. only when tests require them; do not hardcode one provider into a generic pipeline. Keep the test environment isolated from Development and Production data (`dotnet-testing` skill).\n",
+            "\nProject-specific database infrastructure in a generic pipeline; rebuilding different source per environment without a reason; assuming Docker deployment."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              22,
+              24
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore writing a pipeline or container definition, inspect what actually exists: .NET backend, Angular frontend, test projects, Dockerfiles, provider-specific integration tests, generated clients, deployment artifacts. Do not assume PostgreSQL, Redis, Docker, or frontend tooling exists; add stages only for the actual project.\n",
+            "- Frontend flow: install with `npm ci` when a maintained lockfile supports it — do not reflexively replace it with `npm install` — then run only scripts that actually exist in the workspace `package.json` (build, and test/lint when configured); never invent npm scripts.\n- Provide external services (database, cache, broker) in CI only when tests actually require them, isolated from Development and Production data.\n- Supply credentials through the CI platform's secret/identity mechanism (secrets policy: `0-core/security-principles.md`); prefer workload/federated identity over long-lived deployment credentials where supported."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dependency-injection/SKILL.md",
+          "sha256": "3cb3dbc0e2b0ce64e009dda6b52928c72bc11af33f79e4b3f331ec3660c55ef5",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              84,
+              86
+            ],
+            [
+              88,
+              90
+            ]
+          ],
+          "context_quotes": [
+            "\nUse interface-to-implementation registration at architectural boundaries (Application services, repositories, external adapters); concrete registration is fine for implementation-only helpers. Prefer explicit registration in small applications; add scanning, keyed services, factories, or decorators when they solve an actual composition problem.\n",
+            "\nDo not add Scrutor for one decoration when normal composition is simpler (`add-dependency`).\n",
+            "\nPrefer explicit registrations in small and medium projects; scan when registration volume creates genuine boilerplate, and scan the assembly that owns the services (not accidentally only the Api assembly):\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "085f23a7a0929e51460ec274024f05488371df1810f84975781628d665e5e5f8",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nAdd only the infrastructure the project actually uses (no PostgreSQL, Redis, or RabbitMQ because examples have them); keep local passwords in an ignored `.env` file.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "bad46de251dbc4d26a5b51e2f5310dcdc858735e95441a056bd628460886c37c",
+          "inspected_ranges": [
+            [
+              12,
+              14
+            ],
+            [
+              130,
+              132
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: test level, behavior focus, isolation, provider fidelity, readability, naming, coverage → `.claude/rules/0-core/testing-principles.md`; NUnit, `WebApplicationFactory`, EF InMemory → `2-technology/dotnet-testing.md`; regression tests → `development-workflow`; preserving behavioral probes → `verify` step 4. This skill is technique only. Do not build test infrastructure without a concrete testing need.\n",
+            "\n\"Smoke test\" means a small set of fast checks that a built or deployed application is basically operational — not a synonym for every integration test. Snapshot testing can help for large stable outputs; do not add a snapshot library by default, and prefer explicit assertions for small or important contracts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "989bd9a518542dcf32d9210eba887fd4edb1c4a2bb4c032dd0d58d62a2769dc8",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nUse the provider the project selected; do not add a provider because it appears in an example.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "8fc5c9fd2288c4276770747e701a2233f57bedcf53f9d55782087903a62a4078",
+          "inspected_ranges": [
+            [
+              83,
+              85
+            ],
+            [
+              101,
+              102
+            ]
+          ],
+          "context_quotes": [
+            "\nRetry and circuit breaker are not mandatory for every call. Before enabling retry, determine whether the failure is transient, whether the operation is safe to repeat, whether the remote API supports idempotency, and whether a retry may duplicate side effects. POST/PATCH and other state-changing operations are not retried automatically unless an idempotency key, naturally idempotent semantics, or explicit deduplication makes it safe; do not assume every PUT/DELETE implementation is operationally safe. Configuration: `references/resilience.md`.\n",
+            "\nMaking one client style mandatory everywhere; dynamic tokens in shared default headers; mapping every upstream failure to the same status; resilience pipelines added without understanding their behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "39ec7602a1ba48fe96cc82fbe15e82c7ae5e82f7c9c796ad092a84cc6c4e16c7",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: bounded execution time, retry safety, Retry-After, fallback semantics, caller cancellation → `.claude/rules/0-core/runtime-principles.md`; package choice and the direct-Polly exception → `add-dependency`; approved conditional packages → `3-project/decisions.md`. Resilience policies must match failure and operation semantics; do not add mechanisms merely because they are available.\n",
+            "\nObserve retry counts, timeout frequency, circuit state, rate-limit rejections, and dependency latency when they matter operationally, using the telemetry stack the project adopted; resilience alone does not require OpenTelemetry.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/SKILL.md",
+          "sha256": "c651fbd2336601e2e13ce8c046c49e56ea269dc68e83228bb7ee88bdba7bbca3",
+          "inspected_ranges": [
+            [
+              54,
+              56
+            ],
+            [
+              78,
+              80
+            ]
+          ],
+          "context_quotes": [
+            "\nPrefer the platform/runtime trace identifiers when they already provide adequate request correlation. Add an explicit correlation identifier only for an integration or operational requirement; validate or normalize identifiers accepted from external clients before propagating them; propagate tracing context across outbound calls with the project's chosen tracing or HTTP infrastructure.\n",
+            "\nLogging expected business outcomes as errors; logs used as an audit database without an adopted audit design.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              29,
+              31
+            ],
+            [
+              87,
+              89
+            ]
+          ],
+          "context_quotes": [
+            "\nDecide what the request actually needs: backend, Angular frontend, test projects, documentation, external integrations, mapping, containerization. Do not scaffold optional infrastructure because it may be useful later.\n",
+            "\nMediatR, CQRS handler trees, Vertical Slice Architecture, Domain Events, Specifications, SharedKernel, BuildingBlocks, EventBus, messaging, microservices, Kubernetes, cloud-specific projects, state-management frameworks, Docker, generic `Common`/`Helpers`/`Utils` directories — governed by `1-architecture/overview.md`, `code-organization.md`, and `3-project/decisions.md`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "3fe65052fc0c2af61e86f1c0ef32d88e139c1a97f57537fd70a51a666696efe3",
+          "inspected_ranges": [
+            [
+              76,
+              77
+            ]
+          ],
+          "context_quotes": [
+            "\nDocker files, deployment manifests, Kubernetes, cloud infrastructure, messaging infrastructure, and additional services are not part of the target tree; adding one follows CLAUDE.md → Decision control and `.claude/rules/3-project/decisions.md`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "a7674f8c56e85d7f9102dbff876205e8157222e2cf3593d6ea40e51a12f14887",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ],
+            [
+              113,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "2. Distinguish confirmed findings from items that need verification, and assign severity from exploitability, reachability, impact, and application context — never from a suspicious pattern or raw CVSS alone.\n3. Do not suppress a real secret because it sits in a Development file, and do not require security mechanisms the project does not need.\n4. Evaluate effective authorization, including global/fallback policies.",
+            "\nPrefer the smallest secure change consistent with the architecture. Do not recommend a new authentication system without need, custom cryptography, blanket encryption of all database fields, `[Authorize]` on every action when a global policy already protects them, security libraries merely to satisfy the scan, or disabling functionality because a static scanner cannot understand it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "300b18c838e0fdb33e138261701a6306297365a4456d92aab3d5c92e1a110858",
+          "inspected_ranges": [
+            [
+              93,
+              94
+            ]
+          ],
+          "context_quotes": [
+            "\nSwagger as a substitute for integration tests; anonymous objects as long-lived contracts; a second competing documentation stack without a concrete need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ],
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "\nProduce evidence that the requested change is complete and has not introduced obvious regressions. Verification matches the scope and risk of the change; do not require optional tooling the repository has not configured. Verification is not code review: `code-review` independently looks for defects that checks cannot detect.\n",
+            "- **Architecture** — when the change touches boundaries, re-read and check the owning rules: project references and dependency direction (`1-architecture/backend-layers.md`), repository and Unit of Work boundary (`persistence-boundary.md`), entry points (`entry-points.md`). When a Domain or persistence change affects seeded entities, confirm the seeder was updated and stays valid for a freshly recreated Development database (`3-project/data-lifecycle.md`) and that new migrations were reviewed (`development-workflow` → Co-changes).\n- **Formatting and analyzers** — when configured, for example `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to verify. Analyzer output is evidence that still needs context.\n- **Dependencies and security** — for dependency changes or security-sensitive work: `dotnet package list --vulnerable --include-transitive`, `npm audit`, and inspection of secrets, authorization, raw SQL, CORS/TLS, sensitive logging, and certificate validation (`0-core/security-principles.md`). A full `security-scan` is not needed for every small change."
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              44,
+              46
+            ],
+            [
+              63,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "  5. adding an infrastructure category: messaging, background processing, distributed cache, search, external storage, external identity;\n  6. adding a major library/framework or replacing an approved baseline technology;\n  7. introducing a project-wide convention or abstraction that other code is expected to follow, for example a project-wide Result model;",
+            "- Prefer simple, maintainable solutions; keep architectural complexity proportional to current requirements and avoid speculative abstractions (default).\n- Do not introduce frameworks, libraries, infrastructure, or architectural patterns without a concrete current need.\n- Keep changes focused on the requested scope and preserve existing behavior unless the task or the approved specification requires a change."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P002",
+      "canonical_policy": {
+        "id": "GOV-014",
+        "name": "Preserve scope and behavior",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Core Defaults"
+        ],
+        "normalized_policy": "Keep changes focused on requested scope and preserve existing behavior unless the task or approved specification requires change.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "GOV-014",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0032",
+        "primary/L0/constraints.jsonl/RULE-L0-0091",
+        "primary/L0/constraints.jsonl/RULE-L0-0306",
+        "primary/L0/constraints.jsonl/RULE-L0-0308",
+        "primary/L0/constraints.jsonl/RULE-L0-0309",
+        "primary/L0/constraints.jsonl/RULE-L0-0312",
+        "primary/L0/constraints.jsonl/RULE-L0-0488",
+        "primary/L0/constraints.jsonl/RULE-L0-0506"
+      ],
+      "boundary_analysis": "Scope/behavior duty includes upgrade repair, no source compensation for unavailable toolchain, revert harmful speculative fixes, pre-existing failures exception and focused modernization/reorganization. These specific lifecycle duties already explicit, not collapsed merely under broad scope policy.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/dependency-hygiene.md",
+          "sha256": "b6600b9fa58c1af6d27724361d54df8767b8aadb8e04f0d256333e4923353df5",
+          "inspected_ranges": [
+            [
+              16,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "- Keep each dependency in the narrowest project or workspace that actually requires it.\n- Remove a dependency that the current change makes unused when doing so is safe to verify; do not perform unrelated dependency cleanup during a narrowly scoped task (prefer)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "aabd590825a8528eb0b848ea715da112587291c712a1f7278a958cc9742d7ab7",
+          "inspected_ranges": [
+            [
+              58,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "\nBuild and test the affected scope (`verify`); for security-relevant changes run `dotnet package list --vulnerable --include-transitive` or `npm audit`. Scanner output needs context — do not replace or upgrade unrelated packages merely because a scanner reports something. Report: package · version · license · reason · checks performed.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "0e75858fa6dd43c36e126691682d2db491eb8611ebfc6f612666a95570649e01",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ],
+            [
+              51,
+              53
+            ],
+            [
+              56,
+              59
+            ],
+            [
+              65,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nRestore the affected scope to a green build/test state without hiding failures, weakening behavior, or introducing unrelated changes. `code-review` inspects completed changes; `verify` proves a change is ready; `build-fix` repairs a failure that already exists.\n",
+            "\nWhen the build succeeds but tests fail: read the failing test and the production behavior; decide whether the defect is in production code, test setup, test expectation, environment/configuration, or an intentionally changed contract; make the smallest correct change; re-run the affected test, then broader relevant tests. If expected behavior intentionally changed, update the test to express the new contract and confirm the change was actually requested.\n",
+            "- After a package change: inspect the exact installed/requested version, framework/runtime compatibility, and peer dependencies; read the real diagnostics and official migration notes; update usage deliberately. Any package addition or version change goes through `add-dependency` — never add or swap a package just to get green. Work within `.claude/rules/3-project/package-management.md` instead of around it (central versions, lockfile), resolve peer conflicts as `add-dependency` requires, and do not delete `package-lock.json` reflexively as a troubleshooting technique.\n- After a framework upgrade: distinguish compile errors from runtime behavior changes, update obsolete APIs from verified documentation (never invent replacement APIs from memory), and do not perform another unrelated upgrade at the same time.\n- Toolchain: check `dotnet --info`, `node --version`, `npm --version`, `global.json`, target frameworks, Angular versions, lockfile, and CI runtime versions. Never change the declared SDK, Node, framework, or language version just because the local machine differs; if the required toolchain is unavailable, report the limitation instead of editing source to compensate.\n",
+            "\nUse several focused attempts, not an unlimited loop. Stop and reassess when the same root failure survives materially different fixes, fixes create increasing unrelated failures, the toolchain is incompatible, required infrastructure is unavailable, package compatibility cannot be resolved safely, or correct behavior cannot be determined. If a fix introduces new failures, decide whether they reveal a legitimate dependency of the change; otherwise revert or correct the fix. Never leave the repository knowingly worse than before, and leave unrelated pre-existing failures alone unless they block verification or the user asks.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-pipeline/SKILL.md",
+          "sha256": "d8e7a2d952746590394de4dee9c319c9d54d48487c6dd2be126e0ef90751881a",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Supply credentials through the CI platform's secret/identity mechanism (secrets policy: `0-core/security-principles.md`); prefer workload/federated identity over long-lived deployment credentials where supported.\n- Do not let CI upgrade packages automatically unless the project adopted automated dependency updates.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "81740b792987f91db4121a6d5e675d5e6d800b9cbe77a4a3e1619b641e26dfeb",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ],
+            [
+              40,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Determine the requested scope and which areas it touches (backend, frontend, tests, delivery, documentation).\n2. For a new application or a substantial feature, read `SPECIFICATION.md` (and any feature specification) before planning or implementing, and read `CUSTOM_SETTINGS.md` when tunable values are involved.",
+            "\n- Keep the change inside the requested scope (CLAUDE.md → Simplicity and scope).\n- **Bug fixes:** for a meaningful bug with plausible recurrence, add a regression test that fails before the fix and passes after it, unless equivalent coverage already exists (default)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "371490383337c8532cf1f80ab281d79a2ede79efb2ad0d51103c87ebb63ebbad",
+          "inspected_ranges": [
+            [
+              36,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "\nFollow the repository/team convention or the user's explicit request rather than personal preference. Inspect local uncommitted work first; do not automatically stash, reset, or discard it. Resolve conflicts from the intended combined behavior, not by mechanically choosing \"ours\" or \"theirs\", and run relevant verification afterwards.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "e4c92d9afe8cd8d9dcf3b9ce631a94e756acffac17b3c06f6f4fecd54f6554ad",
+          "inspected_ranges": [
+            [
+              119,
+              120
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen explicitly asked to modernize: preserve behavior, keep the change focused, prefer readability improvements, build and test afterwards, and do not mix architecture refactoring into syntax modernization."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              83,
+              85
+            ],
+            [
+              91,
+              92
+            ]
+          ],
+          "context_quotes": [
+            "\nInspect the current tree and references, identify a concrete structural problem, preserve behavior, move code in small reviewable steps, update namespaces and references consistently, avoid unrelated feature work, and verify afterwards. Do not force an established project to match this template when that provides no concrete value.\n",
+            "\nThe physical structure matches the requested scope; references respect the architecture; the approved stack is used; no unnecessary projects or speculative directories exist; backend and frontend (when present) build; relevant tests pass; local Development configuration is usable; nothing unrelated was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "a7674f8c56e85d7f9102dbff876205e8157222e2cf3593d6ea40e51a12f14887",
+          "inspected_ranges": [
+            [
+              113,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "\nPrefer the smallest secure change consistent with the architecture. Do not recommend a new authentication system without need, custom cryptography, blanket encryption of all database fields, `[Authorize]` on every action when a global policy already protects them, security libraries merely to satisfy the scan, or disabling functionality because a static scanner cannot understand it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "3ad52189fdee742608f70aa3d46a73a5eb04fcf2c4f2282e8d809e1342f50389",
+          "inspected_ranges": [
+            [
+              8,
+              10
+            ]
+          ],
+          "context_quotes": [
+            "\n- .NET: `dotnet package list --vulnerable --include-transitive`. Review vulnerable direct and transitive packages, advisory severity, whether the component is actually used, whether a patched compatible version exists, and unexpected or untrusted NuGet sources. Do not upgrade packages during a scan unless asked.\n- npm: `npm audit`. Distinguish production from development/build dependencies and direct from transitive packages; a dev-only vulnerability still matters to the supply chain but has different runtime impact than a browser-shipped package. Review lockfiles when integrity or unexpected dependency changes matter."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "efa60025fe911c14ab72080ecf10709aabf8547267ff0cd73ada77c0351ca950",
+          "inspected_ranges": [
+            [
+              15,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing checks. Confirm that:\n\n- the changes match the requested scope and contain no accidental unrelated refactoring;\n- no generated or build artifacts, secrets, or environment-specific credentials were added;\n- temporary diagnostics and probes are removed only after any behavior they uniquely verified is preserved (step 4)."
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              64,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "- Do not introduce frameworks, libraries, infrastructure, or architectural patterns without a concrete current need.\n- Keep changes focused on the requested scope and preserve existing behavior unless the task or the approved specification requires a change.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

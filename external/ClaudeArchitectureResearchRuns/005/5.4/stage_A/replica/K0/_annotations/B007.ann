@@ -1,0 +1,225 @@
+# K0 / B007 — Run 2 replica annotation (blind).
+
+C R174 OL SEC-016,GOV-013 | MUST | Choose the authentication scheme by the actual application (Bearer/OIDC for an SPA calling an API; cookies for server-rendered apps; Identity when the app owns local users and needs account management; external OIDC/OAuth when identity is delegated); a User entity or profile management alone does not call for Identity, and an API needing authentication does not call for custom JWT issuance when an existing identity provider issues tokens. | Backend authentication | none stated
+C R175 OL WF-015,GOV-014 | MUST | Build-fix restores the affected scope to green without hiding failures, weakening behavior or introducing unrelated changes. | Build/test repair | none stated
+C R176 OL WF-013 | MUST | Reproduce and diagnose the actual failure (narrowest reproducing command with the repository's actual .slnx/projects; complete output read and grouped by root cause) before editing; no guessing; fix root causes and the highest-leverage cause first. | Build/test repair | none stated
+C R177 OL WF-014 | MUST | Small bounded iterations: rerun the narrowest failing verification after each meaningful fix, expand only after the focused failure is resolved; stop and reassess when progress stalls (same root failure after different fixes, growing unrelated failures, incompatible toolchain, missing infrastructure, unresolvable package compatibility, undeterminable behavior); never repeat variants of the same failed guess. | Build/test repair | none stated
+C R178 OL WF-015 | MUST NOT | Never weaken, delete, skip or suppress relevant tests, compiler, TypeScript, lint or analyzer failures merely to pass; do not weaken a strong assertion or delete/skip a failing test because fixing it is inconvenient. | Build/test repair | none stated
+C R179 OL GOV-014,RUN-009,ARC-001 | MUST | Preserve architecture and project conventions while fixing; a green build obtained by violating architecture (e.g. Application -> Infrastructure references, DbContext in Application, business logic in a Controller, Angular-only authorization, scattered HTTP calls) is not a successful repair. | Build/test repair | none stated
+C R180 OL WF-005,WF-007 | MUST | Determine the affected scope (backend, Angular, both, contract/client generation, dependencies, toolchain) and do not run unrelated build systems merely because they exist. | Build/test repair | none stated
+C R181 OL WF-018 | MUST | For Angular inspect package.json first and use scripts that actually exist; do not invent script names or assume a test runner (an existing project may deliberately use another runner than the D-09 default). | Frontend build/test commands | Applies the CI-scoped WF-018 rule to local repair.
+C R182 OL ARC-001 | MUST NOT | Never solve a dependency problem with an invalid project reference (e.g. Application -> Infrastructure). | Backend repair | none stated
+C R183 OL WF-015,FE-001,DEP-014,DEP-015 | MUST NOT | Frontend repairs do not convert code to any to silence TypeScript, disable strict mode, suppress template diagnostics without understanding, add NgModules to work around standalone configuration problems, replace framework APIs speculatively, or add another state-management or HTTP library to bypass a local issue. | Frontend repair | none stated
+C R184 OL WF-016,WF-013 | MUST | For full-stack/contract failures determine the authoritative contract; do not patch both sides into inconsistent shapes merely to compile; with OpenAPI generation verify the backend contract, regenerate the client normally, review the generated changes, then fix handwritten frontend code. | Contract failures | none stated
+C R185 OL GOV-014 | MUST | If expected behavior intentionally changed, update the test to express the new contract and confirm the change was actually requested. | Test failures | none stated
+C R186 OL DEP-006,DEP-007 | MUST | During package-related repair respect Central Package Management and do not delete package-lock.json reflexively. | Dependency failures | none stated
+C R187 OL GOV-014,WF-013 | MUST | For upgrade fallout distinguish compile errors from runtime behavior changes, check official migration documentation, update obsolete APIs deliberately (no fabricated replacement APIs when they can be verified), preserve architecture/behavior and perform no additional unrelated upgrade. | Framework/API upgrades | none stated
+C R188 OL GOV-014,DEP-008,WF-009 | MUST NOT | Do not change the repository's declared SDK, Node, framework or language version merely because the local machine differs; report an unavailable toolchain instead of editing source to compensate. | Toolchain problems | none stated
+C R189 OL WF-016 | DEFAULT | When generated output is wrong or its source changed, fix the authoritative source (OpenAPI document, generator input, EF Core model, build configuration) and regenerate; do not manually patch disposable generated output unless intentionally maintained as source. | Generated code | Output intentionally maintained as source.
+C R190 OL GOV-014,WF-008 | MUST | If a fix introduces new failures decide whether they reveal a legitimate dependency or revert/correct the fix; never leave the repository knowingly worse; do not clean up unrelated pre-existing failures unless they block verification or the user asks. | Build/test repair | Blocking or requested cleanup.
+C R191 OL WF-005,WF-003,TST-010 | MUST | A repair is complete when the affected scope is green (builds, affected tests, consistent contracts, no known new regression, no accidental workaround); diagnosis probes follow verify § 4; then run verify for the final pass when appropriate. | Build/test repair completion | none stated
+C R192 OL WF-009 | MUST | Report repairs with backend build, frontend build and tests as PASS / NOT RUN / NOT APPLICABLE plus failure, root cause, changes and remaining issues; do not claim the problem is fixed while a known relevant failure remains. | Build/test repair report | none stated
+C X26 EX RUN-021,ARC-017 | AVOID (listed common mistake) | Caching EF tracked entities across Unit of Work boundaries is listed as a mistake to avoid. | Caching persistence data | none stated | No oracle policy and no K0 standard forbids caching tracked entities across Unit of Work scopes; the knowledge skill adds this restriction as a named mistake. | A cache that holds EF-tracked entity instances across requests is treated as a defect.
+C R193 OL WF-007 | MUST NOT | An optional local formatter does not become a mandatory CI gate without the project adopting that policy. | CI pipelines | none stated
+C R194 OL WF-018 | MUST | Frontend CI runs the unit-test and lint scripts the workspace actually defines, adding them only when the project defines them. | Frontend CI | none stated
+C R195 OL TST-004,GOV-013 | MUST | Provide CI test services (SQL Server, PostgreSQL, Redis, brokers) only when tests require them; the generic template hardcodes no database provider and the test environment stays isolated from Development and Production data. | CI test infrastructure | none stated
+C R196 OL DEP-003,DEP-004 | MUST NOT | Automatic dependency updates in CI need explicit adoption; dependency-audit findings are treated per the project's security policy. | CI pipelines | Explicitly adopted automation.
+C R197 OL DEP-018 | MUST NOT | Store or publish only artifacts later stages need; build and publish container images from CI only when container deployment is part of the project. | CI artifacts | none stated
+C R198 OL WF-019 | MUST | Migration scripts or bundles may be generated in CI and are executed by an explicit deployment step. | Deployment | none stated
+
+FILE .claude/skills/aspnet-error-handling/SKILL.md | On-demand knowledge.
+1-4 NN | skill front matter: name and trigger description (routing metadata)
+6 NN | header metadata
+8 NN | heading
+10 NN | pointers to rules, decision ID and status-code reference
+12 NN | section heading
+14 OL R62,R69 |
+16-49 NN | global exception handler code example
+51-56 NN | Program.cs registration example
+58 OL R63 | public contracts stay safe
+60 NN | section heading
+62 OL R65 |
+64-68 NN | nullable query result example
+70 OL R65,R13 |
+72 NN | section heading
+74-100 NN | controller mapping code example
+102 NN | section heading
+104 OL R14 |
+106 NN | section heading
+108 OL R68 |
+110-114 DU R68 | text diagram restating validation placement by boundary
+116 MX X18,R68,R54 | Register validators with `FluentValidation.DependencyInjectionExtensions` ⟫ mandated registration package and avoidance of the automatic-validation integration (EXTRA X18) with boundary-specific validation (oracle API-010) and the established invocation pattern (oracle RUN-009)
+118 NN | section heading
+120 OL R62 |
+122 NN | lead-in 'Avoid:'
+124-132 NN | swallowed-exception anti-pattern example
+134 NN | lead-in to the catch/log/rethrow anti-pattern example
+136-142 NN | catch/log/rethrow anti-pattern example
+144 OL R65 | are not logged as application errors
+146 NN | section heading
+148 OL R65 | `Result<T>` is optional.
+150-154 NN | typed error record example
+156 OL R67 |
+158 NN | section heading
+160 DU R63,R13,R65,R67,R62,R64,R68 | common-mistakes list restating error-handling rules
+162 NN | section heading
+164-175 DU R68,R65,R62,R14,R69 | decision-guide table restating defaults
+
+FILE .claude/skills/authentication/SKILL.md | On-demand knowledge.
+1-4 NN | skill front matter: name and trigger description (routing metadata)
+6 NN | header metadata
+8 NN | heading
+10 OL R93 | Authentication architecture changes are Reserved
+12 OL R27 | Keep ASP.NET Core transport and authentication types out of Domain.
+14 NN | section heading
+16-19 OL R174 |
+21 OL R174 |
+23 NN | section heading
+25 OL R96 |
+27 NN | section heading
+29 OL R97 |
+31 NN | section heading
+33-40 NN | [Authorize] controller example
+42 OL R95 |
+44 NN | section heading
+46 NN | soft technique preference (policies with stable constants)
+48-55 NN | authorization policy example
+57-64 NN | policy usage example
+66 NN | roles vs policies technique note
+68 NN | section heading
+70 OL R123 |
+72 NN | section heading
+74-77 DU R17 | text block restating 401 vs 403
+79 OL R17 | A deliberate `404` for some forbidden lookups hides existence when that is a consistent policy
+81 NN | section heading
+83 NN | permissive technique note (controllers may read User)
+85-94 NN | current-user example
+96 OL R33,R32 |
+98-104 NN | ICurrentUser example
+106 NN | section heading
+108 OL R142,R143,R120 |
+110 NN | section heading
+112 OL R105 |
+114 NN | section heading
+116 DU R96,R97,R120,R123,R33,R17,R143,R174 | common-mistakes list restating authentication rules
+
+FILE .claude/skills/build-fix/SKILL.md | Workflow.
+1-4 NN | skill front matter: name and trigger description (routing metadata)
+6 NN | header metadata
+8 NN | heading
+10 OL R175 |
+12 NN | section heading
+14 OL R176 |
+15 OL R177 |
+16 OL R178 |
+17 OL R179,R177 |
+19 NN | section heading
+21 OL R180 |
+23-28 DU R180 | text block restating scope-to-start-point mapping
+30 NN | section heading
+32 OL R176 |
+34-38 NN | reproduction command examples
+40 OL R181 |
+42 NN | section heading
+44 OL R176 |
+46-55 NN | error-category catalogue (diagnosis technique)
+57-59 NN | section headings
+61-67 OL R176,R177 |
+69 OL R182 |
+71 NN | section heading
+73-79 OL R176,R177 |
+81 OL R183 |
+83 NN | section heading
+85 OL R184 |
+87 NN | section heading
+89-94 OL R176,R177 |
+96 OL R178,R185 |
+98 NN | section heading
+100-105 OL R176 |
+107 OL R113,R186 |
+109 NN | section heading
+111 OL R187 |
+113 NN | section heading
+115 OL R188 |
+117 NN | section heading
+119 OL R189 |
+121 NN | section heading
+123 OL R177 |
+125 OL R190 |
+127 OL R179 |
+129 NN | section heading
+131 OL R191 |
+133 NN | section heading
+135-143 OL R192 | Backend build: PASS / NOT RUN / NOT APPLICABLE
+145 OL R192 |
+
+FILE .claude/skills/caching/SKILL.md | On-demand knowledge.
+1-4 NN | skill front matter: name and trigger description (routing metadata)
+6 NN | header metadata
+8 NN | heading
+10 OL R48 | Distributed caching is Reserved
+12 OL R49 |
+14 NN | section heading
+16 NN | technique option: output caching in the API layer
+17 OL R50 |
+18 NN | technique permission: infrastructure adapters may cache while preserving the contract
+20 NN | section heading
+22 NN | HybridCache option (not mandatory)
+24-33 NN | AddHybridCache example
+35 OL R49,R48 |
+37-39 NN | section heading and lead-in
+41-56 NN | cache abstraction example
+58 OL R50 |
+60 NN | section heading
+62 OL R52 |
+64 NN | section heading
+66 OL R53 |
+68 NN | section heading
+70-81 NN | output caching example
+83 OL R51 |
+85 NN | section heading
+87 OL R41,R82 |
+89 NN | section heading
+91 OL R105 | Framework cache internals need no tests.
+93 NN | section heading
+95 MX R49,R51,R52,R50,R53,R48,X26 | caching EF tracked entities across Unit of Work boundaries ⟫ common-mistake list restating caching rules (oracle) plus the extra tracked-entity caching prohibition (X26)
+97 NN | section heading
+99-106 DU R48,R49,R50 | decision-guide table restating caching defaults
+
+FILE .claude/skills/ci-cd/SKILL.md | On-demand knowledge (delivery).
+1-4 NN | skill front matter: name and trigger description (routing metadata)
+6 NN | header metadata
+8 NN | heading
+10 NN | pointers to secrets rule, decision ID and workflow
+12 NN | artifact reproducibility technique ('where practical'; conditional delivery technique)
+14 NN | section heading
+16-20 NN | backend CI commands
+22 NN | lead-in for adopted format gates
+24-26 NN | format gate command
+28 OL R193 |
+30 NN | section heading
+32-35 NN | frontend CI commands
+37 OL R194 |
+39 NN | section heading
+41-83 NN | GitHub Actions workflow example
+85 OL R194 | add frontend test/lint steps only when the project defines them
+87 NN | section heading
+89 OL R195 |
+91 NN | section heading
+93-95 NN | vulnerability listing command
+97 OL R196 |
+99 NN | section heading
+101-107 NN | publish command example
+109 OL R197 |
+111 NN | section heading
+113 NN | build-once/promote preference (conditional delivery technique)
+115 NN | section heading
+117 OL R121 |
+119 NN | section heading
+121 OL R198 |
+123 NN | section heading
+125 DU R195,R198,R197,R194 | common-mistakes list restating pipeline rules
+
+O .claude/skills/aspnet-error-handling/SKILL.md 156-156 PL R67 API-011 | make that a consistent project-level decision | Suspected condition EXTRA. Kept oracle-linked: API-011 forbids business exceptions as the default architecture; selected typed exceptions as a deliberate project decision stay within it. | Typed exceptions only by deliberate project-wide decision.
+O .claude/skills/aspnet-error-handling/SKILL.md 148-148 NN - API-009 | If adopted, use typed errors rather than string arrays | Considered as an extra mandatory pattern. Rejected: representation technique inside an already adopted Result model. | none
+DONE

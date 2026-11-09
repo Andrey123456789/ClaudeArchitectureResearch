@@ -1,0 +1,156 @@
+# Batch B009 (part 1) — skills: build-fix, caching
+
+@@ output/template/.claude/skills/build-fix/SKILL.md ;; Workflow skill routed from CLAUDE.md, development-workflow and verify for failing builds/tests.
+@scope workflow build-fix (failing .NET/Angular build or tests)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15-16 OL [bf.goal]
+18 NN ;; Lead-in sentence.
+20-24 NN ;; Text diagram contrasting code-review, verify and build-fix roles (descriptive).
+26 NN ;; Heading.
+28-29 OL [wf013.reproduce-diagnose]
+30 OL [wf013.root-cause-first]
+31-33 OL [wf014.bounded-iteration]
+34-35 OL [wf015.no-weakening]
+36 OL [bf.preserve-architecture]
+37 OL [wf014.stop-when-stalled]
+39 NN ;; Heading.
+41-46 OL [wf013.scope-first,wf001.read-matching-rules,wf007.no-unrelated-builds]
+48-53 NN ;; Text block of illustrative scope-to-starting-point heuristics.
+55 NN ;; Heading.
+57 OL [wf014.narrowest-repro]
+59 NN ;; Heading.
+61-65 NN ;; Example dotnet build/test commands with placeholder paths.
+67 NN ;; States the example commands are placeholders for the repository's actual .slnx/paths/configuration; no independent constraint.
+69 NN ;; Heading.
+71-75 OL [wf013.actual-scripts]
+77 NN ;; Heading.
+79-81 OL [wf013.read-full-output]
+83-92 NN ;; Reference lists of common .NET and Angular failure categories (diagnostic aid).
+94 NN ;; Heading.
+96-102 OL [wf014.backend-loop]
+104-106 OL [arc001.no-invalid-refs-fix]
+108 NN ;; Heading.
+110-116 OL [wf014.frontend-loop]
+118-122 OL [wf015.frontend-no-silencing]
+124 NN ;; Heading.
+126-133 OL [wf013.contract-authoritative]
+135 NN ;; Heading.
+137-146 OL [wf014.test-fix-flow]
+148-152 OL [wf015.no-weak-assertions] ;; ;; Do not turn a strong assertion into a weak one
+154 NN ;; Heading.
+156-163 OL [wf013.dependency-diagnosis]
+165-170 OL [bf.dependency-repair-rules]
+172 NN ;; Heading.
+174-180 MX [wf013.upgrade-diagnosis,x.bf-no-fabricated-apis] ;; Upgrade diagnosis/no unrelated upgrade are WF-013/GOV-014; not fabricating replacement APIs from memory is additional.
+182 NN ;; Heading.
+184-191 MX [wf013.toolchain-vs-source,x.bf-toolchain] ;; Distinguishing toolchain from source is diagnosis (WF-013); not changing declared SDK/Node/framework/language versions and reporting instead of compensating is additional.
+193 NN ;; Heading.
+195-205 OL [wf014.iteration-limits]
+207 NN ;; Heading.
+209-213 OL [wf008.regressions]
+215 NN ;; Heading.
+217-222 OL [bf.no-architecture-bypass]
+224 NN ;; Heading.
+226-229 OL [tst010.probes-via-verify]
+231 NN ;; Heading.
+233-237 OL [wf005.bf-completion]
+238-239 OL [wf003.bf-then-verify]
+241 NN ;; Heading.
+243-251 MX [wf009.bf-report,x.bf-report-format] ;; PASS/NOT RUN/NOT APPLICABLE reporting is WF-009; the fixed report fields are an added format.
+253 OL [wf009.no-false-fixed]
+
+C bf.goal OL WF-015,WF-008,GOV-014 MUST ;; Restore the affected scope to green without hiding failures, weakening behaviour or introducing unrelated changes. ;; = ;; none ;;
+C wf013.reproduce-diagnose OL WF-013 MUST ;; Reproduce and diagnose the actual failure before editing; do not guess at a fix. ;; = ;; none ;;
+C wf013.root-cause-first OL WF-013 MUST ;; Fix root causes before downstream symptoms. ;; = ;; none ;;
+C wf014.bounded-iteration OL WF-014 MUST ;; Use small bounded repair iterations; rerun the narrowest failing verification after each meaningful fix; expand only after the focused failure is resolved. ;; = ;; none ;;
+C wf015.no-weakening OL WF-015 MUST_NOT ;; Do not weaken, delete, skip or suppress relevant tests or compiler/TypeScript/lint/analyzer failures to make verification pass. ;; = ;; none ;;
+C bf.preserve-architecture OL GOV-014,RUN-009,ARC-001 MUST ;; Preserve architecture and project conventions while fixing a failure. ;; = ;; none ;;
+C wf014.stop-when-stalled OL WF-014,WF-008 MUST ;; Stop when progress has clearly stalled rather than making speculative edits. ;; = ;; none ;;
+C wf013.scope-first OL WF-013 MUST ;; Before running commands determine whether the failure concerns backend, frontend, both, contract/client generation, dependencies or toolchain configuration. ;; = ;; none ;;
+C wf001.read-matching-rules OL WF-001 MUST ;; Read the .claude/rules files whose paths match the failing area before editing (they may not have loaded yet). ;; = ;; none ;;
+C wf007.no-unrelated-builds OL WF-007,WF-014 MUST_NOT ;; Do not run unrelated build systems merely because they exist. ;; = ;; none ;;
+C wf014.narrowest-repro OL WF-014 MUST ;; Start with the narrowest command that reliably reproduces the problem. ;; = ;; none ;;
+C wf013.actual-scripts OL WF-013,WF-018,DEP-014 MUST ;; Inspect package.json and use scripts that actually exist; do not invent script names or assume a test runner (Vitest is the baseline for new projects but an existing project may use another configured runner). ;; = ;; none ;;
+C wf013.read-full-output OL WF-013 MUST ;; Read the complete relevant output, group errors by likely root cause and fix the highest-leverage cause first. ;; = ;; none ;;
+C wf014.backend-loop OL WF-013,WF-014 MUST ;; Backend loop: reproduce narrowest failure, identify root cause, inspect source/references/packages, smallest correct change, rerun same build/test, compare failure sets, expand only after focused failure resolved. ;; = ;; none ;;
+C arc001.no-invalid-refs-fix OL ARC-001,WF-015 MUST_NOT ;; Never solve dependency-direction problems with invalid project references (e.g. Application→Infrastructure). ;; = ;; none ;;
+C wf014.frontend-loop OL WF-013,WF-014 MUST ;; Frontend loop: inspect package.json/config, reproduce, read diagnostics in context, inspect affected code, smallest change, rerun, expand after focused fix. ;; = ;; none ;;
+C wf015.frontend-no-silencing OL WF-015,FE-001,DEP-015 MUST_NOT ;; Do not convert to any, disable strict mode, suppress template diagnostics without understanding, add NgModules to work around standalone issues, replace framework APIs speculatively, or add state/HTTP libraries to bypass a local issue. ;; = ;; none ;;
+C wf013.contract-authoritative OL WF-013,WF-016 MUST ;; For cross-stack contract failures determine which contract is authoritative; do not patch both sides into inconsistent shapes to compile; generated clients follow the generated-output step. ;; = ;; none ;;
+C wf014.test-fix-flow OL WF-013,WF-014 MUST ;; Test-fix flow: read failing test and production behaviour, decide where the defect is (code/setup/expectation/environment/intended change), smallest change, rerun affected tests, broaden after focused fix. ;; = ;; none ;;
+C wf015.no-weak-assertions OL WF-015,GOV-014 MUST_NOT ;; Do not weaken assertions or delete/skip failing tests for convenience; when behaviour intentionally changed update the test and confirm the change was requested. ;; = ;; Intentionally changed and requested behaviour. ;;
+C wf013.dependency-diagnosis OL WF-013 MUST ;; After a dependency-related failure inspect the exact version, framework compatibility, peers, diagnostics and official migration docs, then update usage deliberately. ;; = ;; none ;;
+C bf.dependency-repair-rules OL DEP-003,DEP-002,DEP-001,DEP-006,DEP-007,DEP-025 MUST_NOT ;; Dependency changes during repair go through add-dependency; do not add/swap packages merely to get green; do not duplicate versions in .csproj; no peer-dependency force flags; do not delete package-lock.json reflexively. ;; = ;; none ;;
+C wf013.upgrade-diagnosis OL WF-013,GOV-014 MUST ;; After a framework upgrade inspect installed versions, distinguish compile from runtime changes, consult migration docs, update obsolete usage deliberately, preserve architecture/behaviour, and do not perform an additional unrelated upgrade. ;; = ;; none ;;
+C x.bf-no-fabricated-apis EX WF-013 MUST_NOT ;; Do not fabricate replacement APIs from memory when they can be verified. ;; = ;; When verification is impossible. ;; Verification-of-API-knowledge obligation not stated in the oracle.
+C wf013.toolchain-vs-source OL WF-013 MUST ;; Determine whether the failure comes from source code or the local toolchain (dotnet/node/npm versions, global.json, target framework, lockfile, CI config). ;; = ;; none ;;
+C x.bf-toolchain EX DEP-008,WF-009 MUST_NOT ;; Do not change the repository's declared SDK, Node, framework or language version because the local machine differs; if the toolchain is unavailable and cannot be resolved safely, report the limitation instead of editing source to compensate. ;; = ;; none ;; Toolchain-pinning and report-instead-of-compensate rule beyond the oracle.
+C wf014.iteration-limits OL WF-014,WF-008 MUST ;; Use several focused attempts, not an unlimited loop; stop and reassess when the same root failure survives different fixes, fixes add unrelated failures, toolchain incompatible, infrastructure unavailable, packages unresolvable, or correct behaviour undeterminable; do not repeat failed guesses. ;; = ;; none ;;
+C wf008.regressions OL WF-008,GOV-014 MUST ;; If a fix introduces new failures revert or correct it unless legitimately dependent; do not leave the repository knowingly worse; do not clean unrelated pre-existing failures unless they block verification or the user asks. ;; = ;; Pre-existing failures blocking verification or user request. ;;
+C bf.no-architecture-bypass OL ARC-001,ARC-008,ARC-011,SEC-005,FE-003 MUST_NOT ;; A build fix must not bypass architecture (no Application→Infrastructure reference, DbContext in Application, business logic in Controllers, Angular-only authorization, scattered HTTP calls); such a green build is not a successful repair. ;; = ;; none ;;
+C tst010.probes-via-verify OL TST-010 MUST ;; A temporary probe or new behavioural test used during diagnosis is handled by verify step 4 (behaviour stays covered by maintained tests before the probe is removed); build/compiler/analysis commands need no new tests. ;; = ;; Build/compiler/static-analysis commands. ;;
+C wf005.bf-completion OL WF-005,WF-008,WF-007 MUST ;; Build-fix is complete when the affected scope is green (builds, affected tests, consistent contract, no known new regression, no accidental workaround); do not require unrelated builds. ;; = ;; As applicable to the task. ;;
+C wf003.bf-then-verify OL WF-003 MUST ;; After the focused repair succeeds run verify for the final completion pass when appropriate. ;; = ;; When appropriate. ;;
+C wf009.bf-report OL WF-009 MUST ;; Report backend build, frontend build and tests as PASS / NOT RUN / NOT APPLICABLE. ;; = ;; none ;;
+C x.bf-report-format EX WF-009 MUST ;; Build-fix report includes Initial failure, Root cause, Changes made and Remaining issues fields. ;; = ;; none ;; Report field structure beyond WF-009's status vocabulary.
+C wf009.no-false-fixed OL WF-009,WF-008 MUST_NOT ;; Do not claim the problem is fixed while a known relevant failure remains. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/caching/SKILL.md ;; Knowledge skill (on demand when adding/reviewing caching).
+@scope on-demand knowledge skill caching (backend)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+18-19 OL [run007.semantics-first]
+21 NN ;; Heading.
+23-24 NN ;; Descriptive option: output caching in the API layer when the full response is reusable.
+25-28 OL [arc024.cache-abstraction-when-needed]
+29-31 NN ;; Permissive option: Infrastructure adapters may cache when the Application contract is preserved.
+33 NN ;; Heading.
+35-37 NN ;; Describes HybridCache as an option, explicitly not mandatory.
+39-48 NN ;; Registration code example.
+50-51 OL [run007.redis-only-when-justified]
+53 NN ;; Heading.
+55 NN ;; Lead-in to example.
+57-72 NN ;; Cache abstraction code example.
+74-75 OL [arc024.hybridcache-not-in-app]
+77 NN ;; Heading.
+79-81 MX [run020.key-dimensions,x.cache-central-keys] ;; Key dimensions are RUN-020; centralizing key construction when formats duplicate is additional.
+83 NN ;; Heading.
+85-87 EX [x.cache-expiry-semantics]
+89 NN ;; Heading.
+91 NN ;; Enumerates invalidation strategy options (technique).
+92-94 LU [u.cache-preinvalidate] ;; Permits invalidating before the mutation is known to succeed when the workflow deliberately accepts it; unclear whether this is an exception to RUN-021. ;; Invalidating before the
+96 NN ;; Heading.
+98-109 NN ;; Output-cache code example.
+111-113 OL [run020.output-cache-isolation] ;; ;; Do not cache authenticated or user-specific responses unless
+O 111-112 NN ;; 'apply the selected output-cache policy through controller or action metadata' is Controller-specific technique for applying a chosen policy; no restriction on outcomes. ;; ;; For Controllers, apply the selected output-cache policy through controller or
+115 NN ;; Heading.
+117-120 OL [arc016.no-bypass-for-invalidation]
+122 NN ;; Heading.
+124-125 EX [x.cache-failure-decision]
+127 NN ;; Heading.
+129-132 EX [x.cache-testing]
+134 NN ;; Heading.
+136-138 MX [x.cache-no-tracked-entities,run021.not-authoritative,run007.no-redis-by-default] ;; Cache as authoritative persistence (RUN-021) and Redis merely because caching exists (RUN-007) are oracle; not caching EF tracked entities across UoW boundaries is additional.
+140 NN ;; Heading.
+142-149 DU ;; Decision-guide table restating caching defaults owned by performance.md/architecture.md/CLAUDE.md (output caching, local cache, distributed = Reserved infrastructure, Infrastructure caching, Application abstraction, measure first).
+
+C run007.semantics-first OL RUN-007,RUN-008 MUST ;; Define consistency semantics (staleness, invalidation) before caching; measure before adding caching solely for performance. ;; = ;; none ;;
+C arc024.cache-abstraction-when-needed OL ARC-024,ARC-007,GOV-012 MUST ;; When a use case genuinely needs cache-aware behaviour define the abstraction in Application and implement it in Infrastructure; do not introduce an Application cache abstraction if caching can stay internal to Infrastructure. ;; = ;; none ;;
+C run007.redis-only-when-justified OL RUN-007,ARC-020 MUST ;; Add a distributed backend such as Redis only when deployment requirements justify it. ;; = ;; none ;;
+C arc024.hybridcache-not-in-app OL ARC-024 MUST_NOT ;; HybridCache may implement an Infrastructure cache contract but does not appear in Application contracts. ;; = ;; none ;;
+C run020.key-dimensions OL RUN-020 MUST ;; Cache keys include dimensions affecting the result (entity id, tenant, user when user-specific, locale, query/filter parameters). ;; = ;; none ;;
+C x.cache-central-keys EX RUN-020 DEFAULT ;; Centralize cache-key construction when duplicated key formats become hard to maintain. ;; = ;; Conditional on duplication becoming hard to maintain. ;; Key-construction organisation is not in the oracle.
+C x.cache-expiry-semantics EX RUN-023,RUN-007 MUST ;; Choose cache expiration from data semantics (change rate, regeneration cost, staleness, memory, source-unavailable behaviour) rather than a universal default. ;; = ;; none ;; RUN-023 requires a lifetime/invalidation strategy; forbidding a universal default TTL in favour of per-data semantics is additional.
+C u.cache-preinvalidate LU RUN-021 ALLOWED ;; Invalidating a cache entry before the underlying mutation is known to have succeeded is acceptable only when the workflow deliberately accepts that behaviour. ;; = ;; Deliberate workflow acceptance. ;; Open question: is pre-success invalidation (which never makes the cache a second source of truth) still 'consistent with successful underlying mutations' under RUN-021, or does this clause relax RUN-021 with an exception?
+C run020.output-cache-isolation OL RUN-020 MUST_NOT ;; Do not cache authenticated or user-specific responses unless the key and policy isolate users and authorization context. ;; = ;; Proper user/authorization isolation. ;;
+C arc016.no-bypass-for-invalidation OL ARC-016,ARC-024 MUST_NOT ;; Application Services keep the normal repository/UoW workflow and coordinate invalidation through an abstraction; do not bypass repositories or IUnitOfWork to make invalidation convenient. ;; = ;; none ;;
+C x.cache-failure-decision EX RUN-018 MUST ;; Decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data. ;; = ;; none ;; Explicit cache-failure policy decision is not required by the oracle.
+C x.cache-testing EX TST-003 DEFAULT ;; Test cache behaviour when it affects correctness (invalidation after mutation, tenant/user isolation, miss fallback, outage policy); do not unit-test framework cache internals. ;; = ;; Only when caching affects observable correctness. ;; Cache-specific test obligations beyond the oracle.
+C x.cache-no-tracked-entities EX RUN-021,ARC-016 AVOID ;; Avoid caching EF tracked entities across Unit of Work boundaries. ;; = ;; none ;; EF-tracking-specific caching restriction not in the oracle.
+C run021.not-authoritative OL RUN-021 AVOID ;; Avoid using a cache as authoritative persistence. ;; = ;; none ;;
+C run007.no-redis-by-default OL RUN-007,GOV-013 AVOID ;; Avoid adding Redis merely because the application has caching. ;; = ;; none ;;

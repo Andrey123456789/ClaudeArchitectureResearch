@@ -1,0 +1,212 @@
+# K1 batch 7: regions r291-r330 (protocol v1.2.1)
+# r291-r300 .claude/skills/ef-core/SKILL.md
+CX X:BF-K1-0080@21-21 | EF configuration is placed in separate IEntityTypeConfiguration classes rather than only behind an Infrastructure boundary.
+SD P:EXTRA-K1-0148 X:BF-K1-0080 | S: EF entity configuration M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0033 P:RULE-K1-0385 | P: persistence-specific configuration out of Domain entities where practical.
+SPLIT P:RULE-K1-0386 | a: AddDbContext registers a scoped context shared by repositories and the Unit of Work in a request. | b: Use the selected provider, never one added because an example shows it.
+SD P:RULE-K1-0386#b R:RULE-K1-0251 | S: persistence provider M: MUST both E: none in either T: none
+RD OVERLAP R:RULE-K1-0041 P:RULE-K1-0386#a | P: AddDbContext registration of the shared scoped context.
+RD OVERLAP R:RULE-K1-0040 P:RULE-K1-0387 | P: the staging/commit statement in ef-core knowledge (DEFAULT).
+RD OVERLAP R:RULE-K1-0071 P:RULE-K1-0388 | P: an Infrastructure-only base class is allowed; concrete repositories keep the full EF Core API.
+RD OVERLAP R:RULE-K1-0082 P:RULE-K1-0389 | P: projection for read-only queries; projection not mandatory when the entity is needed.
+SPLIT X:BF-K1-0081 | a@106-106: Tracking or no-tracking is selected by use. | b@108-108: Lazy loading is avoided by default. | c@109-109: Paging is deterministic. | d@108-108: Split queries need generated-SQL verification. | e@119-119: Bulk operations need caution with tracked entities. | f@120-120: No fire-and-forget DbContext work.
+SD P:EXTRA-K1-0149 X:BF-K1-0081#a | S: EF tracking M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-K1-0390 X:BF-K1-0081#b | S: lazy loading M: P AVOID, X 'avoids' E: none in either T: none
+SD P:EXTRA-K1-0151 X:BF-K1-0081#c | S: pagination M: P MUST, X 'demands' E: none in either T: none
+RD COMPOUND_PART P:EXTRA-K1-0150 X:BF-K1-0081#d | P adds preferring an explicit query shape.
+SD P:EXTRA-K1-0152 X:BF-K1-0081#e | S: bulk operations M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0153 R:EXTRA-K1-0038 X:BF-K1-0081#f | S: EF async operations M: MUST_NOT (P, R), X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0082 P:RULE-K1-0391 | P: filter, order and page in the database.
+RD OVERLAP R:RULE-K1-0064 P:RULE-K1-0392 | P adds that EF transactions do not solve distributed transactions.
+SPLIT X:BF-K1-0082 | a@128-128: Compiled queries require measured, material compilation overhead. | b@128-128: A pre-optimization inspection checklist applies. | c@132-132: Interceptors never hide business behavior.
+SD P:RULE-K1-0393 X:BF-K1-0082#a | S: compiled queries M: P DEFAULT, X 'require' E: none in either T: none
+SD P:RULE-K1-0394 X:BF-K1-0082#b | S: query optimization M: P DEFAULT, X no modality E: none in either T: before specialized optimization
+RD BROADER_NARROWER R:RULE-K1-0078 P:RULE-K1-0393 | R: measured or clearly demonstrated need (several techniques); P: measured hot path with material compilation overhead (compiled queries).
+AC P:RULE-K1-0149 P:RULE-K1-0393 | X BF-K1-0082 reports a possible conflict: the general rule allows compiled queries for a measured or clearly demonstrated need, while the knowledge text requires a measured hot path.
+SPLIT R:RULE-K1-0252 | a: EF Core interceptors are used only for infrastructure-level cross-cutting behavior with a clear benefit (auditing); never hide business behavior in them. | b: HTTP DelegatingHandlers are used only for infrastructure-level cross-cutting behavior (auth headers, correlation, request signing); never business decisions.
+SD P:EXTRA-K1-0154 R:RULE-K1-0252#a X:BF-K1-0082#c | S: EF interceptors M: MUST_NOT (P, R), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT X:BF-K1-0083 | a@161-161: Seeder detection uses representative anchor entities and a scope-creating extension. | b@201-201: Complex required seed graphs are described explicitly rather than invented.
+SD P:RULE-K1-0395 X:BF-K1-0083#a | S: development seeder M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-K1-0155 X:BF-K1-0083#b | S: seed datasets M: P MUST, X no modality E: none in either T: when the required graph is complex
+RD OVERLAP R:RULE-K1-0066 P:RULE-K1-0395 | P: narrow extension that creates the scope.
+RD OVERLAP R:RULE-K1-0075 P:RULE-K1-0395 | P: existing-data detection with anchor entities.
+RD OVERLAP R:RULE-K1-0073 P:RULE-K1-0396 | P: representative states to consider.
+SPLIT X:BF-K1-0084 | a@205-205: Migrations use the Infrastructure project with Api startup. | b@216-216: Raw SQL has an expressibility-or-measurement gate. | c@220-220: Approved collation is made explicit. | d@221-221: Database retries prefer provider strategies with wrapped explicit transactions, never HTTP retry policies.
+SD P:EXTRA-K1-0156 X:BF-K1-0084#a | S: EF migrations M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-K1-0398 X:BF-K1-0084#b | S: raw SQL M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0235#a P:RULE-K1-0397 | P: generated idempotent migration scripts are often preferable.
+RD OVERLAP R:RULE-K1-0078 P:RULE-K1-0398 | P: raw SQL when EF Core cannot express the query or measured performance justifies it.
+RD OVERLAP R:RULE-K1-0072 P:RULE-K1-0399 | P names the safe and unsafe raw SQL APIs.
+SPLIT R:RULE-K1-0253 | a: SQL Server string comparison follows column/database collation (default case-insensitive); choosing case sensitivity or a collation is a product decision when observable. | b: An approved choice is made explicit with UseCollation(...) or a column-level collation.
+SD P:RULE-K1-0400 R:RULE-K1-0253#a | S: string comparison semantics M: REQUIRES_APPROVAL both E: none in either T: when observable
+RD DIFFERENT_STRENGTH R:RULE-K1-0253#b P:EXTRA-K1-0157 | same statement; R record-level REQUIRES_APPROVAL, P MUST.
+RD OVERLAP X:BF-K1-0084#c P:EXTRA-K1-0157 | P MUST and R REQUIRES_APPROVAL differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0084#c R:RULE-K1-0253#b | no single merge target (convention).
+SPLIT R:EXTRA-K1-0039 | a: Do not wrap normal database operations in a generic application-level retry pipeline or apply an HTTP retry policy to them; database transient faults use the provider's execution strategy (EnableRetryOnFailure). | b: Explicit transactions are wrapped in the execution strategy.
+SD P:EXTRA-K1-0188 R:EXTRA-K1-0039#a | S: database retries M: MUST_NOT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:EXTRA-K1-0039#a P:EXTRA-K1-0158 | same statement in ef-core L221; R MUST_NOT, P PREFER.
+RD DIFFERENT_STRENGTH R:EXTRA-K1-0039#b P:EXTRA-K1-0158 | same statement; R record-level MUST_NOT, P PREFER.
+RD OVERLAP X:BF-K1-0084#d P:EXTRA-K1-0158 | P PREFER and R MUST_NOT differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0084#d R:EXTRA-K1-0039#a | no single merge target (convention).
+RD OVERLAP R:RULE-K1-0106 P:RULE-K1-0401 | P: InMemory provider is not relational.
+SPLIT X:BF-K1-0085 | a@227-227: Integration setup replaces DbContextOptions in WebApplicationFactory and limits EnsureCreated to disposable test databases. | b@228-228: Mapping/repository tests are targeted.
+SD P:EXTRA-K1-0160 X:BF-K1-0085#a | S: EF integration tests M: P DEFAULT, X no modality E: disposable test databases (both) T: none
+SD P:EXTRA-K1-0161 X:BF-K1-0085#b | S: repository tests M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0106 P:EXTRA-K1-0159 | P: a lighter isolated relational database may suffice.
+RD OVERLAP R:RULE-K1-0106 P:RULE-K1-0402 | P: SQL Server via Testcontainers MsSql or LocalDB.
+RD OVERLAP R:RULE-K1-0107 P:EXTRA-K1-0160 | P: replace DbContextOptions with an isolated test database.
+RD OVERLAP R:RULE-K1-0111 P:RULE-K1-0403 | P: no tests for every trivial Add/Get.
+# r301-r303 .claude/skills/git-workflow/SKILL.md
+SPLIT X:BF-K1-0086 | a@17-17: Git safety forbids stashing work away for convenience. | b@19-19: High-risk operations are permitted when clearly required by an approved workflow, in addition to explicit requests.
+SD P:RULE-K1-0404 R:RULE-K1-0254 X:BF-K1-0086#a | S: user work in Git M: MUST_NOT (P, R), X 'forbids' E: none in either T: none
+SPLIT R:RULE-K1-0256 | a: Treat git reset --hard, git clean, git push --force/--force-with-lease, branch deletion and rebasing shared history as high-risk: perform them only when explicitly requested (or clearly required by an approved workflow). | b: Perform them only after inspecting what will be lost or rewritten.
+SD P:RULE-K1-0406 R:RULE-K1-0256#b | S: high-risk Git operations M: MUST both E: none in either T: before the operation
+RD DIFFERENT_STRENGTH R:RULE-K1-0256#a P:UNCERTAIN-K1-0002 | same restriction with the approved-workflow exception; R MUST, P ALLOWED (LINK_UNCERTAIN).
+RD COMPOUND_PART P:UNCERTAIN-K1-0002 R:UNCERTAIN-K1-0003 | P: the whole restriction; R: the approved-workflow exception only.
+SD R:UNCERTAIN-K1-0003 X:BF-K1-0086#b | S: high-risk Git operations M: R MAY (exception), X 'permitted' E: clearly required by an approved workflow (both) T: none | labels: R LINK_UNCERTAIN; X DS (reports the exception as a discrepancy)
+SPLIT R:RULE-K1-0257 | a: Before committing inspect the staged diff: it contains only the intended logical change; never stage or clean unrelated files merely because they are modified. | b: Prefer one logical change per commit with implementation and tests together; no artificial tiny commits or combined unrelated fixes/refactors.
+SD P:RULE-K1-0407 R:RULE-K1-0257#a | S: commits M: MUST both E: none in either T: before committing
+RD DIFFERENT_STRENGTH R:RULE-K1-0257#b P:EXTRA-K1-0162 | same statement; R record-level MUST ('prefer' wording), P PREFER.
+SPLIT X:BF-K1-0087 | a@23-23: Logical commit granularity. | b@27-27: Branch naming defaults; no renaming user branches. | c@31-31: Commit message naming defaults. | d@27-27: No worktree removal with uncommitted work. | e@35-35: Verified push scope. | f@35-35: Protected branches are treated as non-rewritable.
+RD OVERLAP X:BF-K1-0087#a P:EXTRA-K1-0162 | P PREFER and R MUST differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0087#a R:RULE-K1-0257#b | no single merge target (convention).
+SPLIT R:RULE-K1-0258 | a: Follow the repository's branch-naming convention (defaults feature/, fix/, refactor/, test/, docs/, chore/); do not rename an existing user branch to satisfy a convention. | b: Never check one branch out in multiple normal worktrees; keep each worktree focused. | c: Never remove a worktree containing uncommitted user work (verify preservation first).
+RD DIFFERENT_STRENGTH R:RULE-K1-0258#a P:EXTRA-K1-0163 | same statement; R MUST, P DEFAULT.
+RD OVERLAP X:BF-K1-0087#b P:EXTRA-K1-0163 | P DEFAULT and R MUST differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0087#b R:RULE-K1-0258#a | no single merge target (convention).
+SD P:EXTRA-K1-0164 R:RULE-K1-0258#b | S: Git worktrees M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0408 R:RULE-K1-0258#c X:BF-K1-0087#d | S: worktree removal M: MUST_NOT (P) = MUST + 'never' (R) (F7), X no modality E: none in either T: before removing a worktree
+SD P:EXTRA-K1-0165 X:BF-K1-0087#c | S: commit messages M: P DEFAULT, X no modality E: none in either T: none
+SPLIT R:RULE-K1-0259 | a: Before pushing confirm the intended branch and understood working/staged state, ensure relevant verification completed and avoid pushing unrelated local commits. | b: Never force-push a shared branch unless the user explicitly requests history rewriting and understands the consequences.
+SD P:EXTRA-K1-0166 R:RULE-K1-0259#a X:BF-K1-0087#e | S: git push M: MUST (P, R), X no modality E: none in either T: before pushing | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0409 R:RULE-K1-0259#b | S: force-push M: MUST_NOT (P) = MUST + 'never' (R) (F7) E: explicit request for history rewriting (both) T: none
+SD P:EXTRA-K1-0167 R:EXTRA-K1-0040 X:BF-K1-0087#f | S: protected branches M: MUST_NOT (P, R), X no modality E: none in either T: none
+AC P:EXTRA-K1-0167 P:RULE-K1-0409 | Observed in union review (no run reports it here; K0 has the analogous Codex-reported tension): protected/shared branches are non-rewritable, while force-pushing a shared branch is allowed on an explicit history-rewriting request.
+SPLIT P:EXTRA-K1-0168 | a: Follow the repository/team convention or the user's explicit request for merge vs rebase. | b: Resolve conflicts from the intended combined behaviour, not mechanically; run relevant verification afterwards.
+SPLIT R:RULE-K1-0260 | a: For merge/rebase follow the repository/team convention or the user's explicit request. | b: Inspect local uncommitted work first and never automatically stash, reset or discard it. | c: Resolve conflicts from the intended combined behavior rather than mechanically choosing ours/theirs, and run relevant verification afterwards.
+SPLIT X:BF-K1-0088 | a@39-39: Conflict resolution preserves intended combined behavior and reruns verification. | b@43-43: Verify is required before preparing a PR.
+SD P:EXTRA-K1-0168#a R:RULE-K1-0260#a | S: merge/rebase M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:EXTRA-K1-0168#b R:RULE-K1-0260#c X:BF-K1-0088#a | S: conflict resolution M: MUST (P, R), X 'must' E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K1-0410 R:RULE-K1-0260#b | S: merge/rebase local work M: MUST_NOT (P) = MUST + 'never' (R) (F7) E: none in either T: before merge/rebase
+SPLIT P:EXTRA-K1-0169 | a: Run verify before preparing a PR. | b: A PR has a focused purpose. | c: A PR describes what changed, why, how it was verified and compatibility/migration notes.
+SPLIT R:RULE-K1-0261 | a: Run verify before preparing a PR. | b: A PR has a focused purpose without accidental unrelated changes. | c: Never claim checks that were not run.
+SD P:EXTRA-K1-0169#a R:RULE-K1-0261#a X:BF-K1-0088#b | S: pull requests M: MUST (P, R), X 'required' E: none in either T: before preparing a PR | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:EXTRA-K1-0169#b R:RULE-K1-0261#b | S: pull requests M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:EXTRA-K1-0169#c R:EXTRA-K1-0041 | S: PR description M: MUST both E: none in either T: none
+SD P:RULE-K1-0411 R:RULE-K1-0261#c | S: PR claims M: MUST_NOT (P) = MUST + 'never' (R) (F7) E: none in either T: none
+# r304-r307 .claude/skills/health-check/SKILL.md
+RD OVERLAP R:RULE-K1-0056 P:RULE-K1-0412 | P: distinguish liveness and readiness when infrastructure benefits.
+RD OVERLAP R:RULE-K1-0056 P:RULE-K1-0413 | P: never restart because a dependency is temporarily unavailable.
+SPLIT X:BF-K1-0089 | a@31-31: Never restart for a temporary dependency failure. | b@46-46: Readiness stays unhealthy through startup. | c@50-50: Business queries are forbidden in health checks. | d@50-50: Readiness cascades require understanding.
+SD P:RULE-K1-0413 X:BF-K1-0089#a | S: liveness M: P MUST_NOT, X 'never' E: none in either T: none
+RD COMPOUND_PART P:RULE-K1-0414 X:BF-K1-0089#b | P adds including only required dependencies and never using liveness for this.
+SD P:RULE-K1-0415 X:BF-K1-0089#c | S: database health checks M: P MUST, X 'forbids' E: none in either T: none
+SD P:EXTRA-K1-0171 X:BF-K1-0089#d | S: readiness cascades M: P AVOID, X 'requires understanding' E: none in either T: none
+RD OVERLAP R:RULE-K1-0056 P:RULE-K1-0414 | P: readiness unhealthy until required startup work completes.
+RD OVERLAP R:RULE-K1-0055 P:RULE-K1-0415 | P forbids any business query; R forbids expensive or mutating database work (X BF-K1-0089 reports this as a discrepancy).
+RD OVERLAP R:RULE-K1-0056 P:RULE-K1-0416 | P: external dependency checked only when it matters to readiness.
+RD OVERLAP R:RULE-K1-0057 P:RULE-K1-0417 | P: small probe responses; diagnostics protected by network or authorization controls.
+SPLIT X:BF-K1-0090 | a@54-54: Probe payloads are small and topology diagnostics protected. | b@58-58: Exposure is chosen by context. | c@62-62: No routine Error log per failed probe. | d@66-66: Relied-on health configuration has behavior tests.
+SD P:RULE-K1-0417 X:BF-K1-0090#a | S: probe responses M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0173 X:BF-K1-0090#b | S: probe exposure M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0174 X:BF-K1-0090#c | S: probe logging M: P AVOID, X no modality E: none in either T: none
+SD P:EXTRA-K1-0175 X:BF-K1-0090#d | S: health tests M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K1-0055 P:RULE-K1-0418 | P: probes run frequently; avoid expensive queries, long timeouts, large allocations.
+RD OVERLAP R:RULE-K1-0104 P:EXTRA-K1-0175 | P: health-configuration tests; no tests of uncustomized framework behaviour.
+# r308-r318 .claude/skills/http-api/SKILL.md
+RD OVERLAP R:RULE-K1-0018 P:EXTRA-K1-0177 | P: consistent status codes across similar endpoints.
+RD OVERLAP R:RULE-K1-0018 P:RULE-K1-0419 | P: 200 OK definition.
+RD OVERLAP R:RULE-K1-0019 P:RULE-K1-0420 | P: empty collection returns 200 with [] rather than 204.
+SPLIT X:BF-K1-0029 | a@18-18: Location is returned for stable created URIs. | b@24-24: A 202 returns a progress identifier when practical. | c@25-25: A 204 has no body. | d@25-25: Repeat-delete responses are consistent. | e@29-29: 304 is conditional-only and bodyless.
+RD COMPOUND_PART P:RULE-K1-0421 X:BF-K1-0029#a | P adds the 201 definition and that an inserted row alone is not creation.
+SD P:EXTRA-K1-0178 X:BF-K1-0029#b | S: 202 responses M: P DEFAULT, X no modality E: when practical (both) T: none
+SD P:RULE-K1-0423 X:BF-K1-0029#c | S: 204 responses M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0179 X:BF-K1-0029#d | S: repeated DELETE M: P MUST, X no modality E: none in either T: none
+RD OVERLAP X:BF-K1-0029#e P:EXTRA-K1-0180 | X adds that a 304 carries no representation (present in source L29; P omits it).
+RD OVERLAP R:RULE-K1-0018 P:RULE-K1-0421 | P: 201 definition with Location.
+RD OVERLAP R:RULE-K1-0018 P:RULE-K1-0422 | P: 202 definition.
+RD OVERLAP R:RULE-K1-0020 P:EXTRA-K1-0181 | P: 400 never for authentication failures.
+RD COMPOUND_PART R:RULE-K1-0020 P:RULE-K1-0424 | P: the 401 part (DEFINITION vs R MUST); P adds production by authentication middleware.
+RD COMPOUND_PART R:RULE-K1-0020 P:RULE-K1-0425 | P: the 403 and 404-hiding part (DEFINITION vs R MUST).
+RD OVERLAP R:RULE-K1-0019 P:RULE-K1-0426 | P: a zero-match collection query is not 404.
+RD OVERLAP R:RULE-K1-0020 P:RULE-K1-0426 | P: 404 for deliberately hidden resources.
+SPLIT X:BF-K1-0030 | a@37-37: 406 and 415 are distinguished. | b@41-41: 400/422 with an established-convention exception. | c@42-42: A required precondition that is missing gets 428. | d@43-43: Rate limiting gets 429 with Retry-After when known.
+RD COMPOUND_PART P:EXTRA-K1-0181 X:BF-K1-0030#a | P adds other status semantics.
+SD P:EXTRA-K1-0182 X:BF-K1-0030#b | S: 400/422 M: P DEFAULT, X no modality E: established convention (both) T: none
+SD P:EXTRA-K1-0183 X:BF-K1-0030#c | S: 428 M: P DEFINITION, X 'prescribed' E: none in either T: none
+RD COMPOUND_PART P:EXTRA-K1-0181 X:BF-K1-0030#d | P adds other status semantics.
+RD COMPOUND_PART R:RULE-K1-0021 P:RULE-K1-0427 | P: 409 definition incl. reused idempotency keys; not for malformed syntax.
+RD COMPOUND_PART R:RULE-K1-0021 P:RULE-K1-0428 | P: 412 definition.
+RD OVERLAP R:RULE-K1-0023 P:RULE-K1-0429 | P: 500 via centralized handling.
+RD OVERLAP R:RULE-K1-0024 P:RULE-K1-0429 | P: ProblemDetails without stack traces, SQL, paths or credentials.
+SPLIT X:BF-K1-0031 | a@48-49: Intermediary 502/504 are distinguished from 503. | b@54-54: Idempotency-key payload conflicts map to 409. | c@58-58: HTTP concurrency uses standard ETag/If-Match rather than custom codes.
+RD COMPOUND_PART P:EXTRA-K1-0181 X:BF-K1-0031#a | P adds other status semantics.
+RD COMPOUND_PART P:EXTRA-K1-0184 X:BF-K1-0031#b | P adds method idempotency semantics.
+SD P:RULE-K1-0431 X:BF-K1-0031#c | S: HTTP optimistic concurrency M: P MUST, X no modality E: none in either T: when in the contract
+RD OVERLAP R:RULE-K1-0021 P:RULE-K1-0431 | P: standard conditional semantics including 428; no custom codes.
+RD OVERLAP R:RULE-K1-0017 P:RULE-K1-0432 | P: Application outcomes without IActionResult/ProblemDetails; controller maps.
+RD OVERLAP R:RULE-K1-0022 P:RULE-K1-0433 | P adds that clients never rely on human-readable messages.
+# r319-r328 .claude/skills/httpclient-factory/SKILL.md and references/resilience.md
+RD OVERLAP R:RULE-K1-0050 P:RULE-K1-0443 | P: Application abstraction implemented in Infrastructure with HttpClient.
+RD OVERLAP R:RULE-K1-0048 P:RULE-K1-0444 | P qualifies typed-client capture by understanding the lifetime implications.
+SPLIT X:BF-K1-0035 | a@35-35: Typed-client singleton capture is qualified by understanding the implications. | b@46-46: Handlers are restricted to HTTP concerns rather than business decisions.
+SD P:RULE-K1-0444 X:BF-K1-0035#a | S: typed clients M: P MUST_NOT, X no modality E: understood lifetime implications (both) T: none
+AC P:RULE-K1-0081 P:RULE-K1-0444 | X BF-K1-0035 reports a possible conflict: the general rule never allows capturing a shorter-lived dependency in a longer-lived one, while the knowledge text allows a singleton to capture a typed client after the implications are understood.
+SD P:EXTRA-K1-0193 R:RULE-K1-0252#b X:BF-K1-0035#b | S: DelegatingHandlers M: MUST_NOT (P, R), X no modality E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+RD OVERLAP R:RULE-K1-0080 P:RULE-K1-0445 | P: CancellationToken.None only for work that must outlive the request.
+RD OVERLAP R:RULE-K1-0084 P:RULE-K1-0446 | P: per-attempt vs total timeouts.
+SPLIT X:BF-K1-0036 | a@62-62: CancellationToken.None is limited to intentional request-outliving work. | b@66-66: Meaningful remote statuses are translated. | c@81-81: Even PUT/DELETE require an operational retry-safety assessment.
+SD P:RULE-K1-0445 X:BF-K1-0036#a | S: cancellation M: P MUST, X no modality E: intentionally outliving the request (both) T: none
+SD P:EXTRA-K1-0194 X:BF-K1-0036#b | S: remote status mapping M: P DEFAULT, X 'must' E: none in either T: none
+RD COMPOUND_PART P:RULE-K1-0449 X:BF-K1-0036#c | P adds transience, idempotency mechanisms and timeout/retry defaults.
+RD COMPOUND_PART R:RULE-K1-0050 P:RULE-K1-0447 | R adds that HttpResponseMessage must not leak into Application.
+RD OVERLAP R:RULE-K1-0050 P:RULE-K1-0448 | P: richer failures translated; upstream statuses not exposed.
+RD OVERLAP R:RULE-K1-0085 P:RULE-K1-0449 | P: retry-safety analysis; method semantics are not operational safety.
+SPLIT P:EXTRA-K1-0195 | a: Stable headers on the client; per-request values (dynamic tokens) on the request or via a handler, never by mutating shared DefaultRequestHeaders concurrently. | b: Prefer System.Net.Http.Json/System.Text.Json with explicit options when the external contract differs.
+SD P:EXTRA-K1-0195#a R:EXTRA-K1-0042 | S: outbound headers M: P MUST (with 'never'), R MUST NOT; both mandatory (F7) E: stable headers on the client (both) T: none
+RD OVERLAP R:RULE-K1-0033 P:RULE-K1-0450 | P: Domain entities never reused as remote API contracts.
+SPLIT X:BF-K1-0037 | a@85-85: Dynamic headers must not mutate shared defaults concurrently. | b@85-85: Built-in JSON APIs are preferred. | c@85-85: Domain entities are never remote contracts. | d@95-95: Direct HttpClient construction in tests is expressly allowed.
+SD P:EXTRA-K1-0195#a X:BF-K1-0037#a | S: outbound headers M: P MUST, X 'must not' E: none in either T: none
+SD P:EXTRA-K1-0195#b X:BF-K1-0037#b | S: JSON APIs M: P record-level MUST ('prefer' wording), X 'preferred' E: external contract differs (P) T: none
+SD P:RULE-K1-0450 X:BF-K1-0037#c | S: remote contracts M: P MUST_NOT, X 'never' E: none in either T: none
+RD OVERLAP R:RULE-K1-0083 X:BF-K1-0037#d | X: the source allows constructing HttpClient directly in focused tests (L95); R states the production lifetime rule.
+SPLIT R:RULE-K1-0262 | a: Resilience mechanisms are added only when failure and operation semantics justify them (standard handler not mandatory for every client). | b: No stacked handlers with overlapping strategies. | c: Configure them through the Microsoft.Extensions resilience APIs.
+SPLIT P:EXTRA-K1-0185 | a: Resilience mechanisms are added only when failure and operation semantics justify them. | b: Their behaviour is observed when it matters operationally.
+RD DIFFERENT_STRENGTH R:RULE-K1-0262#a P:EXTRA-K1-0185#a | same statement; R DEFAULT, P MUST.
+RD DIFFERENT_STRENGTH R:RULE-K1-0262#b P:RULE-K1-0435 | same statement; R DEFAULT, P MUST_NOT.
+SD P:RULE-K1-0436 R:RULE-K1-0262#c | S: resilience configuration M: DEFAULT both E: none in either T: none
+RD OVERLAP R:RULE-K1-0262#a P:EXTRA-K1-0186 | P: the standard handler fits when its behaviour matches; reviewed for state-changing requests.
+RD OVERLAP R:RULE-K1-0262#c P:RULE-K1-0434 | P: Microsoft resilience integration by default; direct Polly only as a documented exception.
+RD OVERLAP P:EXTRA-K1-0185#b P:EXTRA-K1-0191 | P0191: observation with the adopted telemetry stack; OpenTelemetry not required.
+SPLIT X:BF-K1-0032 | a@14-14: Overlapping resilience handlers are forbidden. | b@18-18: Attempt and total timeouts are differentiated. | c@22-22: Retry is restricted to plausibly transient categories. | d@22-22: Invented unsupported idempotency keys are disallowed.
+RD OVERLAP X:BF-K1-0032#a P:RULE-K1-0435 | P MUST_NOT and R DEFAULT differ; no single merge target (convention).
+RD OVERLAP X:BF-K1-0032#a R:RULE-K1-0262#b | no single merge target (convention).
+SD P:RULE-K1-0437 X:BF-K1-0032#b | S: resilience timeouts M: P MUST, X no modality E: none in either T: none
+RD COMPOUND_PART P:RULE-K1-0438 X:BF-K1-0032#c | P adds the non-retryable categories and duplicate analysis.
+RD COMPOUND_PART P:RULE-K1-0438 X:BF-K1-0032#d | P adds the transient-only retry restriction.
+RD OVERLAP R:RULE-K1-0084 P:RULE-K1-0437 | P: attempt vs total timeout.
+RD OVERLAP R:RULE-K1-0084 P:RULE-K1-0435 | R: no overlapping timeout mechanisms; P: no stacked overlapping handlers.
+RD OVERLAP R:RULE-K1-0085 P:RULE-K1-0438 | P: retry only plausibly transient failures; supported idempotency mechanisms.
+RD DIFFERENT_STRENGTH R:RULE-K1-0086 P:RULE-K1-0439 | same Retry-After statement; R DEFAULT, P PREFER.
+SPLIT X:BF-K1-0033 | a@30-30: Circuit breakers require a repeated-failure pattern. | b@38-38: Hedging is for duplicate-safe operations only. | c@42-42: Database retries use provider mechanisms. | d@46-46: Publication retries need business-appropriate deduplication without exactly-once claims.
+SD P:EXTRA-K1-0187 X:BF-K1-0033#a | S: circuit breakers M: P DEFAULT, X 'require' E: none in either T: none
+SD P:RULE-K1-0441 X:BF-K1-0033#b | S: hedging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0188 X:BF-K1-0033#c | S: database retries M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-K1-0189 X:BF-K1-0033#d | S: publication retries M: P MUST, X 'require' E: business requirement (both) T: none
+RD EXAMPLE_GENERAL R:RULE-K1-0087 P:RULE-K1-0440 | P: valid and invalid fallback examples.
+RD OVERLAP R:RULE-K1-0085 P:RULE-K1-0441 | P: hedging only for operations safe to execute multiple times.
+SPLIT X:BF-K1-0034 | a@50-50: Inbound 429 guidance applies. | b@54-54: Operational resilience telemetry is expected, while OpenTelemetry is explicitly not required. | c@66-66: Measurement precedes hedging.
+SD P:EXTRA-K1-0190 X:BF-K1-0034#a | S: inbound rate limiting M: P DEFINITION, X no modality E: when a useful delay is known (both) T: none
+SD P:EXTRA-K1-0191 X:BF-K1-0034#b | S: resilience telemetry M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP X:BF-K1-0034#c P:RULE-K1-0441 | P: hedging limits; source table L66 says 'Consider hedging after measurement'.
+RD OVERLAP R:RULE-K1-0080 P:RULE-K1-0442 | P: caller cancellation propagated through resilience pipelines.
+# r329-r330 .claude/skills/logging/SKILL.md
+RD OVERLAP R:RULE-K1-0058 P:RULE-K1-0458 | P: stable property names keep logs queryable.
+SPLIT X:BF-K1-0041 | a@26-32: Log levels have operational meanings. | b@47-47: Existing trace IDs are preferred and new correlation IDs limited to needs. | c@47-47: External correlation IDs are normalized/validated. | d@47-47: Tracing context is propagated outbound.
+SD P:EXTRA-K1-0201 X:BF-K1-0041#a | S: log levels M: P DEFINITION, X no modality E: none in either T: none
+SD P:EXTRA-K1-0202 X:BF-K1-0041#b | S: correlation identifiers M: P PREFER, X 'prefers' E: integration or operational requirement (both) T: none
+SD P:RULE-K1-0460 X:BF-K1-0041#c | S: external correlation identifiers M: P MUST, X 'requires' E: none in either T: none
+RD COMPOUND_PART P:EXTRA-K1-0202 X:BF-K1-0041#d | P adds preferring platform trace identifiers.
+RD OVERLAP R:RULE-K1-0025 P:RULE-K1-0459 | P: no duplicate log when rethrowing without meaningful handling.
+RD EXAMPLE_GENERAL R:RULE-K1-0116 P:RULE-K1-0460 | P: a correlation identifier from an external client.
+REVIEWED r291-r330

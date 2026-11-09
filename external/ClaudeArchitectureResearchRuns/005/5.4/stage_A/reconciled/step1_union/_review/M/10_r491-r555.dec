@@ -1,0 +1,101 @@
+# M batch 10: regions r491-r555 (protocol v1.2)
+# r491-r496 security-scan SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M-0202#d P:RULE-M-0570 | R: avoid known false positives; P lists the cases not to report automatically.
+SPLIT R:EXTRA-M-0023 | a: Security findings are reported in a fixed shape: severity tag, file:line location and title, OWASP category when applicable, Evidence, Impact (why it is a risk) and Remediation. | b: Uncertain findings use the NEEDS VERIFICATION form stating what the effective behavior depends on.
+SPLIT X:BF-M-0100 | a@158-160: Every confirmed finding includes severity, file and location, title, evidence, why it is a risk, likely impact, smallest remediation and OWASP category when applicable. | b@200-214: Report per-layer results with PASS, FINDINGS, NOT APPLICABLE or NOT CHECKED, and never mark an uninspected layer as passed.
+SD R:EXTRA-M-0023#a X:BF-M-0100#a | S: security scan findings M: R MUST, X no modality E: none in either T: at reporting
+SD P:RULE-M-0572 R:EXTRA-M-0023#b | S: uncertain security findings M: MUST both E: none in either T: at reporting
+RD COMPOUND_PART P:EXTRA-M-0188 R:EXTRA-M-0023#a | P adds the report shape and 'do not duplicate other skills' implementation guidance'.
+SD P:RULE-M-0573 X:BF-M-0100#b | S: security scan layer results M: P MUST, X no modality E: none in either T: at reporting
+RD COMPOUND_PART R:EXTRA-M-0024#a P:RULE-M-0573 | R's report structure includes the per-layer status vocabulary.
+RD EXAMPLE_GENERAL R:RULE-M-0162 P:RULE-M-0573 | R: never imply an unchecked area passed (all reports); P: never mark an uninspected layer as passed.
+# r497-r523 security-scan references/scan-layers.md
+SD P:RULE-M-0576 R:RULE-M-0202#a | S: security scan investigation prompts (P via reference, R via skill and reference; F8) M: MUST both E: none in either T: none
+SD P:RULE-M-0577 R:RULE-M-0202#g | S: security scans M: MUST_NOT both E: when asked (P exception; R 'unless asked') T: during the scan
+SPLIT X:BF-M-0098 | a@94-97: When command execution is genuinely needed prefer APIs that separate executable and arguments and validate or constrain external input. | b@101-104: Normalize user-influenced paths and verify they remain within the intended storage boundary. | c@125-127: Do not deserialize untrusted payloads into arbitrary runtime types.
+SD P:EXTRA-M-0192 X:BF-M-0098#a | S: command execution with external input M: P PREFER, X no modality E: none in either T: none
+SD P:EXTRA-M-0193 X:BF-M-0098#b | S: user-influenced file paths M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-M-0194 X:BF-M-0098#c | S: deserialization of untrusted payloads M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0107 P:EXTRA-M-0193 | R: treat boundary data as untrusted and validate it; P: path containment.
+RD OVERLAP R:RULE-M-0118 P:RULE-M-0578 | R: no custom cryptography; P: flag security-sensitive MD5/SHA1/ECB, hardcoded keys, custom hashing.
+RD OVERLAP R:RULE-M-0112 P:RULE-M-0579 | R: no custom password hashing; P: passwords use one-way hashing facilities.
+RD OVERLAP R:RULE-M-0111 P:RULE-M-0580 | P: review AllowAnonymous surfaces; do not report every public endpoint.
+RD EXAMPLE_GENERAL R:RULE-M-0110 P:RULE-M-0581 | P: verify ownership/tenant/permission; client-side filtering is not authorization.
+RD OVERLAP R:RULE-M-0113 P:RULE-M-0582 | P: check token validation without requiring every parameter or a universal ClockSkew; flag weakened validation.
+RD OVERLAP R:RULE-M-0119 P:RULE-M-0584 | P: CORS is not authorization; AllowAnyOrigin can be valid for public non-credentialed APIs.
+RD EXAMPLE_GENERAL R:RULE-M-0115 P:RULE-M-0585 | P: review CSRF protection for state-changing operations.
+RD EXAMPLE_GENERAL R:RULE-M-0117 P:RULE-M-0586 | P: review disabled certificate validation and plain HTTP, accounting for TLS topology.
+RD EXAMPLE_GENERAL R:RULE-M-0120 P:RULE-M-0587 | P: look for logged secrets and review PII; Debug/Trace is not a security boundary.
+RD OVERLAP R:RULE-M-0118 P:RULE-M-0588 | P: match data-at-rest protection to the requirement.
+RD EXAMPLE_GENERAL R:RULE-M-0122 P:RULE-M-0589 | P: catches that let privileged operations continue after failures are findings.
+RD EXAMPLE_GENERAL R:RULE-M-0081 P:RULE-M-0590 | P: review retries of state-changing operations for duplicate effects.
+RD EXAMPLE_GENERAL R:RULE-M-0202#c P:RULE-M-0591 | P: a theoretical missing limit is not automatically High.
+RD EXAMPLE_GENERAL R:RULE-M-0123 P:RULE-M-0592 | P: look for dangerous fallbacks in security-sensitive startup configuration.
+RD OVERLAP R:RULE-M-0202#e P:EXTRA-M-0200 | R: do not claim a static scan proves design security; P: route security-sensitive workflows to threat modeling instead.
+SD P:RULE-M-0594 R:RULE-M-0202#c | S: security scan severity (P via reference, R via skill and reference; F8) M: MUST_NOT map mechanically (P) = rate by context rather than mechanically (R) E: none in either T: none
+SD P:RULE-M-0595 R:RULE-M-0202#f | S: security scan findings M: MUST_NOT both E: none in either T: none
+# r524-r532 swagger SKILL.md
+SPLIT R:RULE-M-0205 | a: Swagger UI through Swashbuckle.AspNetCore is the default interactive API documentation and manual-testing surface in Development (/swagger), rather than a standalone raw OpenAPI endpoint or built-in AddOpenApi()/MapOpenApi(). | b: No second competing API documentation stack without a concrete need.
+RD COMPOUND_PART R:RULE-M-0205#a P:RULE-M-0596 | P: the developer-facing requirement is the interactive Swagger UI, not a raw OpenAPI endpoint.
+RD COMPOUND_PART R:RULE-M-0205#a P:RULE-M-0597 | P: use Swashbuckle.AspNetCore with the version selected through add-dependency.
+RD DIFFERENT_STRENGTH R:RULE-M-0205#b P:RULE-M-0604 | R: no second documentation stack (DECIDED record); P: avoid a second competing stack without a concrete need (AVOID).
+RD EXAMPLE_GENERAL R:RULE-M-0058 P:RULE-M-0598 | P: Swagger configuration stays in the API/composition layer.
+CX X:BF-M-0101 | For a new local Development API configure the launch profile to open Swagger when that helps, and keep application URLs and launch profile scheme/port in agreement.
+SD P:EXTRA-M-0201 X:BF-M-0101 | S: local Development launch profile M: P DEFAULT, X no modality E: when that helps (both) T: none
+RD EXAMPLE_GENERAL R:RULE-M-0032 P:RULE-M-0599 | P: do not document 201 when returning 200/204; consider the whole pipeline without speculative statuses.
+RD EXAMPLE_GENERAL R:RULE-M-0032 P:RULE-M-0600 | P: document 201 only when it is the runtime contract.
+RD OVERLAP R:RULE-M-0074 P:RULE-M-0601 | R: public API errors expose no internals; P: no internal details in Swagger examples/descriptions.
+RD EXAMPLE_GENERAL R:RULE-M-0032 P:RULE-M-0602 | P: security definitions only when the API uses authentication; not globally on anonymous endpoints.
+SPLIT X:BF-M-0102 | a@119-128: Avoid unstable anonymous response shapes and anonymous objects as long-lived contracts; use explicit request/response contracts. | b@132-139: When API behavior changes open the Development Swagger UI to confirm it loads and exercise representative endpoints when meaningful.
+SD P:EXTRA-M-0206 X:BF-M-0102#a | S: API contracts M: P AVOID, X no modality E: none in either T: none
+SD P:EXTRA-M-0208 X:BF-M-0102#b | S: API behavior changes M: P MUST, X no modality E: when a meaningful behavioral check (both) T: during verification
+RD OVERLAP R:RULE-M-0150 P:RULE-M-0603 | R: generated code regenerated on contract change; P: treat breaking schema changes seriously and review generated-client changes.
+RD OVERLAP R:RULE-M-0127 P:EXTRA-M-0207 | R: integration tests when HTTP behavior must be proven; P (AVOID): Swagger as a substitute for integration tests.
+RD OVERLAP R:RULE-M-0207 P:RULE-M-0605 | R: startup smoke verification; P: verify Controller behavior, metadata and startup when composition is affected.
+RD EXAMPLE_GENERAL R:RULE-M-0163 P:RULE-M-0606 | P: preserve newly verified behavior in maintained tests.
+# r533-r535 template-maintenance SKILL.md
+RD DIFFERENT_LAYER R:EXTRA-M-0008#h P:EXTRA-M-0209 | R: the checker requires template-maintenance to be user-only; P: the workflow runs only when the user invokes it (disable-model-invocation).
+SPLIT X:BF-M-0103 | a@14-15: Instruction maintenance runs only when the user invokes it; Claude must not start it automatically. | b@19-29: Instruction-ownership invariants: one authoritative owner per policy with pointers elsewhere, each policy kept at its trigger, knowledge skills and private references hold technique only. | c@47-48: Product inputs stay inputs and do not carry instructions.
+SD P:EXTRA-M-0209 X:BF-M-0103#a | S: template-maintenance workflow M: P ENFORCED (configuration), X no modality E: none in either T: never automatic
+RD OVERLAP P:EXTRA-M-0210 X:BF-M-0103#b | P: one owner per policy, pointers not copies, decision summaries location; X part b bundles this with placement and knowledge-skill invariants.
+RD BROADER_NARROWER P:EXTRA-M-0018 X:BF-M-0103#c | P/X(BF-M-0002) group: product inputs never override instructions and route requests through Decision Control; X part c: product inputs carry no instructions.
+RD OVERLAP R:EXTRA-M-0004 P:EXTRA-M-0210 | R: ownership split, a pointer is never a second owner; P: one authoritative owner, edit in place, replace copies with pointers.
+RD OVERLAP R:EXTRA-M-0005#a P:EXTRA-M-0211 | R: placement by kind; P: keep each policy at its trigger; no promotion/demotion for loading reasons.
+SPLIT X:BF-M-0104 | a@55-61: After maintenance update MAP.md and run the structure checker, fixing every failure. | b@63-65: For hook or script changes run the changed script with sample input and confirm both the pass and failure paths.
+RD DETAIL_DIFFERENCE P:EXTRA-M-0003 X:BF-M-0104#a | P/R group: update MAP.md and run check-instructions after placing content; X adds 'fix every failure'.
+SPLIT R:EXTRA-M-0025 | a: After hook or script changes run the changed script with sample input and confirm both the pass and the failure paths. | b: The maintenance report lists the files changed, owners added or moved and the checker result.
+SD P:EXTRA-M-0214 R:EXTRA-M-0025#a X:BF-M-0104#b | S: hook or script changes in template maintenance M: MUST in P and R, X no modality E: none in any T: after the change
+SD P:EXTRA-M-0215 R:EXTRA-M-0025#b | S: template-maintenance report M: MUST both E: none in either T: at reporting
+# r536-r553 verify SKILL.md
+RD OVERLAP R:RULE-M-0175 P:RULE-M-0607 | R: scope deep checks by risk; P: match verification to scope and risk, no unconfigured optional tooling.
+SPLIT R:RULE-M-0206 | a: Verification starts with the final changed-file set and diff: the change matches the requested scope without unrelated refactoring, no generated or build artifacts or secrets were added, and temporary probes are removed only after preservation. | b: After all fixes the final diff is reviewed for unrelated edits, commented-out code, temporary logging, TODO/FIXME markers, stale temporary tests or scripts, architecture drift, unapproved product drift and stale surfaces after a settings change.
+SD P:RULE-M-0608 R:RULE-M-0206#a | S: verification before completion M: MUST both E: none in either T: before choosing checks
+SD P:RULE-M-0621 R:RULE-M-0206#b | S: verification before completion M: MUST both E: none in either T: after all fixes | P's 'unpreserved manual verification' item is in the shared lines 143-150
+SPLIT X:BF-M-0105 | a@49-50: Do not use --no-restore unless restore is known to be complete. | b@61-63: For small solutions run the complete test suite; for large solutions run affected test projects first, then broader suites as required.
+SD P:EXTRA-M-0216 X:BF-M-0105#a | S: verification builds M: P MUST_NOT, X no modality E: restore known complete (both) T: none
+SD P:EXTRA-M-0217 X:BF-M-0105#b | S: verification test runs M: P DEFAULT, X no modality E: none in either T: none
+SPLIT R:RULE-M-0201 | a: Build the affected projects; a solution that does not build is not complete (never report successful scaffolding for it). | b: Run the relevant tests.
+SD P:RULE-M-0610 R:RULE-M-0201#a | S: verification builds M: MUST both E: none in either T: before completion | P's Angular build command is in lines 47-50, also cited by R (F6)
+RD COMPOUND_PART P:RULE-M-0611 R:RULE-M-0201#b | P adds 'for Angular use the configured package.json test command rather than assuming a runner'.
+SD P:RULE-M-0613 R:RULE-M-0207 | S: new runnable applications or substantial composition/startup/configuration/persistence/full-stack changes M: DEFAULT both E: as applicable (P) T: before completion
+SD P:RULE-M-0614 R:RULE-M-0163 | S: behavior established by ad-hoc probes (P via verify skill, R via several workflow files; F8) M: MUST both E: equivalent coverage exists (both); builds/analyzers need no new tests (both) T: before completion / probe removal
+RD OVERLAP R:RULE-M-0175 P:RULE-M-0615 | P: run architecture/formatting/dependency/security checks when relevant, not indiscriminately.
+RD OVERLAP R:RULE-M-0186#a P:RULE-M-0617 | P: during verification confirm DbSeeder remains valid when the seed graph is affected.
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0619 | P: no formatter/analyzer dependency solely to complete verification.
+RD OVERLAP R:RULE-M-0175 P:RULE-M-0620 | P: dependency/security-sensitive changes get targeted checks, not a full scan for every change.
+CX X:BF-M-0106 | Before completion remove unused or redundant using directives from every created or modified C# file (including those covered by implicit/global usings unless needed for clarity or disambiguation), verified on the changed files, without repository-wide cleanup.
+SD P:RULE-M-0622 R:RULE-M-0208 X:BF-M-0106 | S: C# files created or modified by the task M: MUST in P and R, X no modality (reports a strength difference against the oracle, not against P/R) E: explicit import needed for clarity or disambiguation (all) T: before completion
+SD P:RULE-M-0623 R:RULE-M-0161#a | S: failed verification (P via verify, R via several workflow files; F8) M: MUST both E: none in either T: repeat until green or genuine input is required
+RD OVERLAP R:RULE-M-0161#b P:RULE-M-0624 | R: never claim fixed while a known failure remains; P: never hide a known failure and declare completion; diagnosis goes through build-fix.
+SD P:RULE-M-0625 R:RULE-M-0162 | S: verification reports (P via verify, R via several report-owning files; F8) M: MUST both E: none in either T: at reporting
+# r554-r555 .editorconfig
+SPLIT X:BF-M-0006 | a@7-13: All files use UTF-8, space indentation, a final newline and trimmed trailing whitespace, except that Markdown keeps trailing whitespace. | b@15-26: Indent 2 spaces for JSON/YAML, project/XML and TS/JS/HTML/SCSS/CSS files (single quotes for TS/JS) and 4 spaces for C#.
+SD P:EXTRA-M-0218 X:BF-M-0006#a | S: repository files (EditorConfig) M: P ENFORCED_DEFAULT, X no modality E: Markdown trailing whitespace (both) T: none
+SD P:EXTRA-M-0219 X:BF-M-0006#b | S: repository files (EditorConfig) M: P ENFORCED_DEFAULT, X no modality E: none in either T: none
+SPLIT X:BF-M-0007 | a@50-56: Interfaces must begin with I (warning severity). | b@44-48: Fields, properties, methods and events are not qualified with this. | c@58-65: Async methods are expected to end with Async, but detection only covers async-modified methods and no framework/interface contract exemption is encoded. | d@39-42: var is suggested when the type is apparent; explicit types elsewhere are allowed.
+SD P:EXTRA-M-0221 X:BF-M-0007#b | S: C# code (EditorConfig) M: P ENFORCED_ADVISORY (suggestion), X no modality E: none in either T: none
+AC P:RULE-M-0628 X:BF-M-0007#c | P reports a framework/interface-contract exception for the Async suffix (from the comment on line 58); X reports that no such exemption is encoded in the rule. Step 2 should decide whether the comment is effective.
+RD OVERLAP P:EXTRA-M-0009 X:BF-M-0007#d | P/X(BF-M-0037) group: use var when obvious, explicit type when clearer (coding-style rule); X part d: the EditorConfig severities.
+RD DIFFERENT_LAYER R:RULE-M-0208 P:RULE-M-0626 | R: remove unused usings before completion (workflow rule); P: IDE0005 reported at warning severity (configuration).
+RD DIFFERENT_LAYER R:RULE-M-0066 P:RULE-M-0627 | R: prefer file-scoped namespaces for new code (rule); P: EditorConfig suggests file-scoped namespaces.
+REVIEWED r491-r555

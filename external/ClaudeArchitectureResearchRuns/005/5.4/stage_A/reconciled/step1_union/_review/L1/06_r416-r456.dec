@@ -1,0 +1,109 @@
+# L1 batch 6: regions r416-r456 (protocol v1.2.1)
+# r416-r425 git-workflow/SKILL.md
+SPLIT R:RULE-L1-0207 | a: Never discard, overwrite, reset, clean, stash away or otherwise destroy user work to make a Git operation easier. | b: Never remove a worktree holding uncommitted user work. | c: Never stash, reset or discard automatically to let a merge or rebase proceed.
+SD P:RULE-L1-0444 R:RULE-L1-0207#a | S: Git operations M: MUST_NOT both E: none in either T: none
+RD COMPOUND_PART P:RULE-L1-0449 R:RULE-L1-0207#b | P adds confirming the worktree's changes are preserved before removal.
+RD COMPOUND_PART P:RULE-L1-0450 R:RULE-L1-0207#c | P adds inspecting uncommitted work first; P says 'an operation', R 'a merge or rebase' (same source sentence about merge/rebase).
+SPLIT R:RULE-L1-0208 | a: Before any repository-changing operation inspect the relevant state (status, diffs, current branch, upstream) and use the minimum operation that achieves the request; never silently clean unrelated working-tree changes. | b: Before a high-risk operation inspect what it would lose or rewrite.
+SD P:RULE-L1-0445 R:RULE-L1-0208#a | S: repository-changing Git operations M: MUST both E: none in either T: before the operation
+SD P:RULE-L1-0446 R:RULE-L1-0208#b | S: high-risk Git operations M: MUST both E: none in either T: before the operation
+RD OVERLAP R:RULE-L1-0208#a P:EXTRA-L1-0143 | P: before pushing (branch, state, verification, no unrelated commits).
+RD OVERLAP R:RULE-L1-0208#a P:EXTRA-L1-0144 | P: merge vs rebase convention and conflict resolution.
+SD P:EXTRA-L1-0139 R:EXTRA-L1-0027 | S: protected/shared branches M: MUST_NOT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:UNCERTAIN-L1-0002 P:UNCERTAIN-L1-0002 | same sentence; R reports a conditional restriction (MUST NOT except ...), P a permission (ALLOWED).
+RD OVERLAP R:UNCERTAIN-L1-0002 P:RULE-L1-0446 | both require inspecting what will be lost or rewritten.
+RD OVERLAP R:RULE-L1-0205 P:UNCERTAIN-L1-0002 | R: explicit request only; P adds 'or required by an approved workflow' for high-risk operations.
+SPLIT X:BF-L1-0118 | a@14-14: Never stashing away user work is stated categorically (reported as restricting even an explicitly requested, recoverable stash). | b@16-16: Protected/shared branches are treated as non-rewritable, stated alongside the explicit-request/approved-workflow allowance for rebasing shared history and force pushes (reported tension).
+RD OVERLAP X:BF-L1-0118#a P:RULE-L1-0444 | X reads the stash clause as categorical.
+RD OVERLAP X:BF-L1-0118#b P:EXTRA-L1-0139 | X reads the non-rewritable clause as categorical.
+AC P:EXTRA-L1-0139 P:UNCERTAIN-L1-0002 | X BF-L1-0118 reports a possible conflict: protected/shared branches are non-rewritable, while rebasing shared history and force pushes may run on explicit request or an approved workflow.
+AC P:RULE-L1-0444 R:RULE-L1-0205 | X BF-L1-0118 reports that never stashing away user work is categorical even when the user explicitly asks for a recoverable stash.
+SPLIT R:RULE-L1-0209 | a: Before committing inspect the staged diff and include only the requested logical change; never stage unrelated modified files. | b: One logical change per commit with implementation and its tests together; no unrelated fixes bundled. | c: Avoid pushing unrelated local commits.
+SD P:RULE-L1-0447 R:RULE-L1-0209#a | S: commits M: MUST both E: none in either T: before committing
+RD DIFFERENT_STRENGTH R:RULE-L1-0209#b P:EXTRA-L1-0140 | same commit-grouping guidance; R reports MUST (record level), P PREFER; P adds no artificial micro-commits.
+RD COMPOUND_PART P:EXTRA-L1-0143 R:RULE-L1-0209#c | P adds confirming branch and state and completed verification before pushing.
+SPLIT X:BF-L1-0119 | a@21-21: Prefer one logical change per commit; implementation and its protecting tests normally together; no artificial micro-commits; no unrelated fixes bundled. | b@22-22: Follow the repository's commit-message convention; otherwise Conventional Commits are a useful default.
+RD OVERLAP X:BF-L1-0119#a P:EXTRA-L1-0140 | same sentence; P PREFER and R MUST differ, no single merge target (convention).
+RD OVERLAP X:BF-L1-0119#a R:RULE-L1-0209#b | same sentence; P PREFER and R MUST differ, no single merge target (convention).
+RD COMPOUND_PART P:EXTRA-L1-0141 X:BF-L1-0119#b | P adds using the commit body for motivation, constraints and migration notes.
+RD OVERLAP R:RULE-L1-0205 P:EXTRA-L1-0142 | both: no renaming of user branches without a request.
+RD DETAIL_DIFFERENCE R:RULE-L1-0206 P:RULE-L1-0448 | R adds separate branches/worktrees for parallel work and keeping unrelated changes out of the current branch; P adds focused worktrees.
+RD OVERLAP R:RULE-L1-0174 P:EXTRA-L1-0144 | P: resolve conflicts by intended combined behaviour, then verify.
+SD P:EXTRA-L1-0145 R:EXTRA-L1-0028 | S: pull requests M: MUST both E: none in either T: none
+CX X:BF-L1-0120@38-38 | Run verify before preparing a PR (reported as required even when valid checks already completed or when only drafting a description).
+SD P:RULE-L1-0451 X:BF-L1-0120 | S: PR preparation M: P MUST, X no modality E: none in either T: before preparing a PR
+RD COMPOUND_PART R:RULE-L1-0204 P:RULE-L1-0451 | R adds verify before declaring implementation complete.
+RD EXAMPLE_GENERAL R:RULE-L1-0187 P:RULE-L1-0452 | P: never claim checks that were not run.
+# r426-r432 health-check/SKILL.md
+RD BROADER_NARROWER R:RULE-L1-0091 P:RULE-L1-0453 | P: the liveness endpoint runs no dependency checks at all; R: liveness avoids external dependencies whose outage could cause restart loops.
+CX X:BF-L1-0121@41-41 | Keep readiness unhealthy until required asynchronous startup work completes; liveness never represents that startup state.
+RD COMPOUND_PART P:RULE-L1-0454 X:BF-L1-0121 | P adds including only dependencies required for meaningful readiness.
+RD OVERLAP R:RULE-L1-0091 P:RULE-L1-0454 | P: readiness reflects required startup completion and only required dependencies.
+RD EXAMPLE_GENERAL R:RULE-L1-0090 P:RULE-L1-0455 | P: a database check is a lightweight connectivity check.
+RD OVERLAP R:RULE-L1-0091 P:RULE-L1-0456 | P (AVOID): external services only when they define readiness; no readiness cascades.
+RD OVERLAP R:RULE-L1-0092 P:RULE-L1-0457 | P: small probe responses; detailed diagnostics behind network or authorization controls.
+RD EXAMPLE_GENERAL R:RULE-L1-0090 P:RULE-L1-0458 | P (AVOID): long external timeouts and large allocations in probes.
+RD OVERLAP R:RULE-L1-0090 P:RULE-L1-0459 | P (AVOID): health-check anti-patterns incl. writes, business transactions and expensive queries.
+RD OVERLAP R:RULE-L1-0091 P:RULE-L1-0459 | P (AVOID): every dependency on liveness.
+RD OVERLAP R:RULE-L1-0092 P:RULE-L1-0459 | P (AVOID): secrets/stack traces in probe payloads.
+# r433-r442 http-api/SKILL.md
+RD OVERLAP R:RULE-L1-0078 P:EXTRA-L1-0154 | P: consistent status behaviour across similar endpoints.
+RD EXAMPLE_GENERAL R:RULE-L1-0078 P:RULE-L1-0460 | P: when 200 applies.
+RD OVERLAP R:RULE-L1-0078 P:RULE-L1-0462 | P: 201 when the HTTP operation created a new API resource.
+RD OVERLAP R:RULE-L1-0078 P:RULE-L1-0463 | P: 202 when processing is accepted but incomplete.
+RD OVERLAP R:RULE-L1-0078 P:RULE-L1-0464 | P: 204 for success with no body.
+RD DETAIL_DIFFERENCE R:RULE-L1-0079 P:RULE-L1-0461 | same empty-collection 200 default; R contrasts it with 404, P with 204.
+SPLIT X:BF-L1-0122 | a@15-15: For 201 Created include Location when a stable URI exists. | b@21-21: For 202 Accepted return an operation id or a Location where progress is observable. | c@22-22: Choose one convention for repeated DELETE of an absent resource (204 or 404) and apply it consistently across equivalent resources.
+SD P:EXTRA-L1-0155 X:BF-L1-0122#a | S: 201 responses M: P DEFAULT, X no modality E: stable URI exists (both) T: none
+SD P:EXTRA-L1-0156 X:BF-L1-0122#b | S: 202 responses M: P DEFAULT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL P:EXTRA-L1-0154 X:BF-L1-0122#c | X: the repeated-DELETE convention.
+RD OVERLAP R:RULE-L1-0080 P:RULE-L1-0465 | P: 400 for invalid requests; never for authentication failure.
+RD COMPOUND_PART R:RULE-L1-0080 P:RULE-L1-0466 | P: the 401/403 element.
+RD OVERLAP R:RULE-L1-0080 P:RULE-L1-0467 | both: 404 may deliberately hide resources (R requires a deliberate, consistent security policy).
+SPLIT X:BF-L1-0123 | a@30-30: 406 when no acceptable representation can be produced; 415 for unsupported request media types. | b@33-33: 422 for structurally valid requests with invalid semantics or business input. | c@34-34: 428 when the contract requires a precondition the client omitted (missing If-Match gives 428; stale If-Match gives 412). | d@35-35: 429 for rate-limited requests, with Retry-After when known; never for validation failures.
+SD P:EXTRA-L1-0158 X:BF-L1-0123#a | S: HTTP 406/415 M: P MUST, X no modality E: none in either T: none
+RD COMPOUND_PART P:EXTRA-L1-0159 X:BF-L1-0123#b | P adds following an established 400-for-both convention and the 400/422 split for new APIs.
+SD P:EXTRA-L1-0160 X:BF-L1-0123#c | S: HTTP 428 M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-L1-0161 X:BF-L1-0123#d | S: HTTP 429 M: P MUST, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L1-0081 P:RULE-L1-0468 | P: 409 cases; not for malformed syntax.
+RD COMPOUND_PART R:RULE-L1-0081 P:RULE-L1-0469 | P: the 412 element.
+RD OVERLAP R:RULE-L1-0082 P:RULE-L1-0470 | P: 500 via centralized handling.
+RD OVERLAP R:RULE-L1-0077 P:RULE-L1-0470 | P: ProblemDetails for 500.
+RD OVERLAP R:RULE-L1-0086 P:RULE-L1-0471 | P: distinguish client cancellation from own and upstream timeouts.
+CX X:BF-L1-0124@48-48 | For HTTP-level optimistic concurrency use standard conditional requests (ETag on GET; If-Match on PUT/PATCH; changed gives 412) rather than custom status codes.
+SD P:RULE-L1-0473 X:BF-L1-0124 | S: HTTP optimistic concurrency M: P MUST, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L1-0081 P:RULE-L1-0473 | P: conditional requests for optimistic concurrency.
+RD OVERLAP R:RULE-L1-0075 P:RULE-L1-0474 | both: never infer behaviour from human-readable messages.
+RD OVERLAP R:RULE-L1-0077 P:RULE-L1-0474 | P: stable machine-readable error codes.
+# r443-r451 httpclient-factory/SKILL.md
+RD OVERLAP R:RULE-L1-0138 P:RULE-L1-0475 | P: the use-case layer owns the outbound abstraction.
+RD EXAMPLE_GENERAL R:RULE-L1-0064 P:RULE-L1-0476 | P: typed clients captured in singletons (P: 'without understanding the lifetime consequences').
+RD EXAMPLE_GENERAL R:RULE-L1-0050 P:RULE-L1-0477 | P: pass the caller's token; CancellationToken.None only when the operation intentionally outlives the request.
+RD OVERLAP R:RULE-L1-0053 P:RULE-L1-0478 | P: timeouts from the latency budget; per-attempt vs total.
+RD COMPOUND_PART R:RULE-L1-0138 P:RULE-L1-0479 | P: the translation element.
+RD EXAMPLE_GENERAL R:RULE-L1-0138 P:EXTRA-L1-0167 | P: no blind EnsureSuccessStatusCode() when statuses carry meaning.
+RD OVERLAP R:RULE-L1-0138 P:EXTRA-L1-0168 | P: do not forward every upstream status; outbound retry and inbound response are separate.
+RD OVERLAP R:RULE-L1-0054 P:RULE-L1-0480 | P: retry decision checklist; PUT/DELETE not automatically safe; POST/PATCH need idempotency.
+RD COMPOUND_PART P:EXTRA-L1-0169 R:EXTRA-L1-0030 | P adds configuring stable headers on the client.
+CX X:BF-L1-0126@80-80 | Prefer System.Net.Http.Json/System.Text.Json with explicit options when the remote contract differs; do not reuse domain entities as remote contracts.
+SD P:EXTRA-L1-0170 X:BF-L1-0126 | S: outbound HTTP serialization M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L1-0138 P:EXTRA-L1-0170 | P: domain entities are not remote contracts.
+RD OVERLAP R:RULE-L1-0052 P:RULE-L1-0482 | P (AVOID): HttpClient anti-patterns incl. per-request clients.
+RD OVERLAP R:RULE-L1-0054 P:RULE-L1-0482 | P (AVOID): unsafe and unbounded retries.
+RD OVERLAP R:RULE-L1-0138 P:RULE-L1-0482 | P (AVOID): leaking HttpResponseMessage.
+RD OVERLAP R:RULE-L1-0050 P:RULE-L1-0482 | P (AVOID): ignored cancellation.
+# r452-r456 httpclient-factory/references/resilience.md
+RD COMPOUND_PART R:RULE-L1-0040 P:RULE-L1-0483 | R adds the manifest hook reporting Polly as requiring approval.
+RD DIFFERENT_LAYER R:EXTRA-L1-0009 P:RULE-L1-0483 | R: manifest hook forbids deprecated Polly integration packages; P: default resilience package guidance.
+RD OVERLAP R:RULE-L1-0054 P:RULE-L1-0484 | P: review standard-handler retries for state-changing requests.
+RD OVERLAP R:RULE-L1-0053 P:RULE-L1-0485 | P (AVOID): no stacked handlers with overlapping strategies.
+RD EXAMPLE_GENERAL R:RULE-L1-0053 P:RULE-L1-0486 | P: attempt and total-operation timeouts.
+SPLIT X:BF-L1-0125 | a@19-19: Retry only plausibly transient failures; never retry validation failures, authentication/authorization failures, permanent 404s or deterministic business rejections. | b@28-28: Do not wrap normal ORM operations in a generic application-level retry pipeline; prefer the provider's own execution strategy; HTTP retry policies are not database policies.
+SD P:EXTRA-L1-0172 X:BF-L1-0125#a | S: retry eligibility M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP X:BF-L1-0125#a P:RULE-L1-0487 | P: retry only transient failures; non-idempotent operations need duplicate prevention.
+SD P:EXTRA-L1-0176 R:EXTRA-L1-0029 X:BF-L1-0125#b | S: database access resilience M: MUST_NOT (P, R), X no modality E: none in either T: none
+RD OVERLAP R:RULE-L1-0054 P:RULE-L1-0487 | P: retry only transient failures; ask what a resend does after a lost response.
+RD COMPOUND_PART R:RULE-L1-0055 P:RULE-L1-0488 | P: the Retry-After element.
+RD EXAMPLE_GENERAL R:RULE-L1-0054 P:RULE-L1-0489 | P: hedging only for operations safe to repeat.
+RD OVERLAP R:RULE-L1-0054 P:EXTRA-L1-0177 | P: publication retries and duplicate delivery.
+REVIEWED r416-r456

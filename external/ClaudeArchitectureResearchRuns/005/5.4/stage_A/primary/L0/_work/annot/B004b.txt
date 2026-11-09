@@ -1,0 +1,220 @@
+# L0 — Level 2 technology rules and Level 3 project rules (path-scoped)
+
+@@ output/template/.claude/rules/2-technology/csharp.md ;; Path rule (backend/**/*.cs).
+@scope path rule: backend/**/*.cs
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 NN ;; Pointers.
+12 NN ;; Heading.
+14 OL [run009.conventions]
+15 OL [run011.no-style-rewrites]
+16 OL [run024.file-naming]
+18 NN ;; Heading.
+20 OL [run002.no-sync-over-async]
+21 OL [run003.cancellation]
+23 NN ;; Heading.
+25 OL [run004.timeprovider]
+27 NN ;; Heading.
+29 OL [run005.httpclient]
+31 NN ;; Heading.
+33 OL [run022.typed-options]
+
+C run009.conventions OL RUN-009 DEFAULT ;; Follow existing conventions and .editorconfig; modern C# when it improves clarity; no mechanical modernization of working code. ;; = ;; none ;;
+C run011.no-style-rewrites OL RUN-011 MUST_NOT ;; No style-only rewrites outside the requested change unless asked; avoid mixing large formatting/modernization with functional work. ;; = ;; none ;;
+C run024.file-naming OL RUN-024 DEFAULT ;; New code: file-scoped namespaces when consistent, one primary top-level type per matching file, Async suffix for Task/ValueTask methods unless a contract makes it inappropriate. ;; = ;; none ;;
+C run002.no-sync-over-async OL RUN-002 MUST_NOT ;; Use async APIs for asynchronous I/O; never block with .Result, .Wait() or similar. ;; = ;; none ;;
+C run003.cancellation OL RUN-003 MUST ;; Propagate CancellationToken when cancellation is meaningful; no cancellation parameters on purely synchronous code without a use case. ;; = ;; none ;;
+C run004.timeprovider OL RUN-004 DEFAULT ;; Use TimeProvider for clock-dependent logic needing deterministic tests; do not mechanically replace explicit/stored timestamps. ;; = ;; none ;;
+C run005.httpclient OL RUN-005 MUST_NOT ;; Never create and dispose an HttpClient per request; use IHttpClientFactory or another long-lived strategy. ;; = ;; none ;;
+C run022.typed-options OL RUN-022 DEFAULT ;; Prefer strongly typed options and validate at startup when invalid values prevent correct/secure operation; avoid scattered string IConfiguration lookups. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/2-technology/aspnet-core.md ;; Path rule (backend code, csproj, appsettings, launchSettings).
+@scope path rule: backend/**/*.cs, *.csproj, appsettings*.json, launchSettings.json
+1-7 IM ;; Frontmatter paths.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Pointers.
+15 NN ;; Heading.
+17 OL [arc010.controllers]
+18 OL [arc008.transport-types]
+20 NN ;; Heading.
+22 OL [api002.problemdetails-types]
+23 OL [api007.iexceptionhandler]
+25 NN ;; Heading.
+27 OL [api017.swagger-env]
+29 NN ;; Heading.
+31 OL [sec016.aspnet-identity]
+32 OL [sec008.data-protection]
+
+C arc010.controllers OL ARC-010,DEP-008 MUST_NOT ;; Api entry points are ASP.NET Core Controllers; do not create Minimal API endpoint groups unless explicitly requested. ;; = ;; Explicit request. ;;
+C arc008.transport-types OL ARC-008,API-001 MUST_NOT ;; IActionResult, ActionResult<T>, ProblemDetails, HttpContext, ClaimsPrincipal, IHttpContextAccessor and StatusCodes stay in Api and never appear in Application or Domain contracts. ;; = ;; none ;;
+C api002.problemdetails-types OL API-002 DEFAULT ;; ProblemDetails for non-validation failures and ValidationProblemDetails for request validation; stable safe machine-readable fields. ;; = ;; none ;;
+C api007.iexceptionhandler OL API-007 MUST ;; Centralized unexpected-exception handling uses IExceptionHandler with AddProblemDetails()/UseExceptionHandler(). ;; = ;; none ;;
+C api017.swagger-env OL API-017,DEP-012 DEFAULT ;; Enable Swagger UI in Development by default; expose elsewhere only when deployment requirements explicitly justify it. ;; = ;; none ;;
+C sec016.aspnet-identity OL SEC-016 MUST ;; Established authentication facilities are ASP.NET Core authentication handlers and, for owned local accounts, ASP.NET Core Identity (hashing, lockout, reset tokens). ;; = ;; none ;;
+C sec008.data-protection OL SEC-008 MUST_NOT ;; Data Protection suits application-generated protected payloads; do not treat it as universal database encryption. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/2-technology/ef-core.md ;; Path rule (backend .cs/.csproj).
+@scope path rule: backend/**/*.cs, backend/**/*.csproj
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11 NN ;; Statement of approved framework plus pointers.
+13 OL [arc014.ef-types]
+14 MX [x.ef-entity-config,arc002.config-out-of-domain] ;; IEntityTypeConfiguration classes in Infrastructure are technique (added); keeping persistence configuration out of Domain entities is ARC-002.
+15 OL [arc017.uow-dbcontext]
+16 OL [arc015.base-repo]
+
+C arc014.ef-types OL ARC-008,ARC-014 DEFINITION ;; DbContext, DbSet<T>, EF Core APIs and LINQ-to-EF expressions, EF attributes/mapping types and SQL Server provider types are persistence-framework types for the boundary rules. ;; = ;; none ;;
+C x.ef-entity-config EX ARC-019 PREFER ;; Entity mappings live in Infrastructure as IEntityTypeConfiguration<T> classes. ;; = ;; none ;; Mapping technique not in the oracle.
+C arc002.config-out-of-domain OL ARC-002 PREFER ;; Keep persistence configuration out of Domain entities where practical. ;; = ;; none ;;
+C arc017.uow-dbcontext OL ARC-017 MUST ;; The Infrastructure IUnitOfWork delegates to the same scoped DbContext the use case's repositories share. ;; = ;; none ;;
+C arc015.base-repo OL ARC-015,ARC-019 ALLOWED ;; An Infrastructure-only Repository<TEntity> base may expose protected helpers; concrete repositories may use the full EF Core API internally. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/2-technology/fluentvalidation.md ;; Path rule (backend/**/*.cs).
+@scope path rule: backend/**/*.cs
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 OL [api010.fluentvalidation]
+11 OL [arc023.validator-registration]
+12 EX [x.fv-single-mechanism]
+14 NN ;; Pointer.
+
+C api010.fluentvalidation OL API-010,DEP-010 MUST ;; Use FluentValidation for explicit request/use-case validation where needed (required input, string/collection constraints, ranges, cross-property/conditional rules), each rule at its owning boundary. ;; = ;; none ;;
+C arc023.validator-registration OL ARC-023,DEP-010 DEFAULT ;; Application validators live in Application and are registered with FluentValidation.DependencyInjectionExtensions from Application's own registration. ;; = ;; none ;;
+C x.fv-single-mechanism EX API-010,DEP-002 DEFAULT ;; Follow the established validation invocation pattern rather than adding a competing mechanism; do not adopt deprecated/legacy ASP.NET automatic-validation integration packages without a concrete requirement. ;; = ;; Concrete project requirement. ;; Not in the oracle.
+
+@@ output/template/.claude/rules/2-technology/dotnet-testing.md ;; Path rule (backend test projects).
+@scope path rule: backend/**/*Tests/**/*.cs, backend/**/*Tests/*.csproj
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11 NN ;; Pointers.
+13 OL [tst001.nunit]
+14 OL [tst006.waf,tst004.testing-env]
+15 OL [tst007.no-inmemory-claims]
+
+C tst001.nunit OL TST-001 DEFAULT ;; NUnit is the default .NET test framework; no second framework without a concrete reason; follow an established project's deliberate convention. ;; = ;; none ;;
+C tst006.waf OL TST-006 DEFAULT ;; WebApplicationFactory<Program> integration tests when routing, binding, middleware, auth, DI, repositories, EF Core or persistence is the subject. ;; = ;; none ;;
+C tst004.testing-env OL TST-004 MUST ;; The Testing environment uses isolated test resources. ;; = ;; none ;;
+C tst007.no-inmemory-claims OL TST-007 MUST_NOT ;; EF Core InMemory is not relational; never use it while claiming relational/SQL Server verification. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/2-technology/angular.md ;; Path rule (frontend/**).
+@scope path rule: frontend/**
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 NN ;; Pointers.
+12 OL [fe001.standalone]
+13 OL [fe004.signals-rxjs]
+14 OL [fe011.no-nested-subs]
+15 OL [fe012.lifecycle]
+16 OL [fe008.interceptors]
+17 OL [fe010.reactive-forms]
+18 EX [x.ng-runner-discovery]
+
+C fe001.standalone OL FE-001 DEFAULT ;; Modern standalone Angular APIs for new code organized by feature; no NgModules for ordinary new feature work unless an integration or legacy dependency requires them. ;; = ;; none ;;
+C fe004.signals-rxjs OL FE-004 DEFAULT ;; Signals for synchronous local UI state, RxJS for async streams/HTTP composition/cancellation/event pipelines; avoid mechanical conversions. ;; = ;; none ;;
+C fe011.no-nested-subs OL FE-011 DEFAULT ;; Avoid nested manual RxJS subscriptions; prefer composition operators. ;; = ;; none ;;
+C fe012.lifecycle OL FE-012 MUST ;; Tie manual subscription lifetimes to the component/service lifecycle with current Angular facilities. ;; = ;; none ;;
+C fe008.interceptors OL FE-008 DEFAULT ;; Prefer functional interceptors for new code, cross-cutting only; never feature business logic in an interceptor. ;; = ;; none ;;
+C fe010.reactive-forms OL FE-010 DEFAULT ;; Reactive forms for non-trivial forms when explicit state, validation and testability are useful. ;; = ;; none ;;
+C x.ng-runner-discovery EX WF-005,DEP-014 MUST ;; Unit/component tests run with the workspace's configured runner; inspect package.json instead of assuming a command. ;; = ;; none ;; Runner-discovery obligation not in the oracle.
+
+@@ output/template/.claude/rules/2-technology/logging.md ;; Path rule (backend code, appsettings).
+@scope path rule: backend/**/*.cs, backend/**/appsettings*.json
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11 NN ;; Pointers.
+13 OL [run013.structured]
+14 OL [dep021.addserilog]
+
+C run013.structured OL RUN-013 DEFAULT ;; ILogger<T> with structured templates and stable property names; avoid interpolation that flattens values. ;; = ;; none ;;
+C dep021.addserilog OL DEP-021 DEFAULT ;; With Serilog use builder.Services.AddSerilog(...) (not UseSerilog()); levels/sinks/overrides in environment-aware configuration; application code depends on ILogger<T>. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/2-technology/containers-ci.md ;; Path rule (Dockerfiles, compose, CI definitions).
+@scope path rule: Dockerfile*, .dockerignore, compose*.yml, .github/workflows/**, azure-pipelines*.yml, .gitlab-ci.yml
+1-12 IM ;; Frontmatter paths.
+14 NN ;; Banner.
+16 NN ;; Heading.
+18 IM ;; Routing pointer (Docker optional; delivery-pipeline owns CI/container procedure; technique skills).
+20 MX [dep019.runtime-image,x.non-root] ;; Runtime image and not switching to root are DEP-019; running as the image's non-root user where supported is added.
+21 MX [dep019.no-build-tooling,x.container-config-external,sec001.container-secrets] ;; Build tooling out of runtime images is DEP-019; external environment configuration is added; no secrets in Dockerfiles/Compose/build args is SEC-001.
+
+C dep019.runtime-image OL DEP-019 DEFAULT ;; Production containers use the ASP.NET runtime image rather than the SDK image for convenience; do not switch to root to bypass filesystem problems. ;; = ;; none ;;
+C x.non-root EX DEP-019,SEC-007 DEFAULT ;; Run production containers as the image's non-root user where supported. ;; = ;; Where supported. ;; Not in DEP-019.
+C dep019.no-build-tooling OL DEP-019 DEFAULT ;; Keep build tooling out of production runtime images. ;; = ;; none ;;
+C x.container-config-external EX SEC-002 MUST ;; Keep environment configuration external to container images. ;; = ;; none ;; Not in the oracle.
+C sec001.container-secrets OL SEC-001 MUST_NOT ;; Real secrets never go into Dockerfiles, committed Compose files or build arguments. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/3-project/data-lifecycle.md ;; Path rule (backend code, appsettings).
+@scope path rule: backend/**/*.cs, backend/**/appsettings*.json
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11 NN ;; Pointers.
+13 NN ;; Heading.
+15 OL [pst001.representative]
+16 OL [pst002.infra-concern]
+17 OL [pst003.dbseeder]
+18 OL [pst004.dev-only]
+19 OL [pst005.no-schema]
+20 OL [pst006.no-sync]
+21 OL [pst007.valid]
+23 NN ;; Heading.
+25 OL [dep026.local-db]
+
+C pst001.representative OL PST-001 DEFAULT ;; For an empty Development database maintain a small deterministic representative seed dataset covering meaningful states and relationships. ;; = ;; none ;;
+C pst002.infra-concern OL PST-002 MUST ;; Development seeding is an Infrastructure/bootstrap concern; may use AppDbContext directly, need not use repositories or IUnitOfWork. ;; = ;; none ;;
+C pst003.dbseeder OL PST-003 MUST ;; Substantial seed construction lives in a dedicated internal DbSeeder invoked through a narrow Infrastructure initialization extension, not Program.cs, DbContext configuration, entity configurations or migrations. ;; = ;; none ;;
+C pst004.dev-only OL PST-004,TST-008 MUST_NOT ;; Automatic seeding only in Development; never seed Production automatically; tests never use the seeder. ;; = ;; none ;;
+C pst005.no-schema OL PST-005 MUST_NOT ;; The seeder must not call Database.Migrate()/EnsureCreated() or create/upgrade schema; migrations are applied separately first. ;; = ;; none ;;
+C pst006.no-sync OL PST-006 MUST_NOT ;; Leave existing representative data unchanged; never use the seeder for synchronization, repair, upgrade, overwrite or recreation; developers recreate the database explicitly. ;; = ;; none ;;
+C pst007.valid OL PST-007 MUST ;; Seed entities preserve Domain invariants and valid relationships; prefer readable deterministic examples. ;; = ;; none ;;
+C dep026.local-db OL DEP-026,SEC-002 DEFAULT ;; appsettings.Development.json provides a usable non-secret local connection string (e.g. LocalDB trusted connection); credential-bearing values come from user-secrets or an approved local mechanism. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/3-project/layout.md ;; Path rule (*.slnx, backend csproj, angular.json).
+@scope path rule: *.slnx, backend/**/*.csproj, frontend/*/angular.json
+1-6 IM ;; Frontmatter paths.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 NN ;; Pointers.
+14 NN ;; Heading.
+16-21 OL [dep024.layer-projects]
+23 MX [arc001.project-refs,x.outward-ref-hook] ;; ProjectReference entries implement the dependency direction (ARC-001); the hook rejecting outward references is the added executable enforcement.
+25 NN ;; Heading.
+27 OL [arc027.useful-test-projects]
+29-30 NN ;; Table header.
+31-34 OL [arc028.typical-test-refs]
+36 NN ;; Heading.
+38 MX [dep024.frontend-workspace,x.frontend-test-placement] ;; Workspace location and no frontend tests under backend/ restate DEP-024; colocated unit/component tests and e2e/ placement are added conventions.
+
+C dep024.layer-projects OL DEP-024,ARC-001 DEFAULT ;; Layer-to-project mapping: backend/<Name>.Domain, .Application, .Infrastructure, .Api (contains Program.cs). ;; = ;; none ;;
+C arc001.project-refs OL ARC-001 MUST ;; ProjectReference entries implement the Level 1 dependency direction. ;; = ;; none ;;
+C x.outward-ref-hook EX ARC-001 ENFORCED ;; The project hook rejects outward references (Domain → any layer, Application → Infrastructure/Api, Infrastructure → Api). ;; = ;; none ;; Executable enforcement (captured also from manifest-checks.mjs).
+C arc027.useful-test-projects OL ARC-027,DEP-013 MUST_NOT ;; Create only useful test projects, beside production projects under backend/. ;; = ;; none ;;
+C arc028.typical-test-refs OL ARC-028 DEFAULT ;; Narrowest typical test references: Application.Tests→Application (+Domain); IntegrationTests→Api via WebApplicationFactory; Domain.Tests only for non-trivial Domain; Infrastructure.Tests only for a concrete need. ;; = ;; none ;;
+C dep024.frontend-workspace OL DEP-024 DEFAULT ;; The Angular workspace lives at frontend/<Name>.Web/ and owns its manifests, config and sources; never place frontend tests under backend/. ;; = ;; none ;;
+C x.frontend-test-placement EX DEP-024 DEFAULT ;; Unit/component tests stay inside the workspace colocated by Angular convention; E2E tests, when adopted, live in frontend/<Name>.Web/e2e/. ;; = ;; none ;; Test placement convention not in the oracle.
+
+@@ output/template/.claude/rules/3-project/package-management.md ;; Path rule (manifests).
+@scope path rule: *.csproj, Directory.Packages.props, Directory.Build.props, package.json, package-lock.json
+1-8 IM ;; Frontmatter paths.
+10 NN ;; Banner.
+12 NN ;; Heading.
+14 IM ;; Routing pointer to add-dependency and hook description.
+16 NN ;; Heading.
+18 MX [dep006.cpm,x.versionoverride-report] ;; CPM with versionless narrowly scoped references is DEP-006; a VersionOverride needing a concrete reason and being reported is added.
+19 OL [dep006.no-duplicate-versions]
+21 NN ;; Heading.
+23 OL [dep007.npm-lockfile]
+24 OL [dep007.dev-deps]
+
+C dep006.cpm OL DEP-006 MUST ;; NuGet Central Package Management: versions in Directory.Packages.props; project PackageReference entries versionless and narrowly scoped. ;; = ;; none ;;
+C x.versionoverride-report EX DEP-006 DEFAULT ;; A VersionOverride needs a concrete reason and must be reported. ;; = ;; Concrete reason. ;; Not in DEP-006.
+C dep006.no-duplicate-versions OL DEP-006 MUST_NOT ;; Do not duplicate centrally managed versions in individual .csproj files. ;; = ;; none ;;
+C dep007.npm-lockfile OL DEP-007 MUST ;; npm for the Angular workspace unless deliberately changed; commit package.json and package-lock.json; keep the lockfile consistent. ;; = ;; none ;;
+C dep007.dev-deps OL DEP-007 MUST ;; Build and test tooling go in devDependencies, not runtime dependencies, unless there is a reason. ;; = ;; none ;;

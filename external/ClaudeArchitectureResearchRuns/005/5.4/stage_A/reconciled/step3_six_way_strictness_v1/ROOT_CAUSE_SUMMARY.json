@@ -1,0 +1,1101 @@
+{
+ "policy_level": {
+  "RC-ENF-CODESTYLE-BUILD": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "RUN-009",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "M",
+       "L0"
+      ],
+      [
+       "M1",
+       "L1",
+       "K0",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Only M (Directory.Build.props:13) and L0 (:9) set EnforceCodeStyleInBuild, so warning-severity .editorconfig style rules appear in `dotnet build`; in M1, L1, K0 and K1 they show only in an IDE. Most style rules are suggestion-level in all six, so the effect on this default is small; the one consequential case is IDE0005 (RUN-010).",
+   "extras_clusters_linked": [
+    "X0336",
+    "X0359"
+   ]
+  },
+  "RC-ENF-COMPETING-TEST-FW": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "TST-001",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "M",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "M1 check-manifests.js reads competingFrameworkPackages (xunit, xunit.v3, MSTest, TUnit …) from capabilities/backend-testing/nunit/MODULE.md:35; L1 post-change-checks.mjs:162-163 reports approvalRequiredPackages from nunit/enforcement.json:4-8 ('requires approval ... Remove it unless the user approved it'); K1 facets/test-framework.cjs flags them. M, L0 and K0 have no such check (searched all hooks and scripts for xunit/MSTest/TUnit).",
+   "extras_clusters_linked": [
+    "X0665"
+   ]
+  },
+  "RC-ENF-CPM-NO-SDK": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-006",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "K0",
+       "M"
+      ],
+      [
+       "M1",
+       "L0",
+       "L1",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Without the .NET SDK (Q-11), K0 and M keep a static error when no Directory.Packages.props is in an ancestor folder, where M1, L0, L1 and K1 report NOT_RUN; with the SDK all six agree. Q-12: none checks the name of a central file imported through DirectoryPackagesPropsPath (uniform). Benchmarks run with the SDK (v3 condition 2), so the difference does not reach a study task.",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-DEP-INSTALL-GATE": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-003",
+     "dim": "D1",
+     "material": false,
+     "tiers": [
+      [
+       "K1",
+       "M1",
+       "K0",
+       "L1"
+      ],
+      [
+       "M",
+       "L0"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    },
+    {
+     "policy_id": "DEP-004",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "K0"
+      ],
+      [
+       "L1"
+      ],
+      [
+       "K1"
+      ],
+      [
+       "M",
+       "L0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "DEP-005",
+     "dim": "D1",
+     "material": false,
+     "tiers": [
+      [
+       "M1",
+       "K0"
+      ],
+      [
+       "L1"
+      ],
+      [
+       "K1"
+      ],
+      [
+       "M",
+       "L0"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Install-time gate: an install command without an exact version is blocked by K1 and stopped by M1, K0 (marker) and L1 (deny once), and allowed by M and L0, where `dotnet add package` then writes the version NuGet resolves (normally latest stable). The resulting manifest is checked identically in all six, so the effect on this rule is small; the gate is recorded as material under DEP-004. PROBE-HOOK-01 (HOOK_PROBE_RESULTS.json, direct script runs, same command twice): `dotnet add <Api> package Serilog.AspNetCore --version 8.0.3` -> M allow/allow, L0 allow/allow, K1 allow/allow, L1 deny/allow (identical retry within 30 minutes passes, pre-shell-command.mjs:7-8), M1 deny/deny and K0 deny/deny until the command carries the self-attested marker `# add-dependency: checked` (M1 dependency-commands.js:15/:528) or `# add-dependency: reviewed` (K0 hook.cjs:18/:294); without --version K1 also blocks (exit 2, classify-command.cjs:224 'without an exact version'). The same pattern holds for `npm install left-pad@1.3.0` (matches v3 SAME_TASK_MATRIX 'pinned install, first attempt'). M and L0 rely on PostToolUse reminders to confirm the add-dependency steps (M dependency-guard.mjs:278, L0 claude-hook.mjs:555-557).",
+   "extras_clusters_linked": [
+    "X0137",
+    "X0141",
+    "X0143",
+    "X0144",
+    "X0145",
+    "X0148",
+    "X0149",
+    "X0154",
+    "X0155",
+    "X0158",
+    "X0263",
+    "X0580",
+    "X0768"
+   ]
+  },
+  "RC-ENF-GIT-Q04": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "GOV-015",
+     "dim": "D3",
+     "material": false,
+     "tiers": [
+      [
+       "K0"
+      ],
+      [
+       "M",
+       "M1",
+       "L0",
+       "L1",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Q-04: K0 classifies the first recognized tool anywhere in a segment, so it also asks for 'git' after an unrecognized leading word (echo git commit -m x); the other five parse the command position and allow it. An extra prompt in K0, never a missed mutation in the v3 fixtures.",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-IDE0005-BUILD": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "RUN-010",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "L0"
+      ],
+      [
+       "M",
+       "L1",
+       "K0"
+      ],
+      [
+       "M1",
+       "K1"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "L0 is the only candidate whose command-line build reports IDE0005: IDE0005 = warning (.editorconfig:27), EnforceCodeStyleInBuild and GenerateDocumentationFile in Directory.Build.props:9/:11 with CS1591 suppressed (:12). M sets warning and EnforceCodeStyleInBuild but not GenerateDocumentationFile, which its own .editorconfig:32-33 says is also required, so the CLI build does not report it; L1 and K0 set warning without EnforceCodeStyleInBuild (IDE only); M1 and K1 set suggestion (hidden). Tiers order how visible the leftover using is.",
+   "extras_clusters_linked": [
+    "X0555",
+    "X0573"
+   ]
+  },
+  "RC-ENF-INNER-LAYER": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "ARC-002",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "M",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "ARC-008",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "M",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "ARC-019",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "M",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "M1, L1 and K1 check inner-layer framework/package or namespace leakage mechanically; M, L0 and K0 rely on the rule text and code review. M1: check-architecture.js reads forbiddenNamespaces (Microsoft.AspNetCore and the persistence technology namespaces) for the core-model and use-case layers from capabilities/architecture/clean-architecture/MODULE.md:49-52, run by its post-tool-use hook. L1: check-architecture.mjs:90-104 rejects Microsoft.AspNetCore.App (also implied by the Web SDK) and its packages in inner roles (check.json:11-12) and EF Core packages in domain/use-case roles (persistence/ef-core/enforcement.json), run by post-change-checks. K1: facets/architecture-style.cjs:73-85 errors on the Web SDK, the ASP.NET Core shared framework or Microsoft.AspNetCore.* packages in Domain/Application, and facets/persistence-technology.cjs errors on EF Core packages there. M, L0 and K0 have no such check (searched every hook and script for AspNetCore/EntityFrameworkCore/framework-reference logic).",
+   "extras_clusters_linked": [
+    "X0053",
+    "X0120",
+    "X0728"
+   ]
+  },
+  "RC-ENF-MEDIATOR-PKG": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "ARC-009",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L0",
+       "L1"
+      ],
+      [
+       "M",
+       "K0"
+      ],
+      [
+       "K1"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "Package flags: M1 check-manifests.js:45/:85 (reservedPackages MediatR, Kommand from clean-architecture/MODULE.md:34), L0 manifest-checks.mjs:33-34 (mediatr, kommand), L1 post-change-checks.mjs:152 with check.json:26-29 (MediatR, Kommand prefixes); M check-manifests.mjs:40 and K0 check-dependencies.cjs:27 flag MediatR only; K1 has no package flag for mediator libraries (searched check-manifests.cjs and facets). No candidate detects handler trees or vertical slices written without a library.",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-MIGRATION-REMINDER": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "PST-009",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "M",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "PST-010",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M",
+       "L0",
+       "K0",
+       "K1"
+      ],
+      [
+       "M1",
+       "L1"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "Model-without-migration reminder: M1 stop.js:44-56 (MODULE.md coChange companions 'migrations'), L1 stop-cochange.mjs:60, K1 facets/persistence-technology.cjs:40-47 remind at Stop when Domain or entity-configuration files change without a migration; M, L0 and K0 check only model-without-seeder and migration review (searched their Stop hooks). All six register a Stop hook that blocks finishing once per change state with co-change reminders and never re-blocks while stop_hook_active: M stop-co-change.mjs:28/:104 (decision block), M1 stop.js:87-108 (hook.block), L0 claude-hook.mjs:753-797 (feedback, exit code), L1 stop-cochange.mjs:41/:85 (decision block), K0 hook.cjs:548/:582 (decision block), K1 dispatch.cjs:126-137 (exit 2). Live-host handling NOT_RUN.",
+   "extras_clusters_linked": [
+    "X0311",
+    "X0312",
+    "X0313",
+    "X0314"
+   ]
+  },
+  "RC-ENF-NPM-LOCKFILE": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-007",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "M",
+       "M1",
+       "K0",
+       "K1"
+      ],
+      [
+       "L0",
+       "L1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "A missing package-lock.json is reported by M, M1 (WARN, check-manifests.js:205), K0 (notice, check-dependencies.cjs:355) and K1 (warn, check-manifests.cjs:329-332); L0 and L1 do not check it. `npm install` normally writes the lockfile, so a study task rarely exposes this.",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-NPMRC-BYPASS": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-025",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "L0"
+      ],
+      [
+       "M",
+       "M1",
+       "L1",
+       "K0",
+       "K1"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "Only L0 treats .npmrc as a manifest: manifest-checks.mjs:71 includes it and checkNpmrc (:453-457, called at :495) reports `legacy-peer-deps=true` or `force=true` after the edit (claude-hook.mjs:43 also tracks **/.npmrc). The other five check the shell command only; none of their checkers reads .npmrc (grep: no match in M, M1, L1, K0, K1 .claude/).",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-PKG-LISTS": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-002",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "K0",
+       "L0",
+       "L1"
+      ],
+      [
+       "M",
+       "M1",
+       "K1"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "Post-edit approval-required package lists differ by package: AutoMapper is flagged by K0 check-dependencies.cjs:28, L0 manifest-checks.mjs:35 and L1 manifest-policy.json:12, and by none of M, M1, K1 (searched all hooks/scripts); direct Polly is flagged by all six; MediatR by all but K1 (ARC-009). The lists encode each candidate's own approved stack, so the asymmetry is in coverage, not in the rule.",
+   "extras_clusters_linked": [
+    "X0575",
+    "X0658",
+    "X0664"
+   ]
+  },
+  "RC-ENF-REFERENCE-CMD-GATE": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "ARC-020",
+     "dim": "D5",
+     "material": true,
+     "tiers": [
+      [
+       "K1",
+       "L0",
+       "L1",
+       "M1",
+       "K0"
+      ],
+      [
+       "M"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "GOV-017",
+     "dim": "D5",
+     "material": true,
+     "tiers": [
+      [
+       "K1",
+       "L0",
+       "L1",
+       "M1",
+       "K0"
+      ],
+      [
+       "M"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "PROBE-HOOK-01 (direct PreToolUse runs, inward Shop.Application->Shop.Domain and outward Shop.Application->Shop.Infrastructure): K1 blocks (exit 2) unless each edge is recorded as an accepted decision in the register (dispatch.cjs:74-81, classify-command.cjs:320); L0 blocks every reference command (claude-hook.mjs:461-462; project files are edited instead and reported after the edit); L1 returns ask (pre-shell-command.mjs:79); M1 and K0 deny until the command carries a self-written marker ('# project-reference: checked', dependency-commands.js:16/:517; '# project-references: approved', hook.cjs:19/:284); M allows and reminds afterwards (dependency-guard.mjs:282-285). The five gated candidates release the gate on different conditions (recorded approval, file edit, human answer, self-attested marker), so they are mutually incomparable; only M has no pre-execution gate. Added in Step 3 after the probe (amendment A1).",
+   "extras_clusters_linked": [
+    "X0051",
+    "X0057",
+    "X0088",
+    "X0090",
+    "X0095",
+    "X0149",
+    "X0150",
+    "X0154",
+    "X0264",
+    "X0558",
+    "X0561",
+    "X0562",
+    "X0563",
+    "X0565",
+    "X0567",
+    "X0570",
+    "X0576",
+    "X0587",
+    "X0588",
+    "X0661"
+   ]
+  },
+  "RC-ENF-RESERVED-GRAPH": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "ARC-020",
+     "dim": "D4",
+     "material": false,
+     "tiers": [
+      [
+       "K1"
+      ],
+      [
+       "M",
+       "M1",
+       "L0",
+       "L1",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    },
+    {
+     "policy_id": "GOV-017",
+     "dim": "D4",
+     "material": false,
+     "tiers": [
+      [
+       "K1"
+      ],
+      [
+       "M",
+       "M1",
+       "L0",
+       "L1",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "All six give mechanical feedback on a new project or project-reference change, at different levels: K1 actual-state.cjs:107-120 reports project additions/removals and reference edges not matched by an accepted decision in the register (check-manifests.cjs:336-379); M1 check-architecture.js:77 warns on a project outside the frame; K0 check-dependencies.cjs:148-158 gives notices; M dependency-guard.mjs:282-285, L0 claude-hook.mjs:520-524 and L1 post-change-checks.mjs:338 remind to confirm an approved decision. Only K1 compares the change against recorded approvals.",
+   "extras_clusters_linked": [
+    "X0049",
+    "X0050",
+    "X0054",
+    "X0088",
+    "X0089",
+    "X0092",
+    "X0093",
+    "X0094",
+    "X0278",
+    "X0497",
+    "X0562",
+    "X0563",
+    "X0565",
+    "X0567",
+    "X0588",
+    "X0654"
+   ]
+  },
+  "RC-ENF-REVIEWER-MULTIEDIT": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "WF-010",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "M1",
+       "L1",
+       "K0"
+      ],
+      [
+       "M",
+       "L0",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "M1, L1 and K0 disallow Write, Edit, MultiEdit and NotebookEdit; M, L0 and K1 disallow Write, Edit and NotebookEdit only. No candidate disallows the shell tool, so in all six a reviewer that ignored the text could still change files through the shell; the frontmatter is therefore a partial guard everywhere, and the read-only obligation rests on the same instruction text in all six. Whether the intended host still offers a separate MultiEdit tool is UNVERIFIED (live host NOT_RUN); if it does not, the difference disappears.",
+   "extras_clusters_linked": []
+  },
+  "RC-ENF-TEST-CHANGE-REMINDER-SCOPE": {
+   "material": false,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "TST-009",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "M",
+       "L0",
+       "K0"
+      ],
+      [
+       "M1",
+       "L1",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Frontend scope of the no-test-change reminder: present in M, L0, K0, absent in M1, L1, K1. This policy is backend-tests scoped, where all six remind; the frontend effect is recorded under the frontend testing policy.",
+   "extras_clusters_linked": [
+    "X0311"
+   ]
+  },
+  "RC-ENF-TEST-REFS": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "ARC-028",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "M",
+       "M1",
+       "L1",
+       "K1"
+      ],
+      [
+       "K0"
+      ],
+      [
+       "L0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "M check-manifests.mjs:63-68/:382 (TEST_ALLOWED: the tested layer and inward layers), M1 check-architecture.js:87-99 (capability testProjects mayReference), L1 check-architecture.mjs:85 (testRoles typicalReferences) and K1 facets/architecture-style.cjs:19-26/:65-69 (error outside typical+justified, warn for justified) report an atypical test reference as a finding; K0 check-dependencies.cjs:151-157 only adds a notice; L0 manifest-checks.mjs:406 returns early for test projects, so L0 has no test-reference check. Allowed sets also differ at the edge: M and M1 let Infrastructure.Tests reference Application and Domain without remark, K1 warns.",
+   "extras_clusters_linked": [
+    "X0116",
+    "X0118",
+    "X0122",
+    "X0651"
+   ]
+  },
+  "RC-ENF-TOP-LEVEL-TESTS": {
+   "material": true,
+   "axes": [
+    "ENFORCEMENT"
+   ],
+   "kinds": [
+    "ENFORCED_BEHAVIOR_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "DEP-024",
+     "dim": "D2",
+     "material": true,
+     "tiers": [
+      [
+       "L1"
+      ],
+      [
+       "K1"
+      ],
+      [
+       "M",
+       "M1",
+       "L0",
+       "K0"
+      ]
+     ],
+     "label": "MEANINGFUL_DIVERGENCE"
+    }
+   ],
+   "what_first": "L1 check.json:4 lists `tests` in forbiddenTopLevelDirectories and check-architecture.mjs:29-33 reports a violation; post-change-checks.mjs:310-326 runs it after every project-file edit and exits 2 (feedback). K1 check-manifests.cjs:326-328 warns on a top-level tests/ directory, but only in checkAll, which runs from the CLI (verify skill :54, project-structure scaffold Verify step :41), not from the manifest hook. M1 check-architecture.js and K0 check-dependencies.cjs:158 inspect only projects under backend/, so a project under tests/ is not seen; M and L0 have no layout check.",
+   "extras_clusters_linked": []
+  },
+  "RC-PKG-GITIGNORE": {
+   "material": false,
+   "axes": [
+    "DELIVERY"
+   ],
+   "kinds": [
+    "DELIVERY_REACHABILITY_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "SEC-001",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "L0",
+       "L1"
+      ],
+      [
+       "M",
+       "M1",
+       "K0",
+       "K1"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "L0 and L1 ship a .gitignore that already excludes .env, .env.* (except .env.example) and appsettings.*.local.json (L0 .gitignore:13-17, L1 :14-18). M, M1, K0 and K1 ship none; their project-structure skills create one during scaffolding (M SKILL:28/:62, M1/K1 solution-layout tree, K0 solution-layout.md:66-68 naming 'local secret/config overrides'). Same rule; only whether the ignore file exists before scaffolding differs. A secret in a tracked file is caught by none of the six mechanically.",
+   "extras_clusters_linked": [
+    "X0577"
+   ]
+  },
+  "RC-TXT-FRAMEWORK-DEFAULT-EXCLUSION": {
+   "material": false,
+   "axes": [
+    "NORMATIVE"
+   ],
+   "kinds": [
+    "TRUE_NORMATIVE_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "GOV-011",
+     "dim": "D1",
+     "material": false,
+     "tiers": [
+      [
+       "M",
+       "M1",
+       "L1",
+       "K0",
+       "K1"
+      ],
+      [
+       "L0"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "Five candidates also exclude framework defaults the project has not intentionally overridden (M1 in root CLAUDE.md:40-43; M, L1, K0, K1 in the custom-settings skill). L0 has no such exclusion (searched CLAUDE.md and custom-settings). This is an extra beyond the canonical list, not part of GOV-011; it is carried to the extras inventory.",
+   "extras_clusters_linked": []
+  },
+  "RC-TXT-L0-CONFLICT-WORDING": {
+   "material": false,
+   "axes": [
+    "NORMATIVE"
+   ],
+   "kinds": [
+    "TRUE_NORMATIVE_VARIANCE"
+   ],
+   "policies": [
+    {
+     "policy_id": "GOV-009",
+     "dim": "D2",
+     "material": false,
+     "tiers": [
+      [
+       "M",
+       "M1",
+       "L1",
+       "K0",
+       "K1"
+      ],
+      [
+       "L0"
+      ]
+     ],
+     "label": "PARTIAL_PARITY_WITH_DELTA"
+    }
+   ],
+   "what_first": "M, M1, L1, K0 and K1 say 'stop and ask which source must be corrected' (K1: 'never choose one silently'). L0 :29 says 'stop and resolve which source must be corrected before continuing', the canonical wording, which alone does not name the user. Choosing which product source wins is product behavior that L0 routes to approval elsewhere (CLAUDE.md:25-26 and Reserved item 10 at :49), so the combined L0 text requires approval too; the difference is wording at this owner only.",
+   "extras_clusters_linked": [
+    "X0574"
+   ]
+  }
+ },
+ "extras_level": {
+  "RC-ENF-DEP-REMOVAL-GATE": {
+   "family": null,
+   "title": "Pre-execution gate on dependency removal (and bare update / audit fix) commands",
+   "present": {
+    "M1": "deny until self-attested marker",
+    "K0": "deny until self-attested marker",
+    "L1": "deny once, identical retry allowed",
+    "K1": "block with no command route; remove manifest entries and restore instead"
+   },
+   "absent": {
+    "M": "allowed; post-change reminder (file-change.mjs:66-69)",
+    "L0": "allowed; post-command reminder (claude-hook.mjs:555-557)"
+   },
+   "task_effect": "Remove an unused package: M and L0 run the command; M1/K0 refuse until the marker; L1 refuses once; K1 refuses and the agent edits manifests.",
+   "clusters": [
+    "X0128",
+    "X0132",
+    "X0134"
+   ],
+   "evidence": "PROBE-HOOK-03 (HOOK_PROBE3_RESULTS.json) R1-R5; X0128, X0132, X0134, X0168."
+  },
+  "RC-TXT-FORCE-VOCABULARY": {
+   "family": null,
+   "title": "Force vocabulary: 'default — deviation needs a concrete reason and must be reported'",
+   "present": {
+    "M": "CLAUDE.md:14",
+    "L0": "CLAUDE.md:20",
+    "K0": "CLAUDE.md:13",
+    "K1": "CLAUDE.md:11"
+   },
+   "absent": {
+    "M1": "no vocabulary (grep)",
+    "L1": "no vocabulary (grep)"
+   },
+   "task_effect": "Departing from a stated default: four candidates require a reason and a report; M1 and L1 do not say so.",
+   "clusters": [
+    "X0259",
+    "X0554",
+    "X0556"
+   ],
+   "evidence": "X0259, X0554, X0556."
+  },
+  "RC-TXT-REPORT-DEPENDENCY": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "Dependency report (package, version, license, checks, approval status)",
+   "present": {
+    "M": "add-dependency :164-167",
+    "L0": ":59-61",
+    "L1": ":73-75",
+    "K0": ":97",
+    "K1": ":82-84"
+   },
+   "absent": {
+    "M1": "add-dependency has no report section (sections 1-7, Removal)"
+   },
+   "task_effect": "Add a package: M1 does not ask for the version/license/approval summary.",
+   "clusters": [
+    "X0157",
+    "X0159",
+    "X0494",
+    "X0495",
+    "X0502"
+   ],
+   "evidence": "X0157, X0159, X0494, X0495, X0502."
+  },
+  "RC-TXT-REPORT-DELEGATED": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "Final report lists the Delegated choices made",
+   "present": {
+    "M": "development-workflow :122",
+    "L0": "architecture-decision :17-19",
+    "L1": "development-workflow :54",
+    "K0": ":81"
+   },
+   "absent": {
+    "M1": "report folded into Verify :77-78",
+    "K1": "report :58-60 without Delegated choices"
+   },
+   "task_effect": "Report content only.",
+   "clusters": [
+    "X0284"
+   ],
+   "evidence": "X0284."
+  },
+  "RC-TXT-REPORT-SETTINGS": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "custom-settings report (old -> new value, surfaces, migration, verify)",
+   "present": {
+    "L1": "custom-settings :49",
+    "K1": ":44"
+   },
+   "absent": {
+    "M": "no report step (grep)",
+    "M1": "no report step (grep)",
+    "L0": "no report step (grep)",
+    "K0": "no report step (grep)"
+   },
+   "task_effect": "Report content only.",
+   "clusters": [
+    "X0302"
+   ],
+   "evidence": "X0302."
+  },
+  "RC-TXT-REPORT-PERSISTENCE": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "Persistence report (migration names, destructive operations, seeder, tests)",
+   "present": {
+    "L1": "ef-core workflow :32",
+    "K1": "persistence-change :54"
+   },
+   "absent": {
+    "M": "no report step (grep)",
+    "M1": "no report step (grep)",
+    "L0": "no report step (grep)",
+    "K0": "no report step (grep)"
+   },
+   "task_effect": "Report content only.",
+   "clusters": [
+    "X0491"
+   ],
+   "evidence": "X0491."
+  },
+  "RC-TXT-REPORT-DELIVERY": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "Delivery report (stages, commands, unconfirmed hosting assumptions)",
+   "present": {
+    "K0": "delivery-pipeline :39"
+   },
+   "absent": {
+    "M": "no report step (grep)",
+    "M1": "no report step (grep)",
+    "L0": "no report step (grep)",
+    "L1": "no report step (grep)",
+    "K1": "no report step (grep)"
+   },
+   "task_effect": "Report content only.",
+   "clusters": [
+    "X0493"
+   ],
+   "evidence": "X0493."
+  },
+  "RC-TXT-REPORT-DECISION": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "Recorded-decision report (record path, updated files)",
+   "present": {
+    "M": "architecture-decision :72-73",
+    "L1": ":51",
+    "K0": ":65",
+    "K1": ":58"
+   },
+   "absent": {
+    "M1": "no output step (grep)",
+    "L0": "no output step (grep)"
+   },
+   "task_effect": "Report content only.",
+   "clusters": [
+    "X0499"
+   ],
+   "evidence": "X0499."
+  },
+  "RC-TXT-REVIEW-PRAISE": {
+   "family": "RC-TXT-FINAL-REPORT-CONTENT",
+   "title": "No filler praise in review output",
+   "present": {
+    "M": "code-review :186-188",
+    "M1": ":159-161",
+    "L0": ":72",
+    "K0": ":66",
+    "K1": ":93"
+   },
+   "absent": {
+    "L1": "code-review :71 without the clause"
+   },
+   "task_effect": "Review output tone only.",
+   "clusters": [
+    "X0509",
+    "X0511"
+   ],
+   "evidence": "X0509, X0511."
+  },
+  "RC-TXT-L1-EF-FIRE-AND-FORGET": {
+   "family": null,
+   "title": "No fire-and-forget EF Core async operations (DbContext not thread-safe)",
+   "present": {
+    "M": "ef-core :411-413",
+    "M1": ":414-421",
+    "L0": ":237",
+    "K0": ":348",
+    "K1": ":120"
+   },
+   "absent": {
+    "L1": "no such text in .claude/ or CLAUDE.md (grep)"
+   },
+   "task_effect": "Background or parallel EF Core work: five ef-core skills warn; L1's does not. Technique level.",
+   "clusters": [
+    "X0322"
+   ],
+   "evidence": "X0322, X0323."
+  },
+  "Q-01": {
+   "family": null,
+   "title": "Security-scan prompt: deliberate raw HTML in a server-rendered UI",
+   "present": {
+    "M": "scan-layers reference (v3 CL15 addition)",
+    "M1": "scan-layers reference (v3 CL15 addition)",
+    "L1": "scan-layers reference (v3 CL15 addition)",
+    "K0": "scan-layers reference (v3 CL15 addition)",
+    "K1": "scan-layers reference (v3 CL15 addition)"
+   },
+   "absent": {
+    "L0": "residual kept by v3 (Q-01, USER_DECISION)"
+   },
+   "task_effect": "Only a scan of an app with a server-rendered UI; all candidates target an Angular SPA.",
+   "clusters": [
+    "X0400"
+   ],
+   "evidence": "X0400."
+  }
+ }
+}

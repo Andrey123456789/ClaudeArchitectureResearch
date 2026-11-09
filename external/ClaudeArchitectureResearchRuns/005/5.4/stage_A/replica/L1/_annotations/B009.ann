@@ -1,0 +1,254 @@
+# L1 / B009 — http-api, httpclient-factory (+resilience), logging (+serilog), modern-csharp, project-structure (+references).
+
+C X29 EX RUN-016,DEP-020 | MUST NOT | Do not wrap normal ORM operations in a generic application-level retry pipeline; use the provider's own execution strategy for transient database faults; HTTP retry policies are not database policies. | database access resilience | none stated | RUN-016 governs when retries are safe and the oracle treats database-retry examples as conditional technique (EXC-007); no oracle policy forbids an application-level retry pipeline around ORM operations. | Wrapping repository calls or SaveChanges in a generic resilience retry pipeline violates the instruction even when the operation is idempotent.
+C X30 EX RUN-005 | MUST NOT | Never mutate a shared HttpClient's DefaultRequestHeaders concurrently; apply per-request values such as dynamic tokens per request or through a delegating handler. | outbound HTTP clients | none stated | RUN-005 governs client lifetime; thread-safe header handling is client technique that no oracle policy states. | Setting a per-user access token on DefaultRequestHeaders of a shared typed client per call violates the instruction.
+C X31 EX DEP-008,DEP-023 | MUST | global.json pins the intended SDK line: the current stable SDK of the target .NET release (no RC/preview unless explicitly requested) with a rollForward policy that allows normal patch/feature-band servicing. | repository scaffolding and shared .NET configuration | Preview/RC when explicitly requested. | DEP-008 fixes the platform and DEP-023 repository-level build configuration; no oracle policy requires a global.json SDK pin or a specific roll-forward policy. | A scaffolded solution without global.json, or with a pin that blocks feature-band servicing, deviates from the template.
+
+FILE .claude/skills/http-api/SKILL.md | Knowledge skill (status-code reference); on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R78 | Keep status behavior consistent across similar endpoints.
+12 NN | section heading
+14 OL R78,R79 | an empty collection is `200` with `[]`
+15 OL R78 | the HTTP operation created a new API resource
+16-20 NN | created-at code example
+21 OL R78 | processing accepted but incomplete
+22 OL R78 | apply it consistently across equivalent resources
+23 NN | 304 reference entry (less-common status reference, EXC-009 class)
+25 NN | section heading
+27 OL R80 | Never use `400` for authentication failure.
+28 OL R80 | authentication missing or failed vs. authenticated but not permitted
+29 OL R80 | or the API deliberately hides it
+30 NN | 406/415 reference entries (EXC-009 class)
+31 OL R81 | valid request conflicting with current state
+32 OL R81 | a supplied precondition is false
+33-35 NN | 422/428/429 reference entries (EXC-009 class)
+37 NN | section heading
+39 OL R82,R77 | centralized handling and `ProblemDetails`
+40-41 NN | 502/503 reference entries (EXC-009 class)
+42 OL R86 | Distinguish client cancellation, our own timeout, and upstream timeout
+44 NN | section heading
+46 NN | idempotency-key technique (EXC-009 class)
+48 OL R81 | Do not replace these with custom status codes.
+50 NN | section heading
+52-59 NN | controller mapping code example
+61 OL R77,R75 | never on human-readable exception messages
+63 NN | section heading
+65-87 DU R78,R79,R80,R81,R82 | decision table restating status rules; less-common status rows are EXC-009 reference
+
+FILE .claude/skills/httpclient-factory/references/resilience.md | Private reference of httpclient-factory.
+1 NN | header metadata
+3 NN | document heading
+5 MX R40,X9 | deprecated Polly integrations never ⟫ Microsoft resilience packages by default with documented Polly exception are oracle-linked (R40); the absolute ban on deprecated integrations is X9.
+7 NN | section heading
+9-12 NN | standard handler code example
+14 OL R54,R53 | its retry behavior needs review for state-changing requests
+16 NN | section heading
+18 OL R53 |
+19 OL R54 | non-idempotent operations without duplicate prevention
+20 OL R55 |
+21 NN | circuit-breaker technique (EXC-007 class)
+22 OL R56 |
+23 OL R54 | never writes by default
+24 NN | inbound rate-limiting technique note
+26 NN | section heading
+28 EX X29 | Do not wrap normal ORM operations in a generic application-level retry pipeline
+30 NN | section heading
+32 OL R54 | never claim exactly-once delivery because a retry exists
+34 NN | section heading
+36 NN | telemetry technique note
+38 NN | section heading
+40-48 DU R53,R54,R55,R56 | decision table restating outbound-dependency rules (circuit breaker and hedging rows are EXC-007 technique)
+49 DU X29 | decision row restating the database-retry restriction
+50 NN | inbound rate limiter technique row
+
+FILE .claude/skills/httpclient-factory/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to the owning rules and private reference
+12 NN | section heading
+14-24 NN | adapter boundary code example
+26 OL R138 | The use case does not need to know the remote service speaks HTTP.
+28 NN | section heading
+30 NN | client-model choice technique
+32-35 NN | client registration code example
+37 OL R64 | Do not capture a transient typed client inside a singleton without understanding the lifetime consequences.
+39 NN | section heading
+41 OL R126 | never for business decisions
+43-53 NN | delegating handler code example
+55 NN | section heading
+57 OL R50,R53 | Pass the caller's token
+59 NN | section heading
+61 OL R138 | Translate remote responses into the abstraction's outcomes
+63-70 NN | response mapping code example
+72 OL R138 | Do not forward every upstream status code to your own API
+74 NN | section heading
+76 OL R54 |
+78 NN | section heading
+80 MX X30,R138 | never mutate shared `DefaultRequestHeaders` concurrently ⟫ The shared-header prohibition is the extra X30; not reusing domain entities as remote contracts is the transport-boundary rule (R138).
+82 NN | section heading
+84 NN | outbound HTTP test technique
+86 NN | section heading
+88 DU R52,R54,R138,R50,X30 | anti-pattern list restating outbound HTTP rules
+
+FILE .claude/skills/logging/references/serilog.md | Private reference of logging.
+1 NN | header metadata
+3 NN | document heading
+5 OL R143 | Keep direct Serilog APIs (`Log.Logger`, `LogContext`) at composition or provider-specific boundaries.
+7 NN | section heading
+9 NN | bootstrap technique note
+11-39 NN | bootstrap code example
+41 NN | flush technique note
+43 NN | section heading
+45 OL R181 | Configure only the sinks and enrichers the project needs
+47-70 NN | configuration JSON example
+72 NN | override technique note
+74 NN | section heading
+76 NN | request logging technique note
+78-85 NN | request logging code example
+87 NN | section heading
+89-91 NN | destructuring, LogContext and filtering technique (EXC-013 class)
+93 NN | section heading
+95 EX X9 | The `Serilog.Sinks.Elasticsearch` package is deprecated
+97 NN | section heading
+99-108 NN | provider technique decision table
+
+FILE .claude/skills/logging/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to the owning rules and private reference
+12 NN | section heading
+14-17 NN | structured vs interpolated template example
+19 NN | section heading
+21 OL R108 | still never a safe place for sensitive data
+22-23 NN | level descriptions (technique)
+24 OL R136 | Expected business outcomes such as `NotFound` or validation rejection are normally not errors.
+25 NN | level description
+27 NN | section heading
+29 OL R85 | when rethrowing without meaningful handling, do not add another log
+31 NN | section heading
+33-38 NN | scope code example
+40 OL R181,R95 | validate or normalize ids accepted from clients
+42 NN | section heading
+44 OL R109,R108 | Log the specific properties needed for operation and diagnosis instead of serialized objects or bodies
+46 NN | section heading
+48 NN | source-generated logging technique (EXC-013 class)
+50-56 NN | source-generated logging code example
+58 NN | section heading
+60 DU R65,R85,R136,R108,R109,R143,R181 | anti-pattern list restating logging rules
+62 NN | section heading
+64-71 DU R65,R85,R136 | decision table restating logging rules; scope and source-generator rows are technique
+
+FILE .claude/skills/modern-csharp/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 OL R66 | never to demonstrate newer syntax
+12 NN | section heading
+14 NN | primary constructor technique lead-in
+16-20 NN | primary constructor code example
+22 OL R66 | Never convert constructors mechanically.
+24 NN | section heading
+26 NN | record vs class technique (EXC-002 class)
+28 NN | section heading
+30 NN | required-member technique (EXC-002 class)
+31 OL R66,R68 | do not rewrite existing initializers just to modernize
+32-33 NN | pattern matching and field keyword technique
+35-41 NN | field keyword code example
+43 NN | extension members technique
+45-53 NN | extension members code example
+55 OL R47 | never an excuse for raw SQL
+56 NN | var usage technique (EXC-003 class)
+58 NN | section heading
+60-61 NN | visibility, sealed and naming style details (EXC-003 class)
+62 OL R68 | do not reorganize a file only to satisfy a preferred member order
+63 NN | immutability technique
+65 NN | section heading
+67 OL R47,R46 | never trade maintainability for speculative micro-optimization
+69 NN | section heading
+71 OL R159,R170 | changing `LangVersion` or the target framework requires approval
+73 NN | section heading
+75 OL R66,R174 | do not mix architecture refactoring into syntax modernization
+
+FILE .claude/skills/project-structure/references/baseline-packages.md | Private reference of project-structure.
+1 NN | header metadata
+3 NN | document heading
+5 OL R21,R42 | Resolve every version at install time through `add-dependency`.
+7-8 NN | table header
+9 MX R160,X21 | `FluentValidation.DependencyInjectionExtensions` ⟫ FluentValidation as decided library is oracle-linked (R160); the mandated DI-extensions package is X21.
+10 OL R160,R181 | sinks only when required
+11 OL R161 | `Swashbuckle.AspNetCore`
+12 OL R167 | with the first integration test
+13 OL R41 | only when mapping volume warrants it
+14-15 OL R162 | only when a real integration needs it
+16 OL R171 | only after versioning is adopted
+18 MX X9,R161 | Do not make the built-in `AddOpenApi()`/`MapOpenApi()` endpoint the template default ⟫ The package ban is X9; keeping Swashbuckle Swagger UI as the decided default is oracle-linked (R161).
+20 NN | section heading
+22 OL R93,R168 | production connection strings are never committed
+
+FILE .claude/skills/project-structure/references/solution-layout.md | Private reference of project-structure.
+1 NN | header metadata
+3 NN | document heading
+5 OL R11 | Create optional directories and projects only when needed
+7-8 NN | tree opening
+9-10 OL R12 | every .NET project, including backend test projects
+11-12 OL R12 | frontend workspace
+13 OL R11 | maintained documentation only
+14-25 NN | illustrative repository tree entries (EXC-017 class)
+27 NN | section heading
+29 OL R12 | never under `backend/`
+31 NN | section heading
+33 OL R164 | genuinely shared settings
+34 OL R18,R164 | Central Package Management; versions in one place
+35 MX X31,R159 | no RC/preview unless explicitly requested ⟫ No preview SDK without request is oracle-linked (R159); the global.json pin with roll-forward policy is the extra X31.
+36 NN | editorconfig scaffolding guidance (EXC-017 class)
+38 NN | section heading
+40 OL R93,R168 | local secret/config overrides
+42 NN | section heading
+44 OL R181,R165 | appear only when a concrete requirement exists
+
+FILE .claude/skills/project-structure/SKILL.md | Workflow skill; on invocation.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to owning policy
+12-16 NN | reference reading list
+18 NN | section heading
+20 OL R181,R11 | Do not scaffold optional infrastructure because it may be useful later.
+21 OL R158,R69 | conditional technologies only when the capability is actually needed
+22 OL R11 | create only the required top-level directories and repository files
+23 OL R120,R159 | on the approved .NET target
+24 MX R6,X11 | The project-graph hook asks for confirmation of every reference command ⟫ Layout-only and inward references are oracle-linked (R6); the per-command confirmation of reference changes is X11.
+25 OL R21,R42 | never copy stale versions from examples
+26 OL R11,R8,R12 | only useful ones
+27 OL R12 |
+28 OL R11 | no empty trees for hypothetical capabilities
+29 OL R168,R31,R93 | no Production credentials or Production migration automation
+30 OL R38,R204,R187 | Never report scaffolding as successful when the solution does not build.
+32 NN | section heading
+34 OL R170,R11 | a new production project or layer is Reserved
+35 NN | procedure step: identify responsibility
+36 OL R6,R8 | Add only the minimum references, preserving dependency direction.
+37 NN | procedure step: update shared configuration when necessary
+38 OL R38 | Build and test the affected solution.
+40 NN | section heading
+42-48 OL R174,R34,R38 | Avoid unrelated feature work.
+50 OL R174 | Do not force an established project to match this template when that gives no concrete value.
+52 NN | section heading
+54 DU R121,R125,R181,R170,R28,R165,R11 | list of patterns not introduced by default, restating owning rules
+56 NN | section heading
+58 DU R6,R158,R181,R38,R174,R168 | completion criteria restating owning rules
+DONE

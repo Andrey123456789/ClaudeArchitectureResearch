@@ -1,0 +1,70 @@
+# K0 batch 3: regions r116-r142 (protocol v1.2.1)
+# r116-r121 .claude/rules/common/security.md
+SD P:RULE-K0-0063 R:RULE-K0-0124 | S: production transport M: MUST both E: secure boundary provided by the deployment (both) T: none
+SD P:RULE-K0-0064 R:RULE-K0-0125 | S: certificate validation M: MUST_NOT both E: none in either T: none
+SD P:RULE-K0-0065 R:RULE-K0-0126 | S: sensitive logging M: MUST_NOT both E: concrete permitted need for PII (both) T: none
+SD P:RULE-K0-0066 R:RULE-K0-0127 | S: log payloads M: MUST_NOT both E: none in either T: none
+SD P:RULE-K0-0067 R:RULE-K0-0128 | S: security-sensitive checks M: DEFAULT both E: none in either T: none
+CX X:BF-K0-0104@49-49 | A required security control that cannot be configured correctly must not fall back to an insecure mode; prefer visible startup or configuration failure (reported as a categorical ban).
+SD P:RULE-K0-0068 R:RULE-K0-0129 X:BF-K0-0104 | S: required security controls M: MUST_NOT (P, R), X no modality E: none in any T: none
+# r122-r135 .claude/rules/frontend/angular.md
+SD P:RULE-K0-0174 R:RULE-K0-0130 | S: Angular APIs M: DEFAULT both E: integration/legacy requirement (both) T: new code
+CX X:BF-K0-0105@20-20 | Frontend structure stays feature-oriented: no application-wide technical buckets that spread a feature across directories, no empty architecture folders; code used by two components of one feature is not moved to shared (reported as a categorical ban).
+SD P:RULE-K0-0175 R:RULE-K0-0131 X:BF-K0-0105 | S: frontend structure M: MUST (P, R), X no modality E: none in any T: none
+SD P:RULE-K0-0176 R:RULE-K0-0132 | S: Angular components M: MUST both E: none in either T: none
+SD P:RULE-K0-0177 R:RULE-K0-0133 | S: frontend HTTP boundary M: MUST both E: none in either T: none
+SD P:RULE-K0-0178 R:RULE-K0-0134 | S: Angular interceptors M: DEFAULT both E: none in either T: new code
+SD P:RULE-K0-0179 R:RULE-K0-0135 | S: signals and RxJS M: DEFAULT both E: none in either T: none
+SD P:RULE-K0-0180 R:RULE-K0-0136 | S: frontend state M: DEFAULT both E: none in either T: none
+SD P:RULE-K0-0181 R:RULE-K0-0137 | S: RxJS subscriptions M: DEFAULT both E: R's 'when they express behavior clearly' is in the shared cited text L32 and not contradicted by P (F6) T: none
+SD P:RULE-K0-0182 R:RULE-K0-0138 | S: manual subscriptions M: MUST both E: none in either T: none
+SD P:RULE-K0-0183 R:RULE-K0-0139 | S: lazy loading M: DEFAULT both E: none in either T: none
+SD P:RULE-K0-0184 R:RULE-K0-0140 | S: frontend error handling M: MUST both E: none in either T: none
+SD P:RULE-K0-0185 R:RULE-K0-0141 | S: frontend forms and validation M: MUST both E: none in either T: none
+SD P:RULE-K0-0186 R:RULE-K0-0142 | S: cookie authentication M: MUST both E: none in either T: none
+SD P:RULE-K0-0187 R:RULE-K0-0143 | S: browser token storage M: MUST_NOT both E: none in either T: none
+# r136-r142 .claude/scripts/check-dependencies.cjs
+RD DIFFERENT_STRENGTH R:EXTRA-K0-0009 P:EXTRA-K0-0028 | same checker errors; R MUST NOT (manifest check error), P ENFORCED_ADVISORY.
+SPLIT R:RULE-K0-0146 | a: MediatR and AutoMapper get manifest-check notices that they require an approved decision. | b: Direct Polly gets a notice that it is an explicit exception whose reason must be documented.
+RD DIFFERENT_STRENGTH R:RULE-K0-0146#a P:RULE-K0-0198 | same checker notices; R REQUIRES_APPROVAL, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0146#b P:EXTRA-K0-0029 | same checker notice; R record REQUIRES_APPROVAL, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0147 P:RULE-K0-0199 | same checker notices; R MUST NOT by default, P ENFORCED_ADVISORY.
+SPLIT X:BF-K0-0117 | a@17-22: Deprecated NuGet packages (Microsoft.Extensions.Http.Polly, Polly.Extensions.Http, Serilog.Sinks.Elasticsearch, FluentValidation.AspNetCore) are reported as errors regardless of version. | b@28-28: npm packages @ngrx/*, @ngxs/*, axios, lodash, lodash-es, bootstrap, ngx-bootstrap, @ng-bootstrap/ng-bootstrap, tailwindcss and primeng are flagged as not added by default.
+RD OVERLAP X:BF-K0-0117#a P:EXTRA-K0-0028 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0117#a R:EXTRA-K0-0009 | same checker statement; no single merge target (convention).
+RD OVERLAP X:BF-K0-0117#b P:RULE-K0-0199 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0117#b R:RULE-K0-0147 | same checker statement; no single merge target (convention).
+SPLIT R:RULE-K0-0148 | a: Build/test tooling in runtime dependencies gets a notice that it belongs in devDependencies. | b: A package.json without an adjacent package-lock.json gets a notice to commit a consistent lockfile.
+SD P:RULE-K0-0200 R:RULE-K0-0148#a | S: npm build/test tooling M: ENFORCED_ADVISORY (P) = SHOULD manifest-check notice (R) (F7) E: none in either T: when the checker runs
+SD P:RULE-K0-0210 R:RULE-K0-0148#b | S: missing package-lock.json M: ENFORCED_ADVISORY (P) = SHOULD manifest-check notice (R) (F7) E: none in either T: when the checker runs
+SPLIT R:RULE-K0-0144 | a: Directory.Packages.props must set ManagePackageVersionsCentrally true (checker error). | b: Directory.Packages.props must exist at the repository root when .csproj files exist (checker error). | c: A PackageReference carrying a Version is an error. | d: A VersionOverride gets a notice that it needs a concrete, reported reason.
+RD DIFFERENT_STRENGTH R:RULE-K0-0144#a P:RULE-K0-0207 | same checker error; R MUST, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0144#b P:RULE-K0-0211 | same checker error; R MUST, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0144#c P:RULE-K0-0201 | same checker error; R MUST, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0144#d P:EXTRA-K0-0030 | same checker notice; R record MUST, P ENFORCED_ADVISORY.
+SPLIT X:BF-K0-0120 | a@123-125: A PackageReference carrying a Version is reported as an error; versions belong in Directory.Packages.props (reported as stricter than 'normally versionless'). | b@126-127: A VersionOverride gets a notice that it needs a concrete, reported reason.
+RD OVERLAP X:BF-K0-0120#a P:RULE-K0-0201 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0120#a R:RULE-K0-0144#c | same checker statement; no single merge target (convention).
+RD OVERLAP X:BF-K0-0120#b P:EXTRA-K0-0030 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0120#b R:RULE-K0-0144#d | same checker statement; no single merge target (convention).
+CX X:BF-K0-0121@133-156 | The manifest check infers layer roles from project-name suffixes; references from unrecognized projects skip direction checks and atypical test references produce only notices (reported accuracy limits).
+RD OVERLAP X:BF-K0-0121 P:RULE-K0-0203 | X reports that direction checks rely on project-name suffixes.
+SPLIT R:RULE-K0-0149 | a: A production project referencing a test project is an error. | b: A production project may reference only inward layers (Domain: none; Application: Domain; Infrastructure: Application, Domain; Api: Application, Infrastructure, Domain); other production references are errors.
+RD DIFFERENT_STRENGTH R:RULE-K0-0149#a P:RULE-K0-0202 | same checker error; R MUST, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0149#b P:RULE-K0-0203 | same checker error; R MUST, P ENFORCED_ADVISORY.
+SPLIT R:RULE-K0-0150 | a: A reference to a project that is not a recognized layer gets a notice that new production projects are Reserved. | b: A backend project name not following backend/<Name>.<Layer> gets a notice that new production projects are Reserved.
+RD DIFFERENT_STRENGTH R:RULE-K0-0150#a P:RULE-K0-0204 | same checker notice; R REQUIRES_APPROVAL, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0150#b P:RULE-K0-0206 | same checker notice; R REQUIRES_APPROVAL, P ENFORCED_ADVISORY.
+SD P:RULE-K0-0205 R:RULE-K0-0151 | S: atypical test project references M: ENFORCED_ADVISORY (P) = SHOULD manifest-check notice (R) (F7) E: none in either T: when the checker runs
+SPLIT X:BF-K0-0122 | a@167-170: Directory.Packages.props without ManagePackageVersionsCentrally=true is an error (reported: every props file must enable CPM locally). | b@176-179: Empty, floating or range PackageVersion values are errors and prerelease versions get a notice that they are allowed only when explicitly requested (reported: no explicit-request exception for floating/range versions).
+RD OVERLAP X:BF-K0-0122#a P:RULE-K0-0207 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0122#a R:RULE-K0-0144#a | same checker statement; no single merge target (convention).
+SPLIT R:RULE-K0-0145 | a: A PackageVersion with an empty, floating (*) or range version is an error and a prerelease gets a notice (allowed only when explicitly requested). | b: package.json dependency specs that are empty, *, latest, x or contain * are errors.
+RD DIFFERENT_STRENGTH R:RULE-K0-0145#a P:RULE-K0-0208 | same checker errors and notice; R MUST, P ENFORCED_ADVISORY.
+RD DIFFERENT_STRENGTH R:RULE-K0-0145#b P:RULE-K0-0209 | same checker errors; R record MUST, P ENFORCED_ADVISORY.
+RD OVERLAP X:BF-K0-0122#b P:RULE-K0-0208 | same checker statement; P and R differ in modality, no single merge target (convention).
+RD OVERLAP X:BF-K0-0122#b R:RULE-K0-0145#a | same checker statement; no single merge target (convention).
+SPLIT X:BF-K0-0123 | a@193-197: npm floating-version detection covers empty, *, latest, x and wildcard versions in dependencies, devDependencies and optionalDependencies (reported: other ranges and peerDependencies are missed). | b@206-208: Only the existence of package-lock.json next to package.json is checked (reported: no consistency or alternate package-manager context).
+RD OVERLAP X:BF-K0-0123#a P:RULE-K0-0209 | X reports detection gaps.
+RD OVERLAP X:BF-K0-0123#b P:RULE-K0-0210 | X reports that only lockfile existence is checked.
+REVIEWED r116-r142

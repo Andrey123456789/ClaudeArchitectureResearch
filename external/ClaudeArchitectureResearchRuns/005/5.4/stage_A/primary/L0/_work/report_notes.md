@@ -1,0 +1,14 @@
+## Candidate-specific notes (L0)
+
+### Instruction architecture observed
+- Stability-level model: rules under `.claude/rules/{0-core,1-architecture,2-technology,3-project}/`, each with a one-line header (`Level · Owns · Scope · Loads · Depends on`) and `paths` frontmatter. Always-loaded surface: `CLAUDE.md` plus two imports (`1-architecture/overview.md`, `3-project/decisions.md`). Workflow and knowledge skills under `.claude/skills/`; one agent (`code-reviewer`); maintainer map `.claude/INSTRUCTION_MAP.md` (not auto-loaded).
+- Executable enforcement (read as code, never executed): `.claude/hooks/claude-hook.mjs` registered in exec form for PreToolUse (pre-bash, fail-closed, onFailure block), PostToolUse/PostToolUseFailure (post-bash), PostToolUse edits (post-edit) and Stop. pre-bash blocks npm/pnpm/yarn peer-bypass flags and every `dotnet` project-reference command; post-bash/post-edit compare per-worktree manifest snapshots, route dependency and reference changes, run `manifest-checks.mjs` (central versions, VersionOverride, floating/prerelease versions, deny/review lists with 'Accepted' decision exceptions, npm tooling category, `.npmrc` bypass, outward references) and, after instruction edits, `.claude/tools/check-instructions.mjs`; Stop issues seed/migration/test/custom-settings reminders.
+- `CLAUDE.md` defines a normative vocabulary (must/must not = defect; default = deviation needs a concrete reason and must be reported; prefer/avoid = guidance; requires approval = Reserved). Modalities were assigned from that vocabulary and the clause wording.
+
+### Classification conventions applied
+- Restatements of oracle policies in rules and skills are ORACLE_LINKED; new outcome-restricting imperatives, including in knowledge skills, private references, hook/checker code and configuration assets (`.editorconfig`, `Directory.Build.props`, `.gitignore`), are EXTRA with the closest policy IDs; examples, permissive wording and investigation prompts (EXC-015 context) are NON_NORMATIVE with reasons; decision tables and check-by-reference lists are DUPLICATE unless an item has no owner clause (then MIXED with the item as EXTRA).
+- Instruction-system rules (level placement and neutrality, one owner per rule, split statements, map maintenance, checker invariants) are recorded as EXTRA with a repo/meta scope note; they constrain maintenance of the instruction system rather than product code.
+- Hook and checker behaviour that enforces an oracle policy is ORACLE_LINKED with ENFORCED/ENFORCED_ADVISORY modality; enforcement mechanisms without an oracle counterpart (fail-closed policy, blocking all reference commands, 'Accepted' exception mechanism, deny list, checker invariants) are EXTRA.
+
+### Open items
+- One LINK_UNCERTAIN constraint: destructive Git operations "clearly required by an approved workflow" (git-workflow) vs GOV-015. Listed in `ORPHAN_SWEEP_REPORT.md`; not resolved at Stage A.

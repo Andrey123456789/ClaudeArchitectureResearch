@@ -1,0 +1,68 @@
+# K1 — scripts lib.cjs and check-instructions.cjs (read as code, never executed)
+
+@@ output/template/.claude/scripts/lib.cjs ;; Shared helper module (no policy of its own).
+@scope hook and checker helpers
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-211 IM ;; Conformance comment; ignored directories; root resolution (launcher vs active root, worktrees, nested repositories); read-only Git calls; path helpers; text decoding that throws on undecodable input; directory walk; minimal XML reader that throws on malformed tags; finding formatting; exports.
+
+@@ output/template/.claude/scripts/check-instructions.cjs ;; Instruction-structure checker (instruction-change hooks, verify, template-maintenance).
+@scope repo/meta: check-instructions.cjs (instruction-change hooks, verify, template-maintenance)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-3 IM ;; Conformance comment; strict mode.
+5 NN ;; Descriptive comment.
+7-55 IM ;; Tables (Kinds, Scopes, rule scope directories, canonical globs, scope parents, Kind ranks, ENF targets, slot identities and bindings, required workflows/knowledge, forbidden skills, root and project-owned artifacts, required hooks, token budget).
+57 NN ;; Section comment.
+59-147 IM ;; File collection, frontmatter parsing, header and Conforms parsing, expected Kind per location, artifact parsing.
+149 NN ;; Section comment.
+151-165 EX [x.ci-headers]
+167-189 EX [x.ci-rules]
+191-209 EX [x.ci-imports]
+211-218 IM ;; Skill index.
+220-243 EX [x.ci-skills]
+245-254 OL [wf010.ci-agent]
+255-256 EX [x.ci-agent-thin]
+257 IM ;; Closing brace.
+259 NN ;; Section comment.
+261-280 IM ;; Reference resolution helper.
+281-285 DU [x.ci-conformance-direction] ;; Comment describing the routing vs conformance classification implemented below. ;; must follow
+286-348 EX [x.ci-conformance-direction]
+350-381 IM ;; Scope coverage and cycle-detection helpers (used at 787-788).
+383 NN ;; Section comment.
+385-396 IM ;; Owner-path pattern and capability-permission helper.
+398-433 EX [x.ci-enf-conformance]
+435 NN ;; Section comment.
+437-463 IM ;; Table, manifest-field and binds parsing helpers.
+465-488 EX [x.ci-register-selection]
+490-502 IM ;; Contract parsing.
+503-520 EX [x.ci-binds]
+522-569 EX [x.ci-capabilities]
+571-643 EX [x.ci-modules]
+645-647 IM ;; Regex escape helper.
+649-663 EX [x.ci-leaks]
+665 NN ;; Section comment.
+667-681 EX [x.ci-map]
+683-740 EX [x.ci-settings]
+742-747 EX [x.ci-vocabulary]
+749-786 IM ;; Always-loaded token estimate, dormant facet-role paths, check orchestration.
+787-788 EX [x.ci-conformance-direction]
+789-793 IM ;; Remaining checks and token estimate.
+794 EX [x.ci-budget]
+795-809 IM ;; Return value, exports and CLI (exit 1 on errors).
+
+C x.ci-headers EX - ENFORCED_ADVISORY ;; Every instruction artifact carries the first-line header 'Kind | Scope | Capability | Loading' with a known Kind allowed at its location, a known Scope and a well-formed Capability; Level headers are not used; project-owned files only warn. ;; = ;; SPECIFICATION.md is exempt. ;; Instruction-system structure invariant.
+C x.ci-rules EX - ENFORCED_ADVISORY ;; Rules live only in .claude/rules/<scope>/<topic>.md with the header Scope equal to the directory and non-empty paths frontmatter including the scope's canonical glob. ;; = ;; Delivery rules declare their own globs. ;; Standard-placement invariant.
+C x.ci-imports EX - ENFORCED_ADVISORY ;; CLAUDE.md imports the decision register; imports must resolve and only OP/DEC artifacts may be imported; only CLAUDE.md contains @ imports. ;; = ;; none ;; Always-loaded surface invariant.
+C x.ci-skills EX - ENFORCED_ADVISORY ;; Every skill directory has a SKILL.md whose frontmatter name equals the directory and which has a description (warning above 450 characters); no standalone serilog/resilience skills; template-maintenance is user-only; required workflows (WF) and knowledge skills (KNW) exist with the right Kind. ;; = ;; none ;; Skill-structure invariants.
+C wf010.ci-agent OL WF-010 ENFORCED_ADVISORY ;; The code-reviewer agent must exist, disallow Write and Edit and delegate to the code-review workflow. ;; = ;; none ;;
+C x.ci-agent-thin EX WF-010 ENFORCED_ADVISORY ;; The agent body above 15 non-blank lines produces a warning: keep it a thin delegate. ;; = ;; none ;; Not in the oracle.
+C x.ci-conformance-direction EX - ENFORCED_ADVISORY ;; Backtick references must resolve (unknown skills, unresolved or ambiguous references are errors); skill-private references are used only within their skill; non-routing references follow WF → KNW → STD → DEC → OP; a standard depends on another standard only when that scope loads reliably; the conformance graph is acyclic; pointers to dormant facet roles are allowed. ;; = ;; Routing pointers (skills, agents, SKILL.md files) and enforcement pointers are not dependencies. ;; Conformance-direction invariant.
+C x.ci-enf-conformance EX - ENFORCED_ADVISORY ;; Every ENF artifact declares 'Conforms:' (owners or —) on the line after its header; targets exist, have valid headers and are STD/DEC; capability facets conform only to neutral owners, their own module or the bound frame; every policy owner cited in the file must be declared. ;; = ;; Project-owned files only warn. ;; ENF-conformance invariant.
+C x.ci-register-selection EX ARC-020 ENFORCED_ADVISORY ;; The decision register carries slot-selection block markers with exactly one selection row per slot. ;; = ;; none ;; Capability-selection format invariant.
+C x.ci-binds EX - ENFORCED_ADVISORY ;; Slot contracts and module manifests declare '- Binds:'; only leaves bind and only to the architecture frame; required leaf → frame bindings must be present with a stated role or reason; a slot cannot bind itself. ;; = ;; none ;; Capability-binding invariant.
+C x.ci-capabilities EX ARC-020 ENFORCED_ADVISORY ;; Only the agreed slots exist; each has a contract with the right slot type and facet roles; a selection is recorded per slot; required slots cannot be none; at most one implementation is present and it must be the selected one with a module directory; a none selection has no implementation, knowledge facet or facet-role files; module binds match the contract; artifacts declaring a capability are listed facets of a selected module. ;; = ;; none ;; Capability-composition invariant.
+C x.ci-modules EX ARC-020 ENFORCED_ADVISORY ;; Module manifests exist with matching Capability, Slot, Implementation and Names; facet files exist with headers matching the manifest; the DEC facet is the register; non-knowledge facet file names are role-based; the module provides exactly the contract's facet roles (KNW = the register's knowledge facet); every contract item has a provider, and a 'missing' item requires a Decision Request before selection. ;; = ;; none ;; Module-conformance invariant.
+C x.ci-leaks EX - ENFORCED_ADVISORY ;; No artifact outside the module's facets and manifest, the map, the register's selection block and decision log and project-owned files names the selected implementation (its Names tokens); refer to the slot or facet role instead. ;; = ;; none ;; Implementation-neutrality invariant.
+C x.ci-map EX - ENFORCED_ADVISORY ;; .claude/MAP.md exists, lists every artifact, lists no missing artifact and has a capability view per slot. ;; = ;; none ;; Map-maintenance invariant.
+C x.ci-settings EX - ENFORCED_ADVISORY ;; settings.json registers only PreToolUse, PostToolUse, PostToolUseFailure and Stop, each with matchers covering the required tools and exec-form command hooks (node + [${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs, event]) handled by the dispatcher, no variable expansion, a 1-600 s timeout; the PreToolUse policy hook fails closed and advisory hooks must not block on failure. ;; = ;; none ;; Hook-configuration invariant.
+C x.ci-vocabulary EX - ENFORCED_ADVISORY ;; 'normally' in OP/DEC/STD normative text produces a warning; use must/default/prefer. ;; = ;; none ;; Vocabulary invariant.
+C x.ci-budget EX - ENFORCED_ADVISORY ;; An always-loaded surface above about 6000 tokens (CLAUDE.md, imports, model-invocable skill and agent descriptions) produces a warning; target about 5k. ;; = ;; none ;; Context-budget invariant.

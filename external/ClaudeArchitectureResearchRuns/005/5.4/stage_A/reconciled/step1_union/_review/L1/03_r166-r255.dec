@@ -1,0 +1,182 @@
+# L1 batch 3: regions r166-r255 (protocol v1.2.1)
+# r166-r168 1-architecture/frame/boundaries.md
+SPLIT X:BF-L1-0043 | a@38-38: Application must not depend on IGenericRepository<T> or another generic CRUD contract; a generic repository base may exist only inside Infrastructure to remove real duplication. | b@40-40: Repositories in one use case share the scoped Unit of Work and persistence context; inject repositories explicitly; IUnitOfWork must not become a repository container or service locator.
+SD P:RULE-L1-0147 R:RULE-L1-0131 X:BF-L1-0043#a | S: generic repositories M: MUST_NOT in P and R, X no modality E: Infrastructure-only base (all) T: none
+SD P:RULE-L1-0149 R:RULE-L1-0133 X:BF-L1-0043#b | S: repositories and Unit of Work M: MUST in P and R, X no modality E: none in any T: none
+SPLIT R:RULE-L1-0132 | a: IUnitOfWork (defined in Application) is the normal commit boundary of a use case; repositories stage changes and Application Services decide when to commit. | b: The IUnitOfWork implementation delegates to AppDbContext.SaveChangesAsync and staged changes are the shared context's tracked changes.
+SD P:RULE-L1-0148 R:RULE-L1-0132#a | S: use-case commits M: DEFAULT both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-L1-0132#b P:RULE-L1-0183 | same statement; R reports DEFAULT (record level), P DEFINITION.
+SD P:RULE-L1-0150 R:RULE-L1-0134 | S: transactions M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0151 R:RULE-L1-0008 | S: backend test project references M: MUST_NOT both E: none in either T: none
+# r169-r174 1-architecture/roles.md
+CX X:BF-L1-0044 | Instructions outside the selected architecture frame use the role vocabulary instead of frame-specific layer names.
+SD P:EXTRA-L1-0018 X:BF-L1-0044 | S: instructions outside the frame M: P MUST, X no modality E: none in either T: none
+RD COMPOUND_PART R:EXTRA-L1-0002 P:EXTRA-L1-0018 | R: the full leak rule.
+SD P:RULE-L1-0128 R:RULE-L1-0135 | S: backend layers M: MUST both E: none in either T: none
+SD P:RULE-L1-0129 R:RULE-L1-0136 | S: use-case outcomes M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0130 R:RULE-L1-0137 | S: caching boundaries M: MUST both E: none in either T: none
+SD P:RULE-L1-0131 R:RULE-L1-0138 | S: outbound HTTP boundaries M: MUST both E: none in either T: none
+SD P:RULE-L1-0132 R:RULE-L1-0139 | S: API versioning M: MUST_NOT both E: 'when practical' in the shared cited text (F6) T: none
+# r175-r196 2-technology backend libraries/platform/testing
+SD P:RULE-L1-0152 R:RULE-L1-0140 | S: validation M: MUST both E: none in either T: none
+SD P:RULE-L1-0153 R:RULE-L1-0141 | S: API documentation M: MUST both E: none in either T: none
+SD P:RULE-L1-0154 R:RULE-L1-0142 | S: Swagger UI exposure M: DEFAULT both E: Swagger decision (both) T: none
+SD P:RULE-L1-0155 R:RULE-L1-0143 | S: Serilog configuration M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0156 R:RULE-L1-0144 | S: production containers M: DEFAULT both E: none in either T: none
+SPLIT R:RULE-L1-0145 | a: The entry-point mechanism is ASP.NET Core Controllers; do not create Minimal API endpoint groups unless explicitly requested. | b: Controller classes live in a Controllers/ folder of the entry-point project.
+SD P:RULE-L1-0157 R:RULE-L1-0145#a | S: Api entry points M: MUST_NOT (P) = MUST with negation (R) (F7) E: explicit request (both) T: none
+RD DIFFERENT_STRENGTH R:RULE-L1-0145#b P:EXTRA-L1-0019 | same placement; R reports MUST (record level), P DEFAULT.
+CX X:BF-L1-0046 | Controller classes live in a Controllers/ folder of the entry-point project.
+RD OVERLAP X:BF-L1-0046 P:EXTRA-L1-0019 | same statement; no single merge target (convention).
+RD OVERLAP X:BF-L1-0046 R:RULE-L1-0145#b | same statement; no single merge target (convention).
+RD OVERLAP R:RULE-L1-0135 P:RULE-L1-0158 | P (DEFINITION): the transport result types.
+RD OVERLAP R:RULE-L1-0138 P:RULE-L1-0159 | P (DEFINITION): remote transport responses.
+RD DIFFERENT_LAYER R:RULE-L1-0077 P:RULE-L1-0160 | P (Level 2): the ASP.NET Core binding of the problem-details contract.
+RD DIFFERENT_LAYER R:RULE-L1-0082 P:RULE-L1-0161 | P (Level 2, MUST): IExceptionHandler registration.
+RD OVERLAP R:RULE-L1-0086 P:RULE-L1-0162 | P (DEFINITION): how client cancellation surfaces.
+RD OVERLAP R:RULE-L1-0049 P:RULE-L1-0163 | P (DEFINITION): sync-over-async and awaitable types.
+RD OVERLAP R:RULE-L1-0050 P:RULE-L1-0164 | P (DEFINITION): cancellation tokens.
+CX X:BF-L1-0047 | The time abstraction is TimeProvider (TimeProvider.System injected; tests use FakeTimeProvider).
+SD P:RULE-L1-0165 X:BF-L1-0047 | S: time abstraction binding M: P DEFAULT, X no modality E: none in either T: none
+RD DIFFERENT_LAYER R:RULE-L1-0051 P:RULE-L1-0165 | P (Level 2): the TimeProvider binding.
+RD OVERLAP R:RULE-L1-0052 P:RULE-L1-0166 | P (DEFINITION): factory-managed client.
+RD OVERLAP R:RULE-L1-0065 P:RULE-L1-0167 | P (DEFINITION): logging abstraction.
+RD OVERLAP R:RULE-L1-0062 P:RULE-L1-0168 | P (DEFINITION): typed options.
+RD OVERLAP R:RULE-L1-0100 P:RULE-L1-0169 | P (DEFINITION): established authentication facilities.
+RD OVERLAP R:RULE-L1-0107 P:RULE-L1-0170 | P (DEFINITION): payload-protection API.
+CX X:BF-L1-0048 | Local development secrets use dotnet user-secrets.
+SD P:RULE-L1-0171 X:BF-L1-0048 | S: local development secrets M: P DEFAULT, X no modality E: none in either T: none
+RD DIFFERENT_LAYER R:RULE-L1-0094 P:RULE-L1-0171 | P (Level 2): the user-secrets binding.
+SPLIT R:RULE-L1-0022 | a: NUnit is the default .NET test framework; in an established project that deliberately uses another framework follow that convention; no second test framework without a concrete reason. | b: xunit, MSTest and TUnit packages are reported as requiring approval and to be removed unless approved (the hook escalates 'concrete reason' to approval).
+SD P:RULE-L1-0172 R:RULE-L1-0022#a | S: .NET test framework M: DEFAULT both E: established convention (both) T: none
+SPLIT X:BF-L1-0049 | a@16-16: An explicit case is an NUnit [TestCase] row; TestCaseSource counts as generated case machinery. | b@17-17: The integration-test host is WebApplicationFactory<Program>, created in [OneTimeSetUp] and disposed in [OneTimeTearDown].
+SD P:RULE-L1-0173 X:BF-L1-0049#a | S: NUnit case binding M: P DEFINITION, X no modality E: none in either T: none
+RD COMPOUND_PART X:BF-L1-0049#b P:EXTRA-L1-0020 | P: the lifecycle element.
+RD COMPOUND_PART X:BF-L1-0049#b P:RULE-L1-0174 | P: the host-type element.
+RD DIFFERENT_LAYER R:RULE-L1-0115 P:RULE-L1-0173 | P (Level 2): the NUnit binding of explicit cases.
+RD COMPOUND_PART R:RULE-L1-0116 P:EXTRA-L1-0020 | R includes the lifecycle binding parenthetically.
+# r197-r208 2-technology frontend/persistence
+SD P:RULE-L1-0175 R:RULE-L1-0146 | S: frontend M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0176 R:RULE-L1-0147 | S: frontend state M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0177 R:RULE-L1-0148 | S: frontend interceptors M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0178 R:RULE-L1-0149 | S: frontend RxJS M: DEFAULT both E: none in either T: none
+SD P:RULE-L1-0179 R:RULE-L1-0150 | S: frontend subscriptions M: MUST both E: none in either T: none
+SD P:RULE-L1-0180 R:RULE-L1-0151 | S: persistence implementation M: MUST both E: none in either T: none
+SD P:RULE-L1-0181 R:RULE-L1-0152 | S: persistence-access contracts M: MUST_NOT both E: none in either T: none
+RD OVERLAP R:RULE-L1-0133 P:RULE-L1-0182 | P (DEFINITION): the scoped AppDbContext and persistence-implementation types.
+RD OVERLAP R:RULE-L1-0029 P:RULE-L1-0184 | P: InMemory/SQLite do not establish SQL Server behaviour.
+SPLIT X:BF-L1-0050 | a@10-10: For an empty Development database maintain a small deterministic representative seed dataset; no exhaustive combinations or random bulk data. | b@12-12: Keep substantial seed construction in a dedicated internal DbSeeder exposed through a narrow initialization extension. | c@15-15: When representative data exists (checked through anchor entities) leave it unchanged; the seeder never synchronizes, repairs, upgrades, overwrites or recreates; developers recreate explicitly.
+SD P:RULE-L1-0185 R:RULE-L1-0153 X:BF-L1-0050#a | S: Development seed data M: DEFAULT in P and R, X no modality E: none in any T: none
+SD P:RULE-L1-0187 R:RULE-L1-0155 X:BF-L1-0050#b | S: seed construction M: MUST in P and R, X no modality E: none in any T: none
+SD P:RULE-L1-0190 X:BF-L1-0050#c | S: existing Development data M: P MUST_NOT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-L1-0032 P:RULE-L1-0190 | R: existing data left unchanged; recreate explicitly.
+SD P:RULE-L1-0186 R:RULE-L1-0154 | S: Development seeding M: MUST both E: none in either T: none
+SD P:RULE-L1-0188 R:RULE-L1-0156 | S: automatic seeding M: MUST_NOT both E: none in either T: none
+SD P:RULE-L1-0189 R:RULE-L1-0157 | S: seeder and schema M: MUST_NOT both E: none in either T: none
+SD P:RULE-L1-0191 R:RULE-L1-0037 | S: seed entities M: MUST both E: none in either T: none
+# r209-r223 3-project
+SD P:RULE-L1-0037 R:RULE-L1-0158 | S: approved technologies M: MUST (P) = MUST NOT silently select an alternative (R) (F7) E: approved replacement (R; Reserved in both) T: none
+SPLIT X:BF-L1-0051 | a@14-14: Backend platform: .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core, ASP.NET Core Controllers; a preview/RC move requires approval. | b@16-16: Swashbuckle Swagger UI is the Development documentation and manual-testing surface at /swagger; exposure outside Development only when deployment requirements justify it.
+SD P:RULE-L1-0038 R:RULE-L1-0159 X:BF-L1-0051#a | S: backend platform M: DECIDED in P and R, X no modality E: approval for preview/RC (all) T: none
+SD P:RULE-L1-0040 R:RULE-L1-0161 X:BF-L1-0051#b | S: API documentation surface M: DECIDED in P and R, X no modality E: deployment requirements (all) T: none
+SD P:RULE-L1-0039 R:RULE-L1-0160 | S: validation and logging libraries M: DECIDED both E: none in either T: none
+SPLIT R:RULE-L1-0041 | a: Manual mapping for simple cases; Mapster (+ Mapster.DependencyInjection) is the approved mapping library when mapping volume warrants it. | b: Another mapping framework (AutoMapper) is a Reserved library addition reported as requiring approval.
+RD COMPOUND_PART P:RULE-L1-0041 R:RULE-L1-0041#a | P adds the resilience-package element.
+RD COMPOUND_PART P:RULE-L1-0041 R:RULE-L1-0162 | P adds the mapping element.
+SD P:RULE-L1-0042 R:RULE-L1-0163 | S: solution format M: DEFAULT both E: external tool or project requirement (both) T: none
+SD P:RULE-L1-0043 R:RULE-L1-0164 | S: .NET build configuration M: DEFAULT both E: none in either T: none
+RD COMPOUND_PART R:RULE-L1-0012 P:RULE-L1-0044 | R adds frontend tests inside the workspace.
+RD OVERLAP R:RULE-L1-0009 P:RULE-L1-0044 | P: no top-level tests directory.
+SD P:RULE-L1-0045 R:RULE-L1-0165 | S: Docker/container artifacts M: MUST_NOT both E: none in either T: none
+SPLIT X:BF-L1-0052 | a@28-28: Static composition: each required slot has exactly one selected implementation, the optional slot zero or one; only selected modules ship. | b@33-33: The default string comparison is the database default collation; relying on it for observable behavior requires approval.
+SD P:EXTRA-L1-0017 X:BF-L1-0052#a | S: capability composition M: P MUST, X no modality E: none in either T: none
+RD COMPOUND_PART R:EXTRA-L1-0013 P:EXTRA-L1-0017 | R adds the four named slots and selection resolution.
+SD P:RULE-L1-0047 X:BF-L1-0052#b | S: default string comparison M: P REQUIRES_APPROVAL, X no modality E: none in either T: none
+RD COMPOUND_PART R:RULE-L1-0020 P:RULE-L1-0047 | P: the default-collation element.
+RD COMPOUND_PART P:RULE-L1-0046 R:RULE-L1-0166 | P adds the declared migration and seeding properties.
+RD OVERLAP R:EXTRA-L1-0006#a P:RULE-L1-0046 | R: declared persistence properties.
+SD P:RULE-L1-0048 R:RULE-L1-0167 | S: backend testing stack M: DECIDED both E: Testcontainers conditional (both) T: none
+SD P:RULE-L1-0192 R:RULE-L1-0168 | S: Development configuration M: DEFAULT both E: none in either T: none
+CX X:BF-L1-0053 | Current stable Angular is the latest release supported by the selected Node.js environment at scaffolding time (reported: this may allow an older Angular instead of upgrading Node).
+SD P:RULE-L1-0049 X:BF-L1-0053 | S: frontend stack M: P DECIDED, X no modality E: zoneless when supported (P) T: at scaffolding
+RD DETAIL_DIFFERENCE R:RULE-L1-0023 P:RULE-L1-0049 | P ties 'current stable' to the selected Node.js environment.
+RD COMPOUND_PART R:RULE-L1-0028 P:RULE-L1-0050 | R adds the manifest-hook flag.
+SD P:RULE-L1-0051 R:RULE-L1-0026 | S: frontend E2E M: DEFAULT both E: none in either T: when E2E is required
+CX X:BF-L1-0054 | Package versions live only in Directory.Packages.props; project PackageReference entries are versionless and never duplicate a central version.
+SD R:RULE-L1-0018#a X:BF-L1-0054 | S: NuGet CPM M: R MUST, X no modality E: none in either T: none
+RD COMPOUND_PART P:RULE-L1-0193 R:RULE-L1-0018#a | P adds narrow placement.
+RD COMPOUND_PART P:RULE-L1-0193 R:RULE-L1-0018#c | P adds CPM versionless references.
+RD COMPOUND_PART P:RULE-L1-0194 R:RULE-L1-0169 | P adds committing the manifests.
+RD COMPOUND_PART P:RULE-L1-0194 R:UNCERTAIN-L1-0001 | P adds npm, lockfile consistency and devDependencies.
+# r224-r243 scripts and settings
+CX X:BF-L1-0055 | The architecture check reports a violation whenever a top-level 'tests' path exists (file or directory).
+RD OVERLAP X:BF-L1-0055 P:RULE-L1-0207 | P: a top-level tests/ directory is a violation.
+CX X:BF-L1-0056 | Projects whose names match no frame role are only warned about and skipped in reference checks.
+RD COMPOUND_PART P:EXTRA-L1-0033 X:BF-L1-0056 | P: all three warning cases.
+CX X:BF-L1-0057 | Inner-role checks match direct framework references, implying SDKs and package-name prefixes (reported overmatch of neutral APIs and blind spots for transitive or imported references).
+RD OVERLAP X:BF-L1-0057 P:RULE-L1-0210 | P: shared-framework prohibition.
+RD OVERLAP X:BF-L1-0057 P:RULE-L1-0211 | P: EF Core package prohibition.
+CX X:BF-L1-0070 | Every artifact needs a header starting with '> Level: ' with a known Level and Owns and Loading fields; a 'Kind:' field is a failure.
+RD COMPOUND_PART X:BF-L1-0070 P:EXTRA-L1-0014 | X adds the 'Kind:' prohibition.
+CX X:BF-L1-0071 | The checker allows only the four agreed slot directories, requires a selected implementation for required slots and requires implementation directories to equal the selection (no stored alternatives).
+RD COMPOUND_PART R:EXTRA-L1-0013 X:BF-L1-0071 | R: the composition rule the checker enforces.
+RD OVERLAP X:BF-L1-0071 P:EXTRA-L1-0017 | P: static composition.
+RD OVERLAP X:BF-L1-0071 P:EXTRA-L1-0013 | P: only four slots.
+RD OVERLAP R:EXTRA-L1-0001 P:EXTRA-L1-0059 | P: manifest and facet checks.
+CX X:BF-L1-0072 | A module's binds must be 'none' or '<frame> — <reason>' with a minimum reason length, and binds are required when module content uses frame-specific vocabulary or the contract requires them.
+RD OVERLAP X:BF-L1-0072 P:EXTRA-L1-0043 | P: persistence declares binds.
+RD OVERLAP X:BF-L1-0072 R:EXTRA-L1-0003 | R: binds declarations for non-role bindings.
+RD COMPOUND_PART R:EXTRA-L1-0013 P:EXTRA-L1-0060 | P: Capability files belong to a selected module manifest.
+RD OVERLAP R:EXTRA-L1-0012#a P:EXTRA-L1-0061 | P: rules in level directories with paths and Capability.
+CX X:BF-L1-0073 | A rule may reference only same-or-more-stable artifacts; the only exempt reverse reference is a narrowly formatted 'Framework binding: `<slot>.<facet>`' pointer.
+RD COMPOUND_PART X:BF-L1-0073 P:EXTRA-L1-0010 | X adds the binding-pointer exemption syntax.
+RD OVERLAP R:EXTRA-L1-0013 P:EXTRA-L1-0063 | P: facet references resolve to selected modules.
+SPLIT R:EXTRA-L1-0015 | a: The required workflow skills, shared knowledge skills and each selected module's knowledge skill exist; frontmatter name equals the directory with a description; template-maintenance is user-only and every other skill model-invocable. | b: Named skill/agent references and .claude path references resolve. | c: Skill-private references are used only by their owning skill.
+SD P:EXTRA-L1-0058 R:EXTRA-L1-0015#a | S: skill inventory M: ENFORCED (P) = checker-enforced MUST (R) (F7) E: none in either T: when the checker runs
+SD P:EXTRA-L1-0064 R:EXTRA-L1-0015#b | S: instruction references M: ENFORCED (P) = checker-enforced MUST (R) (F7) E: none in either T: when the checker runs
+SPLIT X:BF-L1-0074 | a@479-484: Skill frontmatter names match directories with descriptions; template-maintenance is user-only and other skills stay model-invocable. | b@486-490: The code-reviewer agent must exist and disallow Write and Edit.
+RD COMPOUND_PART P:EXTRA-L1-0058 X:BF-L1-0074#a | P adds the skill inventory.
+RD COMPOUND_PART P:RULE-L1-0247 X:BF-L1-0074#b | P adds delegation to the code-review skill.
+RD DIFFERENT_LAYER R:RULE-L1-0001 P:RULE-L1-0247 | P: the checker verifies the agent's deny list.
+RD DIFFERENT_LAYER R:RULE-L1-0002 P:RULE-L1-0247 | P: the checker verifies delegation to the code-review skill.
+SPLIT X:BF-L1-0075 | a@514-523: Skill-private references may be used only by their owning skill (the map may list them). | b@525-530: The instruction map must list every artifact and must not be imported by CLAUDE.md.
+SD P:EXTRA-L1-0065 R:EXTRA-L1-0015#c X:BF-L1-0075#a | S: skill-private references M: ENFORCED (P) = checker-enforced MUST (R) (F7), X no modality E: map listing (all) T: when the checker runs
+SD P:EXTRA-L1-0066 X:BF-L1-0075#b | S: instruction map M: P ENFORCED, X no modality E: none in either T: when the checker runs
+RD COMPOUND_PART P:EXTRA-L1-0066 R:EXTRA-L1-0012#e | P adds that the map is not imported by CLAUDE.md.
+CX X:BF-L1-0076 | Hooks must use exec form (bare command, script argument under ${CLAUDE_PROJECT_DIR}/.claude/hooks, no expansion) with numeric timeouts; only PreToolUse sets onFailure block; PreToolUse, PostToolUse and PostToolUseFailure must cover the shell (and edit) tools and a Stop hook must exist.
+SD P:EXTRA-L1-0067 X:BF-L1-0076 | S: hook registrations M: P ENFORCED, X no modality E: none in either T: when the checker runs
+RD COMPOUND_PART P:EXTRA-L1-0067 R:EXTRA-L1-0014 | P adds timeouts and coverage requirements.
+CX X:BF-L1-0078 | Bash/PowerShell calls run the pre-shell hook through node with a 15-second timeout and onFailure block (fail closed).
+RD COMPOUND_PART R:EXTRA-L1-0014 X:BF-L1-0078 | R: the full hook registration rule.
+RD OVERLAP X:BF-L1-0078 P:EXTRA-L1-0022 | P: the gate fails closed.
+# r244-r255 add-dependency/SKILL.md
+RD OVERLAP R:RULE-L1-0069 P:RULE-L1-0248 | P: state the concrete requirement.
+RD OVERLAP R:RULE-L1-0158 P:RULE-L1-0248 | P: use the approved technology.
+RD COMPOUND_PART R:RULE-L1-0158 P:RULE-L1-0249 | P: the replacement-is-Reserved element.
+RD OVERLAP R:RULE-L1-0069 P:RULE-L1-0250 | P: conditional technologies only when needed.
+SPLIT X:BF-L1-0079 | a@16-16: Mapping uses Mapster with Mapster.DependencyInjection. | b@17-17: Microsoft.Extensions.Http.Resilience / Microsoft.Extensions.Resilience are the resilience packages when resilience is required; the deprecated Polly integrations are never added.
+SD P:RULE-L1-0251 X:BF-L1-0079#a | S: mapping package M: P DEFAULT, X no modality E: none in either T: when mapping is needed
+RD COMPOUND_PART X:BF-L1-0079#b P:EXTRA-L1-0068 | P: the deprecated-integration element.
+RD COMPOUND_PART X:BF-L1-0079#b P:RULE-L1-0252 | P: the resilience-package element.
+RD OVERLAP R:RULE-L1-0041#a P:RULE-L1-0251 | R: Mapster is the approved mapping library.
+RD COMPOUND_PART R:RULE-L1-0040 P:RULE-L1-0252 | R adds the hook's approval flag for Polly.
+RD OVERLAP R:EXTRA-L1-0009 P:EXTRA-L1-0068 | R: deny list includes these integrations.
+SD P:RULE-L1-0253 R:RULE-L1-0171 | S: API versioning packages M: DEFAULT both E: none in either T: once versioning is adopted
+RD OVERLAP R:RULE-L1-0042 P:RULE-L1-0254 | P: latest stable compatible version from the registry.
+RD DETAIL_DIFFERENCE R:RULE-L1-0042 P:RULE-L1-0255 | exception scope differs: R allows prerelease on request but never floating; P allows both on explicit request.
+SPLIT R:RULE-L1-0172 | a: Before installing check whether the exact package/version is deprecated. | b: Check known vulnerability information (dotnet package list --vulnerable --include-transitive, the frontend audit command). | c: Verify the exact selected version's license from official registry metadata (and upstream when necessary). | d: Permissive licenses (MIT, Apache-2.0, BSD) are acceptable without approval; being free to download does not make a package acceptable.
+SD P:RULE-L1-0256 R:RULE-L1-0172#a | S: dependency due diligence M: MUST both E: none in either T: before installing
+SD P:RULE-L1-0257 R:RULE-L1-0172#b | S: dependency due diligence M: MUST both E: none in either T: before installing
+SD P:RULE-L1-0258 R:RULE-L1-0172#c | S: dependency licenses M: MUST both E: none in either T: before installing
+RD DIFFERENT_STRENGTH R:RULE-L1-0172#d P:RULE-L1-0259 | same license statement; R reports MUST (record level), P ALLOWED.
+SPLIT R:RULE-L1-0173 | a: Do not install automatically when a package requires payment or a commercial license, or its license has material obligations or cannot be confidently classified; present the concern and reasonable alternatives (say so when none exists) and never substitute silently. | b: Make no legal conclusions beyond published license information.
+SD P:RULE-L1-0260 R:RULE-L1-0173#a | S: paid or restrictive-license dependencies M: REQUIRES_APPROVAL both E: user approval (R) T: none
+RD DIFFERENT_STRENGTH R:RULE-L1-0173#b P:EXTRA-L1-0069 | same statement; R reports REQUIRES_APPROVAL (record level), P MUST_NOT.
+RD OVERLAP R:RULE-L1-0018#a P:RULE-L1-0261 | P: NuGet/npm placement per package-management.
+RD COMPOUND_PART R:RULE-L1-0043 P:RULE-L1-0262 | R adds the PreToolUse ask.
+RD EXAMPLE_GENERAL R:RULE-L1-0174 P:RULE-L1-0263 | P: no unrelated upgrades after scanner findings.
+SD P:EXTRA-L1-0070 R:EXTRA-L1-0016 | S: unused dependencies in the current change M: MUST both E: safe to verify; unrelated cleanup excluded (both) T: during the change
+RD EXAMPLE_GENERAL R:RULE-L1-0174 P:RULE-L1-0264 | P: no unrelated dependency cleanup.
+CX X:BF-L1-0080 | Report package, version, license, vulnerability/deprecation result, target project and approvals obtained or still pending.
+SD P:EXTRA-L1-0071 R:EXTRA-L1-0017 X:BF-L1-0080 | S: add-dependency report M: MUST in P and R, X no modality E: none in any T: none
+REVIEWED r166-r255

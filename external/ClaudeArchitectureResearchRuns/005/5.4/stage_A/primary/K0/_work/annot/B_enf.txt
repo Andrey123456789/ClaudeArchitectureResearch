@@ -1,0 +1,124 @@
+# K0 — executable enforcement: settings.json, hook.cjs, repo.cjs, check-dependencies.cjs (read as code, never executed)
+
+@@ output/template/.claude/settings.json ;; Hook wiring (exec form); repo/meta.
+@scope hook configuration (session)
+1-11 IM ;; Hook wiring: PreToolUse Bash|PowerShell runs hook.cjs pre-tool-use in exec form (node + args).
+12 EX [x.pre-fail-closed]
+13-67 IM ;; PostToolUse (Edit|Write|MultiEdit|NotebookEdit and Bash|PowerShell), PostToolUseFailure (Bash|PowerShell) and Stop wiring of hook.cjs in exec form.
+
+@@ output/template/.claude/hooks/hook.cjs ;; Hook dispatcher (pre-command gates, post-change validation, stop reminders).
+@scope PreToolUse Bash/PowerShell (hook.cjs pre-tool-use)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+2-9 DU [x.pre-fail-closed] ;; Header comment describing exec-form launch, worktree resolution, fail-closed pre-tool-use and feedback output; behaviour captured in the code segments. ;; fail-closed: any error or unreadable input denies the command
+10-66 IM ;; Strict mode, imports, event/tool constants, approval-marker patterns (applied at 283-296), output helpers and hook-input decoding (UTF-8 BOM / BOM-tagged UTF-16 accepted; invalid input throws, which the pre-command path turns into a denial at 585-591).
+68-70 NN ;; Section comment.
+72-275 IM ;; Command tokenizer, segment splitter and classification tables for npm/pnpm/yarn/ng/npx ng/dotnet/nuget/PowerShell package cmdlets, Git (read-only vs repository-changing, after global options) and nested shell launchers (bash -c, pwsh -Command, cmd /c); they decide which commands the gates at 283-303 apply to.
+277-282 IM ;; Pre-command entry: non-shell tools ignored; a missing command string throws (denied by the fail-closed path).
+283-289 EX [x.hook-ref-gate]
+290-294 MX [dep003.hook-dep-gate,x.hook-dep-marker] ;; Routing every package change through add-dependency enforces DEP-003/DEP-004; the self-declared '# add-dependency: reviewed' re-run marker is an added mechanism.
+295 OL [dep025.hook-force]
+296-297 IM ;; Emits the deny decision.
+298-303 OL [gov015.hook-git-ask]
+304 IM ;; Closing brace.
+306-308 NN ;; Section comment.
+310-442 IM ;; Tool loading, surface classification (manifest/instructions/product), per-worktree state in .claude/.hook-state/ (with its own .gitignore), Git status/ls-files listing, bounded non-Git walk, snapshot comparison (first observation = full baseline; later only Git-reported changes and HEAD transitions) and move pairing; consumed at 445-486.
+443-460 IM ;; Reaction setup: validate() runs check-dependencies on a manifest and collects errors and notices; loop over changes; instruction changes flagged.
+461 IM ;; Branch on product-input surface.
+462 OL [gov021.hook-cs-reminder]
+463 OL [gov009.hook-spec-reminder]
+464-466 EX [x.hook-manifest-removed]
+467 IM ;; Branch.
+468-471 EX [x.hook-manifest-moved]
+472 OL [dep006.hook-validate]
+473-477 EX [x.hook-refgraph-post]
+478-482 IM ;; Closing braces; after a project removal every .csproj is revalidated (dangling references surface through the validation at 472).
+483-485 EX [x.hook-instr-check]
+486-525 IM ;; Return; active-root resolution and event wiring: shell events observe the whole worktree (a failed command's partial changes count); edit events check the edited file and detect ProjectReference edits; findings returned as blocking feedback (decision block / PostToolUseFailure additionalContext).
+527-529 NN ;; Section comment.
+531-551 IM ;; findFile helper; stop entry (never loops on its own continuation; fails non-critically outside a Git work tree); changed-path listing and test-path classification.
+552-557 OL [pst008.stop-seed]
+559-562 OL [pst010.stop-migration]
+564-567 OL [tst009.stop-tests]
+569-571 OL [gov021.stop-cs]
+573-578 EX [x.stop-block-once]
+580 NN ;; Separator comment.
+582-584 IM ;; Event dispatch (unknown event fails non-critically).
+585-592 EX [x.pre-fail-closed]
+593-612 IM ;; Non-pre events: unreadable input or check failure exits 1 (non-critical, non-blocking); exports.
+
+C x.pre-fail-closed EX DEP-003,ARC-001,GOV-015 ENFORCED ;; The pre-command hook fails closed: a missing script, crash, timeout (onFailure block) or empty/invalid/unreadable hook input denies the shell command. ;; = ;; none ;; Fail-closed enforcement policy not in the oracle.
+C x.hook-ref-gate EX ARC-001,ARC-020 ENFORCED ;; dotnet project-reference add/remove commands (also dotnet reference add/remove and nested shell strings) are denied unless the command carries the trailing comment '# project-references: approved'; changing the reference graph is Reserved unless an accepted decision already requires it, even when the reference would be legal. ;; = ;; Approval marker present. ;; Reference-graph approval gate not in the oracle.
+C dep003.hook-dep-gate OL DEP-003,DEP-004,DEP-006,DEP-007 ENFORCED ;; npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals are denied until the add-dependency workflow has run. ;; = ;; Review marker present. ;;
+C x.hook-dep-marker EX DEP-003,DEP-004 ENFORCED ;; After the add-dependency checks the command is re-run with the trailing comment '# add-dependency: reviewed', which lets it pass. ;; = ;; none ;; Self-declared review-marker mechanism not in the oracle.
+C dep025.hook-force OL DEP-025 ENFORCED ;; A denied dependency command using --force/-f or --legacy-peer-deps gets the instruction to resolve the actual peer-dependency conflict instead. ;; = ;; The force check is part of the marker-less denial; a command carrying the review marker is not denied. ;;
+C gov015.hook-git-ask OL GOV-015 ENFORCED ;; Repository-changing Git commands (table-driven classifier after global options such as -C) receive an 'ask' decision: run only when the user explicitly requested it; read-only Git commands run. ;; = ;; none ;;
+C gov021.hook-cs-reminder OL GOV-021 ENFORCED_ADVISORY ;; A changed CUSTOM_SETTINGS.md returns feedback to run custom-settings to synchronize every affected surface. ;; PostToolUse edits and shell commands (hook.cjs) ;; none ;;
+C gov009.hook-spec-reminder OL GOV-009,GOV-007 ENFORCED_ADVISORY ;; A changed SPECIFICATION.md returns feedback to confirm it stays consistent with CUSTOM_SETTINGS.md and records only approved behaviour. ;; PostToolUse edits and shell commands (hook.cjs) ;; none ;;
+C x.hook-manifest-removed EX ARC-020,DEP-001 ENFORCED_ADVISORY ;; A removed project or manifest returns feedback that the project graph or dependency set changed and must be confirmed as intended and approved. ;; PostToolUse edits and shell commands (hook.cjs) ;; none ;; Removal-approval check not in the oracle.
+C x.hook-manifest-moved EX - ENFORCED_ADVISORY ;; A moved manifest (same content under a new path) returns feedback to update every reference to it. ;; PostToolUse edits and shell commands (hook.cjs) ;; none ;; Move-tracking obligation not in the oracle.
+C dep006.hook-validate OL DEP-006,DEP-003,DEP-007,ARC-001 ENFORCED_ADVISORY ;; After edits and after successful or failed shell commands, added/changed/moved manifests of the active worktree (on first observation every tracked manifest) are validated with check-dependencies; errors and notices are returned as feedback. ;; PostToolUse / PostToolUseFailure (hook.cjs) ;; Build output, node_modules, dot-directories and nested repositories are not observed. ;;
+C x.hook-refgraph-post EX ARC-001,ARC-020 ENFORCED_ADVISORY ;; A change to a .csproj's project references returns feedback that changing the reference graph is Reserved: confirm it was approved and recorded (architecture-decision) or revert it. ;; PostToolUse edits and shell commands (hook.cjs) ;; none ;; Reference-graph approval not in the oracle.
+C x.hook-instr-check EX - ENFORCED_ADVISORY ;; A change to CLAUDE.md, the decision register or .claude/ instruction files runs check-instructions and returns its errors. ;; repo/meta (instruction-system change) ;; none ;; Instruction-system checker invariants.
+C pst008.stop-seed OL PST-008 ENFORCED_ADVISORY ;; At stop, Domain/persistence model changes without a seeder change (when a DbSeeder exists) produce a reminder to confirm seeded entities are unaffected or update the development seeder. ;; Stop (hook.cjs) ;; none ;;
+C pst010.stop-migration OL PST-010 ENFORCED_ADVISORY ;; At stop, added or changed migrations produce a reminder to review them before committing. ;; Stop (hook.cjs) ;; none ;;
+C tst009.stop-tests OL TST-009,TST-010 ENFORCED_ADVISORY ;; At stop, production code changes without test changes produce a reminder to confirm existing coverage or add tests. ;; Stop (hook.cjs) ;; none ;;
+C gov021.stop-cs OL GOV-021 ENFORCED_ADVISORY ;; At stop, a changed CUSTOM_SETTINGS.md produces a reminder to confirm custom-settings synchronized every affected surface. ;; Stop (hook.cjs) ;; none ;;
+C x.stop-block-once EX PST-008,PST-010,TST-009,GOV-021 ENFORCED_ADVISORY ;; Stopping is blocked once per material state of the changed files with the co-change reminders; the same state is not reminded again and the hook never loops on its own continuation. ;; Stop (hook.cjs) ;; none ;; Stop-gate mechanism not in the oracle.
+
+@@ output/template/.claude/scripts/repo.cjs ;; Shared helper module (no policy of its own).
+@scope hook and checker helpers
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+2-118 IM ;; Active-root resolution through Git (never from the script location), Git invocation, path normalization, UTF-8/UTF-16 decoding without throwing, content hashes; exports.
+
+@@ output/template/.claude/scripts/check-dependencies.cjs ;; Manifest checker (manual run by verify/add-dependency/project-structure; post-change hook).
+@scope check-dependencies.cjs (manual run by verify/add-dependency/project-structure; post-change hook)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+2-15 IM ;; Usage, conformance and owner-pointer comments; strict mode; imports; skipped directories.
+17-22 EX [x.chk-deprecated-list]
+23-27 MX [arc009.chk-decision-pkgs,x.chk-polly-reason] ;; MediatR/AutoMapper notices enforce ARC-009/DEP-002; the documented-reason notice for direct Polly is added.
+28 OL [dep015.chk-not-default]
+29 OL [dep007.chk-dev-tooling]
+31-43 IM ;; Layer and typical test-reference tables used by the checks at 140-153.
+45-122 IM ;; Manifest recognition, project classification, XML start-tag reader (malformed elements are reported as errors, never guessed at), reference extraction, PackageReference loop.
+123-125 OL [dep006.chk-versionless]
+126-128 EX [x.chk-versionoverride]
+129-135 IM ;; Package-name check call, malformed ProjectReference detection, reference loop.
+136-138 EX [x.chk-ref-exists]
+139-140 IM ;; Target-layer lookup.
+141-142 OL [arc001.chk-prod-test]
+143-144 OL [arc001.chk-inward]
+145-147 OL [arc020.chk-unknown-project]
+148-154 OL [arc028.chk-test-refs]
+155-157 OL [dep024.chk-naming]
+158-166 IM ;; Package-name check (applies the lists at 17-27); Directory.Packages.props check entry.
+167-170 OL [dep006.chk-cpm-flag]
+171-175 IM ;; PackageVersion loop.
+176-180 OL [dep003.chk-nuget-versions]
+181-194 IM ;; Name check; package.json parse (invalid JSON is an error) and section loops.
+195-197 OL [dep003.chk-npm-floating]
+198-200 OL [dep015.chk-not-default]
+201-203 OL [dep007.chk-dev-tooling]
+204-205 IM ;; Closing braces.
+206-209 OL [dep007.chk-lockfile]
+210-246 IM ;; checkFile dispatch (unreadable manifests are errors), manifest discovery (nested repositories skipped), repository scan entry.
+247-249 OL [dep006.chk-props-present]
+250-303 IM ;; Aggregation, CLI (explicit targets, root resolution, exit 1 on errors), exports.
+
+C x.chk-deprecated-list EX DEP-004,DEP-020,DEP-010 ENFORCED_ADVISORY ;; Microsoft.Extensions.Http.Polly and Polly.Extensions.Http (use Microsoft.Extensions.Http.Resilience), Serilog.Sinks.Elasticsearch (use Elastic.Serilog.Sinks) and FluentValidation.AspNetCore (use FluentValidation.DependencyInjectionExtensions) are reported as errors. ;; = ;; none ;; Concrete deprecated-package list not in the oracle.
+C arc009.chk-decision-pkgs OL ARC-009,DEP-002,DEP-011 ENFORCED_ADVISORY ;; MediatR (mediator organization not adopted) and AutoMapper (mapping framework other than the approved one) produce notices that an approved decision is required. ;; = ;; none ;;
+C x.chk-polly-reason EX DEP-020 ENFORCED_ADVISORY ;; A direct Polly reference produces a notice that it is an explicit exception whose reason must be documented. ;; = ;; Documented reason. ;; Documentation obligation not in the oracle.
+C dep015.chk-not-default OL DEP-015 ENFORCED_ADVISORY ;; npm packages @ngrx/*, @ngxs/*, axios, lodash, lodash-es, bootstrap, ngx-bootstrap, @ng-bootstrap/ng-bootstrap, tailwindcss and primeng produce notices: not added by default, a concrete requirement is needed. ;; = ;; none ;;
+C dep007.chk-dev-tooling OL DEP-007 ENFORCED_ADVISORY ;; Build/test tooling (Angular CLI/devkit/build, compiler-cli, TypeScript, Vitest, jsdom, Playwright test, Karma/Jasmine, @types, ESLint, Prettier) in dependencies produces a notice that it belongs in devDependencies. ;; = ;; none ;;
+C dep006.chk-versionless OL DEP-006 ENFORCED_ADVISORY ;; A PackageReference with a Version attribute or element is an error: versions belong in Directory.Packages.props. ;; = ;; none ;;
+C x.chk-versionoverride EX DEP-006 ENFORCED_ADVISORY ;; A PackageReference using VersionOverride produces a notice that it needs a concrete, reported reason. ;; = ;; Concrete reported reason. ;; VersionOverride handling not in the oracle.
+C x.chk-ref-exists EX ARC-001 ENFORCED_ADVISORY ;; A ProjectReference pointing to a project that does not exist is an error. ;; = ;; MSBuild-property paths are not checked. ;; Reference-integrity check not in the oracle.
+C arc001.chk-prod-test OL ARC-001,ARC-028 ENFORCED_ADVISORY ;; A production project referencing a test project is an error. ;; = ;; none ;;
+C arc001.chk-inward OL ARC-001 ENFORCED_ADVISORY ;; A production project referencing a layer outside its allowed set (Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application, Infrastructure, Domain) is an error. ;; = ;; none ;;
+C arc020.chk-unknown-project OL ARC-020 ENFORCED_ADVISORY ;; A production reference to a project that is not a recognized layer produces a notice that new production projects are Reserved. ;; = ;; none ;;
+C arc028.chk-test-refs OL ARC-028 ENFORCED_ADVISORY ;; A layer test project or IntegrationTests project referencing production projects beyond its typical set produces a notice to confirm the test scope requires it. ;; = ;; none ;;
+C dep024.chk-naming OL DEP-024,ARC-020 ENFORCED_ADVISORY ;; A backend project whose name does not follow backend/<Name>.<Layer> produces a notice (new production projects are Reserved). ;; = ;; none ;;
+C dep006.chk-cpm-flag OL DEP-006 ENFORCED_ADVISORY ;; Directory.Packages.props without ManagePackageVersionsCentrally=true is an error. ;; = ;; none ;;
+C dep003.chk-nuget-versions OL DEP-003 ENFORCED_ADVISORY ;; Empty, floating ('*') or range ([ ] ( )) PackageVersion values are errors; prerelease versions produce a notice that they are allowed only when explicitly requested. ;; = ;; Prerelease explicitly requested. ;;
+C dep003.chk-npm-floating OL DEP-003 ENFORCED_ADVISORY ;; npm dependencies with empty, '*', 'latest', 'x' or wildcard versions are errors. ;; = ;; Caret/tilde ranges are not flagged. ;;
+C dep007.chk-lockfile OL DEP-007 ENFORCED_ADVISORY ;; A package.json without a package-lock.json beside it produces a notice to commit a consistent lockfile. ;; = ;; none ;;
+C dep006.chk-props-present OL DEP-006 ENFORCED_ADVISORY ;; A repository with .csproj files but no root Directory.Packages.props is an error. ;; = ;; none ;;

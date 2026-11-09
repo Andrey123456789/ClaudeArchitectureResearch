@@ -1,0 +1,2 @@
+"""Evidence dispositions for R12-87-K1LOCALDB. Generated from a reviewed mapping, kept as literal data."""
+DISPOSITIONS = [{'candidate': 'K1', 'path': '.claude/skills/persistence-change/SKILL.md', 'start_line': 45, 'end_line': 45, 'disposition': 'REWORDED', 'new_quote': 'When this work runs against a local database, apply the migration there before any seeding', 'note': 'Unconditional local apply replaced by a conditional step keeping schema before seed; other steps unchanged', 'n_records': 3, 'keys': ['FG-K1-8e4adfba7a', 'FG-K1-d5a92cb349', 'FG-K1-e2a328d3fb']}]

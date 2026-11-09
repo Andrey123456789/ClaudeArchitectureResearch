@@ -1,0 +1,127 @@
+# M1 / B012 — caching, ci-cd, code-review.
+
+C R167 OL WF-017 | MUST | CI pipelines reproduce the repository's supported build/test commands: inspect the repository first, add stages for the actual project rather than generic boilerplate, do not assume a database, Redis, Docker or frontend tooling, do not hardcode a database provider into a generic pipeline, do not make an unadopted formatter a mandatory gate, do not depend on developer-machine state and keep failures visible. | CI/CD pipelines | Enforced checks the project adopted.
+C R168 OL DEP-018 | MUST NOT | Do not add Docker to a pipeline or project merely because it can be containerized; add container artifacts only when the project actually deploys containers. | CI/CD and containers | none stated
+C R169 OL WF-019 | MUST | When deployment performs database migrations make the migration step explicit, use the project's approved credentials, run it at a controlled point and fail visibly; no automatic production seeding or startup migrations. | deployment pipelines | none stated
+C R170 OL WF-011 | MUST | Code review identifies concrete defects and risks in the actual changed behavior, prioritized correctness, security/authorization, data integrity/persistence, architecture boundaries, concurrency/integration, missing meaningful tests, maintainability, credible performance; style preferences are not elevated above behavioral defects and code is not reported as a violation merely for differing from an unadopted pattern. | code review | none stated
+C R171 OL WF-011 | MUST | Before judging conformance the review reads the changed code with enough surrounding code (callers, contracts, dependencies) and the owning rules and knowledge skills of every changed area; do not review isolated lines. | code review | none stated
+C R172 OL GOV-003 | MUST NOT | Do not weaken required specified behavior or introduce unapproved product behavior: new length or numeric limits, reserved names or values, newly required fields, extra workflow restrictions, additional user-visible validation or newly chosen string-comparison semantics (including via database collation or framework defaults). | product behavior | Detail explicitly approved by the user with durable sources synchronized.
+C R173 OL GOV-005 | DEFAULT | Internal implementation details that do not change observable product behavior are not product-behavior decisions and need no approval. | product behavior | none stated
+C R174 OL WF-012 | MUST NOT | Do not manufacture review findings: no failures without a plausible execution path, no findings merely to populate categories, tool output is evidence rather than authority; when there are no meaningful findings say so and name important areas that could not be verified; no filler praise. | code review | none stated
+C R175 OL WF-007 | MUST | Scope security and other deep checks by risk: use the full security-scan workflow only when the user requested a security audit, the change is materially security-sensitive or a concrete finding justifies broader investigation. | code review and verification | none stated
+C R176 OL TST-009 | DEFAULT | For a bug fix with plausible recurrence expect a regression test unless equivalent coverage already exists; do not request duplicate tests. | tests for bug fixes | Equivalent coverage exists.
+C X21 EX RUN-021,ARC-016 | MUST NOT (review defect) | Tracked persistence entities must not be cached across Unit of Work boundaries. | caching | none stated | RUN-021 governs invalidation consistency and ARC-016 the commit boundary; no oracle policy forbids caching tracked entities as such. | Caching EF-tracked entity instances in a cache shared across requests is a review defect.
+C X22 EX WF-011,WF-012 | MUST | Code-review findings are reported ordered by severity, each with severity, file/location, what is wrong, why it matters and the smallest reasonable fix, using the fixed severity scale Critical / High / Medium / Low with defined meanings. | code review output | none stated | WF-011/WF-012 govern priorities and honesty of findings; the oracle does not prescribe a findings format or severity scale. | A review that lists issues without location, impact or severity does not follow the workflow.
+
+FILE .claude/skills/caching/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 OL R93,R96 | measure before adding caching solely for performance.
+16 NN | section heading
+18-26 OL R46,R36 | define an abstraction in Application and implement it in
+28 NN | section heading
+30-32 NN | HybridCache option (technique, explicitly not mandatory)
+34-43 NN | registration code example
+45-46 OL R139,R93 | distributed caching is Reserved
+48 NN | section heading
+50 NN | lead-in
+52-67 NN | cache abstraction code example
+69-70 OL R46 | do not expose
+72 NN | section heading
+74-75 NN | key-construction technique
+77 NN | section heading
+79-81 OL R94 | Avoid unbounded entries.
+83 NN | section heading
+85-88 OL R96 | before the mutation is known to have succeeded only when the workflow
+90 NN | section heading
+92-103 NN | output caching code example
+105-107 OL R95 | Do not cache authenticated or user-specific responses unless
+109 NN | section heading
+111-114 OL R44,R96 | Do not bypass repositories or `IUnitOfWork` to make invalidation
+116 NN | section heading
+118-119 OL R93,R65 | Decide whether a cache failure falls back to the source, fails the request, or
+121 NN | section heading
+123-126 OL R133 | unit-test framework cache internals.
+128 NN | section heading
+130-136 MX R93,R95,R94,R46,R31,R96,R139,X21 | tracked persistence entities cached across Unit of Work ⟫ Review checklist restating caching rules, plus the tracked-entity caching prohibition (X21) that the referenced rules do not contain.
+138 NN | section heading
+140-147 DU R93,R46,R139 | decision table restating caching placement and need
+
+FILE .claude/skills/ci-cd/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R167 | stages according to the actual project rather than generic boilerplate.
+17 NN | section heading
+19-22 OL R167 | Do not assume a particular database,
+24 NN | section heading
+26-30 NN | backend CI command example
+32-35 OL R167 | turn an optional local formatter into a mandatory CI gate without the project
+37 NN | section heading
+39-41 OL R152 | Install from the lockfile with `npm ci`, then run the scripts the frontend
+43 NN | section heading
+45-87 NN | GitHub Actions example
+89-90 OL R152 | add frontend test/lint commands only when the project defines them.
+92 NN | section heading
+94-97 OL R167,R135 | do not hardcode one database provider into a
+99 NN | section heading
+101-103 NN | vulnerability listing command example
+105-108 OL R11 | do not upgrade
+110 NN | section heading
+112-118 NN | publish command example
+120-121 NN | artifact-handling technique
+123 NN | section heading
+125-127 OL R168 | Do not add Docker to the pipeline merely because the
+129 NN | section heading
+131-134 NN | artifact promotion preference ('prefer' guidance)
+136 NN | section heading
+138-140 OL R110,R111 | never real secrets in pipeline
+142 NN | section heading
+144-148 OL R169 | make the migration step explicit, use the
+150 NN | section heading
+152-154 NN | deployment protection guidance ('where appropriate')
+156 NN | section heading
+158-161 OL R167,R110 | does not depend on developer-machine state
+163 NN | section heading
+165-169 DU R167,R110,R161,R103,R169,R168,R152 | review checklist restating pipeline rules (per-environment rebuild item restates the promotion preference)
+
+FILE .claude/skills/code-review/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-17 OL R170 | Review the actual changed behavior and identify concrete defects or risks.
+19-23 OL R170 | evidence-supported performance problems. Do not elevate style preferences above
+25 NN | section heading
+27-30 OL R171 | do not review isolated lines.
+32 NN | section heading
+34-39 OL R171 | owning rules for every changed area
+41-49 NN | routing table of knowledge skills
+51 NN | section heading
+53-61 OL R172 | Does the change introduce unapproved product behavior
+63-65 OL R156,R173 | confuse internal implementation details with product behavior.
+67 NN | section heading
+69-73 OL R174 | Do not invent failures without a
+75 NN | section heading
+77-88 DU R31,R37,R38,R39,R42,R44,R34,R4,R62,R139 | architecture review checklist restating architecture rules
+90-91 OL R170 | Do not report a violation merely because the code differs from a pattern the
+93 NN | section heading
+95-101 DU R76,R77,R78,R75,R79,R114,R80 | frontend review checklist restating frontend rules
+103 NN | section heading
+105-109 DU R44,R113,R114,R112,R110,R124,R96,R15 | data and security checklist restating owning rules
+111-114 OL R175 | do not turn every review into a full OWASP
+116 NN | section heading
+118-121 DU R85,R88,R89,R47 | integration checklist restating outbound-call rules
+123 NN | section heading
+125-129 OL R176,R165,R137 | For a bug fix, look for
+131 NN | section heading
+133-137 OL R83,R97,R93 | recommend caching, compiled queries, pooling, `ValueTask`, or similar
+139 NN | section heading
+141-144 OL R174 | read the code before turning a warning into a finding.
+146 NN | section heading
+148-157 EX X22 | For each finding give severity,
+159-161 OL R174 | Do not manufacture findings to populate categories.
+163 NN | section heading
+165-168 OL R170,R1,R174 | Do not rewrite working code during a review unless asked
+DONE

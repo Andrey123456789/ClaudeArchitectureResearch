@@ -1,0 +1,267 @@
+# M1 / B004 — rules: error-handling, frontend-framework, frontend, performance, persistence-technology, physical-structure, security, test-framework, testing.
+
+C R62 OL API-009 | DEFAULT | Represent common expected outcomes explicitly when that improves clarity, using the simplest contract (null, bool, typed outcome, deliberately adopted Result<T>); do not force a generic Result<T> pattern; Application outcome categories describe business semantics, not HTTP-named categories; expected outcomes are not logged as application errors. | use-case outcomes | none stated
+C R63 OL API-011 | MUST NOT | Do not use exceptions casually for normal control flow; do not establish custom business exceptions as the default architecture or throw and catch merely to jump between normal branches; typed exceptions for selected cases are a consistent project-level decision. | backend error flow | none stated
+C R64 OL API-007 | DEFAULT | Unexpected failures propagate to centralized handling at the outer boundary (IExceptionHandler); avoid repetitive catch/log/rethrow blocks; catch only to recover, translate, perform a defined fallback, add context or clean up. | backend error flow | none stated
+C R65 OL RUN-018 | MUST | Use fallback only when the fallback result is semantically acceptable; do not hide correctness failures behind convenient defaults; never swallow exceptions to continue execution. | failure handling | none stated
+C R66 OL API-012 | MUST | Log an unexpected exception once at the boundary that handles it; not repeatedly across repository, Application, Controller and the global handler. | logging | none stated
+C R67 OL API-002 | DEFAULT | Use ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request-validation failures; keep the machine-readable error contract stable and safe and do not make human-readable exception messages the machine-readable contract. | HTTP errors | none stated
+C R68 OL API-008 | MUST NOT | Do not expose stack traces, SQL details, connection strings, internal paths, secret values, raw exception messages or other sensitive exception details in public API errors. | public API errors | none stated
+C R69 OL API-021 | MUST NOT | Normal client-request cancellation is not a server failure: do not map it to a generic 500 or log it as an unhandled application error. | HTTP requests | none stated
+C R70 OL API-010,DEP-010 | MUST | Validate each concern at the owning layer with FluentValidation for explicit request and use-case validation: Api transport concerns, Application use-case and workflow rules, Domain genuine invariants (not moved into validators merely because the library is available), Infrastructure external-system assumptions; no mechanical duplication across layers. | validation | none stated
+C R71 OL FE-001 | DEFAULT | Use modern standalone Angular APIs for new code organized by feature; do not introduce NgModules for ordinary new feature work unless an integration or legacy dependency requires them. | frontend | none stated
+C R72 OL FE-004 | DEFAULT | Use Signals for naturally synchronous local UI state and RxJS when asynchronous streams, HTTP composition, cancellation or event pipelines are clearer; avoid mechanical conversions. | frontend state | none stated
+C R73 OL FE-008 | DEFAULT | Prefer functional interceptors for new code and keep interceptor responsibilities cross-cutting; do not put feature business logic in an interceptor. | frontend HTTP | none stated
+C R74 OL FE-011 | DEFAULT | Avoid manual nested RxJS subscriptions; prefer composition operators when they express the behavior clearly. | frontend | none stated
+C R75 OL FE-012 | MUST | When manually subscribing from Angular framework-managed code, tie the subscription lifetime to the component or service lifecycle with the project's current Angular facilities. | frontend | none stated
+C R76 OL FE-007 | MUST | Frontend structure stays feature-oriented: a feature owns its UI and data-access logic; avoid application-wide technical buckets and empty architecture folders; keep core and shared small; use shared only for genuinely cross-feature primitives. | frontend structure | none stated
+C R77 OL FE-002 | MUST | Keep pages and components focused on presentation and UI orchestration; do not move trivial presentation logic into services merely to make components smaller. | frontend | none stated
+C R78 OL FE-003 | MUST | Keep backend communication in explicit feature data-access services (Angular: @Injectable feature services using HttpClient); do not scatter HTTP calls through presentation components; use frontend API models matching the published contract and do not import backend Domain entities. | frontend HTTP boundary | none stated
+C R79 OL FE-009 | MUST | Frontend code follows the documented API error contract; centralize reusable ProblemDetails parsing when practical; do not infer business behavior from human-readable exception messages. | frontend errors | none stated
+C R80 OL FE-006 | DEFAULT | Prefer simple local component or service state before introducing a state-management library. | frontend state | none stated
+C R81 OL FE-005 | DEFAULT | Use route-level lazy loading for meaningful features; do not lazy-load every tiny component. | frontend routing | none stated
+C R82 OL FE-010 | MUST | Use the explicit form model (Reactive Forms) for non-trivial forms when useful; frontend validation improves UX but does not replace backend validation or data-integrity and security enforcement. | frontend forms | none stated
+C R83 OL RUN-001 | DEFAULT | Prefer clear, correct code first; no specialized performance optimizations without a concrete reason; prefer measurement or profiling evidence for non-trivial optimizations. | backend code | none stated
+C R84 OL RUN-002 | MUST | Use async APIs for asynchronous I/O and do not block them with .Result, .Wait() or similar sync-over-async patterns. | backend code | none stated
+C R85 OL RUN-003 | MUST | Propagate CancellationToken through asynchronous operations when cancellation is meaningful; no cancellation parameters on purely synchronous code without a use case. | backend code | none stated
+C R86 OL RUN-004 | DEFAULT | Use TimeProvider for logic whose behavior depends on the current time and needs deterministic tests; do not mechanically replace stored or explicit timestamps. | backend code | none stated
+C R87 OL RUN-005 | MUST NOT | Do not create and dispose a new HttpClient per request; use IHttpClientFactory or another appropriate long-lived strategy. | outbound HTTP | none stated
+C R88 OL RUN-015 | MUST | External I/O calls have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms whose combined behavior is unclear. | external calls | none stated
+C R89 OL RUN-016 | MUST | Retry only when repeating the operation is safe; do not automatically retry state-changing operations without idempotency or another concrete duplicate-prevention mechanism. | external calls | none stated
+C R90 OL RUN-017 | DEFAULT | Respect Retry-After or equivalent rate-limit guidance where appropriate; do not retry indefinitely or aggressively. | external calls | none stated
+C R91 OL RUN-019 | MUST NOT | Caller cancellation is not a transient dependency failure; do not retry it or convert it into repeated outbound attempts. | external calls | none stated
+C R92 OL RUN-006 | DEFAULT | Keep database work efficient: filter and project in the database when practical, avoid unnecessary round trips and over-fetching, watch for N+1 patterns, paginate potentially large result sets. | data access | none stated
+C R93 OL RUN-007 | DEFAULT | Caching is an optimization, not a default architecture requirement; introduce it only for a clear measured or reasoned need with acceptable staleness semantics and choose the implementation by deployment, consistency and staleness requirements. | caching | none stated
+C R94 OL RUN-023 | MUST | Every cache entry has a lifetime or another explicit invalidation strategy. | caching | none stated
+C R95 OL RUN-020 | MUST | Cache keys uniquely represent the cached value and include every relevant dimension (identifier, tenant, user when user-specific, locale, query/filter parameters); avoid global keys for user- or tenant-specific data. | caching | none stated
+C R96 OL RUN-021 | MUST | Invalidate or update cache entries only consistently with successful underlying mutations; the cache must not become a second source of truth. | caching | none stated
+C R97 OL RUN-008 | DEFAULT | Compiled queries, ValueTask<T>, ArrayPool/MemoryPool, object pooling, custom serialization optimizations, aggressive caching and raw SQL for performance are introduced only for a measured or clearly demonstrated need; verify that allocation-oriented optimizations materially help. | backend code | none stated
+C R98 OL ARC-019,ARC-015 | MUST | EF Core is an adapter-layer implementation detail: use it directly inside the adapter layer without crippling repositories to preserve a generic abstraction, and do not leak EF Core concepts (DbContext/AppDbContext, DbSet<T>, EF APIs, EF-backed IQueryable<T>, query expressions, provider types) into the use-case layer. | persistence implementation | none stated
+C R99 OL ARC-018,ARC-016 | DEFAULT | A single SaveChangesAsync call is the normal transaction boundary of a use case; do not introduce explicit transaction APIs until a concrete use case requires more control. | transactions | none stated
+C R100 OL PST-001 | DEFAULT | Maintain a small, deterministic, representative seed dataset for an empty Development database covering the main meaningful states and relationships, with readable deterministic examples. | Development seeding | none stated
+C R101 OL PST-002 | MUST | Development seeding is an adapter-layer bootstrap concern and may use AppDbContext directly without repositories or the Unit of Work. | Development seeding | none stated
+C R102 OL PST-003 | MUST | Keep substantial seed construction in a dedicated internal DbSeeder exposed through a narrow adapter-layer initialization extension, not in Program.cs, AppDbContext configuration, entity configurations or migrations. | Development seeding | none stated
+C R103 OL PST-004 | MUST NOT | Automatic development seeding runs only in the Development environment; never seed Production automatically; tests own their setup and do not use the development seeder. | Development seeding | none stated
+C R104 OL PST-005 | MUST NOT | The development seeder must not call Database.Migrate() or EnsureCreated() or otherwise create or upgrade the schema; migrations are applied separately before seeding. | Development seeding | none stated
+C R105 OL PST-006 | MUST NOT | If representative data already exists, leave it unchanged; never use the seeder for automatic synchronization, repair, upgrade, overwrite or recreation of an existing Development database; developers recreate the local database explicitly. | Development seeding | none stated
+C R106 OL PST-007 | MUST | Seed entities preserve current Domain invariants and valid relationships. | Development seeding | none stated
+C R107 OL TST-007 | DEFAULT | Use the actual database provider (SQL Server) when relational or provider behavior matters (an isolated real-provider setup such as Testcontainers is optional); never claim provider fidelity from a different or non-relational provider (EF Core InMemory). | persistence tests | none stated
+C R108 OL DEP-026,SEC-001 | DEFAULT | appsettings.Development.json provides a usable local Development connection string when it contains no secret credentials (e.g. LocalDB with integrated security); credential-bearing local values come from user-secrets or another approved local secret mechanism. | Development configuration | none stated
+C R109 OL ARC-027 | MUST NOT | Physical structure follows actual responsibilities: no speculative projects, infrastructure, empty directory trees or generic Common/Helpers/Utils buckets; create a directory or project only when it holds meaningful cohesive content. | repository structure | none stated
+C R110 OL SEC-001 | MUST NOT | Never hardcode or commit real secrets, credentials, private keys, access or refresh tokens or production connection strings in source-controlled files, including example configuration files. | all files | none stated
+C R111 OL SEC-002 | DEFAULT | Use a local secret mechanism such as dotnet user-secrets for development and environment-specific secret injection or a managed secret store for deployed environments; do not assume a cloud provider not chosen. | secrets | none stated
+C R112 OL SEC-003 | MUST | Treat data from outside the trusted boundary (HTTP requests, uploads, external responses, message payloads, user identifiers and filters) as untrusted and validate it at the owning layer when assumptions matter. | input handling | none stated
+C R113 OL SEC-004 | MUST | Use parameterized database access; never build SQL by concatenating untrusted input (use the supported parameterization for raw SQL, micro-ORMs, ADO.NET). | data access | none stated
+C R114 OL SEC-005 | MUST | Enforce authorization on the server; frontend route guards, hidden or disabled buttons and client-side checks are UX, not a security boundary. | authorization | none stated
+C R115 OL SEC-006 | MUST | Anonymous access is deliberate and visible; avoid redundant [Authorize] attributes when a secure global policy already expresses the intent. | authorization | none stated
+C R116 OL SEC-016 | MUST NOT | Do not implement custom token or password security, password hashing or reset-token cryptography when established ASP.NET Core authentication or Identity facilities cover the requirement. | authentication | none stated
+C R117 OL SEC-017 | MUST | For Bearer/OIDC validate the properties required by the actual issuer (issuer, audience where applicable, signature/signing authority, lifetime); do not disable validation to make a token work. | authentication | none stated
+C R118 OL SEC-018 | MUST NOT | Do not expose authentication-failure detail that unnecessarily reveals secrets or account state; avoid account-enumeration leaks where relevant. | authentication | none stated
+C R119 OL SEC-011 | MUST | When browser cookies carry authentication credentials automatically, include CSRF protection in the design; do not assume the frontend framework removes the risk. | cookie authentication | none stated
+C R120 OL SEC-012 | MUST NOT | Do not claim one browser token-storage mechanism is universally secure; choose token storage by the application's threat model. | browser token storage | none stated
+C R121 OL SEC-007 | MUST | Production traffic carrying credentials or sensitive data uses TLS; respect the hosting topology (no redirection requirement when the deployment provides a secure boundary) and never disable certificate validation. | transport | none stated
+C R122 OL SEC-008 | MUST NOT | Do not implement custom cryptography when a well-reviewed platform mechanism is appropriate; ASP.NET Core Data Protection suits application-generated protected payloads, not universal database encryption. | cryptography | none stated
+C R123 OL SEC-009 | DEFAULT | Configure CORS to the narrowest policy satisfying actual browser-client requirements; never combine credentialed cross-origin requests with an unrestricted origin policy. | CORS | none stated
+C R124 OL SEC-010 | MUST NOT | Never log passwords, access or refresh tokens, private keys, authentication secrets or full payment credentials; avoid PII without a concrete permitted need; changing the log level does not make sensitive data safe. | logging | none stated
+C R125 OL RUN-014 | MUST NOT | Do not serialize arbitrary request bodies, domain objects or sensitive payloads into logs by default; log the minimum operationally useful, non-sensitive context. | logging | none stated
+C R126 OL SEC-013 | DEFAULT | Security-sensitive authorization, permission or required-control checks fail safely; do not silently convert lookup or configuration failures into success. | security checks | none stated
+C R127 OL SEC-014 | MUST | When a required security control cannot be configured correctly, prefer a visible startup or configuration failure over an insecure fallback. | security configuration | none stated
+C R128 OL SEC-015 | MUST NOT | Do not trust client-provided file metadata such as MIME type as authoritative when upload handling or security decisions depend on actual content. | uploads | none stated
+C R129 OL DEP-019 | DEFAULT | Production containers use an appropriate runtime image rather than the SDK image for convenience and do not switch to root to bypass filesystem permission problems. | containers | none stated
+C R130 OL TST-001 | DEFAULT | NUnit is the default framework for .NET automated tests; in an established project deliberately using another framework follow that convention; no second test framework without a concrete reason. | backend tests | Established convention.
+C R131 OL TST-002 | DEFAULT | Choose the narrowest test level that meaningfully verifies the behavior; integration tests when wiring, HTTP, persistence, serialization, authentication or component interaction matters (prefer them over reproducing real persistence or HTTP semantics with mocks); no fixed ratio. | tests | none stated
+C R132 OL TST-006 | DEFAULT | Use WebApplicationFactory<Program>-based integration tests when routing, binding, middleware, authentication/authorization, DI, repositories or database persistence is what the test must prove. | integration tests | none stated
+C R133 OL TST-003 | MUST | Tests verify observable behavior and survive internal refactoring; avoid depending on private methods, exact internal call sequences, specific implementation classes or incidental details; do not reproduce implementation algorithms; interaction verification only when the interaction is specified behavior. | tests | Interaction is specified behavior.
+C R134 OL TST-005 | DEFAULT | For small finite input/state spaces prefer explicit declarative cases (NUnit [TestCase] rows rather than TestCaseSource generators) over loops, branches, LINQ or generated case machinery; state expected results instead of computing them. | tests | none stated
+C R135 OL TST-004 | MUST | Tests are deterministic, independent of execution order and isolated from Production and Development data, uncontrolled external systems and shared mutable state; no wall-clock timing when TimeProvider can make time deterministic; never connect automated tests to Production data. | tests | none stated
+C R136 OL TST-008 | MUST | Tests start from a known state and own their setup; they do not depend on development seed data or execution order. | tests | none stated
+C R137 OL TST-011 | MUST NOT | Coverage is diagnostic; do not generate low-value tests merely to increase a coverage percentage. | tests | none stated
+C R138 OL TST-012 | DEFAULT | Use descriptive test names communicating scenario/condition and expected behavior (e.g. MethodOrScenario_Condition_ExpectedBehavior); follow an established project convention. | tests | Established convention.
+
+FILE .claude/rules/error-handling.md | Path rule (backend .cs).
+1-4 NN | path front matter
+6 NN | header metadata
+8 NN | document heading
+10-11 NN | pointers to API rule and technique
+13 NN | section heading
+15-20 OL R62,R63 | using the simplest contract that communicates the use case:
+21-22 OL R62 | Do not force a generic `Result<T>` pattern
+23-26 OL R62 | do not use HTTP-named categories such as `BadRequest`,
+27-30 OL R63 | Do not establish custom business exceptions as the default architecture
+32 NN | section heading
+34-36 OL R64 | in ASP.NET Core APIs use `IExceptionHandler`
+38-41 OL R64,R65 | Never swallow exceptions to continue execution.
+43 NN | section heading
+45-48 OL R66,R62 | Log an unexpected exception once, at the boundary that handles it.
+50 NN | section heading
+52-55 OL R67 | `ValidationProblemDetails` for request-validation failures
+56-58 OL R68 | Do not expose stack traces, SQL details, connection strings, internal paths,
+60 NN | section heading
+62-64 OL R69 | Normal client-request cancellation is not a server failure
+66 NN | section heading
+68-69 OL R70 | Use FluentValidation for
+71-76 OL R70 | do not move Domain invariants into FluentValidation merely
+78 OL R70 |
+
+FILE .claude/rules/frontend-framework.md | Capability frontend/angular; path rule.
+1-4 NN | path front matter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointer to framework-independent rule
+12-14 OL R71 | Do not introduce NgModules for ordinary new feature development
+15-17 OL R72 | Use Signals for naturally synchronous, local UI state and RxJS when
+18-20 OL R73 | do not put feature business logic in an
+21-22 OL R74 | Avoid manual nested RxJS subscriptions
+23-25 OL R75 | When manually subscribing from Angular framework-managed code, tie the
+27 NN | section heading
+29-32 OL R78,R82 | Reactive Forms
+
+FILE .claude/rules/frontend.md | Path rule (frontend).
+1-4 NN | path front matter
+6 NN | header metadata
+8 NN | document heading
+10-11 NN | pointers to framework rule and server authorization
+13 NN | section heading
+15-19 OL R76 | Frontend structure stays feature-oriented
+20-22 OL R76 | Use `shared` only for UI primitives or behavior that genuinely cross
+24 NN | section heading
+26-28 OL R77 | Keep pages and components focused on presentation and UI orchestration.
+30 NN | section heading
+32-35 OL R78 | do not scatter HTTP calls through
+37 NN | section heading
+39-41 OL R79 | Frontend code follows the documented API error contract.
+43 NN | section heading
+45-46 OL R80 | Prefer simple local component or service state before introducing a
+47-48 OL R81 | use route-level lazy loading for meaningful features
+50 NN | section heading
+52-55 OL R82 | validation improves user experience but does not replace backend validation or
+FILE .claude/rules/performance.md | Path rule (backend .cs).
+1-4 NN | path front matter
+6 NN | header metadata
+8 NN | document heading
+10-11 NN | pointers to placement rule and workflow
+13 NN | section heading
+15-17 OL R83 | Prefer clear, correct code first.
+19 NN | section heading
+21-22 OL R84 | Use async APIs for asynchronous I/O.
+23-25 OL R85 | Propagate `CancellationToken` through asynchronous operations when
+27 NN | section heading
+29-32 OL R86 | use `TimeProvider` for application logic whose behavior depends on
+34 NN | section heading
+36-37 OL R87 | Do not create and dispose a new `HttpClient` per request
+38-40 OL R88 | External I/O calls must have a bounded execution time appropriate to the
+41-43 OL R89 | Retry only when repeating the operation is safe.
+44-45 OL R90 | respect it where appropriate; do not retry indefinitely or aggressively.
+46-47 OL R65 | Use fallback only when the fallback result is semantically acceptable
+48-49 OL R91 | Caller cancellation is not a transient dependency failure
+51 NN | section heading
+53-56 OL R92 | Keep database work efficient by default
+58 NN | section heading
+60-65 OL R93 | Caching is an optimization, not a default architectural requirement.
+66-67 OL R94 | Every cache entry must have a lifetime or another explicit invalidation
+68-71 OL R95 | Cache keys must uniquely represent the cached value and include every
+72-73 OL R96 | Invalidate or update cache entries only consistently with successful
+75 NN | section heading
+77-81 OL R97 | or clearly demonstrated need
+83 NN | section heading
+85-87 OL R97,R83 | verify that the optimization materially improves the workload
+
+FILE .claude/rules/persistence-technology.md | Capability persistence/ef-core; path rule.
+1-6 NN | path front matter
+8 NN | header metadata
+10 NN | document heading
+12-14 NN | pointers to role map and workflow
+16 NN | section heading
+18-20 OL R98 | EF Core is an adapter-layer implementation detail.
+21-26 OL R98,R37,R45 | Do not leak EF Core concepts into the use-case layer.
+27-28 OL R98 | The repository boundary keeps persistence concerns out of the use-case layer;
+30 NN | section heading
+32-34 OL R99 | Do not introduce explicit transaction APIs until a concrete use case
+36 NN | section heading
+38-41 OL R100 | maintain a small, deterministic, representative seed dataset for
+42-44 OL R101 | Development seeding is an adapter-layer bootstrap concern and may use
+45-47 OL R102 | Keep substantial seed construction in a dedicated internal `DbSeeder` exposed
+48-50 OL R103,R136 | Never seed Production automatically.
+51-53 OL R104 | The development seeder must not call `Database.Migrate()`, `EnsureCreated()`,
+54-57 OL R105 | If representative data already exists, leave it unchanged.
+58-59 OL R106 | Seed entities must preserve the current Domain invariants and valid
+61 NN | section heading
+63-65 OL R107 | the actual provider is SQL Server, and EF Core InMemory counts as a different,
+67 NN | section heading
+69-73 OL R108 | should provide a usable local Development
+
+FILE .claude/rules/physical-structure.md | Path rule (backend, frontend, docs, solution).
+1-8 NN | path front matter
+10 NN | header metadata
+12 NN | document heading
+14-18 OL R109 | Physical structure follows actual responsibilities.
+20-21 NN | pointers to layout and workflow
+
+FILE .claude/rules/security.md | Path rule (code, config, manifests, env, Dockerfiles).
+1-15 NN | path front matter
+17 NN | header metadata
+19 NN | document heading
+21-22 NN | pointers to error, dependency and audit owners
+24 NN | section heading
+26-28 OL R110 | Never hardcode or commit real secrets, credentials, private keys, access or
+29-32 OL R111 | use an appropriate local secret mechanism such as
+34 NN | section heading
+36-40 OL R112 | Treat data from outside the trusted application boundary as untrusted
+42 NN | section heading
+44-46 OL R113 | Use parameterized database access.
+48 NN | section heading
+50-51 OL R114 | Enforce authorization on the server.
+52-55 OL R115 | Anonymous access must be deliberate and visible.
+56-58 OL R116 | Do not implement custom token or password security, password hashing, or
+59-62 OL R117 | For Bearer/OIDC authentication, validate the properties required by the
+63-65 OL R118 | Do not expose authentication-failure detail that unnecessarily reveals
+66-68 OL R119 | When browser cookies carry authentication credentials automatically, include
+69-70 OL R120 | Do not claim that one browser token-storage mechanism is universally secure;
+72 NN | section heading
+74-79 OL R121 | Production traffic carrying credentials or sensitive data must use TLS.
+81 NN | section heading
+83-87 OL R122 | Do not implement custom cryptography when a well-reviewed platform mechanism is
+89 NN | section heading
+91-94 OL R123 | Never combine credentialed
+96 NN | section heading
+98-102 OL R124 | Never log passwords, access or refresh tokens, private keys, authentication
+103-105 OL R125 | Do not serialize arbitrary request bodies, domain objects, or sensitive
+107 NN | section heading
+109-111 OL R126 | security-sensitive authorization, permission, or required-control
+112-113 OL R127 | When a required security control cannot be configured correctly, prefer a
+114-115 OL R128 | Do not trust client-provided file metadata such as MIME type as authoritative
+117 NN | section heading
+119-121 OL R129 | use an appropriate runtime image rather
+
+FILE .claude/rules/test-framework.md | Capability backend-testing/nunit; path rule.
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11 NN | pointer to framework-independent rule
+13-15 OL R130 | NUnit is the default framework for .NET automated tests.
+16-20 OL R134 | are written as `[TestCase]` rows
+
+FILE .claude/rules/testing.md | Path rule (backend tests).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11-13 NN | pointers to framework rule, workflows and technique
+15 NN | section heading
+17-22 OL R131 | Choose the narrowest test level that meaningfully verifies the behavior.
+24-26 OL R132 | Use `WebApplicationFactory<Program>`-based integration tests when routing,
+28 NN | section heading
+30-34 OL R133 | Tests verify observable behavior and survive internal refactoring.
+36 NN | section heading
+38-41 OL R134 | prefer explicit declarative test cases
+43 NN | section heading
+45-49 OL R131 | prefer an integration test over reproducing that behavior with
+51 NN | section heading
+53-57 OL R107 | Use the actual database provider when relational or provider-specific behavior
+59 NN | section heading
+61-65 OL R135 | Tests must be deterministic, independent of execution order, and isolated from
+66-67 OL R136 | Tests start from a known state and own their setup
+69 NN | section heading
+71-72 OL R137 | Do not generate low-value tests merely to
+74 NN | section heading
+76-79 OL R138 | use descriptive test names that communicate the scenario or
+DONE

@@ -1,0 +1,266 @@
+# L0 / B005 — logging binding, Level 3 project rules, settings, add-dependency, angular, api-versioning, architecture-decision, aspnet-error-handling.
+
+C R143 OL RUN-013 | DEFAULT | Use ILogger<T> with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text. | backend logging | none stated
+C R144 OL DEP-021 | DEFAULT | When Serilog is configured use the DI-integrated builder.Services.AddSerilog(...) approach (not UseSerilog()), keep levels, sinks and overrides in environment-aware configuration, and keep application code on ILogger<T> rather than Serilog APIs. | logging provider | none stated
+C R145 OL PST-001 | DEFAULT | For an empty Development database maintain a small deterministic, representative seed dataset covering the meaningful states and relationships. | Development seeding | none stated
+C R146 OL PST-002 | MUST | Development seeding is an Infrastructure/bootstrap concern: it may use AppDbContext directly and need not go through Application repositories or IUnitOfWork. | Development seeding | none stated
+C R147 OL PST-003 | MUST | Keep substantial seed construction in a dedicated internal DbSeeder (e.g. Infrastructure/Persistence/Seeding/DbSeeder.cs) invoked through a narrow Infrastructure initialization extension, not in Program.cs, AppDbContext configuration, entity configurations or migrations. | Development seeding | none stated
+C R148 OL PST-004 | MUST NOT | Automatic development seeding runs only in the Development environment; never seed Production automatically; tests own their setup and never use the seeder. | Development seeding | none stated
+C R149 OL PST-005 | MUST NOT | The seeder must not call Database.Migrate() or EnsureCreated() or otherwise create or upgrade schema; migrations are applied separately before seeding. | Development seeding | none stated
+C R150 OL PST-006 | MUST NOT | If representative data already exists, leave it unchanged; never use the seeder for automatic synchronization, repair, upgrade, overwrite or recreation of an existing Development database; developers recreate the local database explicitly. | Development seeding | none stated
+C R151 OL PST-007 | MUST | Seed entities preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations. | Development seeding | none stated
+C R152 OL DEP-026,SEC-001 | DEFAULT | For the SQL Server baseline appsettings.Development.json provides a usable local Development connection string when it contains no secret credentials (e.g. LocalDB with Trusted_Connection); credential-bearing local values come from user-secrets or another approved local secret mechanism. | Development configuration | none stated
+C R153 OL DEP-002 | MUST NOT | When an approved technology covers a need, use it rather than silently selecting an alternative; replacing one is Reserved. | technology choices | Approved replacement.
+C R154 OL DEP-008 | DECIDED | Backend platform: .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core, ASP.NET Core Controllers; moving to a preview/RC .NET or C# release requires approval. | backend platform | Approval for preview/RC.
+C R155 OL DEP-012,API-017 | DECIDED | Swashbuckle Swagger UI is the default Development interactive documentation and manual-testing surface; exposure beyond Development follows the ASP.NET Core binding (only when deployment requirements justify it). | API documentation | Deployment requirements.
+C R156 OL DEP-013,TST-007 | DECIDED | Backend tests: NUnit; backend test projects live under backend/ beside the production projects; Microsoft.AspNetCore.Mvc.Testing / WebApplicationFactory<Program> is the integration-test baseline; Testcontainers is conditional (only when isolated real-provider tests justify it). | backend testing stack | none stated
+C R157 OL DEP-014 | DECIDED | Frontend: current stable Angular with CLI-selected compatible TypeScript and RxJS; standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material and CDK, Vitest. | frontend stack | none stated
+C R158 OL DEP-011 | DEFAULT | Conditional technologies are added only when their trigger holds: Mapster (+ Mapster.DependencyInjection) when mapping volume is repetitive or non-trivial (manual mapping is fine for simple cases); Microsoft.Extensions.Http.Resilience / Microsoft.Extensions.Resilience when a real integration needs resilience. | conditional packages | none stated
+C R159 OL DEP-016 | DEFAULT | Playwright is the approved default when frontend E2E coverage is required, but not part of the minimal scaffold. | frontend E2E | none stated
+C R160 OL DEP-015 | MUST NOT | Do not add NgRx, Axios, Lodash, Bootstrap, Tailwind or additional form, component or state-management libraries by default; use built-in Angular capabilities first and add an extra library only for a concrete need. | frontend libraries | Concrete need.
+C R161 OL DEP-022 | DEFAULT | Use the .slnx solution format by default; legacy .sln only when an external tool or project requirement requires it. | solution files | External tool or project requirement.
+C R162 OL DEP-023 | DEFAULT | Repository-level Directory.Build.props holds genuinely shared .NET build settings and Directory.Packages.props the CPM versions; project-specific settings stay in their owning projects. | .NET build configuration | none stated
+C R163 OL DEP-024 | DEFAULT | Physical layout: backend production and test projects under backend/<Name>.<Layer>/, the Angular workspace under frontend/<Name>.Web/ (unit and component tests inside the workspace, E2E under frontend/<Name>.Web/e2e/, never under backend/), maintained documentation under docs/; keep them separated and create no top-level tests/ directory. | repository layout | none stated
+C R164 OL ARC-001,ARC-012,DEP-024 | DECIDED | Layer-to-project mapping: Domain = backend/<Name>.Domain/, Application = backend/<Name>.Application/, Infrastructure = backend/<Name>.Infrastructure/, Api = backend/<Name>.Api/ (contains Program.cs). | backend projects | none stated
+C R165 OL DEP-007 | MUST | Use npm for the Angular workspace unless the project deliberately adopts another package manager; keep package-lock.json consistent with every change; install with the correct category (build/test tooling in devDependencies). | frontend packages | Deliberately adopted other package manager.
+C R166 OL DEP-004 | MUST | Before installation check that the exact selected version is not deprecated, review known vulnerability information and verify its license from official registry metadata (and upstream when necessary); permissive licenses (MIT, Apache-2.0, BSD) may normally be accepted; a free download does not make a package acceptable. | dependency additions and updates | none stated
+C R167 OL DEP-005 | REQUIRES_APPROVAL | Do not automatically install a paid/commercial dependency or one with a materially restrictive or unclassifiable license; explain the concern and present options (say so when no free alternative exists) without silently substituting; no legal conclusions beyond the published license. | dependency additions | User decision.
+C R168 OL DEP-017 | DEFAULT | When Controller API versioning is explicitly adopted use the Controller integration of Asp.Versioning (Asp.Versioning.Mvc, plus Asp.Versioning.Mvc.ApiExplorer); do not add it before the project actually adopts versioning. | API versioning packages | none stated
+C R169 OL GOV-012 | DEFAULT | Prefer simple, maintainable solutions; keep architectural complexity proportional to current requirements and avoid speculative abstractions (e.g. no custom wrapper around every UI-library component without a concrete reason). | all code | none stated
+C R170 OL WF-016 | DEFAULT | Treat generated code as generated: keep it separate from handwritten code, regenerate it when its source contract changes and do not patch generated files unless the generation workflow requires it; fix wrong generated output at its source. | generated code | Generation workflow treats output as maintained source.
+C R171 OL GOV-017 | MUST | Classify every consequential choice: Decided (settled by the instruction system, product inputs or a recorded decision, including choices already required by the specification or the established project structure; follow it, do not reopen without approval), Delegated (local, reversible, no change to a boundary, dependency, accepted convention, public contract or observable behavior; decide and proceed), Reserved (explicit approval before implementation); an explicit user instruction counts as approval. | all consequential choices | none stated
+C R172 OL GOV-017 | MUST | For a Reserved decision present a Decision Request (Context, Options, Recommendation, Blocked, Proceeding with), then run architecture-decision; do not implement the Reserved option before approval and continue only with the 'Proceeding with' work. | Reserved decisions | none stated
+C R173 OL GOV-017 | MUST | In an autonomous or headless run take only a policy-compliant non-Reserved path, never make a Reserved decision silently, and list every unresolved Decision Request explicitly in the final report. | headless/autonomous runs | none stated
+C R174 OL GOV-007 | MUST | When an accepted decision changes product behavior, synchronize the durable product inputs (SPECIFICATION.md, CUSTOM_SETTINGS.md) in the same change. | approved product decisions | none stated
+C U1 LU GOV-015,DEP-007 | MUST | Commit package.json and package-lock.json and keep the lockfile consistent with every change. | frontend workspace manifests | none stated | Read as a version-control content convention the clause is entailed by DEP-007; read as an instruction to perform commits it conflicts with GOV-015 (commits only on explicit request). The text does not settle the reading. | Under the commit reading an agent could commit lockfile changes without an explicit request.
+C X10 EX DEP-001,DEP-006 | MUST | Removing a dependency removes the project reference and, when no project uses it any more, its central version in Directory.Packages.props, then rebuilds and runs the affected tests. | dependency removal | none stated | DEP-001..DEP-006 govern additions and central version placement; no oracle policy prescribes a removal procedure or the cleanup of unused central versions. | Removing a PackageReference while leaving its PackageVersion entry in Directory.Packages.props does not complete the workflow.
+C X11 EX API-013,ARC-020 | REQUIRES_APPROVAL (Reserved) | Adopting API versioning is Reserved and needs explicit approval, even when a concrete compatibility need exists. | HTTP API versioning | none stated | API-013 allows introducing versioning when a real compatibility need exists and does not require approval; the oracle's consequential-change list does not name versioning adoption. | With coexisting client generations the agent must still send a Decision Request before adding versioning.
+C X12 EX WF-009,GOV-017 | MUST | Decision reporting: Delegated decisions taken are mentioned in the report, and a rejected Decision Request is not recorded as a decision but mentioned in the report. | decision handling | none stated | GOV-017 requires classification and reporting of unresolved Decision Requests in headless runs; no oracle policy requires reporting Delegated decisions or rejected requests. | A completion report that omits the Delegated choices made does not follow the workflow.
+
+FILE .claude/rules/2-technology/logging.md | Path rule (backend code, appsettings).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11 NN | pointers to principles and technique
+13 OL R143 |
+14 OL R144 |
+
+FILE .claude/rules/3-project/data-lifecycle.md | Path rule (backend code, appsettings).
+1-5 NN | path front matter
+7 NN | header metadata
+9 NN | document heading
+11 NN | pointers to co-change workflow and technique
+13 NN | section heading
+15 OL R145 |
+16 OL R146 |
+17 OL R147 |
+18 OL R148,R66 |
+19 OL R149 |
+20 OL R150 |
+21 OL R151 |
+23 NN | section heading
+25 OL R152 |
+
+FILE .claude/rules/3-project/decisions.md | Always loaded (imported by CLAUDE.md).
+1-8 NN | path front matter
+10 NN | header metadata
+12 NN | document heading
+14 NN | template scope statement
+16 NN | section heading
+18 OL R153,R18 | never copy versions from examples
+20-21 NN | table header
+22 OL R154 |
+23 OL R141 |
+24 MX R142,X9 | `FluentValidation.DependencyInjectionExtensions` ⟫ FluentValidation as standard library is oracle-linked (R142); the DI-extensions registration package is X9.
+25 OL R142 |
+26 OL R155 |
+27 OL R156 |
+28 OL R157 |
+30 NN | section heading
+32-33 NN | table header
+34-35 OL R158 | a real integration needs resilience behavior
+36 OL R156 | isolated real-provider tests justify it
+37 OL R159 |
+38 OL R129 |
+40 NN | section heading
+42 OL R160 |
+43 OL R112,R14 | another mapping framework without approval
+45 NN | section heading
+47 OL R161 |
+48 OL R162 |
+49 OL R163 |
+51 NN | section heading
+53 EX X8 | Approved stack or default changes are recorded here by `architecture-decision`
+55 NN | empty decision log placeholder
+
+FILE .claude/rules/3-project/layout.md | Path rule (slnx, backend csproj, angular.json).
+1-6 NN | path front matter
+8 NN | header metadata
+10 NN | document heading
+12 NN | pointers to defaults and scaffolding
+14 NN | section heading
+16-17 NN | table header
+18-21 OL R164 | (contains `Program.cs`)
+23 OL R17 | the project hook rejects outward references
+25 NN | section heading
+27 OL R84,R83,R163 | Create only useful test projects, beside the production projects under `backend/`.
+29-34 OL R84,R83 | only when Domain has non-trivial behavior
+36 NN | section heading
+38 OL R163 | Never place frontend tests under `backend/`.
+
+FILE .claude/rules/3-project/package-management.md | Path rule (manifests).
+1-8 NN | path front matter
+10 NN | header metadata
+12 NN | document heading
+14 NN | pointers to workflow and hook checks
+16 NN | section heading
+18 OL R19,R23 |
+19 OL R19 |
+21 NN | section heading
+23 MX R165,U1 | commit `package.json` and `package-lock.json` and keep the lockfile consistent with every change ⟫ npm and lockfile consistency are oracle-linked (R165); the commit clause is an uncertain link (U1).
+24 OL R16 |
+
+FILE .claude/settings.json | Hook registrations.
+1-6 IM | settings object and PreToolUse matcher
+7 EX X7 | "onFailure": "block"
+8-41 IM | post-bash, post-edit and stop registrations in exec form without blocking failure mode
+
+FILE .claude/skills/add-dependency/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15 OL R21,R22,R153,R7 | Confirm that the change needs the package now
+17 NN | section heading
+19-22 OL R18 | verify it from the package registry rather than from memory or examples
+24 NN | section heading
+26 OL R166 |
+28 NN | section heading
+30 OL R167 |
+32-42 NN | example option message
+44 OL R167 | Do not make legal conclusions beyond what the published license supports.
+46 NN | section heading
+48 OL R168 |
+49 MX R12,X4 | Do not add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`. ⟫ Microsoft resilience packages by default with documented Polly exception are oracle-linked (R12); the absolute ban on the deprecated integrations is X4.
+51 NN | section heading
+53 OL R19,R23 | a versionless `PackageReference` to the narrowest project that needs it
+54 OL R165 | keeping `package-lock.json` consistent
+55 OL R5 |
+57 NN | section heading
+59 MX R24,X2 | Report: package · version · license · reason · checks performed. ⟫ Not upgrading unrelated packages after scanner findings is scope preservation (R24); the dependency report contents are X2.
+61 NN | section heading
+63 EX X10 | and its central version when no project uses it any more
+
+FILE .claude/skills/angular/SKILL.md | Knowledge skill (technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | policy owner pointers; states the skill is technique only
+15 NN | section heading
+17-40 NN | suggested directory tree (EXC-018 class)
+42 OL R100 | Create directories only when they contain meaningful code.
+44 NN | section heading
+46-53 NN | component code example
+55 NN | component responsibility technique
+57 NN | section heading
+59-63 NN | signals code example
+65 NN | computed vs effect technique (EXC-018 class)
+67 NN | section heading
+69 OL R124 | ties the lifetime to the component or service
+71 NN | section heading
+73-88 NN | data-access and provider code examples
+90 NN | section heading
+92 OL R48 | all user experience
+94 NN | section heading
+96 OL R105 | branch on stable codes or fields, not on message text
+98 NN | section heading
+100 OL R106 | Duplicate a complex Domain rule in TypeScript only when the UI genuinely needs an equivalent user-facing rule.
+102 NN | section heading
+104-112 NN | lazy route code example
+114 NN | route component technique note
+116 NN | section heading
+118 OL R104 | introduce a state library only when application complexity demonstrates the need
+120 NN | section heading
+122 OL R169 | do not wrap every Material component in a custom abstraction without a concrete reason
+124 NN | section heading
+126 OL R170 | regenerate it when the contract changes
+128 NN | section heading
+130 NN | frontend test targeting guidance (EXC-018 class)
+132 NN | section heading
+134 OL R28 | Do not prematurely optimize.
+
+FILE .claude/skills/api-versioning/SKILL.md | Knowledge skill (technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 MX X11,R97,R168 | adopting versioning is Reserved ⟫ Reserved adoption of versioning is extra (X11); no per-version inner models (R97) and the package binding after adoption (R168) are oracle-linked.
+15 NN | section heading
+17 OL R94 | do not add `v1` automatically
+19 NN | section heading
+21-25 NN | strategy examples
+27 NN | section heading
+29-42 NN | setup code example
+44 NN | section heading
+46-69 NN | versioned controller code example
+71 NN | mapping technique note
+73 NN | section heading
+75 OL R95 | Compilation success says nothing about compatibility.
+77 NN | section heading
+79-81 NN | deprecation attribute example
+83 OL R98 | The full deprecation sequence is in `architecture-decision`.
+85 NN | section heading
+87 OL R99 | the documented version must match routing and controller metadata
+89 NN | section heading
+91 NN | versioning test targeting (test technique)
+93 NN | section heading
+95 DU R127,R94 | anti-pattern list restating entry-point and versioning rules
+
+FILE .claude/skills/architecture-decision/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | ownership pointer to CLAUDE.md decision control
+15 NN | section heading
+17-18 OL R171 | Check whether it is already Decided
+19 MX R171,X12 | Delegated → proceed and mention it in the report. ⟫ Classification is oracle-linked (R171); mentioning Delegated decisions in the report is X12.
+21 NN | section heading
+23-27 OL R172 | **Proceeding with**
+29 OL R172,R173 | Do not implement the Reserved option before approval
+31 NN | section heading
+33 OL R171 | An explicit user instruction counts as approval.
+35-36 EX X8 | Add an entry to the matching decision summary
+37 OL R174 |
+39 EX X12 | A rejected request is not recorded as a decision; mention it in the report.
+41 NN | section heading
+43-49 OL R98,R7 | removal is itself a Reserved breaking change
+
+FILE .claude/skills/aspnet-error-handling/SKILL.md | Knowledge skill (technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | policy owner pointers; states the skill is technique only
+15 NN | section heading
+17-50 NN | global exception handler code example
+52 OL R60 | public contracts stay safe
+54 NN | section heading
+56 NN | expected-outcome examples
+58-61 NN | nullable query code example
+63 NN | Result typed-error technique for an optional adopted pattern
+65-67 NN | error record example
+69 OL R107 | avoid it when `null`, `bool`, or a simple typed response is clear
+71 NN | section heading
+73-89 NN | controller mapping code example
+91 NN | section heading
+93 NN | error-contract content guidance ('may contain')
+95 NN | section heading
+97 OL R110,R142 | Explicit rules use FluentValidation validators
+99-103 OL R110 | Application validator / Application Service
+105 MX X9,R131 | (FluentValidation.DependencyInjectionExtensions) ⟫ The registration package is X9; invoking validators through the one established mechanism follows the repository-convention rule (R131).
+107 NN | section heading
+109 OL R109 | Catch only when you can recover
+111-120 NN | anti-pattern code example
+122 OL R109,R107 | otherwise let them propagate
+124 NN | section heading
+126-133 DU R89,R107,R109,R40 | decision table restating error-flow rules
+135 DU R89,R127 | avoidance note restating error-contract and Controller-only rules
+DONE

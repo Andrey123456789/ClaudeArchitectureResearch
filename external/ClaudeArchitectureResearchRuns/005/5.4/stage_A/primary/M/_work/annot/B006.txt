@@ -1,0 +1,91 @@
+# Batch B006 — scripts/check-manifests.mjs, scripts/repo-root.mjs, settings.json
+
+@@ output/template/.claude/scripts/check-manifests.mjs ;; Executable Node.js manifest checker; invoked by dependency-guard/file-change hooks (PostToolUse) and named by verify/add-dependency/project-structure/CI. Exit 0 = clean, 1 = violations, 2 = cannot run. Notes are advisory (exit 0).
+@scope executable: check-manifests.mjs over **/*.csproj, Directory.Packages.props, package.json (excluding .claude, node_modules, bin, obj, dist, etc.); run by hooks after manifest edits/shell commands and by workflows/CI
+1-5 NN ;; Shebang and header comment describing the checker's purpose.
+6-14 IM ;; Usage and exit-code documentation (run from repository root; active root resolution; exit 0/1/2); operational, behaviour implemented below.
+15-17 NN ;; Comment naming rule owners and callers.
+19-22 IM ;; Module imports.
+24-27 IM ;; Directories skipped during discovery (scan scope).
+29 NN ;; Comment.
+30-33 EX [x.cm-deny-polly-integration] ;; Hard deny-list data: these package IDs produce VIOLATIONS (exit 1).
+35 NN ;; Comment.
+36 IM ;; Map declaration for advisory review list.
+37 OL [arc009.cm-note-mediatr]
+38-39 OL [dep020.cm-note-polly]
+40 EX [x.ts-no-legacy-autovalidation] ;; Advisory note enforcing the technology-stack ban on the legacy FluentValidation automatic-validation package.
+41 EX [x.cm-note-es-sink]
+42 IM ;; Map close.
+44-45 OL [dep015.cm-note-npm]
+46-50 OL [dep007.cm-tooling-category] ;; Tooling package lists used to flag build/test tooling placed in runtime dependencies.
+52-58 OL [arc001.cm-graph] ;; Production reference allow-matrix (Api may also reference Domain).
+59-65 OL [arc028.cm-test-graph] ;; Test-project reference allow-matrix (tested layer plus inward layers).
+67-95 IM ;; Dispatch: resolves targets (explicit files or discovery), notes files outside root or missing, routes .csproj/Directory.Packages.props/package.json to the checks below.
+97-102 IM ;; Output formatting of violations and notes.
+104-126 IM ;; Repository discovery of manifests (skips .claude and build/vendor directories).
+128-201 IM ;; Path, XML parsing, attribute decoding and central-props lookup helpers (static XML only, no MSBuild evaluation).
+203-211 OL [dep006.cm-cpm] ;; ;; ManagePackageVersionsCentrally is not enabled
+212-217 IM ;; Iterates PackageVersion items into id/version checks.
+219-223 MX [x.cm-deny-polly-integration,arc009.cm-note-mediatr,dep020.cm-note-polly,x.ts-no-legacy-autovalidation,x.cm-note-es-sink] ;; Applies deny-list (violation) and review-list (note) to each package id.
+225-229 OL [dep006.cm-cpm] ;; ;; PackageVersion has no Version
+230-236 MX [dep003.cm-versions,x.cm-floating-no-exception] ;; Floating/range versions are violations (no explicit-request exception); prerelease versions are notes 'allowed only when explicitly requested'.
+238-250 IM ;; Project classification by <Name>.<Layer>[.Tests] / .IntegrationTests naming (IntegrationTests treated as Api layer).
+252-261 OL [dep006.cm-cpm] ;; ;; project opts out of Central Package Management
+262-271 OL [dep006.cm-cpm] ;; ;; package references exist but no Directory.Packages.props was found above this project
+272-278 OL [dep006.cm-cpm] ;; ;; version declared in the project file - versions belong in Directory.Packages.props
+279-281 EX [x.cm-versionoverride-documented]
+282-285 OL [dep006.cm-cpm] ;; ;; no matching PackageVersion in Directory.Packages.props
+287-292 IM ;; Iterates ProjectReference items and classifies source/target.
+293-296 IM ;; Applicability limit: references from projects not following <Name>.<Layer> naming are reported as unchecked notes.
+297-300 EX [x.arch-test-project-names] ;; Note asks to use <Name>.<Layer>.Tests or <Name>.IntegrationTests naming so test references can be checked.
+301-304 IM ;; Applicability limit: targets not following <Name>.<Layer> naming are noted as unchecked.
+305-308 OL [arc001.cm-graph] ;; ;; production project references test project
+309-318 OL [arc001.cm-graph,arc028.cm-test-graph] ;; ;; must not reference
+320-328 IM ;; package.json parse; invalid JSON reported as a violation (cannot be checked).
+329-337 IM ;; Iterates dependency sections; non-registry specs (file:, link:, workspace:, git, URLs) skipped.
+338-342 MX [dep003.cm-versions,x.cm-floating-no-exception] ;; npm floating specs ('', *, x, latest, next, x-suffix, >=) are violations; prerelease is a note.
+343-345 OL [dep015.cm-note-npm] ;; ;; not added by default - needs a concrete requirement
+346-348 OL [dep007.cm-tooling-category] ;; ;; build/test tooling listed in dependencies - devDependencies expected
+349-350 IM ;; Loop closings.
+351-353 OL [dep007.cm-tooling-category] ;; ;; no package-lock.json next to package.json - commit the lockfile
+354 IM ;; Function close.
+356-361 IM ;; Entry-point detection.
+363-375 IM ;; CLI entry: resolves active root (exit 2 when impossible), prints results, exit 1 when violations exist (violation semantics captured at each check above).
+
+C x.cm-deny-polly-integration EX DEP-020,DEP-004 MUST_NOT ;; Microsoft.Extensions.Http.Polly and Polly.Extensions.Http are reported as violations (deprecated integration packages; must not be added). ;; = ;; none ;; DEP-020 makes Microsoft resilience the default and direct Polly an explicit exception; a hard executable ban on these two packages (violation, no exception path) is stricter than the oracle.
+C arc009.cm-note-mediatr OL ARC-009 ENFORCED_ADVISORY ;; A MediatR package reference is flagged (note) as mediator-based organization requiring an approved decision. ;; = ;; Approved decision. ;;
+C dep020.cm-note-polly OL DEP-020 ENFORCED_ADVISORY ;; Direct Polly / Polly.Core references are flagged (note) as a documented exception to the Microsoft resilience default. ;; = ;; Documented exception. ;;
+C x.cm-note-es-sink EX DEP-004,DEP-021 ENFORCED_ADVISORY ;; Serilog.Sinks.Elasticsearch is flagged (note) as a deprecated sink package. ;; = ;; none ;; Package-specific advisory not entailed by the oracle (DEP-004 requires checking deprecation, but naming this sink as deprecated is candidate knowledge).
+C dep015.cm-note-npm OL DEP-015 ENFORCED_ADVISORY ;; axios, lodash, bootstrap, tailwindcss and @ngrx/* dependencies are flagged (note) as not added by default without a concrete requirement. ;; = ;; Concrete requirement. ;;
+C dep007.cm-tooling-category OL DEP-007 ENFORCED_ADVISORY ;; Build/test tooling (typescript, vitest, eslint, @angular/cli, @types/*, etc.) in runtime dependencies and a missing package-lock.json next to package.json are flagged (notes). ;; = ;; none ;;
+C arc001.cm-graph OL ARC-001 ENFORCED ;; Production project references are checked against Domain→none, Application→Domain, Infrastructure→Domain/Application, Api→Domain/Application/Infrastructure; disallowed references and production→test references are violations. ;; = ;; Only projects following <Name>.<Layer> naming are checked. ;;
+C arc028.cm-test-graph OL ARC-028 ENFORCED ;; Test project references are limited to the tested layer and layers inward of it (IntegrationTests as Api); broader references are violations. ;; = ;; Only test projects named <Name>.<Layer>.Tests or <Name>.IntegrationTests are checked. ;;
+C dep006.cm-cpm OL DEP-006 ENFORCED ;; Violations when Directory.Packages.props lacks ManagePackageVersionsCentrally=true, a project opts out of CPM, package references exist without Directory.Packages.props, a PackageVersion lacks Version, or a project declares a version; missing PackageVersion is a note. ;; = ;; none ;;
+C x.cm-versionoverride-documented EX DEP-006 ENFORCED_ADVISORY ;; A PackageReference VersionOverride is flagged as needing a concrete, documented reason. ;; = ;; none ;; DEP-006 says references are normally versionless; requiring a documented reason for VersionOverride adds a documentation obligation.
+C dep003.cm-versions OL DEP-003 ENFORCED ;; Prerelease NuGet/npm versions are flagged as allowed only when explicitly requested; floating/range versions are violations. ;; = ;; Prerelease when explicitly requested. ;;
+C x.cm-floating-no-exception EX DEP-003 ENFORCED ;; Floating or range versions (NuGet *, bracket/comma ranges; npm empty, *, x, latest, next, x-suffix, >=) are always violations with no explicit-request exception. ;; = ;; none (npm ^/~ ranges are not flagged) ;; DEP-003 permits floating versions when explicitly requested; the checker reports them as violations unconditionally.
+
+@@ output/template/.claude/scripts/repo-root.mjs ;; Shared Node.js module resolving the active checkout/worktree root for hooks and checkers.
+@scope executable helper used by hooks and checkers
+1-24 IM ;; Header documenting template-root vs active-root resolution and the error path (no silent wrong-tree checks); requires Node.js 18+, Git optional.
+26-31 IM ;; Imports and template root computation.
+33-64 IM ;; Active root/repository resolution: same tree, linked worktree with offset, inside template root, else throws an explanatory Error.
+66-81 IM ;; Path containment and canonicalization helpers.
+83-123 IM ;; Directory test, Git work-tree/common-dir queries via git rev-parse (errors swallowed when Git is missing).
+
+@@ output/template/.claude/settings.json ;; Claude Code project settings registering hooks (exec form via node and ${CLAUDE_PROJECT_DIR}).
+@scope Claude Code hook registration (all sessions in this project)
+1-6 IM ;; JSON structure: PreToolUse matcher Bash|PowerShell.
+7 MX [dep025.guard-registration,x.settings-failclosed] ;; Registers dependency-guard as PreToolUse guard (DEP-025 enforcement) with onFailure block (fail closed: guard failure blocks the shell call).
+8-14 IM ;; JSON structure: PostToolUse matcher Bash|PowerShell.
+15 IM ;; Registers dependency-guard for PostToolUse on shell calls (activates manifest post-checks captured in dependency-guard.mjs; advisory, fail-open).
+16-20 IM ;; JSON structure: PostToolUse matcher Edit|Write|MultiEdit.
+21 IM ;; Registers file-change.mjs for PostToolUse on file edits (activates reminders/manifest checks captured in file-change.mjs).
+22-28 IM ;; JSON structure: PostToolUseFailure matcher Bash|PowerShell.
+29 IM ;; Registers dependency-guard for failed shell calls (manifest checks of left-behind state, captured in dependency-guard.mjs).
+30-35 IM ;; JSON structure: Stop hook.
+36 IM ;; Registers stop-co-change.mjs (co-change reminders captured in that hook).
+37-41 IM ;; JSON closing brackets.
+
+C dep025.guard-registration OL DEP-025 ENFORCED ;; dependency-guard.mjs runs as a PreToolUse hook on every Bash/PowerShell call (timeout 30 s) to block npm peer-dependency bypass flags. ;; = ;; none ;;
+C x.settings-failclosed EX DEP-025 ENFORCED ;; The PreToolUse guard fails closed (onFailure: block): if the guard cannot run (e.g. Node.js unavailable, invalid hook input, crash or timeout) the Bash/PowerShell tool call is blocked. ;; = ;; Other hooks fail open. ;; Not entailed by any oracle policy: it makes Node.js availability a precondition for every shell command in a session, an executable restriction beyond blocking npm bypass flags.

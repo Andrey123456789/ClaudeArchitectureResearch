@@ -1,0 +1,430 @@
+# K1 / B002 — Run 2 replica annotation (blind). Paths relative to output/template/.
+
+# ---------------- constraints first defined in this batch ----------------
+C X12 EX - | MUST | Every instruction artifact is classified in the order Capability -> Kind -> Scope: capability-owned artifacts declare Capability: <slot>/<implementation> (others Capability: —); Kind (OP, DEC, STD, KNW, WF, ENF, IN) decides mechanism and location; Scope (common, backend, backend-tests, frontend, delivery, repo/meta) decides the rule directory and paths:. | Authoring or changing instruction-system artifacts | none stated | Instruction-system classification scheme of the K1 design; no oracle policy dictates how instruction artifacts are classified, headed or located. | A new rule or skill must be placed and headed according to its Capability/Kind/Scope classification; misplacement is a structural error.
+C X13 EX - | MUST | Instruction dependency direction is WF -> KNW -> STD -> DEC -> OP and ENF -> STD/DEC; each ENF artifact declares what it conforms to on a Conforms: line directly after its header. | Instruction-system artifacts | Skill and agent references are routing pointers, not dependencies. | Internal dependency discipline of the instruction system, not derived from any V2 policy. | A standard may not depend on a workflow; an enforcement script must name the standard/decision it conforms to.
+C X14 EX - | MUST | Single owner per topic: each rule/topic lives in the artifact recorded as its owner in the map (Owns / Extend here when / Where does a topic live), new content is added at its owner, and the map is updated whenever an artifact is added, moved, or removed. | Instruction-system maintenance | none stated | Research construction principle (one normative owner) realised as an instruction-maintenance rule; not one of the 196 V2 policies. | Adding a duplicate rule in a second file or adding an artifact without updating MAP.md is non-conformant (checked by the structure checker).
+C X15 EX GOV-017 | MUST (Reserved for contracts) | Changes to the instruction system go through the user-invoked template-maintenance workflow, and changing a slot contract is a Reserved decision (rare). | Instruction-system and capability-contract changes | none stated | GOV-017 makes Reserved changes approval-gated but does not make the template's own slot contracts Reserved or route instruction changes through a user-invoked maintenance workflow. | Editing a slot CONTRACT.md requires explicit approval; template changes are not made through ordinary task workflows.
+C R285 OL GOV-017,GOV-001,GOV-003 | MUST NOT (silently) | Product, feature and task inputs may request a decision change but must not silently override engineering policy or recorded decisions; requested decision changes go through decision control (an explicit user instruction counts as approval). | Conflicts between product/task inputs and policy or recorded decisions | Requirements already in the approved specification are Decided, not Reserved.
+C R10 OL GOV-017,ARC-020,DEP-002 | MUST (Reserved) | Capability-selection changes and other decision-register changes are Reserved decisions handled through the architecture-decision workflow. | Changing selected implementations, approved stack or other register entries | none stated
+C R11 OL API-013 | MUST NOT | Do not introduce API versioning merely because an API exists; add it only when published compatibility or coexistence of client generations creates a concrete need. | backend API (rule loads for backend/**) | none stated
+C X17 EX API-013,DEP-017,ARC-020 | MUST (Reserved) | Adopting API versioning is a Reserved decision (explicit approval required, per CLAUDE.md). | Introducing API versioning in the backend | none stated | API-013 only forbids versioning without a concrete need and DEP-017 makes the package conditional; neither requires explicit approval to adopt versioning once a concrete need exists, and ARC-020's approval list does not include API versioning. | Even with a real compatibility need, the agent must obtain explicit approval before adding versioning.
+C R12 OL API-014 | MUST | Once an API version is relied on by external clients it must not change incompatibly in silence; a breaking contract change requires a new version or another explicitly approved compatibility strategy. | published backend APIs | none stated
+C R13 OL API-015 | DEFAULT | When explicit versioning is required, use one strategy consistently; URL-segment versioning unless project requirements justify another. | backend API versioning | project requirements may justify another strategy
+C R14 OL ARC-026 | MUST NOT | Do not create separate Domain or persistence models merely because the external API has multiple versions; isolate version-specific transport contracts at the Api boundary when practical. | versioned backend APIs | none stated
+C R15 OL API-016 | MUST | Swagger/OpenAPI metadata must describe the API that actually runs (routes, important response statuses, schemas, authentication behavior); never document speculative responses. | backend API documentation | none stated
+C R16 OL API-017,DEP-012 | DEFAULT | Swagger UI is enabled in Development and exposed in other environments only when a deployment requirement explicitly justifies it. | backend API documentation exposure | explicit deployment requirement
+C R17 OL API-001 | MUST | HTTP status codes and transport response semantics belong to the Api layer; Application and Domain must not return IActionResult or ASP.NET Core status codes. | backend | none stated
+C R18 OL API-003 | MUST | Success statuses follow actual HTTP semantics (200/201/202/204): never 200 for every outcome, 201 merely because a row was inserted internally, or 202 for already-completed work. | backend HTTP endpoints | none stated
+C R19 OL API-004 | DEFAULT | A successful collection query with zero matches returns 200 with an empty collection, not 404. | backend collection endpoints | none stated
+C R20 OL API-005 | MUST | Use 401 for missing/failed authentication and 403 for an authenticated principal that is not permitted; returning 404 to hide a protected resource requires a deliberate, consistent security policy. | backend HTTP endpoints | deliberate consistent 404-hiding policy
+C R21 OL API-006 | MUST | Use 409 for a valid request conflicting with current state and 412 when an explicit HTTP precondition such as If-Match fails. | backend HTTP endpoints | none stated
+C R22 OL API-002 | DEFAULT | Use ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request validation failures; keep machine-readable error contracts stable and safe. | backend HTTP errors | none stated
+C R23 OL API-007 | DEFAULT | Unexpected failures propagate to centralized IExceptionHandler handling; avoid repetitive catch/log/rethrow blocks. | backend | none stated
+C R24 OL API-008 | MUST NOT | Never expose stack traces, SQL, connection strings, internal paths, secret values or sensitive exception details in public API errors. | backend public API errors | none stated
+C R25 OL API-012 | MUST | Log an unexpected exception once, at the boundary that handles it; never log the same exception again across repository, Application, controller and global handler. | backend | none stated
+C R26 OL API-021 | MUST NOT | Normal client-request cancellation must not be mapped to a generic 500 or logged as an unhandled application failure. | backend request handling | none stated
+C R27 OL API-009 | DEFAULT | Represent common expected outcomes explicitly when useful (null, bool, a typed outcome); do not force a generic Result<T> pattern and do not use HTTP-named outcome categories in Application. | backend Application | none stated
+C R28 OL API-010,DEP-010 | MUST | Use FluentValidation for explicit request/use-case validation where appropriate; validation stays at its owning boundary (transport in Api, use-case/workflow rules in Application, non-trivial invariants in Domain, external-system assumptions in Infrastructure when needed) without mechanical duplication at every layer. | backend validation | none stated
+C R29 OL API-011 | MUST NOT | Do not establish business exceptions as the default architecture or throw/catch exceptions merely to jump between normal expected branches. | backend | none stated
+C R30 OL ARC-001,DEP-024,ARC-012 | MUST (role map) | The Clean Architecture frame maps backend roles to projects backend/<Name>.Domain (business concepts, independent of infrastructure/transport), backend/<Name>.Application (use-case orchestration; persistence, external-service and commit-boundary abstractions), backend/<Name>.Infrastructure (implementations of Application abstractions) and backend/<Name>.Api (HTTP entry point and composition root). | backend project structure | none stated
+C R31 OL ARC-001 | MUST | Dependencies point inward: Domain references no other application project; Application references Domain; Infrastructure references Application and Domain; Api references Application and may reference Infrastructure only for composition and registration; inner layers never depend on outer layers and Domain/Application never reference Infrastructure-specific types. | backend project references and types | Api -> Infrastructure only for composition/registration
+C R32 OL ARC-001 | SHOULD | If a feature seems to need an outward reference, reconsider the abstraction boundary instead of adding the reference. | backend design | none stated
+C R33 OL ARC-002 | MUST | Domain stays independent of the persistence technology, ASP.NET Core, HTTP and external-service implementation concerns. | backend Domain | none stated
+C R34 OL ARC-003 | DEFAULT | Simple domain entities by default; straightforward CRUD/workflow rules (validation rules, immutable fields, status transitions, allowed/forbidden edits) belong in Application Services and do not by themselves justify a richer model. | backend Domain/Application | none stated
+C R35 OL ARC-004 | REQUIRES_APPROVAL | Move behavior into Domain only when non-trivial invariants or behavior materially benefit from domain-level encapsulation; otherwise a Rich Domain Model or DDD tactical patterns require approval. | backend Domain modeling | unless the approved specification already requires them
+C R36 OL ARC-005 | MUST NOT | Do not add factories, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar DDD constructs merely to make a simple model look domain-driven. | backend Domain | none stated
+C R37 OL ARC-006,GOV-013 | DEFAULT | Application Services orchestrate use cases (Domain objects, repositories, external-service abstractions, Unit of Work); a large service is a signal to reconsider responsibilities, not an automatic reason for another pattern. | backend Application | none stated
+C R38 OL ARC-007 | MUST | Application defines the persistence and external-service abstractions its use cases require and keeps infrastructure implementation details out. | backend Application | none stated
+C R39 OL ARC-008 | MUST NOT | Application must not depend on persistence-technology types/APIs (database context, entity sets, query or provider types) or ASP.NET Core transport types. | backend Application | none stated
+C R40 OL ARC-016 | DEFAULT | IUnitOfWork is the commit boundary of an Application use case; repositories stage changes and Application Services decide when to commit. | backend Application/persistence | none stated
+C R41 OL ARC-017,ARC-021 | MUST | Repositories in one use case share the same scoped Unit of Work and persistence context; repositories are injected explicitly into consumers and IUnitOfWork must not become a repository container or service locator. | backend persistence | none stated
+C R42 OL ARC-012 | DEFAULT | Program.cs in Api is the application composition root and may register Infrastructure implementations. | backend Api | none stated
+C R43 OL ARC-023 | DEFAULT | Registration stays near the owning layer: Application registers Application services, Infrastructure registers persistence and adapters, Api composes them (AddApplication(), AddInfrastructure(configuration)). | backend DI registration | none stated
+C R44 OL ARC-029 | MUST NOT | Do not duplicate equivalent DTOs across Api and Application merely to create layer-shaped types; introduce transport-specific contracts in Api when separation provides a concrete boundary benefit. | backend contracts | concrete boundary benefit
+C R45 OL ARC-010 | MUST | ASP.NET Core Controllers are the default HTTP entry point and stay thin: bind/validate input, invoke Application services, translate outcomes to HTTP responses. | backend Api | none stated
+C R46 OL ARC-011 | MUST NOT | Controllers must not contain business logic, access the database context or concrete repositories, or construct infrastructure services manually. | backend Api | none stated
+C R47 OL ARC-021 | DEFAULT | Constructor injection for required dependencies; avoid service-locator and property-injection patterns. | backend DI | none stated
+C R48 OL ARC-022 | MUST | Dependency lifetimes must be valid; never capture a shorter-lived dependency inside a longer-lived service. | backend DI | none stated
+C R49 OL ARC-024 | MUST | Cache technology stays out of Domain and infrastructure cache APIs must not leak into Application without a deliberate boundary abstraction. | backend caching | deliberate boundary abstraction
+C R50 OL ARC-025 | MUST | Infrastructure translates remote HTTP responses into Application-facing abstractions; HttpResponseMessage and remote transport concerns must not leak into Application. | backend outbound HTTP | none stated
+C R51 OL RUN-009 | DEFAULT | Follow the repository's conventions and .editorconfig; use modern C# when it improves clarity but do not rewrite working code solely for newer syntax. | backend C# | none stated
+C R52 OL RUN-024 | DEFAULT | For new C# code: file-scoped namespaces when consistent with the project; one primary top-level type per file with a matching name (small private/nested supporting types may stay with their owner); Async suffix on Task/ValueTask-returning methods unless an existing or framework contract makes it inappropriate. | new backend C# code | existing/framework contracts; small supporting types
+C R53 OL RUN-011,GOV-014 | MUST NOT | No style-only rewrites outside the requested change unless explicitly asked; avoid mixing large formatting or modernization changes with functional work. | backend C# | explicit request
+C R54 OL DEP-006 | MUST | NuGet Central Package Management is mandatory: versions live in Directory.Packages.props; project PackageReference entries carry no version (central versions never duplicated in project files; a VersionOverride needs a recorded reason) and live in the narrowest project that requires the package. | backend NuGet (rule loads for backend/**, Directory.*.props) | VersionOverride with a recorded reason
+C R55 OL API-018 | MUST | Health checks stay cheap and deterministic and must not become business workflows or perform expensive or mutating database work. | backend health checks | none stated
+C R56 OL API-019 | MUST | Liveness avoids external dependencies whose unavailability could cause restart loops; readiness may depend on capabilities required to serve traffic and must reflect startup and dependency availability. | backend health checks | none stated
+C R57 OL API-020 | MUST NOT | Publicly reachable health responses must not expose secrets, credentials, connection details, stack traces or unnecessary internal diagnostics. | backend health endpoints | none stated
+C R58 OL RUN-013,DEP-010 | DEFAULT | ILogger<T> with structured message templates and stable property names; avoid string interpolation that turns structured values into opaque text. | backend logging | none stated
+C R59 OL DEP-021 | DEFAULT | When Serilog is configured, use the DI-integrated AddSerilog approach with provider configuration in environment-aware configuration; application code continues to depend on ILogger<T>. | backend logging setup | none stated
+C R60 OL RUN-022 | DEFAULT | Strongly typed options for structured service configuration, validated at startup when missing/invalid values prevent correct or secure operation; avoid scattered string-based IConfiguration lookups. | backend configuration | none stated
+C R61 OL DEP-019 | DEFAULT | Production containers use an appropriate runtime image, not the SDK image for convenience, and do not switch to root merely to bypass filesystem problems. | backend containers (rule also loads for **/Dockerfile*) | none stated
+C R62 OL ARC-019,ARC-008,ARC-014 | MUST | EF Core is an Infrastructure implementation detail used fully inside Infrastructure; DbContext, DbSet<T>, EF Core APIs, EF-backed IQueryable<T> and provider-specific types must not leak into Application. | backend persistence | none stated
+C R63 OL ARC-017 | MUST | Infrastructure implements IUnitOfWork by delegating to the shared scoped AppDbContext. | backend persistence | none stated
+C R64 OL ARC-018 | DEFAULT | No explicit transaction APIs until a concrete use case requires transaction control beyond a single SaveChangesAsync. | backend persistence | concrete use case
+C R65 OL PST-002 | MUST | Development seeding is an Infrastructure/bootstrap concern and may use AppDbContext directly; it need not go through Application repositories or IUnitOfWork. | backend Development seeding | none stated
+C R66 OL PST-003 | MUST | Substantial seed construction lives in a dedicated internal DbSeeder exposed through a narrow Infrastructure initialization extension — never in Program.cs, AppDbContext configuration, entity configurations or migrations. | backend Development seeding | none stated
+C X16 EX PST-003,ARC-019 | MUST (placement convention; enforcement reminders key on these paths) | EF Core persistence code is organised under backend/<Name>.Infrastructure/Persistence/: the DbSeeder in Persistence/Seeding/, migrations in Persistence/Migrations/, entity configurations in Persistence/Configurations/ and the DbContext file there. | backend persistence layout | none stated | PST-003 requires a dedicated internal seeder surface and ARC-019 keeps EF Core in Infrastructure, but no oracle policy fixes folder paths; the candidate binds concrete folders and its Stop-hook reminders only recognise these paths. | A seeder placed outside Infrastructure/Persistence/Seeding/ is non-conformant and is not recognised by the seed co-change reminder.
+C R67 OL PST-005 | MUST NOT | The development seeder must not call Database.Migrate(), EnsureCreated() or otherwise create/upgrade the schema; migrations are applied separately before seeding. | backend Development seeding | none stated
+C R68 OL DEP-026 | DEFAULT | appsettings.Development.json provides a usable local Development connection string when it contains no secret credentials; credential-bearing local values come from user-secrets or another approved local secret mechanism. | SQL Server Development configuration | none stated
+C R69 OL ARC-013,ARC-007 | DEFAULT | Specific repository interfaces represent actual cohesive Application persistence needs, not table-mirroring generic CRUD contracts; repository interfaces are defined in Application and implemented in Infrastructure. | backend repositories | none stated
+C R70 OL ARC-014 | MUST NOT | Repository interfaces must not expose IQueryable<T>, database-context or entity-set types, query expressions or provider-specific types; query construction stays in Infrastructure; return materialized entities, collections, projections or explicit result models. | backend repositories | none stated
+C R71 OL ARC-015 | MUST NOT | Application must not depend on IGenericRepository<T> or another generic CRUD contract; a generic repository/base class may exist only as an Infrastructure detail that removes real duplication. | backend repositories | Infrastructure-only generic base removing real duplication
+C R72 OL SEC-004 | MUST | Database access is parameterized; never build SQL by concatenating untrusted input (raw SQL, micro-ORMs, ADO.NET included). | backend data access | none stated
+C R73 OL PST-001 | DEFAULT | An empty Development database receives a small deterministic representative seed dataset covering the main meaningful states and relationships. | backend Development seeding | none stated
+C R74 OL PST-004,TST-008 | MUST NOT | Automatic seeding runs only in Development, never automatically in Production; the development seeder is not test setup and tests own their setup. | backend seeding | none stated
+C R75 OL PST-006 | MUST NOT | When representative data already exists leave it unchanged; never use the seeder for automatic synchronization, repair, upgrade, overwrite or recreation of an existing Development database (developers recreate local databases explicitly). | backend Development seeding | explicit developer recreation
+C R76 OL PST-007 | MUST | Seed entities preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations. | backend Development seeding | none stated
+C R77 OL RUN-001 | DEFAULT | Clear, correct code first; no specialized optimization without a concrete reason, and measurement/profiling evidence for non-trivial optimizations. | backend | none stated
+C R78 OL RUN-008 | DEFAULT | Compiled queries, ValueTask, pooling, custom serialization, aggressive caching and raw SQL for performance only for a measured or clearly demonstrated need. | backend | none stated
+C R79 OL RUN-002 | MUST | Use async APIs for asynchronous I/O and never block them with .Result, .Wait() or similar sync-over-async patterns. | backend | none stated
+C R80 OL RUN-003 | MUST | Propagate CancellationToken through asynchronous operations when cancellation is meaningful; do not add cancellation parameters to purely synchronous code without a use case. | backend | none stated
+C R81 OL RUN-004 | DEFAULT | TimeProvider for logic depending on the current clock that needs deterministic tests; do not mechanically replace explicit or stored timestamps. | backend | none stated
+C R82 OL RUN-006 | DEFAULT | Filter and project in the database when practical, avoid unnecessary round trips, over-fetching and N+1, and paginate potentially large result sets. | backend data access | none stated
+C R83 OL RUN-005 | MUST NOT | Never create and dispose a new HttpClient per request; use IHttpClientFactory or another appropriate long-lived client strategy. | backend outbound HTTP | none stated
+C R84 OL RUN-015 | MUST | External I/O calls have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms with unclear combined behavior. | backend outbound calls | none stated
+C R85 OL RUN-016 | MUST | Retry only when repeating the operation is safe; never automatically retry state-changing operations without idempotency or another concrete safety mechanism. | backend outbound calls | idempotency or other safety mechanism
+C R86 OL RUN-017 | DEFAULT | Respect Retry-After or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively. | backend outbound calls | none stated
+C R87 OL RUN-018 | MUST | Use a fallback only when its result is semantically acceptable; never hide correctness failures behind convenient default values. | backend outbound calls | none stated
+C R88 OL RUN-019 | MUST NOT | Caller cancellation is not a transient failure: never retry it or convert it into repeated outbound attempts. | backend outbound calls | none stated
+C R89 OL RUN-007 | DEFAULT | No caching without a clear measured or reasoned need; choose the implementation according to deployment, consistency and staleness requirements. | backend caching | none stated
+C R90 OL RUN-020 | MUST | Cache keys uniquely represent the cached value including relevant user, tenant and context dimensions; no global keys for user- or tenant-specific data. | backend caching | none stated
+C R91 OL RUN-023 | MUST | Every cache entry has a lifetime or another explicit invalidation strategy. | backend caching | none stated
+C R92 OL RUN-021 | MUST | Invalidate/update cache entries only consistently with successful underlying mutations; the cache never becomes a second source of truth. | backend caching | none stated
+C R93 OL SEC-006 | MUST | Anonymous access must be deliberate and visible; avoid redundant authorization attributes when a secure global or fallback policy already expresses the intent. | backend authorization | none stated
+C R94 OL SEC-016 | MUST NOT | Do not implement custom token or password security, password hashing or reset-token cryptography when established ASP.NET Core authentication/Identity facilities cover the requirement. | backend authentication | none stated
+C R95 OL SEC-017 | MUST | Bearer/OIDC authentication validates what the actual issuer/provider requires (issuer, audience where applicable, signature/signing authority, lifetime); never disable validation merely to make a token work. | backend authentication | none stated
+C R96 OL SEC-018 | MUST NOT | Authentication failures must not reveal secrets or account state unnecessarily; login avoids account-enumeration leaks where relevant. | backend authentication | none stated
+C R97 OL SEC-008 | MUST NOT | Do not implement custom cryptography when a well-reviewed platform mechanism is appropriate, and do not treat ASP.NET Core Data Protection as universal database encryption. | backend cryptography | none stated
+C R98 OL SEC-009 | DEFAULT | CORS is the narrowest policy satisfying actual browser-client requirements (a public unauthenticated API may legitimately differ from a private browser application); never combine credentialed cross-origin requests with unrestricted origins. | backend CORS | none stated
+C R99 OL SEC-015 | MUST NOT | Do not treat client-provided file metadata such as MIME type as authoritative when upload handling or security decisions depend on actual content. | backend uploads | none stated
+C R100 OL TST-001,DEP-013 | DEFAULT | NUnit is the .NET automated test framework; do not introduce a second test framework without a concrete reason. | backend tests (rule loads for backend/**/*Tests/**/*) | In an established project that deliberately uses another framework, follow that convention.
+C R101 OL ARC-028 | MUST NOT | Backend test projects must not have broader production-project references than their test scope requires; they follow the same inward dependency discipline as production projects. | backend test projects | none stated
+C R102 OL ARC-028,DEP-013 | SHOULD (typical matrix; enforced by the architecture-style facet) | Typical test references: <Name>.Domain.Tests (optional) -> Domain; <Name>.Application.Tests -> Application, Domain as needed; <Name>.IntegrationTests -> Api (other layers exercised through the host); <Name>.Infrastructure.Tests (optional) -> Infrastructure, narrower references as required. | backend test projects | narrower references as required
+C R103 OL TST-002 | DEFAULT | Choose the narrowest test level that meaningfully verifies the behavior; integration tests when framework wiring, HTTP, persistence, serialization or authentication is the subject; no fixed unit/integration ratio. | backend tests | none stated
+C R104 OL TST-003 | MUST | Tests verify observable behavior, survive internal refactoring, do not test private calls or exact internal call sequences, and do not reproduce the implementation's algorithm; interaction verification only when the interaction is the specified behavior. | backend tests | interaction itself is the specified behavior
+C R105 OL TST-006,DEP-013 | DEFAULT | WebApplicationFactory-based integration tests when routing, model binding, middleware, authentication/authorization, DI, repositories, the persistence technology or database persistence is what the test must prove. | backend integration tests | none stated
+C R106 OL TST-007 | DEFAULT | Use the actual database provider when relational/provider behavior matters (Testcontainers optional); never claim provider fidelity from a test that runs against a different provider. | backend tests | none stated
+C R107 OL TST-004 | MUST | Tests are deterministic, independent of execution order and isolated from Production and Development data, uncontrolled external systems and shared mutable state. | backend tests | none stated
+C R108 OL TST-008 | MUST | Tests start from a known state and own their setup; never depend on development seed data or the order in which other tests run. | backend tests | none stated
+C R109 OL TST-005 | DEFAULT | For small finite input/state spaces use explicit declarative cases instead of loops, branches, LINQ or generated case machinery; expected results are stated, not computed. | backend tests | none stated
+C R110 OL TST-012 | DEFAULT | Descriptive test names communicating scenario/condition and expected behavior (e.g. MethodOrScenario_Condition_ExpectedBehavior) unless the project has an established convention. | backend tests | established project convention
+C R111 OL TST-011 | MUST NOT | Do not generate low-value tests merely to increase a coverage percentage. | backend tests | none stated
+C R112 OL DEP-001,GOV-013 | MUST | Add a dependency only for a concrete current requirement; never install packages for hypothetical future use; an approved technology is not a reason to install it by default. | all ecosystems (rule loads for **/*) | none stated
+C R113 OL DEP-003,DEP-004,DEP-005 | MUST | Every NuGet or npm addition or update runs the add-dependency workflow. | dependency changes | none stated
+C R114 OL SEC-001 | MUST NOT | Never hardcode or commit real secrets, credentials, private keys, access/refresh tokens or production connection strings, including in example configuration files. | all code and configuration | none stated
+C R115 OL SEC-002 | DEFAULT | A local secret mechanism (e.g. dotnet user-secrets) for development and environment-specific secret injection or a managed secret store for deployed environments; do not assume a cloud provider the project has not chosen. | secrets handling | none stated
+C R116 OL SEC-003 | MUST | Data crossing the trusted boundary (HTTP requests, uploads, external responses, message payloads, user-provided identifiers and filters) is untrusted; validate it at the owning layer when assumptions matter. | all code | none stated
+C R117 OL SEC-005 | MUST | Authorization is enforced on the server; frontend route guards, hidden/disabled UI actions and client checks are UX, not a security boundary. | all code | none stated
+C R118 OL SEC-007 | MUST | Production traffic carrying credentials or sensitive data uses TLS; respect actual hosting topology (TLS may terminate at app, proxy, ingress, gateway or platform), so app-level HTTP-to-HTTPS redirection is not required where deployment already provides a secure transport boundary and redirection is not desired. | production transport | secure transport boundary provided by deployment
+C R119 OL SEC-007 | MUST NOT | Never disable certificate validation to make an integration work. | outbound/inbound TLS | none stated
+C R120 OL SEC-010 | MUST NOT | Never log passwords, access/refresh tokens, private keys, authentication secrets or full payment credentials; avoid PII unless a concrete operational requirement exists and policy permits; lower log levels do not make sensitive data safe; prefer stable technical identifiers. | all logging | concrete permitted operational need for PII
+C R121 OL RUN-014 | MUST NOT | Do not serialize arbitrary request bodies, domain objects or sensitive payloads into logs by default; log minimal useful non-sensitive context. | all logging | none stated
+C R122 OL SEC-013 | DEFAULT | Security-sensitive authorization, permission and required-control checks fail safely; never silently convert a lookup or configuration failure into success. | all code | none stated
+C R123 OL SEC-014 | MUST | A required security control that cannot be configured correctly fails visibly at startup/configuration time instead of falling back to an insecure mode. | all code and configuration | none stated
+C R124 OL ARC-027 | MUST NOT | Physical structure follows actual responsibilities; do not create speculative projects, infrastructure, empty directory trees or generic Common/Helpers/Utils buckets solely to look architectural. | repository structure (rule loads for **/*) | none stated
+C R125 OL DEP-007 | MUST | npm is the frontend package manager unless deliberately changed; package.json and package-lock.json are committed and kept consistent; build/test tooling belongs in devDependencies unless there is a concrete reason. | frontend (rule loads for frontend/**) | deliberate package-manager change; concrete reason for runtime placement
+C R126 OL FE-001,DEP-014 | DEFAULT | Modern standalone Angular APIs for new code (no new NgModules for ordinary feature development), with code organized primarily by feature. | frontend Angular | none stated
+C R127 OL FE-004 | DEFAULT | Signals for naturally synchronous local UI state; RxJS when async streams, HTTP composition, cancellation or event pipelines are clearer; avoid mechanical conversions. | frontend Angular | none stated
+C R128 OL FE-008 | DEFAULT | Functional HTTP interceptors for new code; interceptors stay cross-cutting and never contain feature business logic. | frontend Angular | none stated
+C R129 OL FE-010 | MUST | Use reactive forms for non-trivial forms when explicit state, validation and testability are useful; frontend validation is UX and never replaces backend validation or data-integrity/security enforcement. | frontend forms | none stated
+C R130 OL FE-011 | DEFAULT | Avoid manual nested RxJS subscriptions; prefer composition operators when stream composition expresses the behavior clearly. | frontend RxJS | none stated
+C R131 OL FE-012 | MUST | A manual RxJS subscription from Angular framework-managed code is tied to the component/service lifecycle using current Angular facilities (e.g. takeUntilDestroyed). | frontend RxJS | none stated
+
+# ---------------- files ----------------
+FILE .claude/MAP.md | Human map, not loaded at runtime; checked by check-instructions.cjs.
+1 NN | header: human map, not loaded at runtime (classification metadata)
+3 NN | document heading
+5-9 EX X12 | Three coordinates classify every artifact, asked in this order:
+11 MX X13,R285,R10,X15 | ⟫ one line combining the instruction dependency direction and Conforms-line rule (EXTRA), the product-input precedence claim (resolved as oracle decision control, R285), capability-selection changes via architecture-decision (oracle GOV-017/ARC-020) and template-maintenance routing (EXTRA)
+13-20 DU X14 | View 1 OP/DEC table: navigation rows restating what CLAUDE.md and the decision register own, their loading and when to extend them; the rules are owned by those files
+22-46 DU X14 | STD table: one navigation row per path-scoped standard restating owned topics, globs, enforcement and the single-owner extension rule; the rules themselves are captured in each rule file
+48-70 DU X14 | WF table: navigation rows restating each workflow's owned procedure, loading and enforcement; procedures are captured in the skills
+72-94 DU X14 | KNW table: navigation rows for knowledge skills (technique ownership and loading); content captured in the skills
+96-114 DU X14 | ENF table: navigation rows describing hooks/scripts/config and their triggers; enforcement behavior is captured in the scripts and settings.json
+116-121 DU X14 | IN table: navigation rows for SPECIFICATION.md and CUSTOM_SETTINGS.md restating their role and edit-hook reminders captured in actual-state.cjs
+123-126 DU X14 | maintenance-metadata heading and table header
+127 EX X14 | any artifact is added, moved, or removed
+128-135 EX X15,X14 | the slot contract changes (rare; Reserved)
+137 NN | descriptive note on where optional decision records live
+139-189 DU X1,X5 | capability view restating static composition (X1) and each slot's facet locations and declared properties already captured in the contracts, manifests and decision register
+191-212 DU X14 | topic-owner lookup table restating ownership; rules captured at the named owners
+
+FILE .claude/rules/backend/api-contracts.md
+1-4 IM | path-scoped loading front matter (backend/**): defines when this standard is loaded
+6 NN | Kind/Scope/Capability/Loading header (classification metadata)
+8-10 NN | document and section headings
+12 MX R11,X17 | ⟫ need-based versioning (oracle API-013) plus the extra 'adopting versioning: Reserved' approval gate
+13 OL R12 |
+14 OL R13 |
+15 OL R14 |
+17 NN | section heading
+19 OL R15 |
+20 OL R16 |
+22 NN | routing pointers to technique skills and the deprecation procedure owner
+
+FILE .claude/rules/backend/api.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8-10 NN | headings
+12 OL R17 |
+13 OL R18 |
+14 OL R19 |
+15 OL R20 |
+16 OL R21 |
+18 NN | section heading
+20 OL R22 |
+21 OL R23 |
+22 OL R24 |
+23 OL R25 |
+24 OL R26 |
+26 NN | section heading
+28 OL R27 |
+29 OL R28 |
+30 OL R29 |
+32 NN | routing pointer to technique skills
+
+FILE .claude/rules/backend/architecture-style.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata (capability facet of architecture/clean-architecture)
+8 NN | heading
+10 EX X4 |
+12-17 OL R30 |
+19 NN | section heading
+21 OL R31 |
+22 OL R32 |
+24 NN | section heading
+26 OL R33 |
+27 OL R34 |
+28 OL R35 |
+29 OL R36 |
+30 NN | conditional design heuristic ('are the natural repository-boundary candidates') that applies only inside an already approved DDD design and imposes no requirement; recorded in the orphan ledger
+32 NN | section heading
+34 OL R37 |
+35 OL R38 |
+36 OL R39 |
+38 NN | section heading
+40 OL R40 |
+41 OL R41 |
+43 NN | section heading
+45 OL R42 |
+46 OL R43 |
+47 OL R44 |
+49 NN | pointer to the enforcing facet script and the scaffolding workflow (routing, no rule)
+
+FILE .claude/rules/backend/architecture.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8 NN | heading
+10 NN | scope statement: applies to roles named in the register and points to the frame-specific standard
+12 NN | section heading
+14 OL R45 |
+15 OL R46 |
+17 NN | section heading
+19 OL R47 |
+20 OL R48 |
+22 NN | section heading
+24 OL R49 |
+25 OL R50 |
+27 NN | routing pointer to technique skills
+
+FILE .claude/rules/backend/coding-style.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8 NN | heading
+10 OL R51 |
+11 OL R52 |
+12 OL R53 |
+14 NN | routing pointers (technique skill; changed-file import cleanup lives in verify)
+
+FILE .claude/rules/backend/dependencies.md
+1-6 IM | path-scoped loading front matter (backend/**, Directory.Packages.props, Directory.Build.props)
+8 NN | header metadata
+10 NN | heading
+12 OL R54 |
+14 NN | pointers to the procedure owner and the enforcing script
+
+FILE .claude/rules/backend/operations.md
+1-5 IM | path-scoped loading front matter (backend/**, **/Dockerfile*)
+7 NN | header metadata
+9-11 NN | headings
+13 OL R55 |
+14 OL R56 |
+15 OL R57 |
+17 NN | section heading
+19 OL R58 |
+20 OL R59 |
+22 NN | section heading
+24 OL R60 |
+26 NN | section heading
+28 OL R61 |
+30 NN | routing pointer to technique skills
+
+FILE .claude/rules/backend/persistence-technology.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata (capability facet persistence/ef-core)
+8 NN | heading naming technology and variant
+10 MX R62,X4 | ⟫ binding declaration required by the frame/leaf rule (EXTRA X4) stating that EF Core lives only in Infrastructure (oracle ARC-019)
+12 NN | section heading
+14 OL R62 |
+15 OL R63 |
+16 OL R64 |
+18 NN | section heading
+20 OL R65 |
+21 MX R66,X16 | ⟫ dedicated internal DbSeeder outside Program/DbContext/configurations/migrations (oracle PST-003) plus the fixed Persistence/Seeding/ folder placement (EXTRA X16)
+22 OL R67 |
+24 NN | section heading (provider variant)
+26 OL R68 |
+28 NN | pointers to technique, procedure and enforcement owners
+
+FILE .claude/rules/backend/persistence.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8-12 NN | headings and pointer to the technology-specific standard
+14 OL R69 |
+15 OL R70 |
+16 OL R71 |
+18 NN | section heading
+20 OL R72 |
+22 NN | section heading
+24 OL R73 |
+25 OL R74 |
+26 OL R75 |
+27 OL R76 |
+29 NN | pointer to the persistence-change procedure
+
+FILE .claude/rules/backend/runtime.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8-10 NN | headings
+12 OL R77 |
+13 OL R78 |
+15 NN | section heading
+17 OL R79 |
+18 OL R80 |
+19 OL R81 |
+21 NN | section heading
+23 OL R82 |
+25 NN | section heading
+27 OL R83 |
+28 OL R84 |
+29 OL R85 |
+30 OL R86 |
+31 OL R87 |
+32 OL R88 |
+34 NN | section heading
+36 OL R89 |
+37 OL R90 |
+38 OL R91 |
+39 OL R92 |
+41 NN | routing pointers to technique skills and the performance-change procedure
+
+FILE .claude/rules/backend/security.md
+1-4 IM | path-scoped loading front matter (backend/**)
+6 NN | header metadata
+8-10 NN | headings
+12 OL R93 |
+13 OL R94 |
+14 OL R95 |
+15 OL R96 |
+17 NN | section heading
+19 OL R97 |
+21 NN | section heading
+23 OL R98 |
+24 OL R99 |
+26 NN | routing pointers to technique and audit procedure
+
+FILE .claude/rules/backend-tests/test-framework.md
+1-4 IM | path-scoped loading front matter (backend/**/*Tests/**/*)
+6 NN | header metadata (capability facet backend-testing/nunit)
+8 NN | heading
+10 OL R100 |
+12 NN | pointers to the technique skill and the enforcing facet script
+
+FILE .claude/rules/backend-tests/test-projects.md
+1-4 IM | path-scoped loading front matter (backend/**/*Tests/**/*)
+6 NN | header metadata (capability facet architecture/clean-architecture)
+8 NN | heading
+10 OL R101 |
+12-17 OL R102 |
+19 NN | pointers to the placement owner (decision register) and enforcing facet
+
+FILE .claude/rules/backend-tests/testing.md
+1-4 IM | path-scoped loading front matter (backend/**/*Tests/**/*)
+6 NN | header metadata
+8-12 NN | headings and pointers to the framework/test-project standards
+14 OL R103 |
+15 OL R104 |
+16 OL R105 |
+17 OL R106 |
+19 NN | section heading
+21 OL R107 |
+22 OL R108 |
+24 NN | section heading
+26 OL R109 |
+27 OL R110 |
+28 OL R111 |
+30 NN | routing pointers (knowledge facet; regression tests and probe preservation owned by development-workflow/verify)
+
+FILE .claude/rules/common/dependencies.md
+1-4 IM | path-scoped loading front matter (**/*): loads for every file
+6 NN | header metadata
+8 NN | heading
+10 OL R112 |
+12 MX R113,X8 | every NuGet or npm addition, update, or removal runs `add-dependency` ⟫ additions/updates through add-dependency (oracle DEP-003..DEP-005) combined with removals routed to the same workflow (EXTRA X8)
+
+FILE .claude/rules/common/security.md
+1-4 IM | path-scoped loading front matter (**/*)
+6 NN | header metadata
+8-10 NN | headings
+12 OL R114 |
+13 OL R115 |
+15 NN | section heading
+17 OL R116 |
+18 OL R117 |
+20 NN | section heading
+22 OL R118 |
+23 OL R119 |
+25 NN | section heading
+27 OL R120 |
+28 OL R121 |
+30 NN | section heading
+32 OL R122 |
+33 OL R123 |
+35 NN | routing pointers to add-dependency and security-scan
+
+FILE .claude/rules/common/structure.md
+1-4 IM | path-scoped loading front matter (**/*)
+6 NN | header metadata
+8 NN | heading
+10 OL R124 |
+12 NN | pointers to the layout owner and the scaffolding workflow
+
+FILE .claude/rules/frontend/dependencies.md
+1-4 IM | path-scoped loading front matter (frontend/**)
+6 NN | header metadata
+8 NN | heading
+10 OL R125 |
+12 NN | pointers to the procedure owner and enforcing script
+
+FILE .claude/rules/frontend/frontend-framework.md
+1-4 IM | path-scoped loading front matter (frontend/**)
+6 NN | header metadata (capability facet frontend/angular)
+8 NN | heading
+10 OL R126 |
+11 OL R127 |
+12 OL R128 |
+13 OL R129 |
+14 OL R130 |
+15 OL R131 |
+17 NN | pointers to technique skill and enforcing facet script
+
+# ---------------- orphan candidates found in this batch ----------------
+O .claude/rules/backend/architecture-style.md 30-30 NN - ARC-005,ARC-013 | they are the natural repository-boundary candidates | Considered as a hidden repository-per-aggregate rule. Rejected: the sentence is descriptive ('natural candidates'), conditional on an already approved DDD design, and imposes no obligation or prohibition. | none
+O .claude/rules/backend/architecture-style.md 28-28 PL R35 ARC-004 | unless the approved specification already requires them | Suspected relaxation EXTRA (approval waived when the specification requires DDD). Kept oracle-linked: an approved specification is itself an approval of the required behavior (GOV-001), so ARC-004's approval requirement is satisfied rather than relaxed. | Rich-domain patterns demanded by the approved specification need no separate approval.
+O .claude/rules/backend/dependencies.md 12-12 PL R54 DEP-006 | a `VersionOverride` needs a recorded reason | Suspected EXTRA (recorded reason for VersionOverride). Kept oracle-linked: DEP-006 says PackageReference entries are 'normally' versionless; requiring a reason for the exceptional override specifies the 'normally' qualifier without forbidding any oracle-permitted outcome. | A VersionOverride without a stated reason is non-conformant.
+O .claude/rules/backend-tests/test-framework.md 10-10 PL R100 TST-001,RUN-009 | In an established project that deliberately uses another framework, follow that convention | Suspected relaxation EXTRA. Kept oracle-linked: TST-001 is a DEFAULT and RUN-009 makes repository conventions authoritative, so following a deliberately chosen existing framework is within the oracle. | In a project already using xUnit deliberately, xUnit continues to be used.
+O .claude/rules/frontend/dependencies.md 10-10 PL R125 DEP-007,WF-018 | `package.json` and `package-lock.json` must be committed and kept consistent | Suspected EXTRA (lockfile must be committed). Kept oracle-linked: DEP-007 requires a consistent package-lock and WF-018 presumes a maintained lockfile; 'committed' means version-controlled, not an instruction to run git commit (GOV-015 still governs commits). | The lockfile is kept under source control.
+O .claude/rules/common/security.md 22-22 PL R118 SEC-007 | application-level HTTP-to-HTTPS redirection is not required | Suspected relaxation EXTRA. Kept oracle-linked: SEC-007 itself requires respecting the actual hosting topology; waiving app-level redirection where the deployment provides the secure boundary is that same qualifier. | App-level HTTPS redirection may be omitted behind TLS-terminating infrastructure.
+O .claude/MAP.md 11-11 PL R285 GOV-001,GOV-003,GOV-017 | product inputs never override policy | Initially registered as LINK_UNCERTAIN (does policy outrank an approved specification, restricting GOV-001?). Resolved after reading the always-loaded owner CLAUDE.md line 24: inputs 'may request a decision change' but 'must not silently override engineering policy or recorded decisions', and CLAUDE.md line 30 classifies what the specification already requires as Decided. That is GOV-017 decision control, not a restriction of GOV-001; the map's unqualified 'never' is a not-loaded summary with no separate runtime effect. | A specification or task that conflicts with a recorded decision triggers a Decision Request instead of a silent override.
+DONE

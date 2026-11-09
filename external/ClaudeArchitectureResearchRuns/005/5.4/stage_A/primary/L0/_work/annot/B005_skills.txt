@@ -1,0 +1,209 @@
+# L0 — B005 skills: add-dependency, architecture-decision (workflows); angular, api-versioning, aspnet-error-handling (knowledge)
+
+@@ output/template/.claude/skills/add-dependency/SKILL.md ;; Workflow skill routed from CLAUDE.md and the project hook.
+@scope workflow add-dependency (adding, updating or removing NuGet/npm packages)
+1-7 IM ;; Frontmatter (name/description loading route).
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15 OL [wf001.ad-read-rules,dep001.ad-justify]
+17 NN ;; Heading.
+19 NN ;; Lead-in.
+21 OL [dep003.latest-stable]
+22 OL [dep003.no-prerelease]
+24 NN ;; Heading.
+26 OL [dep004.due-diligence,dep005.permissive]
+28 NN ;; Heading.
+30 OL [dep005.license-gate]
+32-42 NN ;; Illustrative presentation template for a license concern (placeholders; the obligation to explain options is at line 30).
+44 MX [dep005.license-gate,x.ad-no-legal-conclusions] ;; Stating that no free alternative exists is part of DEP-005's explanation; not drawing legal conclusions beyond the published license is added.
+46 NN ;; Heading.
+48 OL [dep017.asp-versioning]
+49 MX [dep020.resilience-default,x.deny-nuget] ;; Microsoft resilience packages by default with Polly as a documented exception is DEP-020; never adding the deprecated Polly integrations is the added deny rule.
+51 NN ;; Heading.
+53 OL [dep006.install-nuget]
+54 OL [dep007.install-npm]
+55 MX [dep025.no-force,x.pre-bypass-user-runs] ;; No force/legacy-peer-deps to bypass peers is DEP-025; the user running an explicitly approved override is added.
+57 NN ;; Heading.
+59 MX [wf005.ad-verify,wf020.ad-scanner-context,x.ad-report] ;; Build/test and vulnerability commands (WF-005/DEP-004/WF-007), scanner context and no unrelated upgrades (WF-020/GOV-014) are oracle-linked; the fixed report fields are added.
+61 NN ;; Heading.
+63 EX [x.ad-removal-steps]
+
+C wf001.ad-read-rules OL WF-001 MUST ;; Read dependency-hygiene.md and package-management.md first (they may not have loaded). ;; = ;; none ;;
+C dep001.ad-justify OL DEP-001,DEP-002,GOV-017,DEP-011 MUST ;; Confirm the change needs the package now, the approved stack does not cover the need, and it is not a Reserved addition; approved conditional packages only when their trigger holds. ;; = ;; none ;;
+C dep003.latest-stable OL DEP-003 MUST ;; Determine the latest stable version compatible with framework/runtime and peers, verified from the registry rather than memory or examples. ;; = ;; none ;;
+C dep003.no-prerelease OL DEP-003 MUST_NOT ;; No preview/alpha/beta/RC/dev/nightly or floating (*) versions unless the user explicitly requests them. ;; = ;; Explicit user request. ;;
+C dep004.due-diligence OL DEP-004 MUST ;; Check the exact selected version for deprecation, known vulnerabilities and license from official registry metadata (and upstream when necessary). ;; = ;; none ;;
+C dep005.permissive OL DEP-005 ALLOWED ;; Permissive licenses (MIT, Apache-2.0, BSD) may normally be accepted; a free download does not make a package acceptable. ;; = ;; none ;;
+C dep005.license-gate OL DEP-005 REQUIRES_APPROVAL ;; Do not automatically install paid/commercial or restrictive/unclear-license dependencies; explain the concern and options without silently substituting; say so when no free alternative exists. ;; = ;; none ;;
+C x.ad-no-legal-conclusions EX DEP-005 MUST_NOT ;; Do not make legal conclusions beyond what the published license supports. ;; = ;; none ;; Not in DEP-005.
+C dep017.asp-versioning OL DEP-017 DEFAULT ;; When Controller API versioning is explicitly adopted use Asp.Versioning.Mvc (+ ApiExplorer for documentation); do not add it before versioning is adopted. ;; = ;; none ;;
+C dep020.resilience-default OL DEP-020 DEFAULT ;; When resilience is required prefer Microsoft.Extensions.Http.Resilience / Microsoft.Extensions.Resilience; direct Polly is an explicit documented exception. ;; = ;; none ;;
+C dep006.install-nuget OL DEP-006 MUST ;; NuGet installs put the version in Directory.Packages.props and a versionless PackageReference in the narrowest project that needs it. ;; = ;; none ;;
+C dep007.install-npm OL DEP-007 MUST ;; npm installs run from the workspace with the correct dependency category, keeping package-lock.json consistent. ;; = ;; none ;;
+C dep025.no-force OL DEP-025 MUST_NOT ;; Never use npm --force or --legacy-peer-deps merely to bypass incompatible peers; resolve the actual problem. ;; = ;; none ;;
+C wf005.ad-verify OL WF-005,WF-007,DEP-004 MUST ;; Build and test the affected scope (verify); for security-relevant changes run dotnet package list --vulnerable --include-transitive or npm audit. ;; = ;; none ;;
+C wf020.ad-scanner-context OL WF-020,GOV-014 MUST_NOT ;; Scanner output needs context; do not replace or upgrade unrelated packages merely because a scanner reports something. ;; = ;; none ;;
+C x.ad-report EX DEP-004 MUST ;; Report package, version, license, reason and checks performed. ;; = ;; none ;; Report fields not in the oracle.
+C x.ad-removal-steps EX DEP-006,WF-005 MUST ;; Removing a dependency: remove the reference and its central version when no project uses it, rebuild and run affected tests. ;; = ;; none ;; Removal procedure not in the oracle.
+
+@@ output/template/.claude/skills/architecture-decision/SKILL.md ;; Workflow skill for Reserved/unclear choices and Decision Requests.
+@scope workflow architecture-decision (Reserved or unclear decisions, answered Decision Requests, API version deprecation)
+1-7 IM ;; Frontmatter (loading route).
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Ownership statement and pointer to CLAUDE.md Decision control.
+15 NN ;; Heading.
+17-19 MX [gov017.ad-classify,x.ad-report-delegated] ;; Classification steps restate GOV-017; mentioning Delegated choices in the report is added.
+21 NN ;; Heading.
+23-27 OL [gov017.ad-request-fields]
+29 OL [gov017.ad-no-implement]
+31 NN ;; Heading.
+33 EX [x.instruction-as-approval]
+35 EX [x.decision-summary-record]
+36 EX [x.ad-update-owning-rule]
+37 OL [gov007.ad-sync-product]
+39 EX [x.ad-rejected-not-recorded]
+41 NN ;; Heading.
+43-49 OL [api022.deprecation-steps]
+
+C gov017.ad-classify OL GOV-017 MUST ;; State the choice; check whether it is already Decided (product inputs, decision summaries, governing rules, established structure); otherwise apply the Reserved list and five-question test. ;; = ;; none ;;
+C x.ad-report-delegated EX GOV-017 MUST ;; Delegated choices proceed and are mentioned in the report. ;; = ;; none ;; Reporting obligation for Delegated choices not in GOV-017.
+C gov017.ad-request-fields OL GOV-017 MUST ;; Decision Request: Context (requirement, touched decision, evidence), Options (normally two or three incl. the smallest change, with consequences, cost to reverse, affected levels/files), Recommendation, Blocked, Proceeding with. ;; = ;; none ;;
+C gov017.ad-no-implement OL GOV-017 MUST_NOT ;; Do not implement the Reserved option before approval; headless runs continue only with the 'Proceeding with' work. ;; = ;; none ;;
+C x.ad-update-owning-rule EX GOV-017,DEP-002 MUST ;; In the same change update the owning rule module at the right level so no rule contradicts an accepted decision (technology replacement edits the Level 2 module, Level 3 decisions and embedding workflows/assets). ;; = ;; none ;; Instruction-update obligation (repo/meta).
+C gov007.ad-sync-product OL GOV-007 MUST ;; If an accepted decision changes product behaviour, synchronize the product inputs. ;; = ;; none ;;
+C x.ad-rejected-not-recorded EX GOV-017 MUST ;; A rejected Decision Request is not recorded as a decision but mentioned in the report. ;; = ;; none ;; Not in GOV-017.
+C api022.deprecation-steps OL API-022,API-014 MUST ;; Deprecating an externally consumed version: mark it deprecated in metadata, document the replacement, communicate a realistic migration/removal timeline, keep it working for the promised period; removal is a Reserved breaking change. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/angular/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill angular (frontend)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Policy-owner pointers; declares technique-only status.
+15 NN ;; Heading.
+17-40 NN ;; Suggested directory tree (illustrative).
+42 OL [fe007.ng-shared]
+44 NN ;; Heading.
+46-53 NN ;; Component example.
+55 EX [x.ng-component-roles]
+57 NN ;; Heading.
+59-63 NN ;; Signals example.
+65 EX [x.ng-computed-over-effect]
+67 NN ;; Heading.
+69 OL [fe012.ng-takeuntil]
+71 NN ;; Heading.
+73-88 NN ;; HTTP data-access and interceptor registration examples.
+90 NN ;; Heading.
+92 OL [sec005.ng-ux-only]
+94 NN ;; Heading.
+96 OL [fe009.ng-central-parsing]
+98 NN ;; Heading.
+100 MX [fe010.ng-reactive,x.ng-no-duplicate-domain-rule] ;; Reactive forms for non-trivial forms is FE-010; explicit request mapping and duplicating a Domain rule in TypeScript only when the UI needs it are added.
+102 NN ;; Heading.
+104-112 NN ;; Routing example.
+114 NN ;; Permissive note (loadComponent also fits).
+116 NN ;; Heading.
+118 OL [fe006.ng-start-simple]
+120 NN ;; Heading.
+122 EX [x.ng-material-consistent]
+124 NN ;; Heading.
+126 OL [wf016.ng-generated]
+128 NN ;; Heading.
+130 MX [x.ng-test-targets,tst003.ng-no-internals] ;; Test targets and E2E focus are added; not testing framework internals or duplicating behaviour at every level restates TST-003/TST-002.
+132 NN ;; Heading.
+134 OL [run001.ng-no-premature]
+
+C fe007.ng-shared OL FE-007,ARC-027 MUST ;; Create directories only with meaningful code; a feature owns its UI and data access; do not move feature code to shared because two components of the same feature use it; shared holds genuinely cross-feature primitives. ;; = ;; none ;;
+C x.ng-component-roles EX FE-002 DEFAULT ;; Route/page components coordinate UI behaviour; reusable presentation components take explicit inputs and emit meaningful events. ;; = ;; none ;; Component-role convention not in the oracle.
+C x.ng-computed-over-effect EX FE-004 AVOID ;; Use computed for derived state; avoid effect() when computed, a template binding or an event handler expresses the dependency more clearly. ;; = ;; none ;; Signals technique rule not in the oracle.
+C fe012.ng-takeuntil OL FE-012 MUST ;; Manual subscriptions in framework-managed code tie their lifetime via takeUntilDestroyed() or DestroyRef. ;; = ;; none ;;
+C sec005.ng-ux-only OL SEC-005 MUST ;; Frontend token attachment, authenticated state, hidden actions and navigation guards are user experience; server semantics are authoritative. ;; = ;; none ;;
+C fe009.ng-central-parsing OL FE-009 MUST ;; Centralize ProblemDetails parsing/mapping and branch on stable codes or fields, not message text. ;; = ;; none ;;
+C fe010.ng-reactive OL FE-010 DEFAULT ;; Reactive forms for non-trivial forms give explicit state, validation and testability. ;; = ;; none ;;
+C x.ng-no-duplicate-domain-rule EX FE-010,API-010 MUST_NOT ;; Keep request mapping explicit; duplicate a complex Domain rule in TypeScript only when the UI genuinely needs an equivalent user-facing rule. ;; = ;; UI genuinely needs it. ;; Not in the oracle.
+C fe006.ng-start-simple OL FE-006 DEFAULT ;; Start with component state, Signals, a feature service/store and RxJS; add a state library only when complexity demonstrates the need. ;; = ;; none ;;
+C x.ng-material-consistent EX DEP-014 DEFAULT ;; When Angular Material is used, use it consistently for common UI primitives; do not wrap every Material component in a custom abstraction without a concrete reason. ;; = ;; Material used. ;; Not in the oracle.
+C wf016.ng-generated OL WF-016 MUST ;; Generated OpenAPI clients are kept separate, regenerated when the contract changes and not patched unless the generation workflow requires it. ;; = ;; Client generation adopted. ;;
+C x.ng-test-targets EX TST-002 DEFAULT ;; Frontend test targets: meaningful component behaviour, validation, request mapping, important route/auth behaviour, complex reactive state; E2E (Playwright when adopted) focuses on a small number of important workflows unless broader coverage is required. ;; = ;; none ;; Test-targeting guidance not in the oracle.
+C tst003.ng-no-internals OL TST-003,TST-002 MUST_NOT ;; Do not test framework internals or duplicate the same behaviour at every level. ;; = ;; none ;;
+C run001.ng-no-premature OL RUN-001,FE-005 DEFAULT ;; Do not prematurely optimize; use lazy loading and sensible rendering/data access first; add memoization, virtual scrolling or change-detection work after a real need. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/api-versioning/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill api-versioning (backend)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 OL [arc026.av-contract]
+15 NN ;; Heading.
+17 OL [api013.av-when-useful]
+19 NN ;; Heading.
+21-25 NN ;; Strategy examples.
+27 NN ;; Heading.
+29-42 NN ;; Setup code example.
+44 NN ;; Heading.
+46-69 NN ;; Versioned controller example.
+71 NN ;; Descriptive statement.
+73 NN ;; Heading.
+75 OL [api014.av-breaking]
+77 NN ;; Heading.
+79-81 NN ;; Deprecation attribute example.
+83 NN ;; Descriptive (ReportApiVersions) plus pointer.
+85 NN ;; Heading.
+87 MX [x.av-docs-per-version,api016.av-doc-match] ;; Separate/grouped Swagger documents per version when clients need them is added; documented versions matching routing and not overriding HTTP semantics restates API-016/API-003.
+89 NN ;; Heading.
+91 EX [x.av-tests]
+93 NN ;; Heading.
+95 OL [arc010.controllers,api013.av-no-version-per-change]
+
+C arc026.av-contract OL ARC-026,API-013 MUST ;; Versioning belongs to the API contract, not to Domain or Application; adopting it is Reserved and the package binding follows add-dependency. ;; = ;; none ;;
+C api013.av-when-useful OL API-013 MUST_NOT ;; Versioning is useful for non-atomic client upgrades, coexisting generations, public APIs, expected breaking changes, migration windows; do not add v1 automatically for co-deployed apps. ;; = ;; none ;;
+C api014.av-breaking OL API-014 MUST ;; Treat removed/changed fields, changed required input, incompatible semantics, removed endpoints and incompatible documented HTTP behaviour as breaking; compilation says nothing about compatibility; consider client generation. ;; = ;; none ;;
+C x.av-docs-per-version EX API-016 DEFAULT ;; Generate separate or clearly grouped Swagger documents per supported version when clients need them. ;; = ;; Clients need them. ;; Not in the oracle.
+C api016.av-doc-match OL API-016,API-003 MUST ;; The documented version matches routing and controller metadata; versions never override normal HTTP semantics. ;; = ;; none ;;
+C x.av-tests EX TST-003 DEFAULT ;; Test meaningful version differences (routing, shape, deprecated version still working, unsupported version, intended shared behaviour); do not duplicate identical tests per version. ;; = ;; none ;; Version-test guidance not in the oracle.
+C api013.av-no-version-per-change OL API-013 MUST_NOT ;; Do not create a new API version for every implementation change. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/aspnet-error-handling/SKILL.md ;; Knowledge skill (on demand; technique only).
+@scope on-demand knowledge skill aspnet-error-handling (backend)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Policy-owner pointers; declares technique-only status.
+15 NN ;; Heading.
+17-50 NN ;; GlobalExceptionHandler and registration example (illustrates API-007/API-021; the 499 status in the example is not stated as a rule).
+52 OL [api008.eh-public-safe]
+54 NN ;; Heading.
+56 NN ;; Examples of expected outcomes.
+58-61 NN ;; Code example.
+63 MX [api009.eh-typed-outcome,x.eh-result-typed-errors] ;; Typed outcomes for multi-outcome commands restate API-009; using an adopted Result consistently with typed errors rather than strings is added.
+65-67 NN ;; Code example.
+69 OL [api009.eh-when-result]
+71 NN ;; Heading.
+73-89 NN ;; Controller mapping example.
+91 NN ;; Heading.
+93 NN ;; Permissive list of possible ProblemDetails contents ('may contain').
+95 NN ;; Heading.
+97 OL [api010.eh-placement]
+99-103 DU ;; Owner-placement table restating outcomes.md validation boundaries (captured there).
+105 MX [arc023.eh-register,x.fv-single-mechanism] ;; Registering validators via FluentValidation.DependencyInjectionExtensions is ARC-023/DEP-010; invoking them through one established mechanism is the added single-mechanism rule.
+107 NN ;; Heading.
+109 OL [api007.eh-catch]
+111-120 NN ;; Anti-example code (swallowed failure, catch/log/rethrow).
+122 OL [api007.eh-external,api009.eh-no-error-logs]
+124 NN ;; Heading.
+126-133 DU ;; Decision table restating the technique and owner rules above.
+135 MX [api002.eh-no-anon,x.eh-no-endpoint-filters] ;; Avoiding inconsistent anonymous error objects restates API-002; avoiding Minimal API endpoint-filter validation in a Controller project is added.
+
+C api008.eh-public-safe OL API-008 MUST ;; Development diagnostics may show more through development tooling; public contracts stay safe. ;; = ;; none ;;
+C api009.eh-typed-outcome OL API-009 DEFAULT ;; For commands with several meaningful outcomes an explicit typed outcome is often clearer. ;; = ;; none ;;
+C x.eh-result-typed-errors EX API-009,ARC-020 MUST ;; If a Result pattern is deliberately adopted, use it consistently with typed errors rather than strings. ;; = ;; Result adopted. ;; Not in the oracle.
+C api009.eh-when-result OL API-009 DEFAULT ;; Consider a Result for several expected failure modes or to avoid exception control flow; avoid it when null/bool/simple typed responses suffice or it only wraps CRUD. ;; = ;; none ;;
+C api010.eh-placement OL API-010 MUST ;; [ApiController] produces validation problem responses for binding/transport failures; explicit rules use FluentValidation placed by owner. ;; = ;; none ;;
+C arc023.eh-register OL ARC-023,DEP-010 DEFAULT ;; Register validators with AddValidatorsFromAssemblyContaining (FluentValidation.DependencyInjectionExtensions). ;; = ;; none ;;
+C api007.eh-catch OL API-007 MUST ;; Catch only to recover, translate to an abstraction-level outcome, perform otherwise inexpressible cleanup or add context preserving the original; avoid swallowing and catch/log/rethrow at every layer. ;; = ;; none ;;
+C api007.eh-external OL API-007 DEFAULT ;; External-service exceptions may be caught locally to translate, add context, apply a defined fallback or an infrastructure retry policy; otherwise they propagate. ;; = ;; none ;;
+C api009.eh-no-error-logs OL API-009 DEFAULT ;; Expected outcomes (NotFound, validation failures, rejected operations) are normally not logged as errors. ;; = ;; none ;;
+C api002.eh-no-anon OL API-002 AVOID ;; Avoid inconsistent anonymous error objects. ;; = ;; none ;;
+C x.eh-no-endpoint-filters EX API-010,ARC-010 AVOID ;; Avoid validation coupled to Minimal API endpoint filters in a Controller-based project. ;; = ;; none ;; Not in the oracle.

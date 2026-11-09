@@ -1,0 +1,92 @@
+# Batch B018 (part 1) — skills: swagger, template-maintenance
+
+@@ output/template/.claude/skills/swagger/SKILL.md ;; Knowledge skill (on demand when configuring Swagger/OpenAPI for Controllers).
+@scope on-demand knowledge skill swagger (backend API documentation)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+18-20 OL [dep012.ui-not-raw-openapi]
+22 NN ;; Heading.
+24 OL [dep012.swashbuckle-package]
+26 NN ;; Heading.
+28-41 NN ;; Basic setup code example (Development-only UI, API-017 captured in api.md).
+43 OL [arc008.swagger-in-api]
+45 NN ;; Heading.
+47-48 EX [x.sw-launch-profile]
+50-55 NN ;; Launch profile JSON example.
+57-58 EX [x.sw-launch-profile]
+60 NN ;; Heading.
+62-72 NN ;; Response metadata code example.
+74-79 OL [api016.metadata-accuracy]
+81 NN ;; Heading.
+83-84 MX [api016.document-201,x.http-201-location] ;; Documenting 201 only when it is the runtime contract is API-016; preferring CreatedAtAction/CreatedAtRoute for a canonical URL is the Location extra.
+86 NN ;; Heading.
+88-91 OL [api016.error-contracts-doc]
+93 NN ;; Heading.
+95-99 MX [api016.auth-metadata,x.sw-bearer-scheme] ;; Matching auth metadata to actual auth (no scheme because a package is installed, no global requirements on anonymous endpoints) is API-016; exposing a Bearer scheme to exercise endpoints from Swagger UI is additional.
+101 NN ;; Heading.
+103-105 EX [x.sw-descriptions]
+107 NN ;; Heading.
+109-110 EX [x.sw-xml-docs]
+112 NN ;; Heading.
+114-115 EX [x.sw-multiple-docs]
+117 NN ;; Heading.
+119-122 MX [wf016.generated-client-review,x.sw-client-contracts] ;; Treating breaking schema changes seriously and reviewing generated-client changes ties to API-014/WF-016; avoiding anonymous shapes and using explicit contracts is additional.
+124 NN ;; Heading.
+126-128 MX [x.sw-not-tests,x.sw-client-contracts,dep012.no-competing-docs] ;; A second competing documentation stack is DEP-012/DEP-002; Swagger as a substitute for integration tests and anonymous long-lived contracts are added anti-patterns.
+130 NN ;; Heading.
+132-139 MX [wf006.api-change-verify,x.sw-verify] ;; Verifying behaviour, metadata and startup is WF-005/WF-006/API-016; opening and exercising the Development Swagger UI is an added verification step.
+140 OL [tst010.preserve-verified]
+
+C dep012.ui-not-raw-openapi OL DEP-012 DECIDED ;; The developer-facing requirement is the interactive Swagger UI, not a standalone raw OpenAPI endpoint. ;; = ;; none ;;
+C dep012.swashbuckle-package OL DEP-012,DEP-003 DECIDED ;; Use Swashbuckle.AspNetCore with the version selected through add-dependency. ;; = ;; none ;;
+C arc008.swagger-in-api OL ARC-008,ARC-012 MUST ;; Keep Swagger configuration in the API/composition layer. ;; = ;; none ;;
+C x.sw-launch-profile EX API-017 DEFAULT ;; For a new local Development API configure the launch profile to open Swagger when helpful; application HTTP/HTTPS URLs must agree with the launch profile (no HTTPS launch URL on an HTTP-only port). ;; = ;; When that helps. ;; Launch-profile technique outside the oracle (EXC-008).
+C api016.metadata-accuracy OL API-016 MUST ;; Do not document 201 when returning 200 or 204 with a body; consider the whole pipeline (binding, validation, auth, rate limiting, central handling, middleware) but do not add theoretically possible statuses. ;; = ;; none ;;
+C api016.document-201 OL API-016 MUST ;; Document 201 Created only when that is the runtime contract. ;; = ;; none ;;
+C api016.error-contracts-doc OL API-016,API-008 MUST ;; Describe ProblemDetails/ValidationProblemDetails contracts where useful; never put internal exception types, stack traces, SQL, connection strings or paths in Swagger examples/descriptions. ;; = ;; none ;;
+C api016.auth-metadata OL API-016 MUST ;; Configure security definitions/requirements only when the API actually uses authentication; do not add a scheme merely because a package is installed; do not apply auth requirements globally to anonymous endpoints. ;; = ;; none ;;
+C x.sw-bearer-scheme EX API-016,DEP-012 DEFAULT ;; For Bearer authentication expose a Bearer scheme so authenticated endpoints can be exercised from Swagger UI. ;; = ;; When the API uses Bearer auth. ;; Usability configuration beyond API-016's accuracy requirement.
+C x.sw-descriptions EX API-016 DEFAULT ;; Document consumer-relevant contract information (preconditions, idempotency, pagination/filtering, outcomes); avoid descriptions that repeat action/property names. ;; = ;; none ;; Documentation-content guidance not in the oracle.
+C x.sw-xml-docs EX GOV-012 MUST_NOT ;; XML comments only when the project chooses them for public contracts; do not add them to every internal type solely for Swagger. ;; = ;; Project chooses XML docs. ;; Documentation practice outside the oracle.
+C x.sw-multiple-docs EX API-016 MUST_NOT ;; Use multiple Swagger documents only for a real contract separation (API versions, public/internal surfaces). ;; = ;; none ;; Document-partitioning technique outside the oracle (EXC-008).
+C wf016.generated-client-review OL WF-016,API-014,API-016 MUST ;; When the contract feeds client generation treat breaking schema changes seriously, keep metadata accurate and review generated-client changes when the contract changes. ;; = ;; none ;;
+C x.sw-client-contracts EX ARC-029,API-016 AVOID ;; Avoid unstable anonymous response shapes and anonymous objects as long-lived contracts; use explicit request/response contracts. ;; = ;; none ;; Explicit-contract requirement for generated clients is not stated in the oracle (ARC-029 only discourages gratuitous DTO duplication).
+C x.sw-not-tests EX TST-006 AVOID ;; Avoid treating Swagger as a substitute for integration tests. ;; = ;; none ;; Anti-pattern not in the oracle.
+C dep012.no-competing-docs OL DEP-012,DEP-002 AVOID ;; Avoid adding a second competing API-documentation stack without a concrete need. ;; = ;; none ;;
+C wf006.api-change-verify OL WF-005,WF-006,API-016 MUST ;; When API behaviour changes verify Controller behaviour and relevant integration tests, response metadata, and start the API when startup/composition is affected. ;; = ;; none ;;
+C x.sw-verify EX WF-006,DEP-012 MUST ;; Open the Development Swagger UI to confirm it loads and exercise representative endpoints through it when meaningful. ;; = ;; When a meaningful behavioural check. ;; Swagger-UI-specific verification step beyond the oracle.
+C tst010.preserve-verified OL TST-010 MUST ;; Preserve newly verified behaviour in maintained tests (verify step 4). ;; = ;; none ;;
+
+@@ output/template/.claude/skills/template-maintenance/SKILL.md ;; User-invoked-only workflow (disable-model-invocation: true) for maintaining the instruction system.
+@scope user-invoked workflow template-maintenance (instruction-system maintenance; never automatic)
+1-6 IM ;; Frontmatter: name and description.
+7 EX [x.tm-user-only] ;; ;; disable-model-invocation: true
+8 IM ;; Frontmatter close.
+10 NN ;; Ownership/scope/loading banner.
+12 NN ;; Heading.
+14-15 EX [x.tm-user-only]
+17 NN ;; Heading.
+19-22 EX [x.tm-one-owner]
+23-27 EX [x.tm-policy-at-trigger]
+28-29 EX [x.map-responsibility-split]
+30-33 EX [x.ci-header,x.ci-flat-rules-paths,x.ci-imports]
+34-35 EX [x.tm-compact]
+36-46 EX [x.ci-hook-exec-form,x.tm-hook-messages,x.ci-required-hooks,x.ci-failclosed-policy]
+47-48 EX [cl.product-inputs-not-instructions]
+50 NN ;; Heading.
+52-53 EX [x.map-placement] ;; ;; Find the current owner and the right location with `.claude/MAP.md`
+54 EX [x.tm-one-owner]
+55 EX [x.map-update-and-check]
+56-61 EX [x.map-update-and-check] ;; ;; run the
+63-65 EX [x.tm-test-hooks]
+66 EX [x.tm-report]
+
+C x.tm-user-only EX - ENFORCED ;; template-maintenance runs only when the user invokes it; Claude must not start it automatically (disable-model-invocation: true). ;; = ;; none ;; Invocation restriction on a repo/meta workflow; not an oracle policy.
+C x.tm-one-owner EX - MUST ;; One authoritative owner per policy; elsewhere only routing pointers or yes/no check-by-reference, never reworded copies; decision summaries only in CLAUDE.md Architecture Defaults and docs/technology-stack.md; edit the owner in place and replace other copies with pointers. ;; = ;; none ;; Instruction-ownership invariant (repo/meta) not in the oracle.
+C x.tm-policy-at-trigger EX - MUST ;; Keep each policy at its trigger (planning-time policy in CLAUDE.md/technology-stack, area constraints in flat path-scoped rules, procedures in workflow skills); do not promote content into CLAUDE.md for easier loading nor demote planning-time policy to save tokens. ;; = ;; none ;; Instruction-placement invariant (repo/meta).
+C x.tm-compact EX - MUST ;; Keep CLAUDE.md, docs/technology-stack.md and skill descriptions compact; descriptions start with concrete triggers. ;; = ;; none ;; Context-size and description-style invariant (repo/meta).
+C x.tm-hook-messages EX - MUST ;; Hooks fail visibly and point messages at the owning file instead of restating policy. ;; = ;; none ;; Hook-design invariant (repo/meta).
+C x.tm-test-hooks EX WF-005 MUST ;; For hook or script changes run the changed script with sample input and confirm both pass and failure paths. ;; = ;; none ;; Verification obligation for instruction-system scripts beyond the oracle.
+C x.tm-report EX WF-009 MUST ;; Report files changed, owners added or moved, and the checker result after template maintenance. ;; = ;; none ;; Output-shape obligation of the maintenance workflow.

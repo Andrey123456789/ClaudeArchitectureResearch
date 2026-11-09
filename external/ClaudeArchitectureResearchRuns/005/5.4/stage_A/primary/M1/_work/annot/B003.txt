@@ -1,0 +1,260 @@
+# Batch B003 — MAP.md, rules: api, architecture, coding-style, composition, dependencies
+
+@@ output/template/.claude/MAP.md ;; Maintainer map, human-facing, not auto-loaded; its 'Add here' placement guidance applies during instruction maintenance (template-maintenance).
+@scope instruction-system maintenance (MAP.md, not auto-loaded)
+1 NN ;; Banner (maintainer map, not auto-loaded).
+3 NN ;; Heading.
+5-8 EX [x.map-one-owner]
+10-15 NN ;; Definitions of loading values (terminology).
+17-21 NN ;; Pointers to the capability view, change procedure and checker command.
+23 NN ;; Heading.
+25-26 NN ;; Table header.
+27-29 EX [x.map-placement] ;; Rows with 'Add here' placement column.
+31-32 NN ;; Pointer to the capability view.
+34 NN ;; Heading.
+36-37 NN ;; Table header.
+38-47 EX [x.map-placement] ;; Rule rows with 'Add here' placement column (paths/enforcement cells descriptive).
+49-50 NN ;; Pointer to capability-owned rules.
+52 NN ;; Heading.
+54-55 NN ;; Table header.
+56-68 EX [x.map-placement] ;; Workflow rows with 'Add here' column.
+70-72 NN ;; Pointer to capability-owned workflow/reference.
+74 NN ;; Heading ('technique only; never sole policy owners').
+76-77 NN ;; Table header.
+78-93 EX [x.map-placement] ;; Knowledge-skill rows with 'Add here' column.
+95-96 NN ;; Pointer.
+98 NN ;; Heading.
+100-101 NN ;; Table header.
+102 EX [x.map-placement] ;; Agent row: nothing is added here; review criteria belong in code-review.
+104 NN ;; Heading.
+106-107 NN ;; Table header.
+108-109 EX [x.map-placement] ;; Product-input rows with 'Add here' column.
+111 NN ;; Heading.
+113-119 DU [x.pre-fail-closed] ;; Describes the Node.js-on-PATH requirement and visible hook failure (fail-closed PreToolUse captured at settings.json/pre-tool-use.js) and active-root resolution (implementation).
+121-122 NN ;; Table header.
+123-135 EX [x.map-placement] ;; Enforcement rows with 'Add here' column; mechanism descriptions are captured at each implementing file.
+137 NN ;; Heading.
+139-144 EX [x.map-placement,x.cap-leak-tokens] ;; Capability view rules: static composition description, no implementation names outside module facets (enforced leak tokens), implementation-specific content only in module facets.
+146 NN ;; Heading.
+148-149 NN ;; Table header.
+150-154 NN ;; Facet table for the frame (descriptive).
+156-158 NN ;; Binds/properties description.
+160 NN ;; Heading.
+162-163 NN ;; Table header.
+164-169 NN ;; Facet table for persistence (descriptive).
+171-175 NN ;; Binds and declared property description (captured in capability-selection.md and the manifest).
+177 NN ;; Heading.
+179-185 NN ;; Facet table for backend-testing (descriptive).
+187 NN ;; Binds note.
+189 NN ;; Heading.
+191-197 NN ;; Facet table for frontend (descriptive).
+199-200 NN ;; Pointer to frontend-slot removal procedure.
+
+C x.map-one-owner EX - MUST ;; Every rule has exactly one owner and other files point to it; related new content goes where the 'Add here' column says. ;; = ;; none ;; Instruction-ownership rule (repo/meta).
+C x.map-placement EX - MUST ;; Place new instruction content in the artifact whose 'Add here' column covers it (governance only in CLAUDE.md, selection changes only via ADR, rules by topic, procedures in workflows, technique in knowledge skills, mechanisms in hooks/scripts, implementation-specific content only in module facets). ;; = ;; none ;; Repo/meta placement guidance.
+
+@@ output/template/.claude/rules/api.md ;; Path rule; loads with backend/**/*.cs and backend/**/launchSettings.json.
+@scope path rule: backend/**/*.cs, backend/**/launchSettings.json
+1-5 IM ;; Frontmatter paths (loading route).
+7 NN ;; Banner.
+9 NN ;; Heading.
+11-12 NN ;; Pointers.
+14 NN ;; Heading.
+16-18 OL [api001.http-in-api]
+19-22 MX [api003.success-statuses,x.201-location] ;; Status choice is API-003; 'with Location when a stable resource URI exists' is additional.
+23-24 OL [api004.empty-collection]
+25-27 OL [api005.401-403]
+28-29 OL [api006.409-412]
+31 NN ;; Heading.
+33-35 MX [api013.versioning-need,x.reserved-versioning] ;; API-013 plus the Reserved approval gate for adoption.
+36-38 OL [api014.breaking]
+39-41 OL [api015.strategy]
+42-43 NN ;; Pointer to architecture-decision deprecation section.
+45 NN ;; Heading.
+47-49 OL [api016.swagger-truth]
+50-51 OL [api017.swagger-env]
+53 NN ;; Heading.
+55-56 OL [api018.health-cheap]
+57-60 OL [api019.liveness-readiness]
+61-62 OL [api020.health-public]
+
+C api001.http-in-api OL API-001 MUST ;; HTTP status codes/transport semantics belong to the API layer; Application and Domain must not return IActionResult or status codes. ;; = ;; none ;;
+C api003.success-statuses OL API-003 MUST ;; Choose 200/201/202/204 by actual HTTP semantics; no blanket 200, no 201 for internal inserts, no 202 for completed work. ;; = ;; none ;;
+C x.201-location EX API-003 DEFAULT ;; A 201 response includes Location when a stable resource URI exists. ;; = ;; Stable resource URI exists. ;; Location header requirement not in the oracle.
+C api004.empty-collection OL API-004 DEFAULT ;; By default a successful collection query with zero matches returns 200 with an empty collection, not 404. ;; = ;; none ;;
+C api005.401-403 OL API-005 MUST ;; 401 for missing/failed authentication, 403 for authenticated but not permitted; 404 hiding requires a deliberate consistent policy. ;; = ;; none ;;
+C api006.409-412 OL API-006 MUST ;; 409 for valid requests conflicting with current state; 412 when an explicit precondition such as If-Match fails. ;; = ;; none ;;
+C api013.versioning-need OL API-013 MUST_NOT ;; Do not introduce API versioning merely because an API exists; add it for published compatibility or coexisting client generations. ;; = ;; none ;;
+C api014.breaking OL API-014 MUST ;; Once relied on by external clients avoid silent breaking changes; a breaking change requires a new version or explicitly approved compatibility strategy. ;; = ;; none ;;
+C api015.strategy OL API-015 DEFAULT ;; Use one versioning strategy consistently; URL-segment is default unless requirements justify another. ;; = ;; none ;;
+C api016.swagger-truth OL API-016 MUST ;; Swagger/OpenAPI metadata describes the API that actually runs (routes, important statuses, schemas, authentication); no speculative responses. ;; = ;; none ;;
+C api017.swagger-env OL API-017 DEFAULT ;; Enable Swagger UI in Development by default; expose elsewhere only when deployment requirements explicitly justify it. ;; = ;; none ;;
+C api018.health-cheap OL API-018 MUST ;; Health checks remain cheap and deterministic; no full business workflows or expensive/mutating database work. ;; = ;; none ;;
+C api019.liveness-readiness OL API-019 MUST ;; Liveness must not depend on external dependencies whose unavailability could cause restart loops; readiness may depend on required capabilities and must reflect startup and dependency availability. ;; = ;; none ;;
+C api020.health-public OL API-020 MUST_NOT ;; No secrets, credentials, connection details, stack traces or unnecessary diagnostics in publicly reachable health responses. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/architecture.md ;; Capability-owned path rule (architecture/clean-architecture); loads with backend/**/*.cs and *.csproj.
+@scope path rule: backend/**/*.cs, backend/**/*.csproj
+1-5 IM ;; Frontmatter paths (loading route).
+7 NN ;; Banner with capability ownership.
+9 NN ;; Heading.
+11-13 NN ;; Pointers to role map and persistence-technology rule.
+15 NN ;; Heading.
+17-25 OL [arc001.inward]
+27 NN ;; Heading.
+29-30 OL [arc003.simple-default]
+32-33 OL [arc002.domain-independent]
+34-37 OL [arc003.crud-in-app]
+38-42 OL [arc004.rich-domain-approval]
+43-46 OL [arc005.no-decorative-ddd]
+48 NN ;; Heading.
+50-52 OL [arc006.appsvc]
+53-55 OL [arc007.app-abstractions]
+56-57 OL [arc008.no-tech-in-app]
+58-59 OL [arc006.no-pattern-for-size]
+61 NN ;; Heading.
+63-65 OL [arc010.thin-controllers]
+67-68 OL [arc011.controller-limits]
+70-72 OL [arc012.composition-root,arc001.controllers-no-infra]
+74 NN ;; Heading.
+76 NN ;; Definitional statement; the placement obligation is stated on lines 82-83.
+78-81 OL [arc013.specific-repos] ;; ;; Prefer specific repository interfaces that represent actual, cohesive
+O 80-81 NN ;; 'When an explicitly approved DDD design contains Aggregate Roots, they are natural repository-boundary candidates' is conditional non-binding guidance. ;; ;; they are natural repository-boundary candidates
+82-83 OL [arc007.repos-in-app]
+84-86 OL [arc014.no-iqueryable]
+88-99 NN ;; Example repository interface.
+101 NN ;; Heading.
+103-108 OL [arc015.generic-repo]
+110 NN ;; Heading.
+112 OL [arc016.uow-default]
+114-120 NN ;; Example IUnitOfWork interface.
+122 OL [arc016.uow-impl]
+123-124 OL [arc016.uow-default] ;; ;; Repositories stage changes and do not independently commit
+125-127 OL [arc017.shared-session]
+128-129 OL [arc017.not-container]
+131 NN ;; Heading.
+133-134 OL [arc024.cache]
+135-137 OL [arc025.http]
+138-140 OL [arc023.registration]
+141-143 OL [arc026.versioned-models]
+144-146 OL [arc029.dto-dup]
+148 NN ;; Heading.
+150-152 OL [arc028.narrow-test-refs]
+
+C arc001.inward OL ARC-001 MUST ;; Dependencies point inward: Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application and Infrastructure only for composition/registration; inner layers never depend on outer; no Infrastructure-specific types in Domain/Application. ;; = ;; none ;;
+C arc003.simple-default OL ARC-003 DEFAULT ;; Domain holds business concepts independent of infrastructure/transport; simple entities are default. ;; = ;; none ;;
+C arc002.domain-independent OL ARC-002 MUST ;; Keep Domain independent of persistence technology, ASP.NET Core, HTTP, persistence and external-service concerns. ;; = ;; none ;;
+C arc003.crud-in-app OL ARC-003 DEFAULT ;; For CRUD/straightforward workflows keep entities simple and enforce rules in Application Services; validation, immutable fields, transitions or edit rules alone do not justify a Rich Domain Model. ;; = ;; none ;;
+C arc004.rich-domain-approval OL ARC-004 REQUIRES_APPROVAL ;; Move behaviour into Domain only for non-trivial invariants benefiting from encapsulation; otherwise Rich Domain/DDD tactical patterns need explicit approval. ;; = ;; Unless the approved specification requires it. ;;
+C arc005.no-decorative-ddd OL ARC-005 MUST_NOT ;; No factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar merely to appear domain-driven. ;; = ;; none ;;
+C arc006.appsvc OL ARC-006 DEFAULT ;; Application Services are the default orchestration mechanism (coordinating Domain, repositories, external abstractions, UoW). ;; = ;; none ;;
+C arc007.app-abstractions OL ARC-007 MUST ;; Define persistence/external-service abstractions in Application when use cases need them; keep infrastructure details out. ;; = ;; none ;;
+C arc008.no-tech-in-app OL ARC-008 MUST_NOT ;; Application must not depend on persistence-technology types or ASP.NET Core transport types. ;; = ;; none ;;
+C arc006.no-pattern-for-size OL ARC-006,ARC-009 DEFAULT ;; An oversized service is a signal to reconsider responsibilities, not an automatic reason to introduce another pattern. ;; = ;; none ;;
+C arc010.thin-controllers OL ARC-010 MUST ;; Controllers are the default HTTP entry point and stay thin (bind/validate, invoke Application services, translate outcomes). ;; = ;; none ;;
+C arc011.controller-limits OL ARC-011 MUST_NOT ;; Controllers must not contain business logic, access the persistence session or concrete repositories, or construct infrastructure services manually. ;; = ;; none ;;
+C arc012.composition-root OL ARC-012 DEFAULT ;; By default Program.cs is the composition root and may register Infrastructure implementations. ;; = ;; none ;;
+C arc001.controllers-no-infra OL ARC-001,ARC-011 MUST_NOT ;; Controllers do not consume Infrastructure implementation types directly. ;; = ;; none ;;
+C arc013.specific-repos OL ARC-013 PREFER ;; Prefer specific repository interfaces for cohesive use-case persistence needs over table-mirroring generic CRUD contracts. ;; = ;; none ;;
+C arc007.repos-in-app OL ARC-007,ARC-014 MUST ;; Define repository interfaces in Application and implement them in Infrastructure; query construction stays in Infrastructure. ;; = ;; none ;;
+C arc014.no-iqueryable OL ARC-014 MUST_NOT ;; Repository interfaces must not expose IQueryable<T>, persistence-technology types/query expressions or provider types; return materialized results. ;; = ;; none ;;
+C arc015.generic-repo OL ARC-015,ARC-019 MUST_NOT ;; Application must not depend on IGenericRepository<T>/generic CRUD contracts; a generic base exists only in Infrastructure to remove genuine duplication and must not replace the technology's query capabilities. ;; = ;; none ;;
+C arc016.uow-default OL ARC-016 DEFAULT ;; IUnitOfWork is the default commit boundary; repositories stage and do not commit; Application Services decide when to commit. ;; = ;; none ;;
+C arc016.uow-impl OL ARC-016,ARC-017 MUST ;; Infrastructure implements IUnitOfWork over the scoped persistence session. ;; = ;; none ;;
+C arc017.shared-session OL ARC-017 MUST ;; Repositories in one use case share the same scoped Unit of Work and persistence session; inject repositories explicitly. ;; = ;; none ;;
+C arc017.not-container OL ARC-017 MUST_NOT ;; IUnitOfWork must not act as a repository container or service locator. ;; = ;; none ;;
+C arc024.cache OL ARC-024 MUST ;; Keep cache technology out of Domain; no infrastructure cache APIs in Application without a deliberate boundary abstraction. ;; = ;; none ;;
+C arc025.http OL ARC-025 MUST ;; Infrastructure translates remote HTTP responses into Application-facing abstractions; no HttpResponseMessage/transport concerns in Application. ;; = ;; none ;;
+C arc023.registration OL ARC-023 DEFAULT ;; By default registration stays near the owning layer; Api remains the composition root. ;; = ;; none ;;
+C arc026.versioned-models OL ARC-026 MUST_NOT ;; No separate Domain/persistence models merely for multiple API versions; version-specific contracts at the API boundary. ;; = ;; none ;;
+C arc029.dto-dup OL ARC-029 MUST_NOT ;; Do not duplicate equivalent DTOs across Api and Application merely for layer-shaped types; transport contracts when separation gives a concrete benefit. ;; = ;; none ;;
+C arc028.narrow-test-refs OL ARC-028 MUST_NOT ;; Backend test projects get no broader production references than needed and keep inward discipline. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/coding-style.md ;; Path rule; loads with backend/**/*.cs.
+@scope path rule: backend/**/*.cs
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 NN ;; Heading.
+12-15 OL [run009.conventions]
+17 NN ;; Heading.
+19 NN ;; Lead-in.
+21 OL [run024.file-scoped-rule]
+22-24 OL [run024.one-type]
+26-27 OL [run011.no-reorder]
+29 NN ;; Heading.
+31-34 OL [run024.async-suffix]
+36 NN ;; Heading.
+38-39 EX [x.cs-constructors] ;; ;; Primary constructors are appropriate when dependency injection or simple
+41-47 NN ;; Primary constructor example.
+49-52 MX [x.cs-constructors,run009.no-mechanical] ;; Regular-constructor criteria are added; 'Do not convert constructors mechanically' is RUN-009.
+54 NN ;; Heading.
+56-59 EX [x.cs-records]
+61 NN ;; Heading.
+63-66 EX [x.cs-visibility]
+68 NN ;; Heading.
+70-72 OL [run009.modern-when-clearer]
+73-74 EX [x.cs-var]
+76 NN ;; Heading.
+78-81 EX [x.cs-naming]
+83 NN ;; Heading.
+85-87 MX [run011.no-style-rewrites,x.cs-no-mixing] ;; No style-only rewrites (RUN-011) plus the added caution against mixing large formatting changes with functional work; the using-cleanup sentence is a pointer to verify.
+
+C run009.conventions OL RUN-009 DEFAULT ;; Follow existing conventions and .editorconfig; prefer modern C# when clearer; no rewrites solely for newer syntax; consistency over feature maximization. ;; = ;; none ;;
+C run024.file-scoped-rule OL RUN-024 PREFER ;; For new code prefer file-scoped namespaces when consistent with the project. ;; = ;; none ;;
+C run024.one-type OL RUN-024 DEFAULT ;; By default one primary top-level type per file with matching file name. ;; = ;; Small private/nested supporting types may stay with the owner. ;;
+C run011.no-reorder OL RUN-011 MUST_NOT ;; Do not reorganize an existing file merely to satisfy a preferred member ordering. ;; = ;; none ;;
+C run024.async-suffix OL RUN-024,RUN-011 DEFAULT ;; Task/ValueTask methods use the Async suffix by default; do not rename framework implementations or established APIs when that breaks a contract. ;; = ;; Existing/framework contracts. ;;
+C x.cs-constructors EX RUN-009 DEFAULT ;; Primary constructors when DI/simple initialization stays clear; regular constructors when validation/initialization is non-trivial, explicit fields help, the codebase uses that style, or capture hurts understanding. ;; = ;; none ;; Constructor style criteria outside the oracle (EXC-002/EXC-003).
+C run009.no-mechanical OL RUN-009 MUST_NOT ;; Do not convert constructors mechanically. ;; = ;; none ;;
+C x.cs-records EX RUN-009 DEFAULT ;; Records when value semantics/immutability are desirable (many DTOs, genuine Value Objects); classes for identity/mutable lifecycle/inheritance/framework behaviour; not every DTO/Domain type becomes a record. ;; = ;; none ;; Record/class style rule outside the oracle.
+C x.cs-visibility EX RUN-009 DEFAULT ;; Keep implementation details non-public unless public API; use sealed for deliberate non-inheritance intent, not speculative JIT optimization. ;; = ;; none ;; Visibility/sealed conventions outside the oracle.
+C run009.modern-when-clearer OL RUN-009 DEFAULT ;; Use modern features (collection expressions, pattern matching, switch expressions, target-typed new) when they read better; not when less obvious. ;; = ;; none ;;
+C x.cs-var EX RUN-009 DEFAULT ;; Use var when the type is obvious or unimportant; explicit type when clearer. ;; = ;; none ;; Type-inference convention outside the oracle.
+C x.cs-naming EX RUN-009 MUST ;; Standard .NET naming: PascalCase types/methods/properties/public members, camelCase parameters/locals, meaningful names; private fields per repository convention. ;; = ;; none ;; Naming convention not in the oracle.
+C run011.no-style-rewrites OL RUN-011 MUST_NOT ;; No style-only rewrites outside the requested change unless explicitly asked. ;; = ;; Explicit request. ;;
+C x.cs-no-mixing EX RUN-011 AVOID ;; Avoid mixing large formatting or modernization changes with functional work. ;; = ;; none ;; Goes beyond RUN-011's outside-scope prohibition.
+
+@@ output/template/.claude/rules/composition.md ;; Path rule; loads with backend/**/*.cs and backend/**/appsettings*.json.
+@scope path rule: backend/**/*.cs, backend/**/appsettings*.json
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11-13 NN ;; Pointers.
+15 NN ;; Heading.
+17-18 OL [arc021.ctor-injection]
+19-21 OL [arc022.lifetimes]
+23 NN ;; Heading.
+25-29 OL [run022.typed-options]
+30-31 OL [run022.startup-validation]
+33 NN ;; Heading.
+35-36 OL [run013.structured-logging]
+37-40 OL [dep021.addserilog]
+
+C arc021.ctor-injection OL ARC-021 DEFAULT ;; Constructor injection is the default for required dependencies; avoid service-locator and property injection. ;; = ;; none ;;
+C arc022.lifetimes OL ARC-022 MUST ;; Never capture a shorter-lived dependency in a longer-lived service; singletons/hosted services needing scoped work create a scope per operation and resolve a scoped orchestration service. ;; = ;; none ;;
+C run022.typed-options OL RUN-022 PREFER ;; Prefer strongly typed options for structured configuration; avoid scattered string IConfiguration lookups in services; direct IConfiguration belongs to composition/provider setup/infrastructure registration. ;; = ;; none ;;
+C run022.startup-validation OL RUN-022 DEFAULT ;; Validate settings at startup when missing/invalid values prevent correct or secure operation. ;; = ;; none ;;
+C run013.structured-logging OL RUN-013 DEFAULT ;; Use ILogger<T> with structured templates and stable property names; avoid interpolation. ;; = ;; none ;;
+C dep021.addserilog OL DEP-021,DEP-010 DEFAULT ;; When Serilog is configured use DI-integrated AddSerilog() with environment-aware provider configuration; application code depends on ILogger<T>, not Serilog APIs. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/dependencies.md ;; Path rule; loads with **/*.csproj, Directory.Packages.props, Directory.Build.props, package.json, package-lock.json.
+@scope path rule: **/*.csproj, **/Directory.Packages.props, **/Directory.Build.props, **/package.json, **/package-lock.json
+1-8 IM ;; Frontmatter paths.
+10 NN ;; Banner.
+12 NN ;; Heading.
+14-17 OL [dep.route-add-dependency] ;; ;; Adding, updating, or removing a NuGet or npm dependency follows the
+19 NN ;; Heading.
+21-22 OL [dep001.need]
+24 NN ;; Heading.
+26-29 MX [dep006.cpm,x.versionoverride-documented] ;; CPM and versionless references are DEP-006; a documented reason for VersionOverride is additional.
+31-41 NN ;; CPM XML example.
+43-45 OL [dep006.narrow]
+47 NN ;; Heading.
+49-53 OL [dep007.npm]
+
+C dep.route-add-dependency OL DEP-003,DEP-004,DEP-005 MUST ;; Adding, updating or removing a NuGet/npm dependency follows the add-dependency workflow (version, deprecation, vulnerability, license checks). ;; = ;; none ;;
+C dep001.need OL DEP-001 MUST ;; Add a dependency only for a concrete current requirement; no hypothetical future use. ;; = ;; none ;;
+C dep006.cpm OL DEP-006 MUST ;; Use NuGet CPM: versions in Directory.Packages.props, versionless PackageReference by default, no duplicated versions in .csproj. ;; = ;; none ;;
+C dep006.narrow OL DEP-006 MUST ;; Keep package references in the narrowest project that requires them. ;; = ;; none ;;
+C dep007.npm OL DEP-007 MUST ;; npm by default unless deliberately changed; maintain and commit package.json and package-lock.json; tooling in devDependencies unless there is a reason. ;; = ;; Deliberate other package manager; reason for runtime tooling. ;;

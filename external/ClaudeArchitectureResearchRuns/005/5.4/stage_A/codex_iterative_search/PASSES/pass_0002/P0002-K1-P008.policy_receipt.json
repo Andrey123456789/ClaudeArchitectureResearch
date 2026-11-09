@@ -1,0 +1,888 @@
+{
+  "unit": "P0002-K1-P008",
+  "batch_input_sha256": "5359300d96cb95b479a7b39cbf4ab9f9fdb94629f0c227a03228aecd17f09108",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-001",
+        "name": "Development seeding defaults to representative data",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Development Data Seeding"
+        ],
+        "normalized_policy": "For an empty Development database, maintain a small deterministic representative seed dataset covering meaningful states and relationships.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0155"
+      ],
+      "boundary_analysis": "Empty-development condition and deterministic representative size match canonical. Explicit dataset description for complex graphs is additional but registered; examples remain illustrative.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: an empty Development database receives a small, deterministic, representative seed dataset covering the main meaningful states and relationships.\n- Automatic seeding runs only in Development; never automatically seed Production. The development seeder is not test setup; tests own their own setup."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              160,
+              202
+            ]
+          ],
+          "context_quotes": [
+            "\nUse one or more representative root/anchor entities to detect existing data; keep the seeder internal and expose a narrow extension that creates the scope.\n\n```csharp\ninternal static class DbSeeder\n{\n    public static async Task SeedAsync(AppDbContext db, CancellationToken cancellationToken = default)\n    {\n        if (await db.Projects.AnyAsync(cancellationToken))\n            return;\n\n        await db.Projects.AddRangeAsync(CreateProjects(), cancellationToken);\n        await db.SaveChangesAsync(cancellationToken);\n    }\n\n    private static IReadOnlyCollection<Project> CreateProjects()\n    {\n        // Deterministic, representative development scenarios matching the current model.\n        throw new NotImplementedException();\n    }\n}\n\npublic static class DatabaseInitializationExtensions\n{\n    public static async Task SeedDevelopmentDataAsync(\n        this IServiceProvider services,\n        CancellationToken cancellationToken = default)\n    {\n        await using var scope = services.CreateAsyncScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        await DbSeeder.SeedAsync(db, cancellationToken);\n    }\n}\n\n// Program.cs\nif (app.Environment.IsDevelopment())\n{\n    await app.Services.SeedDevelopmentDataAsync();\n}\n```\n\nRepresentative states to consider: newly created, active/in progress, completed, inactive/archived, with and without optional values and relationships, representative status values, meaningful boundary states. When the required graph is complex, the task should describe the dataset explicitly instead of inventing a large generic graph.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              30,
+              32
+            ],
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "   ```\n5. Create the initial migration (section B), apply it locally, then let Development startup seed the empty database.\n",
+            "3. Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.\n4. Seed co-change: whenever the Domain or persistence change affects seeded entities — new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants — update the maintained development seeder in the same change, so that recreating an empty Development database at this revision yields valid, representative data. Existing seeded rows are not patched automatically.\n5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-002",
+        "name": "Seeding is Infrastructure/bootstrap concern",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Development Data Seeding"
+        ],
+        "normalized_policy": "Development seeding belongs to Infrastructure/bootstrap and may use AppDbContext directly; it need not use Application repositories or IUnitOfWork.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0111"
+      ],
+      "boundary_analysis": "Direct-context seeding permission exactly matches canonical; no need to force Application repository workflow from general commit rules.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ]
+          ],
+          "context_quotes": [
+            "\n- Development seeding is an Infrastructure/bootstrap concern and may use `AppDbContext` directly; it need not go through Application repositories or `IUnitOfWork`.\n- Substantial seed construction lives in a dedicated internal `DbSeeder` (`Persistence/Seeding/` in Infrastructure), exposed through a narrow Infrastructure initialization extension — never in `Program.cs`, `AppDbContext` configuration, entity configurations, or migrations."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-003",
+        "name": "Seeder is dedicated and internal",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Development Data Seeding"
+        ],
+        "normalized_policy": "Keep substantial seed construction in a dedicated internal DbSeeder/Infrastructure initialization surface, not Program.cs, DbContext configuration, entity configurations, or migrations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0169"
+      ],
+      "boundary_analysis": "Exact Persistence/Seeding placement and narrow initialization extension are registered. Scope-creating extension also primary0395/independent0083.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              20,
+              22
+            ]
+          ],
+          "context_quotes": [
+            "- Development seeding is an Infrastructure/bootstrap concern and may use `AppDbContext` directly; it need not go through Application repositories or `IUnitOfWork`.\n- Substantial seed construction lives in a dedicated internal `DbSeeder` (`Persistence/Seeding/` in Infrastructure), exposed through a narrow Infrastructure initialization extension — never in `Program.cs`, `AppDbContext` configuration, entity configurations, or migrations.\n- The development seeder must not call `Database.Migrate()`, `EnsureCreated()`, or otherwise create or upgrade the schema; migrations are applied separately before seeding."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/persistence-technology.cjs",
+          "sha256": "13a101eb46f845d8bbc4716a25b851d48c4c5941c00f856095929384ea7660a5",
+          "inspected_ranges": [
+            [
+              18,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\nconst isMigration = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Migrations\\//.test(p);\nconst isSeeder = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Seeding\\//.test(p);\nconst isModel = p =>\n  /^backend\\/[^/]+\\.Domain\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Configurations\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/[^/]*DbContext\\.cs$/.test(p);\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              160,
+              202
+            ]
+          ],
+          "context_quotes": [
+            "\nUse one or more representative root/anchor entities to detect existing data; keep the seeder internal and expose a narrow extension that creates the scope.\n\n```csharp\ninternal static class DbSeeder\n{\n    public static async Task SeedAsync(AppDbContext db, CancellationToken cancellationToken = default)\n    {\n        if (await db.Projects.AnyAsync(cancellationToken))\n            return;\n\n        await db.Projects.AddRangeAsync(CreateProjects(), cancellationToken);\n        await db.SaveChangesAsync(cancellationToken);\n    }\n\n    private static IReadOnlyCollection<Project> CreateProjects()\n    {\n        // Deterministic, representative development scenarios matching the current model.\n        throw new NotImplementedException();\n    }\n}\n\npublic static class DatabaseInitializationExtensions\n{\n    public static async Task SeedDevelopmentDataAsync(\n        this IServiceProvider services,\n        CancellationToken cancellationToken = default)\n    {\n        await using var scope = services.CreateAsyncScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        await DbSeeder.SeedAsync(db, cancellationToken);\n    }\n}\n\n// Program.cs\nif (app.Environment.IsDevelopment())\n{\n    await app.Services.SeedDevelopmentDataAsync();\n}\n```\n\nRepresentative states to consider: newly created, active/in progress, completed, inactive/archived, with and without optional values and relationships, representative status values, meaningful boundary states. When the required graph is complex, the task should describe the dataset explicitly instead of inventing a large generic graph.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension.\n3. Register persistence in Infrastructure's `AddInfrastructure(configuration)` using the `DefaultConnection` connection string.\n4. `appsettings.Development.json` connection string per `persistence-technology.md` (Variant: sqlserver). A suitable Windows LocalDB default, adapted to the project's database name:\n\n   ```json\n   {\n     \"ConnectionStrings\": {\n       \"DefaultConnection\": \"Server=(localdb)\\\\MSSQLLocalDB;Database=ProjectName;Trusted_Connection=True;TrustServerCertificate=True;\"\n     }\n   }\n   ```\n5. Create the initial migration (section B), apply it locally, then let Development startup seed the empty database.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-004",
+        "name": "Seeding is Development-only",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Environment"
+        ],
+        "normalized_policy": "Automatic development seeding runs only in Development; never automatically seed Production; tests own their own setup.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0235"
+      ],
+      "boundary_analysis": "Automatic Development-only rule matches canonical; delivery prose's unqualified no-Production seeding is explicitly retained in existing delivery record, not a missed modality difference.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Default: an empty Development database receives a small, deterministic, representative seed dataset covering the main meaningful states and relationships.\n- Automatic seeding runs only in Development; never automatically seed Production. The development seeder is not test setup; tests own their own setup.\n- When representative data already exists, leave it unchanged. Never use the seeder for automatic synchronization, repair, upgrade, overwrite, or recreation of an existing Development database; developers recreate local databases explicitly when they need a fresh dataset."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-change/SKILL.md",
+          "sha256": "65272c6960340d9665b3deec732badf947f186ef3dcdbc69bd1bf48dd4570600",
+          "inspected_ranges": [
+            [
+              33,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "\n- Production database migrations must not run automatically from normal application startup by default. A production migration is an explicit deployment operation: make the step explicit, use the project's approved credentials, run it at a controlled point, and fail visibly on error.\n- Development seeding never runs in Production.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "86ecdc73f9bcbe8fd7c25e7a25a4dbe371f87936f88299cd8981dd578d881190",
+          "inspected_ranges": [
+            [
+              90,
+              92
+            ]
+          ],
+          "context_quotes": [
+            "\nContainer deployment does not change the production migration or Development-only seeding policies (`delivery-change`, `.claude/rules/backend/persistence.md`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              211,
+              213
+            ],
+            [
+              231,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nFor controlled production deployment, generated (idempotent) migration scripts are often preferable; production migration is an explicit deployment step (`delivery-change`).\n",
+            "\n| Scenario | Default technique |\n|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              39,
+              41
+            ]
+          ],
+          "context_quotes": [
+            "7. **Minimal internal directories** — only directories the initial implementation needs; no empty trees for hypothetical capabilities.\n8. **Development persistence** — run `persistence-change` (initial setup). Never add Production credentials or Production migration automation.\n9. **Verify** — restore backend dependencies; build the .NET solution; build the frontend when present; run relevant tests when present; inspect project references (`node \"<root>/.claude/scripts/check-manifests.cjs\"`; `<root>`: the active repository root, command form in `verify`); inspect the final repository tree; confirm the Development configuration is valid. Then run `verify`. Never report successful scaffolding when the result does not build."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-005",
+        "name": "Seeder does not migrate schema",
+        "related_groups": [
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Empty Database Behavior"
+        ],
+        "normalized_policy": "The development seeder must not call Database.Migrate(), EnsureCreated(), or otherwise create/upgrade schema; migrations are applied separately before seeding.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0473"
+      ],
+      "boundary_analysis": "Initial migration local application before startup seeding elaborates ordering; registered separately from seeder schema prohibition.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "- Substantial seed construction lives in a dedicated internal `DbSeeder` (`Persistence/Seeding/` in Infrastructure), exposed through a narrow Infrastructure initialization extension — never in `Program.cs`, `AppDbContext` configuration, entity configurations, or migrations.\n- The development seeder must not call `Database.Migrate()`, `EnsureCreated()`, or otherwise create or upgrade the schema; migrations are applied separately before seeding.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              30,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "   ```\n5. Create the initial migration (section B), apply it locally, then let Development startup seed the empty database.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-006",
+        "name": "Existing Development data is not auto-synchronized",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Empty Database Behavior"
+        ],
+        "normalized_policy": "If representative data already exists, leave it unchanged; do not use the seeder as automatic synchronization, repair, upgrade, overwrite, or recreation of an existing Development database.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0395"
+      ],
+      "boundary_analysis": "Representative root/anchor detection and explicit local recreation are added technique beyond no overwrite, but registered. Any-row exemplar does not establish all-product completeness.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              25,
+              27
+            ]
+          ],
+          "context_quotes": [
+            "- Automatic seeding runs only in Development; never automatically seed Production. The development seeder is not test setup; tests own their own setup.\n- When representative data already exists, leave it unchanged. Never use the seeder for automatic synchronization, repair, upgrade, overwrite, or recreation of an existing Development database; developers recreate local databases explicitly when they need a fresh dataset.\n- Seed entities must preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              160,
+              202
+            ],
+            [
+              231,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nUse one or more representative root/anchor entities to detect existing data; keep the seeder internal and expose a narrow extension that creates the scope.\n\n```csharp\ninternal static class DbSeeder\n{\n    public static async Task SeedAsync(AppDbContext db, CancellationToken cancellationToken = default)\n    {\n        if (await db.Projects.AnyAsync(cancellationToken))\n            return;\n\n        await db.Projects.AddRangeAsync(CreateProjects(), cancellationToken);\n        await db.SaveChangesAsync(cancellationToken);\n    }\n\n    private static IReadOnlyCollection<Project> CreateProjects()\n    {\n        // Deterministic, representative development scenarios matching the current model.\n        throw new NotImplementedException();\n    }\n}\n\npublic static class DatabaseInitializationExtensions\n{\n    public static async Task SeedDevelopmentDataAsync(\n        this IServiceProvider services,\n        CancellationToken cancellationToken = default)\n    {\n        await using var scope = services.CreateAsyncScope();\n        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();\n        await DbSeeder.SeedAsync(db, cancellationToken);\n    }\n}\n\n// Program.cs\nif (app.Environment.IsDevelopment())\n{\n    await app.Services.SeedDevelopmentDataAsync();\n}\n```\n\nRepresentative states to consider: newly created, active/in progress, completed, inactive/archived, with and without optional values and relationships, representative status values, meaningful boundary states. When the required graph is complex, the task should describe the dataset explicitly instead of inventing a large generic graph.\n",
+            "\n| Scenario | Default technique |\n|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              43,
+              46
+            ]
+          ],
+          "context_quotes": [
+            "3. Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.\n4. Seed co-change: whenever the Domain or persistence change affects seeded entities — new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants — update the maintained development seeder in the same change, so that recreating an empty Development database at this revision yields valid, representative data. Existing seeded rows are not patched automatically.\n5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed.\n6. Add or update persistence/integration tests when provider behavior, mappings, constraints, or non-trivial queries changed (provider fidelity: `ef-core`, Testing)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              51,
+              53
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree)."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-007",
+        "name": "Seed data preserves domain validity",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Seed Dataset"
+        ],
+        "normalized_policy": "Seed entities must preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive/random combinations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0396"
+      ],
+      "boundary_analysis": "Named representative states supplement invariant/relationship rule and are already recorded as considerations rather than exhaustive mandatory datasets.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "- When representative data already exists, leave it unchanged. Never use the seeder for automatic synchronization, repair, upgrade, overwrite, or recreation of an existing Development database; developers recreate local databases explicitly when they need a fresh dataset.\n- Seed entities must preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              200,
+              202
+            ]
+          ],
+          "context_quotes": [
+            "\nRepresentative states to consider: newly created, active/in progress, completed, inactive/archived, with and without optional values and relationships, representative status values, meaningful boundary states. When the required graph is complex, the task should describe the dataset explicitly instead of inventing a large generic graph.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-008",
+        "name": "Seeder co-changes with model",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Keeping Seed Data Current"
+        ],
+        "normalized_policy": "Whenever Domain or persistence changes affect seeded entities, update the maintained development seeder in the same change.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0135"
+      ],
+      "boundary_analysis": "Same-change seed update matches canonical; path-level cochange heuristic can be suppressed by unrelated matching seeder edit, explicitly recorded. No runtime impact proof asserted.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              114,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction stop(input) {\n  if (input.stop_hook_active) return 0; // never re-block a continuation triggered by this hook\n  const cochange = require('../scripts/check-cochange.cjs');\n  const result = cochange.run(lib.activeRoot(workingDirectory(input)), 'hook');\n  if (!result.applicable) {\n    process.stdout.write(`${JSON.stringify({ systemMessage: 'Co-change reminders inactive: the project is not a Git work tree.' })}\\n`);\n    return 0;\n  }\n  if (!result.reminders.length) return 0;\n  process.stderr.write(\n    `Co-change reminders (reported once per content state):\\n${cochange.format(result.reminders)}\\n` +\n    'Address each item or state why it does not apply, then finish.\\n');\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/persistence-technology.cjs",
+          "sha256": "13a101eb46f845d8bbc4716a25b851d48c4c5941c00f856095929384ea7660a5",
+          "inspected_ranges": [
+            [
+              9,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\n// Binds the architecture frame: EF Core packages belong to the Infrastructure role only.\nfunction checkProject(ctx, project) {\n  const role = ctx.roleOf(project.name);\n  if (role.kind !== 'production' || (role.layer !== 'Domain' && role.layer !== 'Application')) return [];\n  return project.packages\n    .filter(pkg => /^Microsoft\\.EntityFrameworkCore(\\.|$)/i.test(pkg.id))\n    .map(pkg => lib.finding('error', project.rel, `${role.layer} references EF Core package \"${pkg.id}\"`, OWNER_STD));\n}\n\nconst isMigration = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Migrations\\//.test(p);\nconst isSeeder = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Seeding\\//.test(p);\nconst isModel = p =>\n  /^backend\\/[^/]+\\.Domain\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Configurations\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/[^/]*DbContext\\.cs$/.test(p);\n\n/** Seed and migration co-change reminders for the current working-tree changes. */\nfunction cochange(ctx, changes) {\n  const paths = changes.map(c => c.path);\n  const reminders = [];\n  const model = paths.filter(isModel);\n  const migrations = paths.filter(isMigration);\n  if (model.length && !paths.some(isSeeder)) {\n    reminders.push({\n      id: 'persistence-seed',\n      message: `persistence model changed (${model.slice(0, 3).join(', ')}${model.length > 3 ? ', ...' : ''}) without a development seeder change; confirm whether seeded entities are affected`,\n      owner: OWNER_WF,\n      paths: model,\n    });\n  }\n  if (model.length && !migrations.length) {\n    reminders.push({\n      id: 'persistence-migration',\n      message: 'persistence model changed without a migration; confirm whether the schema changed',\n      owner: OWNER_WF,\n      paths: model,\n    });\n  }\n  if (migrations.length) {\n    reminders.push({\n      id: 'persistence-migration-review',\n      message: `migration files changed (${migrations.length}); review them as source code before committing`,\n      owner: OWNER_WF,\n      paths: migrations,\n    });\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              42,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"Stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              54,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen backend code is in scope, check against the loaded owners rather than a private checklist:\n\n- [ ] Role and dependency rules — `.claude/rules/backend/architecture-style.md` and `.claude/rules/backend/architecture.md` (thin controllers, Application Services orchestrate, inward references, commit boundary).\n- [ ] Repository contracts and persistence boundary — `.claude/rules/backend/persistence.md`, `.claude/rules/backend/persistence-technology.md`.\n- [ ] Proportionality — consequential patterns or extra abstractions appear only with an approved need (`CLAUDE.md`, Decision control).\n- [ ] When the persistence model changed: `persistence-change` steps were followed, including the development seeder.\n\nWhen frontend code is in scope, check against `.claude/rules/frontend/` (feature boundaries, data-access boundary, subscription lifetime, error contract, route guards not treated as server authorization, no unnecessary global state, meaningful tests). Do not apply backend project-boundary rules mechanically to frontend code.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "3. Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.\n4. Seed co-change: whenever the Domain or persistence change affects seeded entities — new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants — update the maintained development seeder in the same change, so that recreating an empty Development database at this revision yields valid, representative data. Existing seeded rows are not patched automatically.\n5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              51,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-009",
+        "name": "Schema-affecting custom settings co-change with persistence artifacts",
+        "related_groups": [
+          "governance-product",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/custom-settings/SKILL.md#Database Impact"
+        ],
+        "normalized_policy": "When a CUSTOM_SETTINGS.md change affects schema constraints, indexes, column lengths, or other persistence metadata, update EF Core mapping, create the appropriate migration according to the project's migration workflow, verify Development seeding remains valid, and update provider-sensitive persistence or integration tests when needed; do not casually alter existing migrations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0049"
+      ],
+      "boundary_analysis": "New-migration, uncommitted edit allowance, local application and fresh-database smoke obligations already recorded in primary0475/76, replica0267 and independent0049.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              123,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "  if (!result.reminders.length) return 0;\n  process.stderr.write(\n    `Co-change reminders (reported once per content state):\\n${cochange.format(result.reminders)}\\n` +\n    'Address each item or state why it does not apply, then finish.\\n');\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/persistence-technology.cjs",
+          "sha256": "13a101eb46f845d8bbc4716a25b851d48c4c5941c00f856095929384ea7660a5",
+          "inspected_ranges": [
+            [
+              9,
+              25
+            ],
+            [
+              39,
+              48
+            ]
+          ],
+          "context_quotes": [
+            "\n// Binds the architecture frame: EF Core packages belong to the Infrastructure role only.\nfunction checkProject(ctx, project) {\n  const role = ctx.roleOf(project.name);\n  if (role.kind !== 'production' || (role.layer !== 'Domain' && role.layer !== 'Application')) return [];\n  return project.packages\n    .filter(pkg => /^Microsoft\\.EntityFrameworkCore(\\.|$)/i.test(pkg.id))\n    .map(pkg => lib.finding('error', project.rel, `${role.layer} references EF Core package \"${pkg.id}\"`, OWNER_STD));\n}\n\nconst isMigration = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Migrations\\//.test(p);\nconst isSeeder = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Seeding\\//.test(p);\nconst isModel = p =>\n  /^backend\\/[^/]+\\.Domain\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Configurations\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/[^/]*DbContext\\.cs$/.test(p);\n",
+            "  }\n  if (model.length && !migrations.length) {\n    reminders.push({\n      id: 'persistence-migration',\n      message: 'persistence model changed without a migration; confirm whether the schema changed',\n      owner: OWNER_WF,\n      paths: model,\n    });\n  }\n  if (migrations.length) {"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              42,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"Stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "7f77d4d424158664ed03e2b59275da804138015ae5abd5fcbaf7e7c95f5c4058",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the change affects schema constraints, indexes, column lengths, or other persistence metadata: update the persistence mapping, create the appropriate migration according to the project's migration workflow, verify that Development seeding remains valid, and add or update provider-sensitive persistence or integration tests when provider behavior matters. Do not casually alter existing migrations when the project requires a new one. Run `persistence-change` for the steps and commands.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ],
+            [
+              41,
+              51
+            ]
+          ],
+          "context_quotes": [
+            "1. Change the entity and its configuration within the role rules of the read-first standards.\n2. If the schema changes, create a **new** migration:\n",
+            "\n   Regenerate or edit an uncommitted migration only when that matches the project's migration workflow; never casually alter migrations that are already applied or shared.\n3. Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.\n4. Seed co-change: whenever the Domain or persistence change affects seeded entities — new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants — update the maintained development seeder in the same change, so that recreating an empty Development database at this revision yields valid, representative data. Existing seeded rows are not patched automatically.\n5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed.\n6. Add or update persistence/integration tests when provider behavior, mappings, constraints, or non-trivial queries changed (provider fidelity: `ef-core`, Testing).\n\n## C. Verify\n\nBuild, run the affected tests, start the API against a freshly recreated Development database when seeding or the schema changed, and run `node \"<root>/.claude/scripts/check-cochange.cjs\"` (`<root>`: the active repository root; command form in `verify`, Risk-scoped checks). Continue with `verify`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              52,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P008",
+      "canonical_policy": {
+        "id": "PST-010",
+        "name": "EF Core migrations are reviewed source code",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/ef-core/SKILL.md#Migrations"
+        ],
+        "normalized_policy": "Treat EF Core migrations as source code and review generated migrations before committing them, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "PST-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0218"
+      ],
+      "boundary_analysis": "Migration review checklist matches canonical; destructive-operation report and cochange review reminders are additional already-registered lifecycle duties.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/persistence/CONTRACT.md",
+          "sha256": "17bc8ae5486df1b3b794d5b77f5c4f773772bdd373d583ac418d8cc31dd68b92",
+          "inspected_ranges": [
+            [
+              14,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|\n| `technology-boundary` | Which technology types exist only in Infrastructure and how they stay out of Application |\n| `commit-boundary-binding` | How the Application commit-boundary contract is implemented |\n| `migration-mechanism` | How schema changes are created, reviewed, and applied |\n| `seeding-mechanism` | How Development seed data is constructed and invoked |\n| `provider-variant` | The selected provider and its variant-specific configuration |\n| `declared-properties` | Observable properties such as string comparison and case sensitivity |\n| `testing-implications` | Provider-fidelity guidance for tests |\n| `change-workflow` | The workflow for setup, model, migration, and seed changes |\n| `knowledge` | The knowledge facet for implementation technique |\n| `enforcement` | Deterministic checks for boundary leaks and co-change reminders |\n\n## Facet roles\n\nRole-named facet locations; every implementation provides exactly these (file names never change with the implementation).\n\n| Kind | Scope | Location |\n|---|---|---|\n| DEC | common | `docs/architecture/decision-register.md` (capability-selection row) |\n| STD | backend | `.claude/rules/backend/persistence-technology.md` |\n| KNW | backend | knowledge facet named in the decision register |\n| WF | backend | `.claude/skills/persistence-change/SKILL.md` |\n| ENF | backend | `.claude/scripts/facets/persistence-technology.cjs` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              114,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction stop(input) {\n  if (input.stop_hook_active) return 0; // never re-block a continuation triggered by this hook\n  const cochange = require('../scripts/check-cochange.cjs');\n  const result = cochange.run(lib.activeRoot(workingDirectory(input)), 'hook');\n  if (!result.applicable) {\n    process.stdout.write(`${JSON.stringify({ systemMessage: 'Co-change reminders inactive: the project is not a Git work tree.' })}\\n`);\n    return 0;\n  }\n  if (!result.reminders.length) return 0;\n  process.stderr.write(\n    `Co-change reminders (reported once per content state):\\n${cochange.format(result.reminders)}\\n` +\n    'Address each item or state why it does not apply, then finish.\\n');\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/persistence-technology.cjs",
+          "sha256": "13a101eb46f845d8bbc4716a25b851d48c4c5941c00f856095929384ea7660a5",
+          "inspected_ranges": [
+            [
+              29,
+              56
+            ]
+          ],
+          "context_quotes": [
+            "  const reminders = [];\n  const model = paths.filter(isModel);\n  const migrations = paths.filter(isMigration);\n  if (model.length && !paths.some(isSeeder)) {\n    reminders.push({\n      id: 'persistence-seed',\n      message: `persistence model changed (${model.slice(0, 3).join(', ')}${model.length > 3 ? ', ...' : ''}) without a development seeder change; confirm whether seeded entities are affected`,\n      owner: OWNER_WF,\n      paths: model,\n    });\n  }\n  if (model.length && !migrations.length) {\n    reminders.push({\n      id: 'persistence-migration',\n      message: 'persistence model changed without a migration; confirm whether the schema changed',\n      owner: OWNER_WF,\n      paths: model,\n    });\n  }\n  if (migrations.length) {\n    reminders.push({\n      id: 'persistence-migration-review',\n      message: `migration files changed (${migrations.length}); review them as source code before committing`,\n      owner: OWNER_WF,\n      paths: migrations,\n    });\n  }\n  return reminders;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              42,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"Stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              204,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nCreate migrations from the Infrastructure project with the Api project as startup project:\n\n```bash\ndotnet ef migrations add AddOrderIndex --project backend/MyApp.Infrastructure --startup-project backend/MyApp.Api\ndotnet ef migrations script --idempotent --project backend/MyApp.Infrastructure --startup-project backend/MyApp.Api\n```\n\nFor controlled production deployment, generated (idempotent) migration scripts are often preferable; production migration is an explicit deployment step (`delivery-change`).\n\n## Raw SQL\n\nUse raw SQL only when EF Core cannot express the query effectively or measured performance justifies it, and keep values parameterized: `FromSql`/`FromSqlInterpolated` and `ExecuteSql`/`ExecuteSqlInterpolated` parameterize interpolated values, whereas `FromSqlRaw`/`ExecuteSqlRaw` with concatenated input do not.\n\n## SQL Server provider (variant: sqlserver)\n\n- String comparison in queries follows the column/database collation; SQL Server's default collations are case-insensitive. Choosing case sensitivity or a collation is a product decision when observable — make an approved choice explicit with `UseCollation(...)` or a column-level collation in configuration.\n- Transient faults: prefer provider execution strategies (`options.UseSqlServer(cs, sql => sql.EnableRetryOnFailure())`) over generic application-level retry pipelines; with an execution strategy, wrap explicit transactions in `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`. Do not apply HTTP retry policies to database operations.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ],
+            [
+              41,
+              51
+            ],
+            [
+              53,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "1. Change the entity and its configuration within the role rules of the read-first standards.\n2. If the schema changes, create a **new** migration:\n",
+            "\n   Regenerate or edit an uncommitted migration only when that matches the project's migration workflow; never casually alter migrations that are already applied or shared.\n3. Review the generated migration as source code before it is committed, paying particular attention to destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, and delete behavior.\n4. Seed co-change: whenever the Domain or persistence change affects seeded entities — new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new meaningful states, changed invariants — update the maintained development seeder in the same change, so that recreating an empty Development database at this revision yields valid, representative data. Existing seeded rows are not patched automatically.\n5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed.\n6. Add or update persistence/integration tests when provider behavior, mappings, constraints, or non-trivial queries changed (provider fidelity: `ef-core`, Testing).\n\n## C. Verify\n\nBuild, run the affected tests, start the API against a freshly recreated Development database when seeding or the schema changed, and run `node \"<root>/.claude/scripts/check-cochange.cjs\"` (`<root>`: the active repository root; command form in `verify`, Risk-scoped checks). Continue with `verify`.\n",
+            "\nModel changes, migration name and review notes (destructive operations called out), seeder updates, and verification results."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              52,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context."
+          ]
+        }
+      ]
+    }
+  ]
+}

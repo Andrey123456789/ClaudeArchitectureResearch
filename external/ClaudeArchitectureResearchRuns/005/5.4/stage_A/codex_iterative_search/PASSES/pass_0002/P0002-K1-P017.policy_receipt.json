@@ -1,0 +1,1736 @@
+{
+  "unit": "P0002-K1-P017",
+  "batch_input_sha256": "421a36d895ce6822ecb681230f4797395c457bf0998b39327dc82f3eecd6bff2",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-001",
+        "name": "Dependencies require current need",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#General Principle"
+        ],
+        "normalized_policy": "Add a dependency only for a concrete current requirement; do not install packages for hypothetical future use.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0112",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0094",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0176"
+      ],
+      "boundary_analysis": "Approved technology alone never justifies installation. In-scope safe removal is required and must run add-dependency via manifest edits then restore because recognized removal commands block. The union separately captures removal workflow, verification and reporting rather than only additions.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              53,
+              56
+            ],
+            [
+              64,
+              80
+            ]
+          ],
+          "context_quotes": [
+            "      return `\\`${f.segment}\\`: updates dependencies without exact versions -> add-dependency workflow`;\n    case 'dependency-removal':\n      return `\\`${f.segment}\\`: removes ${f.specs.length ? f.specs.join(', ') : 'a dependency'} -> add-dependency workflow (removal)`;\n    case 'peer-bypass':",
+            "\nfunction preToolUse(input) {\n  if (!SHELL_TOOLS.has(input.tool_name)) return 0;\n  const command = input.tool_input && input.tool_input.command;\n  if (typeof command !== 'string') throw new Error('tool_input.command is missing');\n  const cwd = workingDirectory(input);\n  let findings = require('../scripts/classify-command.cjs').classify(command, { cwd });\n  if (findings.some(f => f.kind === 'reference-change')) {\n    const manifests = require('../scripts/check-manifests.cjs');\n    const approvals = manifests.acceptedDecisionText(lib.activeRoot(cwd));\n    findings = findings.filter(f => f.kind !== 'reference-change' || !f.edges.length || f.edges.some(e => !manifests.isApprovedEdge(approvals, e.from, e.to)));\n  }\n  if (!findings.length) return 0;\n  process.stderr.write(`Blocked before execution (dependency and project-reference guard):\\n- ${findings.map(describe).join('\\n- ')}\\n`);\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/common/dependencies.md",
+          "sha256": "16a4128dd73bfe7112b213926c11f68e1d9aa97a2cb6d86c4b2601cd9307db66",
+          "inspected_ranges": [
+            [
+              9,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\n- Add a dependency only for a concrete current requirement; never install packages for hypothetical future use. An approved technology is not a reason to install it by default.\n\nRelated: every NuGet or npm addition, update, or removal runs `add-dependency`; approved and conditional technologies — decision register. Ecosystem-specific dependency standards load with backend and frontend files."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/actual-state.cjs",
+          "sha256": "5138e905d8a18191c8ab6a30759dc8010ba60e10788a604fc64f090f5ff6545a",
+          "inspected_ranges": [
+            [
+              188,
+              190
+            ]
+          ],
+          "context_quotes": [
+            "    else if (path.posix.basename(rel) === 'Directory.Packages.props') findings.push(lib.finding('error', rel, 'central package management file was deleted', '.claude/rules/backend/dependencies.md'));\n    else if (path.posix.basename(rel) === 'package.json') findings.push(lib.finding('warn', rel, 'dependency manifest was deleted; dependency removals go through the add-dependency workflow', '.claude/rules/frontend/dependencies.md'));\n    if (!rel.endsWith('.csproj')) continue;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/classify-command.cjs",
+          "sha256": "c46a12ee7a0187eb5089e2fb81df871d337b557b282052cfd840eb90b7044e85",
+          "inspected_ranges": [
+            [
+              241,
+              252
+            ],
+            [
+              306,
+              308
+            ]
+          ],
+          "context_quotes": [
+            "  if (!category) return [];\n  const findings = [];\n  if (options.some(o => PEER_BYPASS.test(o))) findings.push({ kind: 'peer-bypass', segment });\n  if (category === 'remove') findings.push({ kind: 'dependency-removal', segment, specs });\n  else if (category === 'update' && !specs.length) findings.push({ kind: 'dependency-update', segment });\n  else if (category === 'install' || category === 'update') {\n    const loose = specs.filter(s => !npmSpecIsExact(s));\n    if (loose.length) findings.push({ kind: 'dependency-version', segment, specs: loose });\n  }\n  return findings;\n}\n",
+            "  }\n  if (action === 'remove') return [{ kind: 'dependency-removal', segment, specs: positional }];\n  const [id, inlineVersion] = String(positional[0] || '').split('@');"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"PreToolUse\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              18,
+              22
+            ],
+            [
+              75,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "\n- [ ] A concrete current requirement exists (common dependency standard).\n- [ ] The choice matches the decision register's approved stack; anything else goes through `architecture-decision` first.\n- Conditional packages are added only when their capability is actually adopted:\n  - Default: API versioning uses the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation) — added only after the project has adopted API versioning, never before.",
+            "\nRemove dependencies that are no longer used when doing so is part of the current change and safe to verify; do not leave dead package references behind, and do not perform unrelated dependency cleanup during a narrowly scoped task.\n\nThe dependency-command hook blocks removal commands (`npm uninstall`, `dotnet remove … package`, and equivalents) so that removals pass this checklist: remove the entry from the manifest (the project `PackageReference`, plus the central `PackageVersion` when no project uses it any more; the `package.json` entry), then restore (`dotnet restore`, `npm install`) so the lockfile stays consistent.\n\n## 7. Verify and report\n\nBuild and run the affected tests (`verify`). Report: package, version, license, due-diligence results, and any approval obtained or pending.\n\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "db066240e9cc0b10c671d9ff54464f9efccb58ca64ee9ec3c118767d5b7c31ff",
+          "inspected_ranges": [
+            [
+              120,
+              122
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the project has chosen Angular Material, use its components consistently for common UI primitives where they satisfy the requirement; do not add it to projects that have not chosen it, and do not wrap every Material component in a custom abstraction without a concrete reason.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dependency-injection/SKILL.md",
+          "sha256": "35017a68932438479749e126ed5d512a913fe48c53f5a0d7eda7988b0b43991f",
+          "inspected_ranges": [
+            [
+              75,
+              111
+            ]
+          ],
+          "context_quotes": [
+            "\nFor several implementations of one abstraction selected by a known key; not when a single registration or a simple explicit factory is clearer.\n\n```csharp\nbuilder.Services.AddKeyedScoped<INotificationService, EmailNotificationService>(\"email\");\nbuilder.Services.AddKeyedScoped<INotificationService, SmsNotificationService>(\"sms\");\n\ninternal sealed class EmailOrderNotifier([FromKeyedServices(\"email\")] INotificationService notifier)\n{\n    public Task NotifyAsync(Notification notification, CancellationToken cancellationToken) =>\n        notifier.SendAsync(notification, cancellationToken);\n}\n```\n\n## Decorators\n\nWrap an abstraction with cross-cutting behavior without changing its implementation:\n\n```csharp\ninternal sealed class LoggingOrderService(IOrderService inner, ILogger<LoggingOrderService> logger) : IOrderService\n{\n    public async Task<Guid> CreateAsync(CreateOrderRequest request, CancellationToken cancellationToken)\n    {\n        logger.LogInformation(\"Creating order\");\n        var id = await inner.CreateAsync(request, cancellationToken);\n        logger.LogInformation(\"Order {OrderId} created\", id);\n        return id;\n    }\n}\n```\n\nIf Scrutor is already used: `services.AddScoped<IOrderService, OrderService>(); services.Decorate<IOrderService, LoggingOrderService>();`. Do not add Scrutor for a single decoration when normal composition is simpler.\n\n## Convention scanning (Scrutor)\n\nUse assembly scanning only when registration volume creates genuine boilerplate, and scan the assembly that owns the services (not accidentally only the Api assembly):\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              133,
+              135
+            ]
+          ],
+          "context_quotes": [
+            "\n\"Smoke test\" means a small set of fast checks that a built or deployed application is basically operational — not a synonym for every integration test. Coverage is diagnostic, not a target; prioritize meaningful behavior, edge cases, and risky integrations. Snapshot testing can help for large stable outputs, but do not add a snapshot library by default; explicit assertions are clearer for small or important contracts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              65,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\n`AddDbContext` registers the context as scoped, so repositories and the Unit of Work in one request share it. Use the provider the project actually selected; never add a provider because an example shows it.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              50,
+              52
+            ],
+            [
+              82,
+              84
+            ],
+            [
+              135,
+              143
+            ]
+          ],
+          "context_quotes": [
+            "\nBaseline integration package: `Serilog.AspNetCore`. A Console sink suffices for a simple local Development baseline; File, Seq, OpenTelemetry, Elasticsearch, and enrichers such as `WithMachineName`/`WithEnvironmentName` are optional — add sinks and enrichers only when the project requires them (`add-dependency`). Numeric limits and retention values in examples are illustrative, not approved defaults.\n",
+            "\n`Override` keys are namespace prefixes matched against `SourceContext`; more specific prefixes win. A rolling File sink (`\"path\": \"logs/app-.log\", \"rollingInterval\": \"Day\"`) or a Seq sink (`\"serverUrl\": \"http://localhost:5341\"`) is added to `WriteTo` only when needed.\n",
+            "\n| Scenario | Recommendation |\n|---|---|\n| Provider setup | `AddSerilog()` + configuration |\n| Development log storage | Console; Seq or Aspire Dashboard when useful |\n| Production log storage | Seq, Elasticsearch (Elastic sink), or an OTLP backend |\n| Request logging | `UseSerilogRequestLogging()` |\n| Scoped properties | `LogContext.PushProperty()` in middleware |\n| Level per environment | `MinimumLevel.Override` in appsettings |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4)."
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "33735cc8bf3a1f35f2119ccbaf8e6dc24b38e562bb8306d72f0450d43836ce71",
+          "inspected_ranges": [
+            [
+              37,
+              39
+            ]
+          ],
+          "context_quotes": [
+            "  5. adding an infrastructure category: messaging, background processing, distributed cache, search, external storage, external identity;\n  6. adding a major library or framework, or replacing approved baseline technology;\n  7. introducing a project-wide convention or abstraction that other code is expected to follow;"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              32,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\nApproved, but added only when the capability is actually needed:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-002",
+        "name": "Approved technology is not silently replaced",
+        "related_groups": [
+          "governance-product",
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#General Principle",
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md"
+        ],
+        "normalized_policy": "When the template/project has an approved technology, use it rather than silently selecting an alternative; consequential replacement requires approval.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0091",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0026",
+        "replica/K1/constraints.jsonl/EXTRA-K1-0007"
+      ],
+      "boundary_analysis": "All off-stack choices first run architecture-decision, broader than consequential replacement. Any register change is Reserved; persistence replacements retain all contract items or explicitly report Blocked. These strengthened gates are independently registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\nDependency direction: WF → KNW → STD → DEC → OP; ENF → STD/DEC, declared on each ENF artifact's `Conforms:` line (the line after its header); product inputs never override policy. Skill and agent references are routing pointers. Changing this system: `template-maintenance` (user-invoked); capability selection changes: `architecture-decision`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/persistence/CONTRACT.md",
+          "sha256": "17bc8ae5486df1b3b794d5b77f5c4f773772bdd373d583ac418d8cc31dd68b92",
+          "inspected_ranges": [
+            [
+              8,
+              10
+            ]
+          ],
+          "context_quotes": [
+            "\nA provider change (for example to another relational database) is a variant change inside this slot, not a new slot. Replacing the implementation (for example with a micro-ORM) requires every item below; an item the proposed implementation cannot provide — such as a migration mechanism — is surfaced as *Blocked* in the Decision Request instead of being dropped.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-instructions.cjs",
+          "sha256": "a22c9c305f581111bcc077e4ae49016c3054e320443abd05f282ab79d29fe938",
+          "inspected_ranges": [
+            [
+              570,
+              644
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction checkModule(root, artifacts, slot, impl, contract, knowledgeFacet, out) {\n  const id = `${slot}/${impl}`;\n  const manifest = `.claude/capabilities/${id}/MODULE.md`;\n  const m = artifacts.get(manifest);\n  if (!m) {\n    out.push(lib.finding(ERR, manifest, 'module manifest is missing'));\n    return null;\n  }\n  if (m.header && m.header.capability !== id) out.push(lib.finding(ERR, manifest, `header Capability must be ${id}`));\n  if (manifestField(m.body, 'Slot') !== slot) out.push(lib.finding(ERR, manifest, `\"- Slot:\" must be ${slot}`));\n  if (manifestField(m.body, 'Implementation') !== impl) out.push(lib.finding(ERR, manifest, `\"- Implementation:\" must be ${impl}`));\n  const names = (manifestField(m.body, 'Names') || '').split(',').map(s => s.trim()).filter(Boolean);\n  if (!names.length) out.push(lib.finding(ERR, manifest, '\"- Names:\" (leak-check tokens) is required'));\n  const binds = parseBinds(manifestField(m.body, 'Binds'));\n  checkBinds(slot, manifest, binds, out);\n\n  const files = [];\n  const rows = [];\n  for (const row of tableRows(m.body, '## Facets')) {\n    const [kind, scope, fileCell] = row;\n    const file = firstCode(fileCell);\n    if (!file) {\n      out.push(lib.finding(ERR, manifest, `facet row without a file: ${row.join(' | ')}`));\n      continue;\n    }\n    rows.push({ kind, scope, file });\n    if (!lib.exists(root, file)) {\n      out.push(lib.finding(ERR, manifest, `facet file does not exist: ${file}`));\n      continue;\n    }\n    if (kind === 'DEC') {\n      if (file !== REGISTER) out.push(lib.finding(ERR, manifest, 'the DEC facet is the decision register capability-selection block'));\n      continue;\n    }\n    files.push(file);\n    const a = artifacts.get(file);\n    if (!validHeader(a)) continue;\n    const h = a.header;\n    if (h.kind !== kind) out.push(lib.finding(ERR, file, `facet Kind ${h.kind} differs from manifest (${kind})`));\n    if (h.scope !== scope) out.push(lib.finding(ERR, file, `facet Scope ${h.scope} differs from manifest (${scope})`));\n    if (h.capability !== id) out.push(lib.finding(ERR, file, `facet must declare Capability: ${id}`));\n    if (kind !== 'KNW') {\n      const base = path.posix.basename(file).replace(/\\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '');\n      const leaked = names.find(n => base.includes(n.toLowerCase().replace(/[^a-z0-9]/g, '')));\n      if (leaked) out.push(lib.finding(ERR, file, `facet file name must be role-based, not \"${leaked}\"`));\n    }\n  }\n\n  if (contract) {\n    // Facet roles: the module provides exactly the contract's role-named locations (KNW: the register's knowledge facet).\n    for (const role of contract.roles) {\n      if (role.kind === 'KNW') {\n        const expected = knowledgeFacet && knowledgeFacet !== '—' ? `.claude/skills/${knowledgeFacet}/SKILL.md` : null;\n        if (!expected) out.push(lib.finding(ERR, REGISTER, `slot \"${slot}\" requires a knowledge facet named in its capability-selection row`));\n        else if (!rows.some(r => r.kind === 'KNW' && r.file === expected && r.scope === role.scope)) out.push(lib.finding(ERR, manifest, `contract facet role KNW (${role.scope}) must be the register's knowledge facet ${expected}`));\n        continue;\n      }\n      if (!role.file) continue;\n      if (!rows.some(r => r.kind === role.kind && r.file === role.file && r.scope === role.scope)) out.push(lib.finding(ERR, manifest, `contract facet role ${role.kind} ${role.file} (${role.scope}) is not provided`));\n    }\n    for (const r of rows) {\n      const declared = r.kind === 'KNW' ? contract.roles.some(role => role.kind === 'KNW') : contract.roles.some(role => role.file === r.file && role.kind === r.kind);\n      if (!declared) out.push(lib.finding(ERR, manifest, `facet ${r.kind} ${r.file} is not a facet role of the slot contract`));\n    }\n    const coverage = new Map(tableRows(m.body, '## Contract coverage').map(r => [firstCode(r[0]), r[1] || '']));\n    for (const item of contract.required) {\n      const provided = (coverage.get(item) || '').trim();\n      if (!provided) out.push(lib.finding(ERR, manifest, `contract item \"${item}\" has no provider`));\n      else if (/^missing\\b/i.test(provided)) out.push(lib.finding(ERR, manifest, `contract item \"${item}\" is missing; raise a Decision Request before selecting this implementation`));\n    }\n  }\n  return { id, slot, impl, manifest, names, files, binds };\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              18,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- [ ] A concrete current requirement exists (common dependency standard).\n- [ ] The choice matches the decision register's approved stack; anything else goes through `architecture-decision` first.\n- Conditional packages are added only when their capability is actually adopted:\n  - Default: API versioning uses the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation) — added only after the project has adopted API versioning, never before.\n  - Default: when resilience is required, `Microsoft.Extensions.Http.Resilience` for `HttpClient` and `Microsoft.Extensions.Resilience` for general pipelines. Direct Polly usage is an explicit, documented exception; never add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`.\n  - Mapping: `Mapster` with `Mapster.DependencyInjection` once mapping volume warrants it (never referenced from Domain); Testcontainers, Playwright, and similar conditional packages: per the decision register.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "53f9ed14597b24078b62a0d7aa2184e23a942b65a10292cbd769d5a7832edb68",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ],
+            [
+              46,
+              51
+            ],
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nApply the Reserved list and five-question test from `CLAUDE.md`. Delegated → proceed without this workflow. Decided → follow the existing record; reopening it is itself Reserved.\n",
+            "\nCapability slots (architecture, persistence, backend-testing, frontend) compose statically; a selection change is Reserved.\n\n1. Read `.claude/capabilities/<slot>/CONTRACT.md` and the current module manifest (`.claude/capabilities/<slot>/<implementation>/MODULE.md`).\n2. For the proposed implementation, map every contract item to a concrete mechanism. An item without a mechanism (for example a persistence implementation without a migration mechanism) must be named in the Decision Request under *Blocked* — never silently dropped.\n3. After approval, in a user-invoked `template-maintenance` session: replace the module directory and its facets (role-based facet file names stay the same), update the register's capability selection row, remove every facet of the old implementation, and run `node \"<root>/.claude/scripts/check-instructions.cjs\"` until it reports no leak, manifest, binding, facet-role, or contract errors. Facet file locations are fixed by the slot contract (Facet roles); clearing the optional frontend removes the module, its facets, and the MAP rows and sets the register row to `none`.",
+            "\nA provider variant change inside a slot (for example a different database provider for the same persistence technology) is a Reserved persistence-technology change but not a new slot: update the module's `Variant:` line, its variant-specific facet sections, the register row, and the affected provider-dependent tests.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              47,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "\nNever solve an architectural dependency problem with an invalid project reference (e.g. Application → Infrastructure to make a type compile). Invalid shortcuts also include leaking persistence-technology types into Application, moving business logic into controllers, replacing server authorization with frontend-only guards, and scattering HTTP calls into components to bypass a data-access service. Read `.claude/rules/backend/architecture-style.md` for backend repairs and `.claude/rules/frontend/` for frontend repairs. Frontend shortcuts to refuse: converting code to `any` to silence the compiler, disabling strict mode, suppressing template diagnostics without understanding them, replacing framework APIs speculatively, adding another state-management or HTTP library to bypass a local issue.\n\n## Full-stack and contract failures\n\nDetermine which contract is authoritative (response shape, generated client vs. OpenAPI, enum/value semantics, endpoint path or method, nullability, authentication contract). Never patch both sides independently into inconsistent shapes merely to compile. With OpenAPI client generation: verify the backend contract, regenerate the client through the project's normal workflow, review the generated changes, then fix handwritten frontend code. Technique: `swagger`, `http-api`.\n\n## Test failures\n\nWhen the build succeeds but tests fail: read the failing test and the relevant production behavior; decide whether the defect lies in production code, test setup, the test expectation, environment/configuration, or an intentionally changed contract; make the smallest correct change; rerun the affected test, then broader relevant tests. Never turn a strong assertion into a weak one, and never delete or skip a failing test because fixing it is inconvenient. If expected behavior intentionally changed, update the test to express the new contract and confirm the change was actually requested.\n\n## Dependency and package failures\n\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n\n## Framework/API upgrades and toolchain\n\nFor upgrade fallout, inspect the installed version, separate compile errors from changed runtime behavior, update obsolete APIs deliberately from verified documentation (never fabricate replacement APIs from memory), and do not perform an additional unrelated upgrade. For toolchain problems check `dotnet --info`, `dotnet --version`, `node --version`, `npm --version`, `global.json`, target frameworks, frontend package versions, `package-lock.json`, and CI runtime versions. Never change the repository's declared SDK, Node, framework, or language version merely because the local machine differs; if the required toolchain is unavailable, report the limitation instead of editing source code to compensate.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "- Questionable request? Apply the challenge obligation in `CLAUDE.md` (Engineering defaults) before implementing.\n- Classify each consequential choice per `CLAUDE.md` (Decision control); Reserved choices go to `architecture-decision`.\n- Route specialized work to its workflow:"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ],
+            [
+              33,
+              35
+            ],
+            [
+              68,
+              69
+            ]
+          ],
+          "context_quotes": [
+            "\nExplicit project boundaries; dependency direction enforced through project references; production projects, test projects, frontend, and documentation organized per the layout default; approved technology only; no speculative projects, abstractions, or directories; an immediately buildable result verified before completion.\n",
+            "1. **Determine scope** — backend, frontend, test projects, documentation, external integrations, mapping, containerization. Do not scaffold optional infrastructure because it may be useful later (Docker only when containerization is needed).\n2. **Use the approved stack** from the decision register; conditional technologies only when their capability is required. Resolve package versions at install time through `add-dependency`; never copy versions from examples or older template content.\n3. **Repository level** — read `references/solution-layout.md`; create only required top-level directories and shared configuration files.",
+            "\nThe task is complete when the structure matches the requested scope, references respect the architecture, approved technology is used, no unnecessary projects or speculative directories exist, the backend builds, the frontend builds when present, relevant tests pass, the local Development configuration is usable, and no unrelated code was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\nControllers are the HTTP endpoint mechanism; create Minimal API endpoint groups only when explicitly requested. Api references Infrastructure only for composition — controllers never consume Infrastructure implementation types directly. Use `Contracts/` for transport-specific contracts only when separation from Application models provides value.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "33735cc8bf3a1f35f2119ccbaf8e6dc24b38e562bb8306d72f0450d43836ce71",
+          "inspected_ranges": [
+            [
+              27,
+              34
+            ],
+            [
+              37,
+              39
+            ]
+          ],
+          "context_quotes": [
+            "\nClassify a choice before acting on it:\n\n- **Decided** — recorded in the decision register or a standard, or already required by the specification or established project structure. Follow it; reopening it requires approval.\n- **Delegated** — local and reversible, and does not materially change a boundary, dependency, accepted convention, public contract, or observable behavior. Decide and proceed.\n- **Reserved** — requires explicit approval before implementation. At least:\n  1. changing an accepted project or architecture decision, including a capability selection;\n  2. adopting a new architectural style or pattern, e.g. CQRS, a mediator, Vertical Slice Architecture, event sourcing, microservices, a Rich Domain Model or DDD tactical patterns, a project-wide Result model;",
+            "  5. adding an infrastructure category: messaging, background processing, distributed cache, search, external storage, external identity;\n  6. adding a major library or framework, or replacing approved baseline technology;\n  7. introducing a project-wide convention or abstraction that other code is expected to follow;"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ],
+            [
+              21,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "\nDecided project decisions available at planning time. Follow them. Changing any entry is Reserved and goes through `architecture-decision`.\n",
+            "\nUse the approved technology below; must not silently select an alternative. Replacing approved technology requires approval.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-003",
+        "name": "Choose latest stable compatible version",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#Version Selection"
+        ],
+        "normalized_policy": "For NuGet/npm additions or updates, verify the current latest stable compatible version from the registry; avoid prerelease and floating versions unless explicitly requested.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0121",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0122",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0126",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0128",
+        "replica/K1/constraints.jsonl/RULE-K1-0161"
+      ],
+      "boundary_analysis": "Registry/latest stable compatible and explicit-request exceptions coexist with harder literal checker behavior: central ranges error without exception, hyphen versions warn, npm only selected floating forms, exact local/URL specs treated self-pinning, npm three-component versus dotnet two-to-four component versions. All are registered. The bare -- operand-parsing hypothesis U0002 remains distinct and deferred to a safe classifier probe.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-U0002"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              4,
+              13
+            ],
+            [
+              49,
+              56
+            ],
+            [
+              64,
+              80
+            ],
+            [
+              142,
+              154
+            ]
+          ],
+          "context_quotes": [
+            "\n// Two roots, never mixed:\n// - launcher root: where this file lives (located through ${CLAUDE_PROJECT_DIR}); it only locates the implementation;\n// - active root: the repository/worktree that contains the hook input `cwd`; every inspection, relative path,\n//   and state file uses it, so a linked worktree or nested directory is checked where Claude is working.\n// Exit codes follow the Claude Code hook contract: 0 = continue, 2 = feedback to Claude (PreToolUse: blocks the\n// tool call). PreToolUse guards policy-critical commands and fails closed: any internal error, unreadable or\n// mismatched input exits 2 (settings.json additionally sets onFailure \"block\" for host-level failures).\n// Post and Stop events are advisory: internal errors exit 1 (visible, non-blocking).\n",
+            "  switch (f.kind) {\n    case 'dependency-version':\n      return `\\`${f.segment}\\`: ${f.specs.join(', ')} without an exact version -> add-dependency workflow (version selection)`;\n    case 'dependency-update':\n      return `\\`${f.segment}\\`: updates dependencies without exact versions -> add-dependency workflow`;\n    case 'dependency-removal':\n      return `\\`${f.segment}\\`: removes ${f.specs.length ? f.specs.join(', ') : 'a dependency'} -> add-dependency workflow (removal)`;\n    case 'peer-bypass':",
+            "\nfunction preToolUse(input) {\n  if (!SHELL_TOOLS.has(input.tool_name)) return 0;\n  const command = input.tool_input && input.tool_input.command;\n  if (typeof command !== 'string') throw new Error('tool_input.command is missing');\n  const cwd = workingDirectory(input);\n  let findings = require('../scripts/classify-command.cjs').classify(command, { cwd });\n  if (findings.some(f => f.kind === 'reference-change')) {\n    const manifests = require('../scripts/check-manifests.cjs');\n    const approvals = manifests.acceptedDecisionText(lib.activeRoot(cwd));\n    findings = findings.filter(f => f.kind !== 'reference-change' || !f.edges.length || f.edges.some(e => !manifests.isApprovedEdge(approvals, e.from, e.to)));\n  }\n  if (!findings.length) return 0;\n  process.stderr.write(`Blocked before execution (dependency and project-reference guard):\\n- ${findings.map(describe).join('\\n- ')}\\n`);\n  return 2;\n}\n",
+            "\nfunction main(event) {\n  run(event).then(\n    code => {\n      process.exitCode = code;\n    },\n    err => {\n      const critical = CRITICAL.has(event);\n      process.stderr.write(`[hook ${event}] ${critical ? 'blocked (fail closed)' : 'failed'}: ${err && err.message ? err.message : err}\\n`);\n      process.exitCode = critical ? 2 : 1;\n    });\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/common/dependencies.md",
+          "sha256": "16a4128dd73bfe7112b213926c11f68e1d9aa97a2cb6d86c4b2601cd9307db66",
+          "inspected_ranges": [
+            [
+              11,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\nRelated: every NuGet or npm addition, update, or removal runs `add-dependency`; approved and conditional technologies — decision register. Ecosystem-specific dependency standards load with backend and frontend files."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/actual-state.cjs",
+          "sha256": "5138e905d8a18191c8ab6a30759dc8010ba60e10788a604fc64f090f5ff6545a",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              188,
+              190
+            ]
+          ],
+          "context_quotes": [
+            "\n// Post-execution inspection of the ACTUAL files of the active repository/worktree; command text is never consulted.\n// A bounded snapshot (content hash per relevant file, project-reference edges, HEAD) is kept per worktree in its\n// own Git directory. The first observation baselines against HEAD; later observations report what changed since\n// the previous one. Reference-graph changes count only while they differ from HEAD (committed history and\n// reverted edits are not pending changes).\n",
+            "    else if (path.posix.basename(rel) === 'Directory.Packages.props') findings.push(lib.finding('error', rel, 'central package management file was deleted', '.claude/rules/backend/dependencies.md'));\n    else if (path.posix.basename(rel) === 'package.json') findings.push(lib.finding('warn', rel, 'dependency manifest was deleted; dependency removals go through the add-dependency workflow', '.claude/rules/frontend/dependencies.md'));\n    if (!rel.endsWith('.csproj')) continue;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              98,
+              118
+            ],
+            [
+              124,
+              151
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction checkPackagesProps(ctx, rel) {\n  const text = lib.stripXmlComments(lib.readText(ctx.root, rel));\n  const findings = [];\n  if (!/<ManagePackageVersionsCentrally>\\s*true\\s*<\\/ManagePackageVersionsCentrally>/i.test(text)) {\n    findings.push(lib.finding('error', rel, 'ManagePackageVersionsCentrally is not enabled', OWNER_NUGET));\n  }\n  const packages = lib.xmlElements(text, 'PackageVersion').map(e => ({\n    id: e.attrs.Include || '',\n    version: e.attrs.Version || e.child.Version || '',\n  }));\n  for (const pkg of packages) {\n    const id = pkg.id.toLowerCase();\n    if (!pkg.version || /[*\\[\\](),]/.test(pkg.version)) {\n      findings.push(lib.finding('error', rel, `PackageVersion \"${pkg.id}\" has a missing, floating, or range version \"${pkg.version}\"`, OWNER_WORKFLOW));\n    } else if (pkg.version.includes('-')) {\n      findings.push(lib.finding('warn', rel, `PackageVersion \"${pkg.id}\" ${pkg.version} is a prerelease; allowed only when explicitly requested`, OWNER_WORKFLOW));\n    }\n    if (NUGET_DENY.has(id)) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${NUGET_DENY.get(id)}`, OWNER_WORKFLOW));\n    if (NUGET_EXCEPTION.has(id)) findings.push(lib.finding('warn', rel, `\"${pkg.id}\": ${NUGET_EXCEPTION.get(id)}`, OWNER_WORKFLOW));\n  }",
+            "\nfunction npmVersionIsFloating(spec) {\n  const s = String(spec).trim().toLowerCase();\n  return s === '' || s === '*' || s === 'x' || s === 'latest' || s === 'next';\n}\n\nfunction checkPackageJson(ctx, rel) {\n  let pkg;\n  try {\n    pkg = JSON.parse(lib.readText(ctx.root, rel));\n  } catch (err) {\n    return [lib.finding('error', rel, `package.json is not valid JSON (${err.message})`, OWNER_NPM)];\n  }\n  const findings = [];\n  for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {\n    for (const [name, spec] of Object.entries(pkg[section] || {})) {\n      if (npmVersionIsFloating(spec)) {\n        findings.push(lib.finding('error', rel, `${section}.${name} uses a floating version \"${spec}\"`, OWNER_WORKFLOW));\n      } else if (/\\d-(alpha|beta|rc|next|canary|dev|preview)/i.test(String(spec))) {\n        findings.push(lib.finding('warn', rel, `${section}.${name} \"${spec}\" is a prerelease; allowed only when explicitly requested`, OWNER_WORKFLOW));\n      }\n    }\n  }\n  for (const name of Object.keys(pkg.dependencies || {})) {\n    if (NPM_TOOLING.includes(name) || name.startsWith('@types/')) {\n      findings.push(lib.finding('warn', rel, `build/test tooling \"${name}\" is in runtime dependencies`, OWNER_NPM));\n    }\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/classify-command.cjs",
+          "sha256": "c46a12ee7a0187eb5089e2fb81df871d337b557b282052cfd840eb90b7044e85",
+          "inspected_ranges": [
+            [
+              196,
+              208
+            ],
+            [
+              236,
+              257
+            ],
+            [
+              262,
+              316
+            ]
+          ],
+          "context_quotes": [
+            "\nconst EXACT_SEMVER = /^v?\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$/;\nconst NON_REGISTRY_SPEC = /^(\\.{1,2}[\\\\/]|[\\\\/]|~[\\\\/]|[A-Za-z]:[\\\\/]|file:|link:|workspace:|portal:|git\\+|git:|https?:|github:|gitlab:|bitbucket:)/;\n\nfunction npmSpecIsExact(spec) {\n  if (NON_REGISTRY_SPEC.test(spec) || /\\.(tgz|tar\\.gz)$/i.test(spec)) return true; // local or URL source pins itself\n  const at = spec.indexOf('@', spec.startsWith('@') ? 1 : 0);\n  if (at < 0) return false;\n  const version = spec.slice(at + 1);\n  if (version.startsWith('npm:')) return npmSpecIsExact(version.slice(4));\n  return EXACT_SEMVER.test(version.replace(/^=/, ''));\n}\n",
+            "  let specs = positional;\n  if (category === 'audit') {\n    category = positional[0] === 'fix' ? 'update' : null;\n    specs = [];\n  }\n  if (!category) return [];\n  const findings = [];\n  if (options.some(o => PEER_BYPASS.test(o))) findings.push({ kind: 'peer-bypass', segment });\n  if (category === 'remove') findings.push({ kind: 'dependency-removal', segment, specs });\n  else if (category === 'update' && !specs.length) findings.push({ kind: 'dependency-update', segment });\n  else if (category === 'install' || category === 'update') {\n    const loose = specs.filter(s => !npmSpecIsExact(s));\n    if (loose.length) findings.push({ kind: 'dependency-version', segment, specs: loose });\n  }\n  return findings;\n}\n\n// ---------- dotnet ----------\n\nconst DOTNET_VALUE_OPTIONS = new Set(['-v', '--version', '-f', '--framework', '-s', '--source', '--package-directory', '--project', '--verbosity']);\nconst EXACT_NUGET = /^\\d+(\\.\\d+){1,3}(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$/;\n",
+            "\nfunction dotnetFindings(words, cwd, segment) {\n  let i = 1;\n  while (i < words.length && words[i].startsWith('-')) i += 1; // host options such as --diagnostics\n  const verb = (words[i] || '').toLowerCase();\n  const rest = words.slice(i + 1);\n  if (rest.some(w => /^(-h|--help|-\\?|\\/\\?)$/.test(w))) return [];\n  let kind;\n  let action;\n  let project = null;\n  let args;\n  if (verb === 'add' || verb === 'remove') {\n    const j = rest.findIndex(w => /^(package|reference)$/i.test(w));\n    if (j < 0) return [];\n    kind = rest[j].toLowerCase();\n    action = verb;\n    project = rest.slice(0, j).find(w => !w.startsWith('-')) || null;\n    args = rest.slice(j + 1);\n  } else if ((verb === 'package' || verb === 'reference') && /^(add|remove|update)$/i.test(rest[0] || '')) {\n    kind = verb;\n    action = rest[0].toLowerCase();\n    args = rest.slice(1);\n  } else {\n    return [];\n  }\n  const opts = {};\n  const positional = [];\n  for (let k = 0; k < args.length; k += 1) {\n    const m = /^(--?[A-Za-z][\\w-]*)(?:[=:](.*))?$/.exec(args[k]);\n    if (m) {\n      const name = m[1].toLowerCase();\n      let value = m[2];\n      if (value === undefined && DOTNET_VALUE_OPTIONS.has(name)) value = args[(k += 1)];\n      opts[name] = value === undefined ? true : value;\n      continue;\n    }\n    positional.push(args[k]);\n  }\n  if (typeof opts['--project'] === 'string') project = opts['--project'];\n  if (kind === 'reference') {\n    if (action === 'update') return [];\n    const from = projectName(project, cwd);\n    const edges = positional.map(ref => ({ from, to: projectName(ref, cwd) }));\n    return [{ kind: 'reference-change', segment, action, edges }];\n  }\n  if (action === 'remove') return [{ kind: 'dependency-removal', segment, specs: positional }];\n  const [id, inlineVersion] = String(positional[0] || '').split('@');\n  if (!id && action === 'update') return [{ kind: 'dependency-update', segment }];\n  const version = opts['--version'] || opts['-v'] || inlineVersion;\n  if (!id || typeof version !== 'string' || !EXACT_NUGET.test(version)) {\n    return [{ kind: 'dependency-version', segment, specs: [id || '(no package id)'] }];\n  }\n  return [];\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"PreToolUse\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              27,
+              35
+            ],
+            [
+              61,
+              63
+            ],
+            [
+              70,
+              72
+            ],
+            [
+              77,
+              79
+            ],
+            [
+              83,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "\nFor every NuGet or npm addition or update:\n\n1. Determine the latest **stable** version compatible with the project's target framework/runtime and peer dependencies.\n2. Verify it from the package registry rather than from memory.\n3. Never select preview, alpha, beta, RC, dev, nightly, or other prerelease versions, or floating versions such as `*`, unless the user explicitly requested them.\n\n\"Latest\" means latest stable compatible version, not latest version of any release channel.\n",
+            "\n- **NuGet:** add or update the `PackageVersion` in `Directory.Packages.props`; reference the package without a version only from the narrowest project that needs it (`dotnet add <project> package <id> --version <version>` writes the central version under Central Package Management).\n  ```xml",
+            "\n- **npm:** `npm install <name>@<version>` (`--save-dev` for build/test tooling); keep `package-lock.json` consistent and committed.\n- **Peer-dependency conflicts:** resolve the actual compatibility problem; never use `npm --force` or `--legacy-peer-deps` merely to bypass incompatible peer dependencies.",
+            "\nThe dependency-command hook blocks removal commands (`npm uninstall`, `dotnet remove … package`, and equivalents) so that removals pass this checklist: remove the entry from the manifest (the project `PackageReference`, plus the central `PackageVersion` when no project uses it any more; the `package.json` entry), then restore (`dotnet restore`, `npm install`) so the lockfile stays consistent.\n",
+            "\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-change/SKILL.md",
+          "sha256": "65272c6960340d9665b3deec732badf947f186ef3dcdbc69bd1bf48dd4570600",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Frontend CI must use scripts that actually exist in the workspace's `package.json` and must use `npm ci` when a maintained lockfile supports it; never invent npm scripts and never reflexively replace a lockfile-based install with `npm install`.\n- Enforced formatting/analyzer gates only when the project has adopted them; dependency vulnerability inspection per the project's security policy; no automatic package upgrades unless the project adopted automated updates.\n- Integration-test infrastructure: per `ci-cd` (Integration-test infrastructure)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "  |---|---|\n  | NuGet/npm package change | `add-dependency` |\n  | Persistence entities, mappings, migrations, seed data | `persistence-change` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              33,
+              35
+            ]
+          ],
+          "context_quotes": [
+            "1. **Determine scope** — backend, frontend, test projects, documentation, external integrations, mapping, containerization. Do not scaffold optional infrastructure because it may be useful later (Docker only when containerization is needed).\n2. **Use the approved stack** from the decision register; conditional technologies only when their capability is required. Resolve package versions at install time through `add-dependency`; never copy versions from examples or older template content.\n3. **Repository level** — read `references/solution-layout.md`; create only required top-level directories and shared configuration files."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/frontend-setup.md",
+          "sha256": "b3c97fa173fc743b53ab230474a71277113ef05e09b9418f7a364bd0fd02ded9",
+          "inspected_ranges": [
+            [
+              6,
+              8
+            ],
+            [
+              13,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Use the latest stable Angular release supported by the selected Node.js environment, through the current Angular CLI. Let the CLI select mutually compatible Angular/TypeScript/RxJS versions; do not upgrade TypeScript beyond Angular's supported range independently.\n2. Create the workspace in the shared frontend location:",
+            "\n   Accept zoneless mode when the selected stable version supports it; keep the CLI's default test runner when it is Vitest, otherwise configure Vitest as the baseline for new projects.\n3. Add Angular Material/CDK with the version matching the workspace (`ng add @angular/material`), following `add-dependency` for version and license checks.\n4. Configure the API base URL for the Development backend and keep it compatible with the backend's CORS configuration."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep Swagger configuration in the Api/composition layer. Package: `Swashbuckle.AspNetCore` (`add-dependency`).\n"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Packages.props",
+          "sha256": "877468e119a942899a24a8470f6c613d21c410697c45bf47a486261076c3c3c6",
+          "inspected_ranges": [
+            [
+              2,
+              4
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: .claude/rules/backend/dependencies.md -->\n<!-- Versions are added by the add-dependency workflow after registry, license, and vulnerability checks; never copy versions from examples. -->\n<Project>"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-004",
+        "name": "Dependency due diligence",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#Version Selection"
+        ],
+        "normalized_policy": "Before installation, check deprecation, known vulnerabilities and the exact selected version's license.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0092",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0119",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0199",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0120"
+      ],
+      "boundary_analysis": "Selected version must be nondeprecated, official exact-version license metadata is checked and transitive vulnerabilities treated contextually; named legacy resilience bans and Elasticsearch replacement are already covered. Lockfile integrity/change review at scan-layers21 is pass1 CIS-K1-0004, not a second discovery. Automated upgrades require adopted automation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K1-0004"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              51,
+              54
+            ],
+            [
+              64,
+              80
+            ]
+          ],
+          "context_quotes": [
+            "      return `\\`${f.segment}\\`: ${f.specs.join(', ')} without an exact version -> add-dependency workflow (version selection)`;\n    case 'dependency-update':\n      return `\\`${f.segment}\\`: updates dependencies without exact versions -> add-dependency workflow`;\n    case 'dependency-removal':",
+            "\nfunction preToolUse(input) {\n  if (!SHELL_TOOLS.has(input.tool_name)) return 0;\n  const command = input.tool_input && input.tool_input.command;\n  if (typeof command !== 'string') throw new Error('tool_input.command is missing');\n  const cwd = workingDirectory(input);\n  let findings = require('../scripts/classify-command.cjs').classify(command, { cwd });\n  if (findings.some(f => f.kind === 'reference-change')) {\n    const manifests = require('../scripts/check-manifests.cjs');\n    const approvals = manifests.acceptedDecisionText(lib.activeRoot(cwd));\n    findings = findings.filter(f => f.kind !== 'reference-change' || !f.edges.length || f.edges.some(e => !manifests.isApprovedEdge(approvals, e.from, e.to)));\n  }\n  if (!findings.length) return 0;\n  process.stderr.write(`Blocked before execution (dependency and project-reference guard):\\n- ${findings.map(describe).join('\\n- ')}\\n`);\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/common/dependencies.md",
+          "sha256": "16a4128dd73bfe7112b213926c11f68e1d9aa97a2cb6d86c4b2601cd9307db66",
+          "inspected_ranges": [
+            [
+              11,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\nRelated: every NuGet or npm addition, update, or removal runs `add-dependency`; approved and conditional technologies — decision register. Ecosystem-specific dependency standards load with backend and frontend files."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              23,
+              34
+            ],
+            [
+              89,
+              93
+            ],
+            [
+              115,
+              117
+            ]
+          ],
+          "context_quotes": [
+            "\n// Approved-stack exceptions owned by the add-dependency workflow.\nconst NUGET_DENY = new Map([\n  ['microsoft.extensions.http.polly', 'deprecated resilience integration package'],\n  ['polly.extensions.http', 'deprecated resilience integration package'],\n]);\nconst NUGET_EXCEPTION = new Map([\n  ['polly', 'direct Polly usage is a documented exception'],\n  ['polly.core', 'direct Polly usage is a documented exception'],\n]);\nconst NPM_TOOLING = ['typescript', 'vitest', 'eslint', 'prettier', 'jest', '@playwright/test', 'karma', 'jasmine-core'];\n",
+            "    }\n    const denied = NUGET_DENY.get(pkg.id.toLowerCase());\n    if (denied) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${denied}`, OWNER_WORKFLOW));\n  }\n  for (const facet of Object.values(ctx.facets)) {",
+            "    }\n    if (NUGET_DENY.has(id)) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${NUGET_DENY.get(id)}`, OWNER_WORKFLOW));\n    if (NUGET_EXCEPTION.has(id)) findings.push(lib.finding('warn', rel, `\"${pkg.id}\": ${NUGET_EXCEPTION.get(id)}`, OWNER_WORKFLOW));"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/classify-command.cjs",
+          "sha256": "c46a12ee7a0187eb5089e2fb81df871d337b557b282052cfd840eb90b7044e85",
+          "inspected_ranges": [
+            [
+              241,
+              252
+            ],
+            [
+              307,
+              314
+            ]
+          ],
+          "context_quotes": [
+            "  if (!category) return [];\n  const findings = [];\n  if (options.some(o => PEER_BYPASS.test(o))) findings.push({ kind: 'peer-bypass', segment });\n  if (category === 'remove') findings.push({ kind: 'dependency-removal', segment, specs });\n  else if (category === 'update' && !specs.length) findings.push({ kind: 'dependency-update', segment });\n  else if (category === 'install' || category === 'update') {\n    const loose = specs.filter(s => !npmSpecIsExact(s));\n    if (loose.length) findings.push({ kind: 'dependency-version', segment, specs: loose });\n  }\n  return findings;\n}\n",
+            "  if (action === 'remove') return [{ kind: 'dependency-removal', segment, specs: positional }];\n  const [id, inlineVersion] = String(positional[0] || '').split('@');\n  if (!id && action === 'update') return [{ kind: 'dependency-update', segment }];\n  const version = opts['--version'] || opts['-v'] || inlineVersion;\n  if (!id || typeof version !== 'string' || !EXACT_NUGET.test(version)) {\n    return [{ kind: 'dependency-version', segment, specs: [id || '(no package id)'] }];\n  }\n  return [];"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"PreToolUse\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              22,
+              24
+            ],
+            [
+              37,
+              41
+            ],
+            [
+              81,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "  - Default: API versioning uses the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation) — added only after the project has adopted API versioning, never before.\n  - Default: when resilience is required, `Microsoft.Extensions.Http.Resilience` for `HttpClient` and `Microsoft.Extensions.Resilience` for general pipelines. Direct Polly usage is an explicit, documented exception; never add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`.\n  - Mapping: `Mapster` with `Mapster.DependencyInjection` once mapping volume warrants it (never referenced from Domain); Testcontainers, Playwright, and similar conditional packages: per the decision register.",
+            "\n- [ ] The selected package/version is not deprecated.\n- [ ] Known vulnerability information from the ecosystem has been checked (`dotnet package list --vulnerable --include-transitive`, `npm audit`, registry advisories). Scanner output needs context; do not upgrade or replace unrelated packages because of a finding.\n- [ ] The license of the exact selected version is verified from official registry metadata (and the upstream license when necessary). Permissive licenses such as MIT, Apache-2.0, and BSD-family licenses may normally be accepted; free download does not imply an acceptable license.\n",
+            "\nBuild and run the affected tests (`verify`). Report: package, version, license, due-diligence results, and any approval obtained or pending.\n\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "99734c4095dac007d827ef805a23ccc8550931cbaee9acb4f8c4a31eebfa9a97",
+          "inspected_ranges": [
+            [
+              101,
+              107
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not move Domain invariants into FluentValidation merely because the library is available, and do not duplicate one rule in several layers unless each has a distinct reason. Register validators with `FluentValidation.DependencyInjectionExtensions`; do not add deprecated/legacy ASP.NET automatic-validation integration packages, and follow the project's established invocation pattern instead of adding a competing one. A syntactically valid request can still violate an Application or Domain rule.\n\n## Exceptions for rules\n\nA project may deliberately use typed exceptions for selected cases, but only as a consistent project-level decision.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "2b7c07ebb283c3ec3d5b0a2fa03533c0e8b676613ac3dea9255626448128e0b7",
+          "inspected_ranges": [
+            [
+              79,
+              81
+            ]
+          ],
+          "context_quotes": [
+            "\n`dotnet package list --vulnerable --include-transitive`; NuGet auditing also runs during restore on modern SDKs; `npm audit` for the frontend. Treat findings per the project's security policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/delivery-change/SKILL.md",
+          "sha256": "65272c6960340d9665b3deec732badf947f186ef3dcdbc69bd1bf48dd4570600",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Frontend CI must use scripts that actually exist in the workspace's `package.json` and must use `npm ci` when a maintained lockfile supports it; never invent npm scripts and never reflexively replace a lockfile-based install with `npm install`.\n- Enforced formatting/analyzer gates only when the project has adopted them; dependency vulnerability inspection per the project's security policy; no automatic package upgrades unless the project adopted automated updates.\n- Integration-test infrastructure: per `ci-cd` (Integration-test infrastructure)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "  |---|---|\n  | NuGet/npm package change | `add-dependency` |\n  | Persistence entities, mappings, migrations, seed data | `persistence-change` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "18b915b257108f315777db09744f7d9547794dfd5bd778321e65ef622f48d266",
+          "inspected_ranges": [
+            [
+              108,
+              133
+            ]
+          ],
+          "context_quotes": [
+            "\nNever destructure large graphs such as `HttpRequest` without limits; configure `Destructure.ToMaximumDepth/StringLength/CollectionCount` or transform to specific properties (`Destructure.ByTransforming<HttpRequest>(r => new { r.Method, r.Path })`).\n\n## LogContext\n\n```csharp\nusing (LogContext.PushProperty(\"CorrelationId\", correlationId))\nusing (LogContext.PushProperty(\"TenantId\", tenantId))\n{\n    logger.LogInformation(\"Processing order {OrderId}\", orderId);\n}\n```\n\nRequires `.Enrich.FromLogContext()`.\n\n## Optional integrations\n\n- OTLP export without the OpenTelemetry SDK: `Serilog.Sinks.OpenTelemetry` (`.WriteTo.OpenTelemetry(o => { o.Endpoint = \"http://localhost:4317\"; o.Protocol = OtlpProtocol.Grpc; })`).\n- Expression filtering (`Serilog.Expressions`): `.Filter.ByExcluding(\"RequestPath like '/health%'\")`, `.WriteTo.Conditional(\"@l = 'Error'\", wt => wt.File(\"logs/errors-.log\", rollingInterval: RollingInterval.Day))`.\n- Elasticsearch: the `Serilog.Sinks.Elasticsearch` package is deprecated; use `Elastic.Serilog.Sinks` (`.WriteTo.Elasticsearch([new Uri(\"https://elastic.example.com:9200\")], opts => opts.DataStream = new DataStreamName(\"logs\", \"myapp\"))`).\n- Audit trails: `AuditTo` (synchronous; exceptions propagate) — only with an adopted audit design.\n\n## Shutdown flush\n\nWhen the static/bootstrap `Log.Logger` is used, flush it on shutdown (`try { app.Run(); } ... finally { await Log.CloseAndFlushAsync(); }`) so asynchronous sinks do not lose buffered events. Purely host-managed logging follows the provider's lifetime instead.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/frontend-setup.md",
+          "sha256": "b3c97fa173fc743b53ab230474a71277113ef05e09b9418f7a364bd0fd02ded9",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "   Accept zoneless mode when the selected stable version supports it; keep the CLI's default test runner when it is Vitest, otherwise configure Vitest as the baseline for new projects.\n3. Add Angular Material/CDK with the version matching the workspace (`ng add @angular/material`), following `add-dependency` for version and license checks.\n4. Configure the API base URL for the Development backend and keep it compatible with the backend's CORS configuration."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "e43b42b6459244caef00f781f7f4ae1c2abd0b5b54c2a881a2124fa2be468204",
+          "inspected_ranges": [
+            [
+              16,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "\nReview vulnerable direct and transitive dependencies, advisory severity, whether the vulnerable component is actually used, whether a patched compatible version exists, and unexpected or untrusted NuGet sources. Do not upgrade packages during a scan unless asked, and do not rate the finding from CVSS alone — consider reachability and exposure.\n\n## npm\n\nWhen a frontend workspace exists, run `npm audit`. Distinguish production from development/build dependencies and direct from transitive packages: a development-only vulnerability can still matter to the supply chain, but its runtime impact differs from a browser-shipped dependency. Review lockfiles when package integrity or unexpected dependency changes are relevant.\n\n# Layer 2: Secrets and Configuration (A02, A04)\n\nSearch source-controlled files for real credentials: `.cs`, `.ts`, `.json`, `.yml`, `.yaml`, `.xml`, `.config`, `.env*`, Dockerfiles, Compose files, CI workflow files, scripts.\n\nHigh-confidence indicators: private keys, real access/refresh tokens, cloud access keys, database passwords, API secrets, service-account credentials, production connection strings containing credentials.\n\nIndicators requiring context: `ApiKey = \"...\"`, `Secret = \"...\"`, `Token = \"...\"`, `Password = \"...\"`, long opaque strings, connection strings, certificate material.\n\nDo not automatically ignore `appsettings.Development.json`; a real committed secret remains a secret regardless of file name. Obviously fake values (`changeme`, `example-only`, `test-password`, `not-a-real-key`) may be ignored or reported as Info when context makes them clearly non-sensitive. `UserSecretsId` itself is not a secret.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep Swagger configuration in the Api/composition layer. Package: `Swashbuckle.AspNetCore` (`add-dependency`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              54,
+              56
+            ]
+          ],
+          "context_quotes": [
+            "- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context.\n- **Dependencies and security:** for dependency changes or security-sensitive work, inspect vulnerabilities (`dotnet package list --vulnerable --include-transitive`, `npm audit`) and changed secrets, authorization, raw SQL, CORS/TLS, sensitive logging, and certificate validation. A full `security-scan` is not required for every small change.\n- **Instruction system:** when `.claude/`, `CLAUDE.md`, or the decision register changed, run `node \"<root>/.claude/scripts/check-instructions.cjs\"`."
+          ]
+        },
+        {
+          "path": "output/template/Directory.Packages.props",
+          "sha256": "877468e119a942899a24a8470f6c613d21c410697c45bf47a486261076c3c3c6",
+          "inspected_ranges": [
+            [
+              2,
+              4
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: .claude/rules/backend/dependencies.md -->\n<!-- Versions are added by the add-dependency workflow after registry, license, and vulnerability checks; never copy versions from examples. -->\n<Project>"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-005",
+        "name": "Commercial/risky licenses require approval",
+        "related_groups": [
+          "governance-product"
+        ],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#Paid or Commercial Dependencies"
+        ],
+        "normalized_policy": "Do not automatically install paid/commercial or materially restrictive/unclear-license dependencies; explain the concern and reasonable alternatives without silently substituting.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0163",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0093"
+      ],
+      "boundary_analysis": "Approval gate includes materially restrictive or unclassifiable licenses as well as paid ones; free download is insufficient. Explain choices without silent substitution, state absence of reasonable free alternatives and stay within published-license evidence: all independently present in prior claims.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/common/dependencies.md",
+          "sha256": "16a4128dd73bfe7112b213926c11f68e1d9aa97a2cb6d86c4b2601cd9307db66",
+          "inspected_ranges": [
+            [
+              11,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\nRelated: every NuGet or npm addition, update, or removal runs `add-dependency`; approved and conditional technologies — decision register. Ecosystem-specific dependency standards load with backend and frontend files."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              37,
+              41
+            ],
+            [
+              43,
+              45
+            ],
+            [
+              57,
+              59
+            ],
+            [
+              81,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\n- [ ] The selected package/version is not deprecated.\n- [ ] Known vulnerability information from the ecosystem has been checked (`dotnet package list --vulnerable --include-transitive`, `npm audit`, registry advisories). Scanner output needs context; do not upgrade or replace unrelated packages because of a finding.\n- [ ] The license of the exact selected version is verified from official registry metadata (and the upstream license when necessary). Permissive licenses such as MIT, Apache-2.0, and BSD-family licenses may normally be accepted; free download does not imply an acceptable license.\n",
+            "\nDo not automatically install a dependency that requires payment or a commercial license, or whose license has material obligations or cannot be confidently classified (strong copyleft, dual licensing that may require a commercial license, source-available/custom licenses, unclear or missing license information). Explain the concern and present choices without silently substituting an alternative:\n",
+            "\nIf no reasonable free alternative exists, say so. Do not draw legal conclusions beyond what the published license supports.\n",
+            "\nBuild and run the affected tests (`verify`). Report: package, version, license, due-diligence results, and any approval obtained or pending.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "  |---|---|\n  | NuGet/npm package change | `add-dependency` |\n  | Persistence entities, mappings, migrations, seed data | `persistence-change` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/frontend-setup.md",
+          "sha256": "b3c97fa173fc743b53ab230474a71277113ef05e09b9418f7a364bd0fd02ded9",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "   Accept zoneless mode when the selected stable version supports it; keep the CLI's default test runner when it is Vitest, otherwise configure Vitest as the baseline for new projects.\n3. Add Angular Material/CDK with the version matching the workspace (`ng add @angular/material`), following `add-dependency` for version and license checks.\n4. Configure the API base URL for the Development backend and keep it compatible with the backend's CORS configuration."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep Swagger configuration in the Api/composition layer. Package: `Swashbuckle.AspNetCore` (`add-dependency`).\n"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Packages.props",
+          "sha256": "877468e119a942899a24a8470f6c613d21c410697c45bf47a486261076c3c3c6",
+          "inspected_ranges": [
+            [
+              2,
+              4
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: .claude/rules/backend/dependencies.md -->\n<!-- Versions are added by the add-dependency workflow after registry, license, and vulnerability checks; never copy versions from examples. -->\n<Project>"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-006",
+        "name": "Central Package Management",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#NuGet"
+        ],
+        "normalized_policy": "Use NuGet Central Package Management; versions belong in Directory.Packages.props and project PackageReference entries are normally versionless and narrowly scoped.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0167",
+        "replica/K1/constraints.jsonl/RULE-K1-0148",
+        "primary/K1/constraints.jsonl/RULE-K1-0040"
+      ],
+      "boundary_analysis": "Never duplicate central versions is stronger than normally versionless canonical wording; VersionOverride requires recorded reason. Checker severity separates ordinary Version error from override warning, while each central file must textually enable CPM. Example versions cannot be copied; union already covers each constraint.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/dependencies.md",
+          "sha256": "562c5a810a11fdfb3abf9bb719fff08f870e5d8fc2e7a54ca0bd4195677c26e7",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "\n- NuGet Central Package Management is mandatory: package versions live in `Directory.Packages.props`; project `PackageReference` entries carry no version (central versions are never duplicated in project files; a `VersionOverride` needs a recorded reason) and live in the narrowest project that actually requires the package.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/actual-state.cjs",
+          "sha256": "5138e905d8a18191c8ab6a30759dc8010ba60e10788a604fc64f090f5ff6545a",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              180,
+              208
+            ]
+          ],
+          "context_quotes": [
+            "\n// Post-execution inspection of the ACTUAL files of the active repository/worktree; command text is never consulted.\n// A bounded snapshot (content hash per relevant file, project-reference edges, HEAD) is kept per worktree in its\n// own Git directory. The first observation baselines against HEAD; later observations report what changed since\n// the previous one. Reference-graph changes count only while they differ from HEAD (committed history and\n// reverted edits are not pending changes).\n",
+            "    if (kind === 'instruction') instructionChanged = true;\n    if (kind === 'input' && attributable(rel, present)) {\n      if (rel === 'CUSTOM_SETTINGS.md') reminders.push('CUSTOM_SETTINGS.md changed: run the custom-settings workflow to synchronize affected surfaces.');\n      else reminders.push('SPECIFICATION.md changed: check consistency with CUSTOM_SETTINGS.md (CLAUDE.md, Product sources) and synchronize affected code, tests, and docs (development-workflow).');\n    }\n    if (kind !== 'manifest') continue;\n    if (present) findings.push(...manifests.checkFile(root, rel, mctx));\n    else if (!attributable(rel, present)) continue;\n    else if (path.posix.basename(rel) === 'Directory.Packages.props') findings.push(lib.finding('error', rel, 'central package management file was deleted', '.claude/rules/backend/dependencies.md'));\n    else if (path.posix.basename(rel) === 'package.json') findings.push(lib.finding('warn', rel, 'dependency manifest was deleted; dependency removals go through the add-dependency workflow', '.claude/rules/frontend/dependencies.md'));\n    if (!rel.endsWith('.csproj')) continue;\n    let cur = null;\n    try {\n      cur = present ? edgesOf(rel, bufferOf(rel)) : null;\n      if (present) refsNow.set(rel, cur);\n      const headEdges = ctx ? edgesOf(rel, headBuffer(root, ctx, rel)) : null;\n      const prevEdges = prev && !tooMany ? (prev.entries[rel] ? prev.entries[rel].refs || [] : null) : headEdges;\n      if (!ctx && !prev) continue; // no baseline outside Git before the first snapshot\n      const base = prev && !tooMany && !headMoved ? prevEdges : headEdges;\n      findings.push(...graphFindings(rel, cur, base, headEdges, !!ctx, approvals, mctx.roleOf));\n    } catch (err) {\n      findings.push(lib.finding('error', rel, `project file could not be read (${err.message})`, '.claude/rules/backend/dependencies.md'));\n    }\n  }\n\n  let instructionErrors = [];\n  if (instructionChanged) {\n    instructionErrors = require('./check-instructions.cjs').check(root).filter(f => f.severity === 'error');\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              59,
+              90
+            ],
+            [
+              98,
+              118
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction parseProject(root, rel, source) {\n  const text = lib.stripXmlComments(source === undefined ? lib.readText(root, rel) : source);\n  const dir = path.posix.dirname(rel);\n  const projectTag = lib.xmlElements(text, 'Project')[0];\n  const sdk = (projectTag && projectTag.attrs.Sdk) || '';\n  const packages = lib.xmlElements(text, 'PackageReference').map(e => ({\n    id: e.attrs.Include || e.attrs.Update || '',\n    version: e.attrs.Version || e.child.Version || '',\n    versionOverride: e.attrs.VersionOverride || e.child.VersionOverride || '',\n  }));\n  // Only an Include adds a reference edge (Update/Remove items or a missing Include reference nothing).\n  const projectRefs = lib.xmlElements(text, 'ProjectReference').filter(e => e.attrs.Include).map(e => {\n    const include = e.attrs.Include.replace(/\\\\/g, '/');\n    const target = path.posix.normalize(path.posix.join(dir, include));\n    return { include, target, name: path.posix.basename(target).replace(/\\.(cs|fs|vb)proj$/i, '') };\n  });\n  const frameworkRefs = lib.xmlElements(text, 'FrameworkReference').map(e => e.attrs.Include || '');\n  return { rel, name: path.posix.basename(rel).replace(/\\.(cs|fs|vb)proj$/i, ''), sdk, packages, projectRefs, frameworkRefs };\n}\n\nfunction checkProjectFile(ctx, rel) {\n  const project = parseProject(ctx.root, rel);\n  const findings = [];\n  for (const pkg of project.packages) {\n    if (pkg.version) {\n      findings.push(lib.finding('error', rel, `PackageReference \"${pkg.id}\" declares a version (central package management)`, OWNER_NUGET));\n    }\n    if (pkg.versionOverride) {\n      findings.push(lib.finding('warn', rel, `PackageReference \"${pkg.id}\" uses VersionOverride; record the reason`, OWNER_NUGET));\n    }\n    const denied = NUGET_DENY.get(pkg.id.toLowerCase());",
+            "\nfunction checkPackagesProps(ctx, rel) {\n  const text = lib.stripXmlComments(lib.readText(ctx.root, rel));\n  const findings = [];\n  if (!/<ManagePackageVersionsCentrally>\\s*true\\s*<\\/ManagePackageVersionsCentrally>/i.test(text)) {\n    findings.push(lib.finding('error', rel, 'ManagePackageVersionsCentrally is not enabled', OWNER_NUGET));\n  }\n  const packages = lib.xmlElements(text, 'PackageVersion').map(e => ({\n    id: e.attrs.Include || '',\n    version: e.attrs.Version || e.child.Version || '',\n  }));\n  for (const pkg of packages) {\n    const id = pkg.id.toLowerCase();\n    if (!pkg.version || /[*\\[\\](),]/.test(pkg.version)) {\n      findings.push(lib.finding('error', rel, `PackageVersion \"${pkg.id}\" has a missing, floating, or range version \"${pkg.version}\"`, OWNER_WORKFLOW));\n    } else if (pkg.version.includes('-')) {\n      findings.push(lib.finding('warn', rel, `PackageVersion \"${pkg.id}\" ${pkg.version} is a prerelease; allowed only when explicitly requested`, OWNER_WORKFLOW));\n    }\n    if (NUGET_DENY.has(id)) findings.push(lib.finding('error', rel, `\"${pkg.id}\": ${NUGET_DENY.get(id)}`, OWNER_WORKFLOW));\n    if (NUGET_EXCEPTION.has(id)) findings.push(lib.finding('warn', rel, `\"${pkg.id}\": ${NUGET_EXCEPTION.get(id)}`, OWNER_WORKFLOW));\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/classify-command.cjs",
+          "sha256": "c46a12ee7a0187eb5089e2fb81df871d337b557b282052cfd840eb90b7044e85",
+          "inspected_ranges": [
+            [
+              243,
+              245
+            ],
+            [
+              306,
+              308
+            ]
+          ],
+          "context_quotes": [
+            "  if (options.some(o => PEER_BYPASS.test(o))) findings.push({ kind: 'peer-bypass', segment });\n  if (category === 'remove') findings.push({ kind: 'dependency-removal', segment, specs });\n  else if (category === 'update' && !specs.length) findings.push({ kind: 'dependency-update', segment });",
+            "  }\n  if (action === 'remove') return [{ kind: 'dependency-removal', segment, specs: positional }];\n  const [id, inlineVersion] = String(positional[0] || '').split('@');"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ],
+            [
+              77,
+              79
+            ],
+            [
+              83,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "\n- **NuGet:** add or update the `PackageVersion` in `Directory.Packages.props`; reference the package without a version only from the narrowest project that needs it (`dotnet add <project> package <id> --version <version>` writes the central version under Central Package Management).\n  ```xml",
+            "\nThe dependency-command hook blocks removal commands (`npm uninstall`, `dotnet remove … package`, and equivalents) so that removals pass this checklist: remove the entry from the manifest (the project `PackageReference`, plus the central `PackageVersion` when no project uses it any more; the `package.json` entry), then restore (`dotnet restore`, `npm install`) so the lockfile stays consistent.\n",
+            "\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              46,
+              48
+            ]
+          ],
+          "context_quotes": [
+            "- `Directory.Build.props` — genuinely shared settings such as `TargetFramework`, `Nullable`, `ImplicitUsings`, and analysis/compiler settings; never project-specific settings.\n- `Directory.Packages.props` — NuGet Central Package Management; versions in one place.\n- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4)."
+          ]
+        },
+        {
+          "path": "output/template/Directory.Packages.props",
+          "sha256": "877468e119a942899a24a8470f6c613d21c410697c45bf47a486261076c3c3c6",
+          "inspected_ranges": [
+            [
+              2,
+              7
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: .claude/rules/backend/dependencies.md -->\n<!-- Versions are added by the add-dependency workflow after registry, license, and vulnerability checks; never copy versions from examples. -->\n<Project>\n  <PropertyGroup>\n    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>\n  </PropertyGroup>"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "- Default solution format: `.slnx`; legacy `.sln` only when an external tool or project requirement needs it.\n- Default shared .NET configuration: repository-level `Directory.Build.props` for genuinely shared build settings and `Directory.Packages.props` for Central Package Management; project-specific settings stay in their owning projects.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-007",
+        "name": "npm lockfile and dependency category",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/dependencies.md#npm"
+        ],
+        "normalized_policy": "Use npm by default unless deliberately changed, keep package-lock consistent, and place build/test tooling in the appropriate dependency category.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0179",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0133",
+        "replica/K1/constraints.jsonl/RULE-K1-0149",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0053"
+      ],
+      "boundary_analysis": "Prose allows deliberate manager change and reasoned runtime tooling placement but requires committed consistent manifest/lock. Concrete tool/package-family warnings have no need-based suppression; frontend missing adjacent lock warns. Setup pins workspace layout and compatible CLI ecosystem. Prior union captures those scope/modality differences.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/frontend/dependencies.md",
+          "sha256": "b44f0596bdc385caa331a9e205b61410a18582422579e12ec9128dc1d21e78ea",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ]
+          ],
+          "context_quotes": [
+            "\n- npm is the frontend package manager unless the project deliberately adopts another. `package.json` and `package-lock.json` must be committed and kept consistent, and build/test tooling belongs in `devDependencies`, not runtime `dependencies`, unless there is a concrete reason.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/actual-state.cjs",
+          "sha256": "5138e905d8a18191c8ab6a30759dc8010ba60e10788a604fc64f090f5ff6545a",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              188,
+              190
+            ]
+          ],
+          "context_quotes": [
+            "\n// Post-execution inspection of the ACTUAL files of the active repository/worktree; command text is never consulted.\n// A bounded snapshot (content hash per relevant file, project-reference edges, HEAD) is kept per worktree in its\n// own Git directory. The first observation baselines against HEAD; later observations report what changed since\n// the previous one. Reference-graph changes count only while they differ from HEAD (committed history and\n// reverted edits are not pending changes).\n",
+            "    else if (path.posix.basename(rel) === 'Directory.Packages.props') findings.push(lib.finding('error', rel, 'central package management file was deleted', '.claude/rules/backend/dependencies.md'));\n    else if (path.posix.basename(rel) === 'package.json') findings.push(lib.finding('warn', rel, 'dependency manifest was deleted; dependency removals go through the add-dependency workflow', '.claude/rules/frontend/dependencies.md'));\n    if (!rel.endsWith('.csproj')) continue;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-manifests.cjs",
+          "sha256": "1d704db02381c6ce9c0dd28717131f5d46f73dcb45c8ef2bdf9252381eb9a0be",
+          "inspected_ranges": [
+            [
+              32,
+              34
+            ],
+            [
+              124,
+              152
+            ],
+            [
+              182,
+              187
+            ]
+          ],
+          "context_quotes": [
+            "]);\nconst NPM_TOOLING = ['typescript', 'vitest', 'eslint', 'prettier', 'jest', '@playwright/test', 'karma', 'jasmine-core'];\n",
+            "\nfunction npmVersionIsFloating(spec) {\n  const s = String(spec).trim().toLowerCase();\n  return s === '' || s === '*' || s === 'x' || s === 'latest' || s === 'next';\n}\n\nfunction checkPackageJson(ctx, rel) {\n  let pkg;\n  try {\n    pkg = JSON.parse(lib.readText(ctx.root, rel));\n  } catch (err) {\n    return [lib.finding('error', rel, `package.json is not valid JSON (${err.message})`, OWNER_NPM)];\n  }\n  const findings = [];\n  for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {\n    for (const [name, spec] of Object.entries(pkg[section] || {})) {\n      if (npmVersionIsFloating(spec)) {\n        findings.push(lib.finding('error', rel, `${section}.${name} uses a floating version \"${spec}\"`, OWNER_WORKFLOW));\n      } else if (/\\d-(alpha|beta|rc|next|canary|dev|preview)/i.test(String(spec))) {\n        findings.push(lib.finding('warn', rel, `${section}.${name} \"${spec}\" is a prerelease; allowed only when explicitly requested`, OWNER_WORKFLOW));\n      }\n    }\n  }\n  for (const name of Object.keys(pkg.dependencies || {})) {\n    if (NPM_TOOLING.includes(name) || name.startsWith('@types/')) {\n      findings.push(lib.finding('warn', rel, `build/test tooling \"${name}\" is in runtime dependencies`, OWNER_NPM));\n    }\n  }\n  for (const facet of Object.values(ctx.facets)) {",
+            "  }\n  for (const rel of lib.walk(root, 'frontend', r => path.posix.basename(r) === 'package.json')) {\n    const lock = path.posix.join(path.posix.dirname(rel), 'package-lock.json');\n    if (!lib.exists(root, lock)) findings.push(lib.finding('warn', rel, 'no package-lock.json next to package.json', OWNER_NPM));\n  }\n  return findings;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/frontend-framework.cjs",
+          "sha256": "972ea90faaa2dcd7f581b46d53a4a91b5ccf0bbf813e02febad1bad24c3a78cf",
+          "inspected_ranges": [
+            [
+              9,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\n// Libraries the Angular selection does not add by default (concrete need required).\nconst NOT_BY_DEFAULT = [/^@ngrx\\//, /^axios$/, /^lodash(-es)?$/, /^bootstrap$/, /^@ng-bootstrap\\//, /^ngx-bootstrap$/, /^tailwindcss$/];\n// Angular build tooling that belongs in devDependencies.\nconst BUILD_TOOLING = [/^@angular\\/cli$/, /^@angular\\/build$/, /^@angular-devkit\\//, /^@angular\\/compiler-cli$/];\n\nfunction checkPackageJson(ctx, rel, pkg) {\n  if (!rel.startsWith('frontend/')) return [];\n  const findings = [];\n  for (const section of ['dependencies', 'devDependencies']) {\n    for (const name of Object.keys(pkg[section] || {})) {\n      if (NOT_BY_DEFAULT.some(re => re.test(name))) {\n        findings.push(lib.finding('warn', rel, `\"${name}\" is not added by default; confirm the concrete need`, OWNER_DEC));\n      }\n    }\n  }\n  for (const name of Object.keys(pkg.dependencies || {})) {\n    if (BUILD_TOOLING.some(re => re.test(name))) {\n      findings.push(lib.finding('warn', rel, `build tooling \"${name}\" is in runtime dependencies`, OWNER_NPM));\n    }\n  }\n  return findings;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "e7f46e6f2e559553dd4307def833e172fc40b3fa7847263667624d947176cfc0",
+          "inspected_ranges": [
+            [
+              70,
+              72
+            ],
+            [
+              75,
+              84
+            ]
+          ],
+          "context_quotes": [
+            "\n- **npm:** `npm install <name>@<version>` (`--save-dev` for build/test tooling); keep `package-lock.json` consistent and committed.\n- **Peer-dependency conflicts:** resolve the actual compatibility problem; never use `npm --force` or `--legacy-peer-deps` merely to bypass incompatible peer dependencies.",
+            "\nRemove dependencies that are no longer used when doing so is part of the current change and safe to verify; do not leave dead package references behind, and do not perform unrelated dependency cleanup during a narrowly scoped task.\n\nThe dependency-command hook blocks removal commands (`npm uninstall`, `dotnet remove … package`, and equivalents) so that removals pass this checklist: remove the entry from the manifest (the project `PackageReference`, plus the central `PackageVersion` when no project uses it any more; the `package.json` entry), then restore (`dotnet restore`, `npm install`) so the lockfile stays consistent.\n\n## 7. Verify and report\n\nBuild and run the affected tests (`verify`). Report: package, version, license, due-diligence results, and any approval obtained or pending.\n\nEnforcement: before execution, the dependency-command hook routes additions and updates without an exact version, bulk updates, removals, and `--force`/`--legacy-peer-deps` here (updates re-run the install command with the exact selected version); after edits and shell commands, the manifest hook runs `.claude/scripts/check-manifests.cjs` on the files that actually changed."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nAfter adding or upgrading a package: inspect the exact installed/requested version, confirm framework/runtime compatibility, inspect peer dependencies, read the actual diagnostics, consult official migration notes when necessary, and update usage deliberately. Every dependency addition or version change runs `add-dependency` (including its peer-dependency rules); never replace a package or add another merely to get a green build. Respect Central Package Management (never duplicate conflicting versions in `.csproj` files) and the lockfile (never delete `package-lock.json` reflexively).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/frontend-setup.md",
+          "sha256": "b3c97fa173fc743b53ab230474a71277113ef05e09b9418f7a364bd0fd02ded9",
+          "inspected_ranges": [
+            [
+              6,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Use the latest stable Angular release supported by the selected Node.js environment, through the current Angular CLI. Let the CLI select mutually compatible Angular/TypeScript/RxJS versions; do not upgrade TypeScript beyond Angular's supported range independently.\n2. Create the workspace in the shared frontend location:\n\n   ```bash\n   npx @angular/cli@<verified stable version> new ProjectName.Web --directory frontend/ProjectName.Web --routing --style=scss --strict\n   ```\n\n   Accept zoneless mode when the selected stable version supports it; keep the CLI's default test runner when it is Vitest, otherwise configure Vitest as the baseline for new projects.\n3. Add Angular Material/CDK with the version matching the workspace (`ng add @angular/material`), following `add-dependency` for version and license checks.\n4. Configure the API base URL for the Development backend and keep it compatible with the backend's CORS configuration.\n5. Create feature directories only when they contain code; no empty `core/`, `shared/`, or `features/` trees.\n6. Verify with the workspace's declared scripts (`npm run build`, `npm test`) and commit `package-lock.json`.\n\nPlaywright E2E is added only when E2E coverage is required (decision register: Conditional technologies), inside `frontend/ProjectName.Web/e2e/`."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P017",
+      "canonical_policy": {
+        "id": "DEP-008",
+        "name": "Default backend platform",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Backend Platform"
+        ],
+        "normalized_policy": "Default platform is .NET 10 LTS, C# 14, ASP.NET Core and ASP.NET Core Controllers; do not move to preview/RC without approval.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0195",
+        "replica/K1/constraints.jsonl/RULE-K1-0264",
+        "replica/K1/constraints.jsonl/EXTRA-K1-0046",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0102"
+      ],
+      "boundary_analysis": "Declared platform cannot be changed merely for local tooling or syntax. SDK-line pin and servicing policy, explicit preview request, actual supported CI versions and repository net10 target are all covered. No external current-version lookup is required or performed for frozen textual research.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              63,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "\nFor upgrade fallout, inspect the installed version, separate compile errors from changed runtime behavior, update obsolete APIs deliberately from verified documentation (never fabricate replacement APIs from memory), and do not perform an additional unrelated upgrade. For toolchain problems check `dotnet --info`, `dotnet --version`, `node --version`, `npm --version`, `global.json`, target frameworks, frontend package versions, `package-lock.json`, and CI runtime versions. Never change the repository's declared SDK, Node, framework, or language version merely because the local machine differs; if the required toolchain is unavailable, report the limitation instead of editing source code to compensate.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "2b7c07ebb283c3ec3d5b0a2fa03533c0e8b676613ac3dea9255626448128e0b7",
+          "inspected_ranges": [
+            [
+              71,
+              73
+            ]
+          ],
+          "context_quotes": [
+            "\nAdapt action and runtime versions to the repository's supported versions.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "d30ebb31c297c9e90ba278783e161107f1776823f38b61b1b84bfc1b2c0c47cb",
+          "inspected_ranges": [
+            [
+              102,
+              120
+            ]
+          ],
+          "context_quotes": [
+            "\n- `var` when the type is obvious or unimportant; an explicit type when it improves clarity; follow the project's convention.\n- Standard .NET naming: PascalCase for types, methods, properties, and public members; camelCase for parameters and locals; meaningful names over abbreviations; private-field naming per the repository's convention.\n- Keep implementation details non-public when they are not part of the project's public API; use `sealed` to communicate a deliberate \"not for inheritance\" design, not as a speculative JIT optimization.\n- Do not reorganize an existing file merely to satisfy a preferred member ordering.\n- Immutability where it represents the model naturally; controlled mutation where framework models or workflows are simpler with it.\n\n## Span and allocation-oriented APIs\n\n`Span<T>`, `ReadOnlySpan<T>`, stack allocation, pooling, and source-generated serialization are performance tools for demonstrated hot paths; ordinary arrays, strings, and collections are the default. Verify that an optimization materially improves the workload.\n\n## Compatibility\n\nConfirm the configured language version supports a feature before using it; never silently change `LangVersion` or the target framework to use newer syntax (a platform change is Reserved).\n\n## Modernization tasks\n\nWhen explicitly asked to modernize: preserve behavior, keep the change focused, prefer readability improvements, build and test afterwards, and do not mix architecture refactoring into syntax modernization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\nControllers are the HTTP endpoint mechanism; create Minimal API endpoint groups only when explicitly requested. Api references Infrastructure only for composition — controllers never consume Infrastructure implementation types directly. Use `Contracts/` for transport-specific contracts only when separation from Application models provides value.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "08bfc50ad77a9685a150ec97f61f3654738b1aea75a6de8678d4c2fd5a652cac",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "- `Directory.Packages.props` — NuGet Central Package Management; versions in one place.\n- `global.json` — pin the intended supported SDK line: select the current stable SDK for the target .NET release (no RC/preview unless explicitly requested) and allow servicing according to the chosen `rollForward` policy.\n- `.editorconfig` — deterministic repository-wide formatting and code-style configuration; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions."
+          ]
+        },
+        {
+          "path": "output/template/Directory.Build.props",
+          "sha256": "c89b1f606e040670343733aa340350d8ca547399a696f47eb5e27c9217e40fb8",
+          "inspected_ranges": [
+            [
+              2,
+              9
+            ]
+          ],
+          "context_quotes": [
+            "<!-- Conforms: docs/architecture/decision-register.md -->\n<!-- Genuinely shared .NET build settings only; project-specific settings stay in their projects. -->\n<Project>\n  <PropertyGroup>\n    <TargetFramework>net10.0</TargetFramework>\n    <Nullable>enable</Nullable>\n    <ImplicitUsings>enable</ImplicitUsings>\n  </PropertyGroup>"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Backend platform: .NET 10 LTS, C# 14, ASP.NET Core, ASP.NET Core Controllers. Moving to a preview/RC release requires approval.\n- Validation: FluentValidation is the standard explicit request/use-case validation library."
+          ]
+        }
+      ]
+    }
+  ]
+}

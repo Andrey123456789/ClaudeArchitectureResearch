@@ -1,0 +1,38 @@
+# M1 / B007 — manifest check script (static analysis; not executed).
+
+C R140 OL DEP-020 | DEFAULT (manifest check warning) | When resilience is required the approved Microsoft.Extensions resilience packages are the default; direct Polly usage is an explicit, documented exception. | NuGet manifests | Documented exception.
+C R141 OL DEP-003 | MUST (manifest check) | Select the latest stable compatible version: floating or empty versions are errors; prerelease versions are allowed only when explicitly requested. | Directory.Packages.props and package.json | Prerelease explicitly requested.
+C X15 EX DEP-004,DEP-020,DEP-010 | MUST NOT (manifest check error; no approval path) | Microsoft.Extensions.Http.Polly and Polly.Extensions.Http (deprecated resilience integrations), Serilog.Sinks.Elasticsearch (deprecated sink) and FluentValidation.AspNetCore (legacy automatic-validation integration) are reported as errors whenever they appear in a manifest. | NuGet manifests | none stated | DEP-004 requires deprecation checks and DEP-020 treats direct Polly integration as an explicit exception; no oracle policy forbids specific packages outright regardless of approval. | Adding FluentValidation.AspNetCore is an error finding even when the user requests the integration.
+
+FILE .claude/scripts/check-manifests.js | Manifest check; exit 1 on errors, 2 when it cannot run.
+1-11 IM | header comment (scope, owners, usage)
+12-16 IM | imports and owner constants
+18 IM | comment
+19-24 EX X15 | deprecated resilience integration; use the approved Microsoft.Extensions resilience packages
+25-27 OL R140 | direct Polly usage is an explicit, documented exception
+28 OL R10 | NEUTRAL_DEV_ONLY_NPM
+30 IM | prerelease pattern
+32-73 IM | finding helper, module data loading, version and reference reading
+75-78 EX X15 | DEPRECATED_PACKAGES.has(id)
+79-81 OL R140 | EXCEPTION_PACKAGES.has(id)
+82-84 OL R4 | introduces a pattern listed as not adopted; this is a Reserved decision
+85 IM | delimiter
+87-93 IM | project-file reading and loop
+94-96 OL R60 | versions belong in Directory.Packages.props
+97-99 OL R60 | uses VersionOverride; this needs a concrete, documented reason
+100-108 IM | package id check and test-project detection
+109-111 OL R8 | a second framework needs a concrete reason
+112-116 IM | delimiters and central package file reading
+117-119 OL R60 | Central Package Management is not enabled
+120-125 IM | PackageVersion loop
+126-128 OL R141 | floating or empty version
+129-130 OL R141 | is allowed only when explicitly requested
+131-148 IM | package.json parsing and dependency loop
+149-151 OL R141 | pin the latest stable compatible version
+152-154 OL R141 | is allowed only when explicitly requested
+155-157 OL R10 | is build/test tooling listed in runtime dependencies
+158-160 OL R9 | is not part of the frontend baseline
+161-163 IM | delimiters and lockfile path
+164-166 MX R61,U1 | maintain and commit the lockfile ⟫ A maintained, consistent lockfile is oracle-linked (R61); the 'commit' wording is the uncertain link U1.
+167-205 IM | manifest detection, dispatch, exports and command-line entry
+DONE

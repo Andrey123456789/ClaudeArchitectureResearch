@@ -1,0 +1,121 @@
+# M / B013 — ef-core, git-workflow.
+
+C R191 OL GOV-015 | MUST NOT | Do not commit, push, merge, rebase, reset, force-push, delete branches or perform other repository-changing Git operations unless explicitly requested; completing an implementation is not such a request. | Git operations | Explicit user request.
+C R192 OL GOV-019 | MUST NOT | Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier; do not automatically stash, reset or discard work to make a merge or rebase proceed; never remove a worktree containing uncommitted user work. | Git operations | none stated
+C R193 OL GOV-020 | MUST | Before a repository-changing Git operation inspect the relevant repository state (git status, git diff, git diff --cached) and use the minimum operation required; do not silently clean up unrelated working-tree changes, rename existing user branches to satisfy a convention or push unrelated local commits accidentally. | Git operations | none stated
+C R194 OL GOV-016 | MUST | Parallel implementation work uses separate branches or worktrees and keeps unrelated changes out of the current branch; one branch is not checked out in multiple normal worktrees and each worktree stays focused on its branch's concern. | parallel work | none stated
+C R195 OL WF-022 | MUST | Before committing inspect the staged diff and include only the intended logical change; do not stage unrelated files merely because they are modified; implementation and its tests belong in the same logical commit; no artificial tiny commits and no unrelated fixes combined. | commits | none stated
+C U2 LU GOV-015,GOV-020 | MUST NOT (high-risk) | High-risk Git operations (reset --hard, clean, push --force, push --force-with-lease, branch deletion, rebase of shared history) are performed only when explicitly requested or clearly required by an approved workflow, after inspecting what will be lost or rewritten. | Git operations | Clearly required by an approved workflow. | GOV-015 requires an explicit request for repository-changing operations; whether 'clearly required by an approved workflow' is an admissible substitute for that request cannot be decided from the oracle text. | An agent could run git clean or a force-push without a direct user request when it judges an approved workflow to require it.
+C X18 EX GOV-015,GOV-020 | MUST NOT | main, master and other protected or shared branches are treated as non-rewritable; a shared branch is never force-pushed unless the user explicitly requests history rewriting and the consequences are understood. | push and history rewriting | Explicit user request for history rewriting of a shared branch. | GOV-015 requires an explicit request for force-push; the oracle does not declare named branches categorically non-rewritable. | A requested force-push to main is still refused or challenged under this rule.
+C X19 EX WF-009,WF-022 | MUST | Run verify before preparing a pull request; the PR has a focused purpose and its description explains what changed, why, how it was verified and important compatibility or migration notes. | pull requests | none stated | WF-009 covers truthful verification reporting and WF-022 focused commits; the oracle does not prescribe PR preparation or description contents. | A PR description listing only file names does not follow the workflow.
+
+FILE .claude/skills/ef-core/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-18 NN | pointers to policy owners
+20 NN | section heading
+22-23 OL R44,R55 | Application defines persistence contracts such as specific repository
+25-28 OL R52,R53 | boundary, and its Infrastructure implementation delegates to the same
+30 NN | section heading
+32 NN | entity configuration technique (EXC-011)
+34-63 NN | DbContext and configuration code examples
+65 OL R39 |
+67 NN | section heading
+69 OL R58 |
+71-88 NN | registration code example
+90-91 OL R149,R141 | do not add a provider
+93 NN | section heading
+95-116 NN | repository code example
+118-119 OL R52 | The repository stages the change; the Application Service commits through
+121 NN | section heading
+123-124 OL R53 | Repositories are injected independently and participate in the same Unit of
+126-136 NN | Unit of Work code example
+138 NN | section heading
+140 OL R51 |
+142-148 NN | repository base code example
+150-151 OL R55,R51 | force complex queries through a generic CRUD abstraction.
+153 NN | section heading
+155-156 OL R90 | For read-only queries that need only selected data, prefer database-side
+158-171 NN | projection code example
+173-174 OL R90 | avoid loading a complete aggregate only to return two scalar fields.
+176 NN | section heading
+178-182 NN | tracking technique (EXC-011)
+184 NN | section heading
+186-187 NN | FindAsync technique (EXC-011)
+189-193 NN | FindAsync code example
+195-196 NN | LINQ shaping technique (EXC-011)
+198 NN | section heading
+200-204 OL R90 | lazy loading by default because it hides database access and causes N+1
+206 NN | section heading
+208-209 OL R90 | Apply filtering, ordering, and pagination in the database, and always use
+211-226 NN | pagination code example
+228-229 NN | keyset pagination technique
+231 NN | section heading
+233-234 NN | bulk operation lead-in
+236-240 NN | bulk delete code example
+242-244 NN | bulk operation caveat (EXC-011)
+246 NN | section heading
+248-251 OL R54 | A single `SaveChangesAsync` is normally the transaction boundary for one
+253 NN | section heading
+255-258 OL R95 | pay off only on a measured hot
+260 NN | section heading
+262-263 NN | interceptor technique (EXC-011)
+265-293 NN | interceptor code example
+295 OL R43,R40 |
+297 NN | section heading
+299-301 OL R100 | The seeder assumes the Development schema was already migrated to the current
+303 NN | subsection heading
+305-311 OL R96 | Cover the main meaningful states and relationships, for example where
+313 NN | subsection heading
+315 OL R101 |
+317-361 NN | seeder code example
+363-364 OL R102 | The concrete seed entities and states must match the current Domain and
+366 NN | subsection heading
+368-373 NN | Development-only startup wiring code example
+375-376 OL R98,R100 | Database migration strategy is separate from development seeding.
+378 NN | section heading
+380-381 NN | migration command technique
+383-385 NN | migration command example
+387-389 OL R186,R167 | After a model change, recreating an empty Development database must produce
+391-393 NN | migration script command example
+395 NN | section heading
+397-400 OL R85,R95 | Start with clear LINQ and optimize after identifying a real problem.
+402 NN | section heading
+404-406 OL R109,R95 | prefer EF APIs that preserve parameterization
+408 NN | section heading
+410-412 DU R90,R95 | anti-pattern list ('avoid' guidance) restating database-efficiency rules; the fire-and-forget item stays guidance
+414 NN | section heading
+416-428 DU R90,R54,R187,R96,R101 | decision table restating persistence defaults
+
+FILE .claude/skills/git-workflow/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R191 | Completing an implementation is not a request to
+17 NN | section heading
+19-20 OL R192 | Never discard, overwrite, reset, clean, or otherwise destroy user work to make
+21-23 OL R193 | Do not silently clean up unrelated working-tree changes.
+25 NN | section heading
+27-29 OL R195 | Before committing, inspect the staged diff and include only the intended
+31 NN | section heading
+33-36 OL R193 | do not rename an existing user branch merely to satisfy this convention.
+38 NN | section heading
+40-42 OL R194 | One branch must not be checked out simultaneously in multiple normal
+43-45 OL R192 | never remove a worktree containing uncommitted
+47 NN | section heading
+49-52 OL R195 | Do not create artificial tiny commits, and do not combine unrelated fixes or
+53-63 NN | commit-message convention default and examples
+65-66 NN | commit body guidance
+68 NN | section heading
+70-75 OL R193,R195 | avoid pushing unrelated local commits accidentally.
+77-79 MX R191,X18 | rewriting and the consequences are understood. Treat `main`, `master`, and ⟫ An explicit request for force-push is GOV-015 (R191); categorical non-rewritability of main/master/shared branches is X18.
+81 NN | section heading
+83-87 OL R192,R147 | and do not automatically stash, reset, or discard work to make it proceed.
+89 NN | section heading
+91-94 MX X19,R162 | claim checks were run if they were not. ⟫ PR preparation and description contents are X19; not claiming unrun checks is oracle-linked (R162).
+96 NN | section heading
+98-102 LU U2 | high-risk. Perform them only when explicitly requested or clearly required by an ⟫ Explicit-request gating of high-risk operations is GOV-015; the approved-workflow alternative is an uncertain substitute for that request.
+104 NN | section heading
+106-108 NN | conditional completion reporting ('when useful')
+DONE

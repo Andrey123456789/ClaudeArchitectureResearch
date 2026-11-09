@@ -1,0 +1,131 @@
+# Batch B014 — skills: docker, dotnet-testing (capability facet backend-testing/nunit)
+
+@@ output/template/.claude/skills/docker/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge skill docker (containers)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13-16 MX [dep019.no-build-tooling,x.dk-image-practices] ;; Build tooling out of runtime images ties to DEP-019; reproducibility, external configuration, separation from architecture and platform probes are added.
+18 NN ;; Heading.
+20 EX [x.dk-multistage]
+22-53 NN ;; Example multi-stage Dockerfile.
+55-58 EX [x.dk-copy-practices]
+60 NN ;; Heading.
+62-65 EX [x.dk-restore-caching]
+67 NN ;; Heading.
+69-70 OL [dep019.runtime-image-kind]
+72 NN ;; Heading.
+74-76 MX [x.dk-nonroot,dep019.permissions] ;; Running as the built-in non-root user is added; correct ownership/permissions for writable directories ties to DEP-019.
+78 NN ;; Heading.
+80-84 MX [x.dk-runtime-config,sec001.docker-credentials,sec002.docker-secrets] ;; Runtime configuration is added; credential placement and secret mechanisms are SEC-001/SEC-002.
+86 NN ;; Heading.
+88-89 NN ;; Permissive: Compose helps when the project benefits.
+91-102 NN ;; Compose example.
+104-106 OL [gov013.compose-used,sec002.local-passwords]
+108 NN ;; Heading.
+110-115 EX [x.dk-probes]
+117 NN ;; Heading.
+119-122 EX [x.dk-frontend-container]
+124 NN ;; Heading.
+126 EX [x.dk-dockerignore] ;; ;; Exclude what does not belong in the build context:
+128-136 NN ;; Example ignore list.
+138-139 EX [x.dk-dockerignore]
+141 NN ;; Heading.
+143-147 EX [x.dk-image-optimization]
+149 NN ;; Heading.
+151-154 EX [x.dk-verify]
+156 NN ;; Heading.
+158-163 MX [dep019.runtime-image-kind,x.dk-probes,x.dk-image-optimization,x.dk-image-practices] ;; Check-by-reference list; SDK/root/secrets/Compose/migration items restate owner rules, while assumed curl/wget, unverified specialized images and Docker leakage into Domain/Application are the docker-skill extras.
+
+C dep019.no-build-tooling OL DEP-019 DEFAULT ;; Keep build tooling out of production runtime images. ;; = ;; none ;;
+C x.dk-image-practices EX DEP-019,ARC-002 DEFAULT ;; Keep images reproducible and configuration external, keep Docker concerns out of application architecture (Domain/Application), use platform health probes when practical. ;; = ;; When practical. ;; Container practices outside the oracle (EXC-006).
+C x.dk-multistage EX DEP-019 DEFAULT ;; Use a multi-stage build for ASP.NET Core Dockerfiles. ;; = ;; none ;; Dockerfile shape is technique outside the oracle.
+C x.dk-copy-practices EX - DEFAULT ;; Copy only present build files needed by restore (do not add them to satisfy the Dockerfile); copy project files explicitly without flattening wildcards. ;; = ;; none ;; Dockerfile technique.
+C x.dk-restore-caching EX - DEFAULT ;; Copy project/build-dependency files before full source; update the copy section with structure changes; never sacrifice restoring the real project graph for caching. ;; = ;; none ;; Restore caching technique.
+C dep019.runtime-image-kind OL DEP-019 DEFAULT ;; Use the ASP.NET runtime image for ASP.NET Core and an appropriate .NET runtime image for workers. ;; = ;; none ;;
+C x.dk-nonroot EX DEP-019 DEFAULT ;; Use the built-in non-root user (USER app) when it fits the image and deployment. ;; = ;; When it fits. ;; Beyond DEP-019's 'do not switch to root to bypass problems'.
+C dep019.permissions OL DEP-019 MUST ;; Give writable directories appropriate ownership and permissions (instead of root). ;; = ;; none ;;
+C x.dk-runtime-config EX SEC-002 DEFAULT ;; Pass environment-specific configuration at runtime (ASPNETCORE_ENVIRONMENT, ConnectionStrings__Default, Authentication__Authority). ;; = ;; none ;; Container configuration practice not in the oracle.
+C sec001.docker-credentials OL SEC-001 MUST_NOT ;; Real credentials never go into Dockerfiles, committed Compose files, visible build arguments or copied appsettings. ;; = ;; none ;;
+C sec002.docker-secrets OL SEC-002 DEFAULT ;; Use platform or container secret mechanisms. ;; = ;; none ;;
+C gov013.compose-used OL GOV-013 MUST_NOT ;; Add only infrastructure the project actually uses to Compose. ;; = ;; none ;;
+C sec002.local-passwords OL SEC-002 MUST ;; Keep local passwords in a local .env or another ignored developer mechanism. ;; = ;; none ;;
+C x.dk-probes EX API-019 DEFAULT ;; Expose liveness/readiness via ASP.NET Core health checks, prefer orchestrator HTTP probes, do not assume curl/wget/shell in runtime images; verify or add a probe mechanism weighing debug-package cost. ;; = ;; none ;; Probe mechanics outside the oracle (EXC-006).
+C x.dk-frontend-container EX - DEFAULT ;; For static frontend deployment build in a Node stage and serve assets with the selected hosting strategy (Nginx not mandatory); keep API base URLs/config compatible. ;; = ;; none ;; Frontend container technique.
+C x.dk-dockerignore EX - DEFAULT ;; Exclude non-build content from the build context; do not exclude tests the image build runs or files required by restore/build. ;; = ;; none ;; Build-context hygiene.
+C x.dk-image-optimization EX DEP-019 DEFAULT ;; Start with standard runtime images; Alpine/chiseled/trimming/Native AOT only when justified, verifying globalization, native dependencies, reflection and diagnostics. ;; = ;; Justified by compatibility/deployment needs. ;; Image optimization discipline (EXC-006).
+C x.dk-verify EX WF-006 MUST ;; For Docker changes build the image, verify startup, ports/configuration, non-root behaviour, health probes, review for accidental secrets/files, and run meaningful tests. ;; = ;; As relevant. ;; Docker verification checklist beyond the oracle.
+
+@@ output/template/.claude/skills/dotnet-testing/SKILL.md ;; Capability-owned knowledge skill (backend-testing/nunit), on demand.
+@scope on-demand knowledge skill dotnet-testing (backend tests)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13-15 OL [gov012.proportional-tests]
+17 NN ;; Heading.
+19-40 NN ;; NUnit example.
+42-43 NN ;; Permissive AAA structure note.
+45 NN ;; Heading.
+47-48 OL [tst005.table-preferable]
+50-63 NN ;; Case-table example.
+65-66 NN ;; Permissive: multi-step tests fit sequence scenarios.
+68 NN ;; Heading.
+70-74 EX [x.tst-boundary-doubles] ;; ;; Mock or fake architectural boundaries when that makes the
+76 NN ;; Heading.
+78-83 OL [tst003.app-service-tests]
+85 NN ;; Heading.
+87-90 NN ;; Describes what WebApplicationFactory exercises.
+92-133 NN ;; Integration test example.
+135-139 OL [tst004.testing-env] ;; ;; Configure the `Testing` environment to use isolated test resources
+O 137-139 NN ;; Exposing Program via 'public partial class Program' is a technique hint. ;; ;; `public partial class Program`
+141 NN ;; Heading.
+143-150 OL [tst007.db-strategy]
+152 NN ;; Heading.
+154-156 OL [tst008.known-state-strategy]
+158 NN ;; Heading.
+160-163 OL [tst011.meaningful-persistence]
+165 NN ;; Heading.
+167 OL [run004.fake-time]
+169-177 NN ;; FakeTimeProvider example.
+179 NN ;; Heading.
+181-185 MX [tst004.external-doubles,x.tst-separate-slow] ;; Controlled doubles/local fakes are TST-004; separating slow external tests is added.
+187 NN ;; Heading.
+189-191 EX [x.tst-data-builders]
+193 NN ;; Heading.
+195-199 NN ;; Example test names.
+201 NN ;; Heading.
+203-208 MX [tst010.convert-probes,x.tst-review-probe] ;; Converting probes is TST-010; reviewing a probe before keeping it is added.
+210 NN ;; Heading.
+212-213 NN ;; Definition of smoke test.
+215 NN ;; Heading.
+217-219 OL [gov013.no-snapshot-default]
+221 NN ;; Heading.
+223-228 MX [x.tst-no-assertion-free,tst004.no-delays,tst007.no-needless-testcontainers] ;; Check-by-reference list; assertion-free tests has no owner clause in testing.md (added); delays and needless Testcontainers restate TST-004/TST-007.
+230 NN ;; Heading.
+232-235 MX [dep023.test-project-cleanup,x.tst-nunit-template] ;; Removing duplicated props/versions is DEP-023/DEP-006; creating test projects with the NUnit template is added technique.
+236-239 OL [dep013.test-packages]
+240 NN ;; Filter command technique.
+242 NN ;; Heading.
+244-255 DU ;; Decision table restating testing.md/verify defaults.
+
+C gov012.proportional-tests OL GOV-012,GOV-013 MUST_NOT ;; Do not build test infrastructure without concrete need; a small project needs no enterprise harness; test the risks that matter. ;; = ;; none ;;
+C tst005.table-preferable OL TST-005 PREFER ;; A longer explicit case table is preferable to a shorter algorithmic test when it makes rules visible. ;; = ;; none ;;
+C x.tst-boundary-doubles EX TST-003 DEFAULT ;; Mock or fake architectural boundaries when that makes the behaviour under test clearer. ;; = ;; none ;; Mocking technique outside the oracle (EXC-012).
+C tst003.app-service-tests OL TST-003,TST-002,TST-006 DEFAULT ;; Test Application Services with controlled doubles asserting results and meaningful side effects; interaction checks only when part of the contract; integration tests when persistence/transactions/DI/serialization/HTTP semantics matter. ;; = ;; none ;;
+C tst004.testing-env OL TST-004 MUST ;; Configure the Testing environment with isolated resources so integration tests never reach development or production databases. ;; = ;; none ;;
+C tst007.db-strategy OL TST-007 DEFAULT ;; Provider fidelity matters for provider-specific SQL/constraints/transactions/locking/indexes/raw SQL/mappings/migrations (use the actual provider; Testcontainers is a good option); a lighter isolated relational DB may do when fidelity does not matter, stating the trade-off. ;; = ;; none ;;
+C tst008.known-state-strategy OL TST-008 MUST ;; Give every test a known state (recreate/reset isolated DB, fitting transactions, minimal seed, unique identifiers). ;; = ;; none ;;
+C tst011.meaningful-persistence OL TST-011 MUST_NOT ;; Test repositories/mappings only for meaningful persistence behaviour; no tests for every trivial Add/Get. ;; = ;; none ;;
+C run004.fake-time OL RUN-004,TST-004 DEFAULT ;; Read time through TimeProvider and control it with FakeTimeProvider in tests. ;; = ;; none ;;
+C tst004.external-doubles OL TST-004 MUST ;; Use fakes/mocks, stub HttpMessageHandler or local fake servers at external boundaries; dedicated sandboxes only when explicitly targeted. ;; = ;; none ;;
+C x.tst-separate-slow EX TST-004 DEFAULT ;; Keep slow or unreliable external-system tests separate from ordinary fast runs. ;; = ;; none ;; Test-suite partitioning not in the oracle.
+C x.tst-data-builders EX TST-008,GOV-012 DEFAULT ;; Keep test data explicit and minimal; builders/fixtures only when repeated setup gets hard to read; no generic test-data framework for a few objects. ;; = ;; none ;; Builder technique (EXC-012).
+C tst010.convert-probes OL TST-010 MUST ;; Convert temporary probes (HTTP requests, scripts, ad-hoc tests, manual DB checks, regression probes) into maintained tests (e.g. WebApplicationFactory). ;; = ;; none ;;
+C x.tst-review-probe EX TST-010 MUST ;; Review a temporary probe before keeping it as a permanent test. ;; = ;; none ;; Added review step.
+C gov013.no-snapshot-default OL GOV-013,DEP-001 MUST_NOT ;; Do not introduce a snapshot library by default; explicit assertions are usually clearer. ;; = ;; Large stable outputs. ;;
+C x.tst-no-assertion-free EX TST-003 AVOID ;; Avoid assertion-free tests unless the behaviour is 'does not throw'. ;; = ;; 'Does not throw' behaviour. ;; Not stated in testing.md or the oracle.
+C tst004.no-delays OL TST-004 AVOID ;; Avoid arbitrary delays such as Task.Delay in tests. ;; = ;; none ;;
+C tst007.no-needless-testcontainers OL TST-007,GOV-013 AVOID ;; Avoid Testcontainers without a provider-fidelity need and claiming in-memory providers as relational coverage. ;; = ;; none ;;
+C dep023.test-project-cleanup OL DEP-023,DEP-006 MUST ;; After creating test projects remove properties duplicated by Directory.Build.props and versions duplicated by CPM, at the locations/references project-structure defines. ;; = ;; none ;;
+C x.tst-nunit-template EX DEP-013 DEFAULT ;; Create test projects with the NUnit template (dotnet new nunit). ;; = ;; none ;; Tooling technique not in the oracle.
+C dep013.test-packages OL DEP-013,DEP-003 DECIDED ;; Test packages via add-dependency: NUnit, NUnit3TestAdapter, Microsoft.NET.Test.Sdk; Microsoft.AspNetCore.Mvc.Testing for integration tests; Microsoft.Extensions.TimeProvider.Testing when FakeTimeProvider is needed. ;; = ;; none ;;

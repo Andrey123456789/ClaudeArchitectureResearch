@@ -1,0 +1,279 @@
+# K0 — skills batch B010: git-workflow, health-check, http-api, httpclient-factory (+ references/resilience.md)
+
+@@ output/template/.claude/skills/git-workflow/SKILL.md ;; Workflow (repo/meta).
+@scope workflow git-workflow (any Git operation)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 OL [gov015.gw-explicit,gov016.gw-parallel]
+12 DU [gov015.hook-git-ask] ;; Enforced-by note restating the pre-command Git confirmation captured from hook.cjs.
+14 NN ;; Heading.
+16 OL [gov019.gw-protect]
+17 OL [gov020.gw-inspect]
+19-23 NN ;; Example inspection commands.
+25 NN ;; Heading.
+27 OL [wf022.gw-staged]
+29 NN ;; Heading.
+31 EX [x.gw-branch-naming]
+33 NN ;; Heading.
+35 EX [x.gw-worktree-focus]
+36 OL [gov019.gw-worktree-removal]
+38 NN ;; Heading.
+40 EX [x.gw-logical-commits]
+41 EX [x.gw-commit-convention]
+43-50 NN ;; Conventional Commits examples.
+52 EX [x.gw-commit-convention]
+54 NN ;; Heading.
+56-59 EX [x.gw-push-checklist]
+61 MX [gov015.gw-force-push,x.gw-protected-branches] ;; Force-pushing only on explicit request restates GOV-015; treating main/master and protected/shared branches as non-rewritable is added.
+63 NN ;; Heading.
+65 MX [gov019.gw-merge-no-discard,x.gw-merge-practice] ;; Not stashing/resetting/discarding work restates GOV-019; following team convention, resolving conflicts from intended combined behaviour and re-verifying are added.
+67 NN ;; Heading.
+69 MX [x.gw-pr-practice,wf009.gw-pr-no-false-claims] ;; Never claiming checks that were not run restates WF-009; running verify before a PR, one focused purpose and the description contents are added.
+71 NN ;; Heading.
+73 MX [u.gw-destructive-approved-workflow,gov020.gw-inspect-loss] ;; Destructive operations allowed 'when explicitly requested or required by an approved workflow' (link to GOV-015 uncertain); inspecting what will be lost first restates GOV-020.
+75 NN ;; Heading.
+77 EX [x.gw-report]
+
+C gov015.gw-explicit OL GOV-015 MUST_NOT ;; Repository-changing Git operations happen only when explicitly requested; completing an implementation is not a request to commit, push or merge. ;; = ;; none ;;
+C gov016.gw-parallel OL GOV-016 MUST ;; Parallel work uses separate branches or worktrees. ;; = ;; none ;;
+C gov019.gw-protect OL GOV-019 MUST_NOT ;; Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier. ;; = ;; none ;;
+C gov020.gw-inspect OL GOV-020 MUST ;; Before any repository-changing operation inspect the relevant state and use the minimum operation; never silently clean unrelated working-tree changes. ;; = ;; none ;;
+C wf022.gw-staged OL WF-022 MUST ;; Before committing inspect the staged diff and include only the requested logical change; do not stage or clean unrelated modified files. ;; = ;; none ;;
+C x.gw-branch-naming EX - DEFAULT ;; Follow the repository's branch-naming convention (feature/, fix/, refactor/, test/, docs/, chore/ prefixes as defaults); do not rename an existing user branch to satisfy a convention. ;; = ;; none ;; Branch-naming convention not in the oracle.
+C x.gw-worktree-focus EX GOV-016 MUST ;; Keep each worktree focused on its branch's concern; one branch is not checked out in several normal worktrees at once. ;; = ;; none ;; Worktree discipline not in the oracle.
+C gov019.gw-worktree-removal OL GOV-019 MUST_NOT ;; Before removing a worktree verify required changes are committed or preserved; never remove a worktree holding uncommitted user work. ;; = ;; none ;;
+C x.gw-logical-commits EX WF-022 PREFER ;; Prefer one logical change per commit with its tests; no artificial tiny commits or combined unrelated fixes and refactors. ;; = ;; none ;; Commit-granularity guidance not in the oracle.
+C x.gw-commit-convention EX - DEFAULT ;; Follow the repository's commit-message convention (Conventional Commits as default); use the body when motivation, constraints or migration information would otherwise be lost; do not narrate obvious diff details. ;; = ;; none ;; Commit-message convention not in the oracle.
+C x.gw-push-checklist EX GOV-020,WF-003 MUST ;; Before pushing confirm the intended branch and understood working/staged state, ensure relevant verification completed and avoid pushing unrelated local commits. ;; = ;; none ;; Push checklist not in the oracle.
+C gov015.gw-force-push OL GOV-015,GOV-019 MUST_NOT ;; Never force-push a shared branch unless the user explicitly requests history rewriting and the consequences are understood. ;; = ;; Explicit request. ;;
+C x.gw-protected-branches EX GOV-015 MUST_NOT ;; Treat main, master and other protected or shared branches as non-rewritable. ;; = ;; none ;; Protected-branch rule not in the oracle.
+C gov019.gw-merge-no-discard OL GOV-019,GOV-020 MUST_NOT ;; Inspect local uncommitted work before merge/rebase; do not automatically stash, reset or discard work to make the operation proceed. ;; = ;; none ;;
+C x.gw-merge-practice EX - MUST ;; Follow the repository/team convention or the user's explicit request for merge vs rebase; resolve conflicts from the intended combined behaviour (not mechanically ours/theirs) and run relevant verification afterwards. ;; = ;; none ;; Merge practice not in the oracle.
+C x.gw-pr-practice EX WF-003,GOV-014 MUST ;; Run verify before preparing a PR; a PR has one focused purpose without unrelated changes and describes what changed, why, how it was verified and compatibility/migration notes. ;; = ;; none ;; PR practice not in the oracle.
+C wf009.gw-pr-no-false-claims OL WF-009 MUST_NOT ;; Never claim PR checks that were not run. ;; = ;; none ;;
+C u.gw-destructive-approved-workflow LU GOV-015 ALLOWED ;; High-risk operations (reset --hard, clean, push --force, push --force-with-lease, branch deletion, rebasing shared history) run only when explicitly requested or required by an approved workflow. ;; = ;; Explicit request or approved workflow. ;; Open question: GOV-015 permits repository-changing Git operations only when explicitly requested; whether 'required by an approved workflow' widens that condition or only describes an explicitly requested workflow cannot be decided from the text.
+C gov020.gw-inspect-loss OL GOV-020,GOV-019 MUST ;; Inspect what will be lost or rewritten before a destructive Git operation. ;; = ;; none ;;
+C x.gw-report EX WF-009 DEFAULT ;; After Git operations report the resulting state when useful (branch, commit, push target, PR status, remaining uncommitted changes). ;; = ;; none ;; Git report contract not in the oracle.
+
+@@ output/template/.claude/skills/health-check/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge health-check (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule pointer.
+12 OL [api019.hc-distinguish]
+14 NN ;; Heading.
+16-22 NN ;; Basic setup example.
+24 NN ;; Heading.
+26 NN ;; Descriptive definition of liveness with a pointer to the owning rule.
+28-35 NN ;; Liveness endpoint example (no checks).
+37 NN ;; Heading.
+39 OL [api019.hc-readiness]
+41-54 NN ;; Readiness tag example.
+56 OL [api019.hc-startup]
+58 NN ;; Heading.
+60 MX [api018.hc-db-lightweight,api019.hc-external,x.hc-readiness-chains] ;; Lightweight database checks and checking external dependencies only when they define readiness restate API-018/API-019; avoiding readiness chains without understanding their consequences is added.
+62 NN ;; Heading.
+64 MX [x.hc-status-mapping,api020.hc-small-payloads] ;; Small probe responses with diagnostics behind controls restate API-020; success/non-success per probe policy and not transferring business status semantics are added.
+66 NN ;; Heading.
+68 MX [x.hc-exposure,api020.hc-no-public-diagnostics] ;; No unauthenticated public diagnostics restates API-020; probe exposure options are added.
+70 NN ;; Heading.
+72 MX [api018.hc-cheap,x.hc-no-error-logs] ;; Avoiding expensive queries, long timeouts, allocations and business workflows restates API-018; no Error-level log for every normal failed probe is added.
+74 NN ;; Heading.
+76 EX [x.hc-tests]
+78 NN ;; Heading.
+80 MX [x.hc-not-grading,api018.cheap-health,api019.liveness-readiness,api020.no-health-leak,x.hc-readiness-chains] ;; Common-mistakes list restating rule-owned items; health checks as a code-quality grading system have no owner clause and are registered.
+
+C api019.hc-distinguish OL API-019 DEFAULT ;; Health checks answer liveness and/or readiness; distinguish them when the deployment infrastructure benefits. ;; = ;; none ;;
+C api019.hc-readiness OL API-019 MUST ;; Tag the checks that define readiness and include only dependencies required for meaningful readiness; an optional external service need not make the application unready. ;; = ;; none ;;
+C api019.hc-startup OL API-019 MUST ;; Keep readiness unhealthy until required asynchronous startup work completes; using liveness for this causes restart loops. ;; = ;; none ;;
+C api018.hc-db-lightweight OL API-018 MUST ;; A database health check is a lightweight connectivity/availability check. ;; = ;; none ;;
+C api019.hc-external OL API-019 DEFAULT ;; Check an external dependency only when its availability defines readiness, preferring a lightweight check of the needed capability. ;; = ;; none ;;
+C x.hc-readiness-chains EX API-019 AVOID ;; Avoid readiness chains (service A → B → C) without understanding their operational consequences. ;; = ;; none ;; Readiness-chain guidance not in the oracle.
+C x.hc-status-mapping EX API-019,API-003 MUST ;; Health endpoints return success when healthy and non-success when unhealthy under the probe policy (HealthCheckOptions mapping); business API status semantics do not transfer mechanically to probes. ;; = ;; none ;; Probe status mapping not in the oracle.
+C api020.hc-small-payloads OL API-020 MUST ;; Keep probe responses small; operator-level diagnostic detail goes behind network or authorization controls. ;; = ;; none ;;
+C x.hc-exposure EX SEC-006 DEFAULT ;; Probes are usually reachable by infrastructure without user authentication via private networks, a management port, host restrictions or authorization when supported. ;; = ;; none ;; Probe exposure options not in the oracle.
+C api020.hc-no-public-diagnostics OL API-020 MUST_NOT ;; Detailed diagnostics are not published unauthenticated on the internet. ;; = ;; none ;;
+C api018.hc-cheap OL API-018 MUST ;; Probes run frequently: avoid expensive queries, long external timeouts, large allocations and business workflows. ;; = ;; none ;;
+C x.hc-no-error-logs EX RUN-013 AVOID ;; Avoid Error-level logs for every normal failed probe. ;; = ;; none ;; Probe logging guidance not in the oracle.
+C x.hc-tests EX TST-003 DEFAULT ;; When deployment relies on health configuration test that liveness responds while healthy, readiness follows a required dependency, responses leak nothing sensitive and optional dependencies behave as intended; uncustomized framework behaviour needs no elaborate tests. ;; = ;; none ;; Health-test guidance not in the oracle.
+C x.hc-not-grading EX API-018 MUST_NOT ;; Health checks are not a code-quality grading system. ;; = ;; none ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/http-api/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge http-api (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule and technique pointers.
+12 NN ;; Heading.
+14 OL [api003.ha-200]
+16-18 NN ;; Example.
+20 OL [api004.ha-empty]
+22 OL [api003.ha-201]
+24-29 NN ;; Example.
+31 MX [api003.ha-202,x.ha-202-location] ;; 202 for accepted-but-incomplete work restates API-003; returning an operation identifier or progress Location is added.
+33-38 NN ;; Example.
+40 OL [api003.ha-204]
+42-44 NN ;; Example.
+46 EX [x.ha-delete-convention]
+48 NN ;; Heading.
+50 EX [x.ha-304]
+52 NN ;; Heading.
+54 EX [x.ha-status-definitions]
+56 OL [api005.ha-401]
+58 OL [api005.ha-403]
+60 OL [api004.ha-404]
+62 EX [x.ha-status-definitions]
+64 OL [api006.ha-409]
+66 OL [api006.ha-412]
+68 EX [x.ha-422]
+70 EX [x.ha-428]
+72 EX [x.ha-status-definitions]
+74 NN ;; Heading.
+76 OL [api008.ha-500]
+78 EX [x.ha-status-definitions]
+80 EX [x.ha-status-definitions]
+82 MX [x.ha-status-definitions,api021.ha-cancel-distinguish] ;; 504 definition is added; distinguishing client cancellation from own and upstream timeouts restates API-021.
+84 NN ;; Heading.
+86 EX [x.ha-idempotency]
+88 NN ;; Heading.
+90 OL [api006.ha-etag]
+92-97 DU [api006.409-412,x.ha-428] ;; Conditional-request flow example restating 412/428 semantics.
+99 OL [api006.ha-etag]
+101 NN ;; Heading.
+103 OL [arc010.ha-mapping]
+105-120 NN ;; Controller example.
+122 OL [fe009.ha-stable-codes]
+124 NN ;; Heading.
+126-127 NN ;; Table header.
+128-148 DU [api003.status-semantics,api004.empty-collection,api005.401-403,api006.409-412,x.ha-status-definitions,x.ha-304,x.ha-422,x.ha-428,api008.no-exposure] ;; Status decision guide restating the definitions above.
+
+C api003.ha-200 OL API-003 DEFINITION ;; 200 OK: completed with a representation (GET, PUT/PATCH returning the representation, operation-style POST without a new resource, queries). ;; = ;; none ;;
+C api004.ha-empty OL API-004 DEFAULT ;; Empty collections follow the 200-with-empty-collection rule; 204 for an empty collection loses the representation. ;; = ;; none ;;
+C api003.ha-201 OL API-003 DEFINITION ;; 201 Created: a new API resource was created (Location when a stable URI exists; PUT may return 201 when creating at a new URI); an internal row insert alone is not creation. ;; = ;; none ;;
+C api003.ha-202 OL API-003 DEFINITION ;; 202 Accepted: accepted but not complete when the response is sent (long-running operations, jobs, imports, queues). ;; = ;; none ;;
+C x.ha-202-location EX API-003 MUST ;; A 202 response returns an operation identifier or a Location where progress can be observed. ;; = ;; none ;; Progress-location requirement not in the oracle.
+C api003.ha-204 OL API-003 DEFINITION ;; 204 No Content: completed with no body needed (successful DELETE, update whose representation adds no value); a 204 carries no body. ;; = ;; none ;;
+C x.ha-delete-convention EX API-003 MUST ;; Repeated DELETE of an absent resource returns 204 or 404 by one convention applied consistently across equivalent resources. ;; = ;; none ;; DELETE-convention rule not in the oracle.
+C x.ha-304 EX API-003 DEFINITION ;; 304 only answers a conditional request whose cached representation is still valid; it is not a generic 'nothing changed' business response. ;; = ;; none ;; 304 semantics not in the oracle.
+C x.ha-status-definitions EX API-003,API-002 DEFINITION ;; Status semantics beyond the oracle: 400 for invalid HTTP requests (not authentication failures); 406/415 for content negotiation and unsupported media types; 429 for rate limiting with Retry-After when known (not validation); 502/503/504 for intermediary/unavailability/upstream-timeout cases (not every dependency failure; 503 with Retry-After when meaningful). ;; = ;; none ;; Status-code definitions not in the oracle.
+C api005.ha-401 OL API-005 DEFINITION ;; 401: authentication missing or failed; produced by authentication middleware. ;; = ;; none ;;
+C api005.ha-403 OL API-005 DEFINITION ;; 403: authenticated but not permitted; a deliberate 404 for hidden resources must be a consistent policy. ;; = ;; none ;;
+C api004.ha-404 OL API-004,API-005 DEFINITION ;; 404: the resource does not exist or is deliberately hidden; a zero-match collection query follows the empty-collection rule. ;; = ;; none ;;
+C api006.ha-409 OL API-006 DEFINITION ;; 409: a valid request conflicting with current state (duplicates, incompatible transitions, concurrent operations, reused idempotency key with a different payload); malformed syntax is not 409. ;; = ;; none ;;
+C api006.ha-412 OL API-006 DEFINITION ;; 412: a supplied conditional precondition is false (e.g. stale If-Match), not a generic 409. ;; = ;; none ;;
+C x.ha-422 EX API-003,API-010 DEFAULT ;; 422 for structurally valid but semantically invalid content; follow an established 400-for-both convention, otherwise new APIs use 400 for invalid request contracts and 422 for invalid semantics. ;; = ;; Established convention. ;; 400/422 split not in the oracle.
+C x.ha-428 EX API-006 DEFINITION ;; 428 when a contract-required precondition is missing (missing If-Match → 428; stale → 412); other mandatory preconditions only when the contract defines them. ;; = ;; none ;; 428 semantics not in the oracle.
+C api008.ha-500 OL API-008,API-007 DEFINITION ;; 500 for unexpected internal failures without a more specific controlled outcome, produced through centralized handling and ProblemDetails without internal details. ;; = ;; none ;;
+C api021.ha-cancel-distinguish OL API-021,RUN-019 MUST ;; Not every TaskCanceledException is 504: distinguish client-cancelled requests, own operation timeouts and upstream timeouts. ;; = ;; none ;;
+C x.ha-idempotency EX RUN-016,API-006 DEFAULT ;; GET safe and idempotent, PUT idempotent, DELETE idempotent in intended state, POST generally not; consider an Idempotency-Key for POSTs that must not duplicate effects (reuse with a different payload → 409); unlikely duplicates do not make an operation idempotent. ;; = ;; none ;; Idempotency guidance not in the oracle.
+C api006.ha-etag OL API-006 MUST ;; When HTTP optimistic concurrency is part of the contract use standard conditional requests (ETag/If-Match); never replace well-defined precondition semantics with custom status codes. ;; = ;; none ;;
+C arc010.ha-mapping OL ARC-010,API-001 DEFINITION ;; Controllers translate Application outcomes into HTTP outcomes. ;; = ;; none ;;
+C fe009.ha-stable-codes OL FE-009,API-002 MUST ;; Machine-readable clients rely on stable error codes or contract fields in ProblemDetails, not human-readable exception messages. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/httpclient-factory/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge httpclient-factory (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule, decision and private-reference pointers.
+12 NN ;; Heading.
+14 OL [arc025.hcf-abstraction]
+16-29 NN ;; Gateway abstraction example.
+31 NN ;; Heading.
+33 EX [x.hcf-one-model]
+35 NN ;; Lead-in.
+37-42 NN ;; Typed client example.
+44 OL [arc022.hcf-typed-singleton]
+46 NN ;; Descriptive use cases for named clients.
+48-53 NN ;; Named client example.
+55 DU [x.di-keyed-when] ;; Keyed clients only when keyed DI makes consumption clearer restates the keyed-service guidance.
+57 NN ;; Heading.
+59 EX [x.hcf-handlers]
+61-78 NN ;; Delegating handler example.
+80 NN ;; Heading.
+82-86 NN ;; Cancellation example.
+88 OL [run003.hcf-cancellation,run015.hcf-timeouts]
+90 NN ;; Heading.
+92 EX [x.hcf-status-mapping]
+94-101 NN ;; Response mapping example.
+103 OL [arc025.hcf-translate]
+105 NN ;; Heading.
+107 OL [run017.hcf-retry-after]
+109 NN ;; Heading.
+111 OL [run016.hcf-retry-safety]
+113 NN ;; Heading.
+115 MX [x.hcf-headers-serialization,arc025.hcf-no-domain-contracts] ;; Domain entities not being remote contracts restates ARC-025; per-request header handling and serializer guidance are added.
+117 NN ;; Heading.
+119 NN ;; Descriptive test technique (controlled HttpMessageHandler).
+121-126 NN ;; Test client example.
+128 NN ;; Permissive note (new HttpClient in a focused test is fine).
+130 NN ;; Heading.
+132 MX [run005.httpclient-lifetime,x.hcf-one-model,run016.safe-retry,run015.bounded-time,arc025.no-transport-leak,run003.cancellation-token,x.hcf-headers-serialization,x.hcf-status-mapping,x.res-identified-scenario] ;; Common-mistakes list restating rule-owned items and the guidance registered here and in the resilience reference.
+
+C arc025.hcf-abstraction OL ARC-025,ARC-007 DEFAULT ;; Application may define an abstraction implemented in Infrastructure with HttpClient; Application need not know the service uses HTTP. ;; = ;; none ;;
+C x.hcf-one-model EX GOV-012 DEFAULT ;; Named, typed and keyed clients are all valid; choose the simplest model for the consumer and lifetime rather than mandating one model everywhere. ;; = ;; none ;; Client-model guidance not in the oracle.
+C arc022.hcf-typed-singleton OL ARC-022 MUST ;; Understand the lifetime implications before capturing a transient typed client inside a singleton. ;; = ;; none ;;
+C x.hcf-handlers EX ARC-025 MUST_NOT ;; Delegating handlers serve genuine HTTP pipeline concerns (authorization headers, correlation, signing), never business decisions. ;; = ;; none ;; Handler-scope rule not in the oracle.
+C run003.hcf-cancellation OL RUN-003 MUST ;; Pass the request cancellation token; replace it with CancellationToken.None only when the operation intentionally outlives the incoming request. ;; = ;; Intentionally outliving the request. ;;
+C run015.hcf-timeouts OL RUN-015 MUST ;; Choose timeouts from the remote operation and latency budget; with resilience pipelines distinguish per-attempt from total-operation timeout. ;; = ;; none ;;
+C x.hcf-status-mapping EX ARC-025 DEFAULT ;; Do not rely on EnsureSuccessStatusCode() alone when specific remote statuses carry contract meaning; map them explicitly. ;; = ;; none ;; Status-mapping technique not in the oracle.
+C arc025.hcf-translate OL ARC-025 MUST ;; Translate richer failure semantics into explicit Infrastructure/Application outcomes rather than exposing every upstream status through the API. ;; = ;; none ;;
+C run017.hcf-retry-after OL RUN-017 DEFAULT ;; Honor Retry-After from a remote 429 when the selected retry policy supports it; outbound retry and the inbound response are separate decisions. ;; = ;; none ;;
+C run016.hcf-retry-safety OL RUN-016,RUN-015 MUST ;; Every external call needs bounded time but retry/circuit breakers are not mandatory; before retrying establish transience, repeat safety, remote idempotency support and duplicate side effects; idempotency keys, natural idempotency or deduplication make writes retry-safe; HTTP method semantics alone do not. ;; = ;; none ;;
+C x.hcf-headers-serialization EX - MUST ;; Stable headers on the client, per-request values (dynamic tokens) on the request or via a handler, never by concurrently mutating shared DefaultRequestHeaders; prefer System.Net.Http.Json/System.Text.Json with explicit options when the remote contract differs. ;; = ;; none ;; Header/serialization technique not in the oracle.
+C arc025.hcf-no-domain-contracts OL ARC-025 MUST_NOT ;; Internal Domain entities are not remote API contracts. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/httpclient-factory/references/resilience.md ;; Private knowledge reference (read by httpclient-factory only).
+@scope private reference resilience (read by httpclient-factory)
+1 NN ;; Banner (kind, scope, owner, loading metadata).
+3 NN ;; Heading.
+5 IM ;; Rule, decision and see-also pointers.
+7 MX [x.res-identified-scenario,dep020.res-ms-apis] ;; Application code using the Microsoft.Extensions resilience APIs restates DEP-020; adding a mechanism only for an identified failure scenario and observing it are added.
+9 NN ;; Heading.
+11-17 NN ;; Standard resilience handler example.
+19 MX [x.res-standard-handler,run015.res-no-stacking] ;; Avoiding stacked handlers with overlapping strategies restates RUN-015; the standard handler being optional and reviewed for state-changing requests is added.
+21 NN ;; Heading.
+23 MX [run015.res-timeouts,x.cfg-operational-values] ;; Distinguishing attempt and total timeouts restates RUN-015; choosing values from actual requirements, not examples, restates the configuration extra.
+25 NN ;; Heading.
+27 OL [run016.res-transient]
+29 OL [run016.res-write-retry]
+31 NN ;; Heading.
+33 OL [run017.res-retry-after]
+35 NN ;; Heading.
+37 EX [x.res-circuit-breaker]
+39 NN ;; Heading.
+41 OL [run018.res-fallback]
+43 NN ;; Heading.
+45 OL [run016.res-hedging]
+47 NN ;; Heading.
+49 EX [x.res-db]
+51 NN ;; Heading.
+53 EX [x.res-messaging]
+55 NN ;; Heading.
+57 EX [x.res-inbound-rate-limit]
+59 NN ;; Heading.
+61 OL [run019.res-cancellation]
+63 NN ;; Heading.
+65 EX [x.res-telemetry]
+67 NN ;; Heading.
+69-70 NN ;; Table header.
+71-79 DU [run015.bounded-time,run016.safe-retry,run017.retry-after,x.res-circuit-breaker,run018.fallback,run016.res-hedging,x.res-db,x.res-inbound-rate-limit] ;; Decision guide restating the rules and guidance captured above.
+
+C x.res-identified-scenario EX DEP-020,GOV-013 MUST ;; Resilience policies match failure and operation semantics: add a mechanism only for an identified failure scenario and observe retries, timeouts and circuit state when they matter operationally. ;; = ;; none ;; Resilience-adoption rule not in the oracle.
+C dep020.res-ms-apis OL DEP-020 DEFAULT ;; The Microsoft packages build on Polly v8, but application code uses the Microsoft.Extensions resilience APIs. ;; = ;; none ;;
+C x.res-standard-handler EX DEP-020,RUN-016 DEFAULT ;; The standard resilience handler is used when its behaviour fits the remote API, is not mandatory for every client, and its retry behaviour is reviewed carefully for state-changing requests. ;; = ;; none ;; Standard-handler guidance not in the oracle.
+C run015.res-no-stacking OL RUN-015 AVOID ;; Avoid stacking resilience handlers with overlapping strategies. ;; = ;; none ;;
+C run015.res-timeouts OL RUN-015 MUST ;; Distinguish attempt timeout from total operation timeout, especially with retries. ;; = ;; none ;;
+C run016.res-transient OL RUN-016,RUN-019 DEFINITION ;; Plausibly transient: selected network failures, temporary unavailability, allowed rate limiting, transient provider DB failures; not retried: validation, authentication/authorization, permanent 404, deterministic business rejection, non-idempotent operations without duplicate prevention. ;; = ;; none ;;
+C run016.res-write-retry OL RUN-016 MUST_NOT ;; Before retrying a write ask what happens if the first attempt succeeded remotely; if duplicates result, automatic retry is unsafe; use an idempotency mechanism the remote API actually supports. ;; = ;; none ;;
+C run017.res-retry-after OL RUN-017 PREFER ;; Prefer the server's retry guidance over an independent aggressive schedule against a rate-limited dependency. ;; = ;; none ;;
+C x.res-circuit-breaker EX RUN-015 DEFAULT ;; A circuit breaker is used only for a meaningful repeated-failure pattern where repeated calls add load or latency, with operational visibility in production when it matters. ;; = ;; none ;; Circuit-breaker guidance not in the oracle.
+C run018.res-fallback OL RUN-018 MUST ;; Acceptable fallbacks: stale cached reads where staleness is acceptable, omitted optional enrichment; unacceptable: pretending a failed operation (e.g. payment) succeeded. ;; = ;; none ;;
+C run016.res-hedging OL RUN-016 MUST_NOT ;; Hedging only for operations safe to execute multiple times (typically idempotent reads against interchangeable endpoints), never writes. ;; = ;; none ;;
+C x.res-db EX RUN-016,ARC-019 MUST_NOT ;; Do not wrap normal EF Core operations in a generic application-level retry pipeline; prefer EF Core execution strategies/provider configuration and the provider's transaction-retry guidance; HTTP retry policies are not database policies. ;; = ;; none ;; Database-resilience rule not in the oracle.
+C x.res-messaging EX RUN-016 MUST ;; Retrying message publication can duplicate delivery: use idempotent consumers, broker deduplication or outbox patterns when the business needs them; retries do not make delivery exactly-once. ;; = ;; Business requirement. ;; Messaging guidance not in the oracle.
+C x.res-inbound-rate-limit EX RUN-017 DEFINITION ;; ASP.NET Core inbound rate limiting is separate from outbound resilience; rejected requests get 429 with Retry-After when a useful delay is known. ;; = ;; none ;; Inbound rate-limit guidance not in the oracle.
+C run019.res-cancellation OL RUN-019,RUN-003 MUST ;; Propagate caller cancellation through resilience pipelines; it is not a transient failure to retry. ;; = ;; none ;;
+C x.res-telemetry EX GOV-013 MUST_NOT ;; Use the telemetry stack the project adopted; resilience handlers alone do not justify adding OpenTelemetry. ;; = ;; none ;; Telemetry rule not in the oracle.

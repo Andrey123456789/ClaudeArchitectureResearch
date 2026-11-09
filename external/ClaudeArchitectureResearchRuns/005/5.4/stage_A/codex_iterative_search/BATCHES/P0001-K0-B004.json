@@ -1,0 +1,195 @@
+{
+  "unit": "P0001-K0-B004",
+  "candidate": "K0",
+  "files": [
+    {
+      "path": "output/template/.claude/scripts/repo.cjs",
+      "read_index_status": "SOURCE_READ_AND_SEMANTICALLY_COMPARED",
+      "inspected_ranges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "hotspots": [
+        "Actual parser acceptance and failure severity",
+        "Path containment and omitted fields"
+      ],
+      "deferred_deeper_reread": null,
+      "review_notes": "All functions inspected. Independent BF-K0-0131 covers Git-root priority. Decoder permits BOM-tagged UTF-16 and UTF-8 but reports malformed bytes. toRelative rejects every relative path starting with two dots, including contained names; uncertain case preserved."
+    },
+    {
+      "path": "output/template/.claude/scripts/check-dependencies.cjs",
+      "read_index_status": "SOURCE_READ_AND_SEMANTICALLY_COMPARED",
+      "inspected_ranges": [
+        [
+          1,
+          303
+        ]
+      ],
+      "hotspots": [
+        "Actual parser acceptance and failure severity",
+        "Path containment and omitted fields"
+      ],
+      "deferred_deeper_reread": null,
+      "review_notes": "Full branches inspected against primary RULE-0198..0211, EXTRA-0028..0031; replica RULE-0144..0151/EXTRA-0009; independent BF-0117..0123. Existing records cover skip scope, XML comments/conditions, project naming, CPM severity and version holes generally. Malformed-element and unreadable-manifest errors are separately retained. Missing PackageVersion Version also skips deny-list evaluation, preserved uncertain."
+    }
+  ],
+  "claims": [
+    {
+      "id": "CIS-K0-0002",
+      "path": "output/template/.claude/scripts/check-dependencies.cjs",
+      "start_line": 102,
+      "end_line": 106,
+      "claim": "Malformed PackageReference, ProjectReference or PackageVersion start-tag attributes produce a manifest-check error rather than being silently skipped.",
+      "actor": "check-dependencies manifest checker",
+      "trigger": "A recognized manifest element has unclosed/mismatched attribute quotes or an unquoted attribute value",
+      "modality": "MUST",
+      "domain": "WORKFLOW_ENFORCEMENT",
+      "exceptions": "Only the specific XML start-tag parser acceptance checks are established; this is not complete XML validation.",
+      "enforcement_effect": "Adds an error; CLI exits 1 when errors exist (lines 295..298); post-change handling reviewed separately.",
+      "closest_policy_ids": [],
+      "baseline_comparisons": [
+        {
+          "baseline_keys": [
+            "primary/K0/coverage_ranges.jsonl/K0-S000335",
+            "replica/K0/coverage_ranges.jsonl/K0-S000333"
+          ],
+          "reason": "Both describe malformed-element errors but dismiss the range as implementation without a separately registered constraint.",
+          "assessment": "DISMISSED_IMPLEMENTATION"
+        },
+        {
+          "baseline_keys": [
+            "primary/K0/constraints.jsonl/RULE-K0-0201",
+            "replica/K0/constraints.jsonl/RULE-K0-0144",
+            "independent/K0/BLIND_FINDINGS.jsonl/BF-K0-0119"
+          ],
+          "reason": "Version placement and inactive/commented XML evaluation do not express the malformed-attribute error condition.",
+          "assessment": "DIFFERENT_ACTION"
+        }
+      ],
+      "comparison_reason": "A malformed attribute can trigger failure even without a forbidden version or architectural edge; this is a separate effective acceptance condition.",
+      "distinguishing_behavioral_scenario": "A recognized PackageReference has an unquoted Include attribute but no version. It yields an error independently of CPM version-placement checks.",
+      "comparison_status": "RECLASSIFICATION_CANDIDATE",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "CIS-K0-0003",
+      "path": "output/template/.claude/scripts/check-dependencies.cjs",
+      "start_line": 217,
+      "end_line": 220,
+      "claim": "A manifest that cannot be read or decoded by the accepted UTF-8/BOM-tagged UTF-16 decoder produces a check error with a request to save readable encoding.",
+      "actor": "check-dependencies manifest checker",
+      "trigger": "An existing recognized manifest returns readText.error",
+      "modality": "MUST",
+      "domain": "WORKFLOW_ENFORCEMENT",
+      "exceptions": "A missing file returns no findings in checkFile itself; CLI missing-target checking is separate. Valid BOM-tagged UTF-16 is accepted despite UTF-8 formatting preference.",
+      "enforcement_effect": "Adds manifest error and returns before semantic checks; CLI aggregates errors and exits 1.",
+      "closest_policy_ids": [],
+      "baseline_comparisons": [
+        {
+          "baseline_keys": [
+            "primary/K0/constraints.jsonl/EXTRA-K0-0044",
+            "replica/K0/constraints.jsonl/RULE-K0-0296",
+            "independent/K0/BLIND_FINDINGS.jsonl/BF-K0-0074"
+          ],
+          "reason": "Formatting charset preferences do not specify manifest decoding errors or acceptance of BOM-tagged UTF-16.",
+          "assessment": "DIFFERENT_ACTION"
+        },
+        {
+          "baseline_keys": [
+            "primary/K0/constraints.jsonl/EXTRA-K0-0020",
+            "primary/K0/coverage_ranges.jsonl/K0-S000395"
+          ],
+          "reason": "Fail-closed pre-command input decoding has a different target and timing; helper decoding is classified implementation.",
+          "assessment": "DIFFERENT_ACTION"
+        }
+      ],
+      "comparison_reason": "Unreadable manifest content fails validation before dependency semantics and has a different trigger and severity from editor formatting or hook input.",
+      "distinguishing_behavioral_scenario": "A tracked package manifest contains malformed UTF-8 bytes but otherwise no forbidden dependency; checker records a manifest error without evaluating package content.",
+      "comparison_status": "RECLASSIFICATION_CANDIDATE",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "CIS-K0-U0001",
+      "path": "output/template/.claude/scripts/check-dependencies.cjs",
+      "start_line": 273,
+      "end_line": 277,
+      "claim": "An explicitly targeted manifest under a contained directory whose name starts with two dots is rejected as outside the repository.",
+      "actor": "check-dependencies CLI",
+      "trigger": "Explicit target resolves to a relative path such as ..cache/package.json inside the root",
+      "modality": "UNCERTAIN",
+      "domain": "UNCERTAIN",
+      "exceptions": "Repository-wide scanning separately skips dot-directories; the hypothesis concerns explicit targets. Ordinary parent traversal is correctly rejected.",
+      "enforcement_effect": "rel.startsWith('..') records an outside-root error; repo.toRelative lines 60..63 has a similar prefix test, with hook effects pending full caller review.",
+      "closest_policy_ids": [],
+      "baseline_comparisons": [
+        {
+          "baseline_keys": [
+            "primary/K0/coverage_ranges.jsonl/K0-S000358",
+            "replica/K0/coverage_ranges.jsonl/K0-S000356",
+            "replica/K0/coverage_ranges.jsonl/K0-S000413"
+          ],
+          "reason": "CLI/helper containment is implementation-classified.",
+          "assessment": "DIFFERENT_ACTION"
+        },
+        {
+          "baseline_keys": [
+            "independent/K0/BLIND_FINDINGS.jsonl/BF-K0-0118",
+            "independent/K0/BLIND_FINDINGS.jsonl/BF-K0-0131"
+          ],
+          "reason": "Skipping dot-directories during scans and Git-root precedence do not register false rejection of an explicit contained target.",
+          "assessment": "DIFFERENT_ACTION"
+        }
+      ],
+      "comparison_reason": "Lexical prefix rejection is stricter than actual parent traversal containment, but whether this accidental edge is a registrable effective constraint remains uncertain.",
+      "distinguishing_behavioral_scenario": "The existing file root/..cache/package.json is supplied explicitly; its relative string starts with '..' and the CLI labels it outside root.",
+      "comparison_status": "UNCERTAIN_NOVELTY",
+      "confidence": "HIGH_SOURCE_UNCERTAIN_NORMATIVITY",
+      "status": "OPEN",
+      "open_question": "Should this parser/path edge count as an effective constraint, and which hook paths also inherit it?",
+      "next_evidence_strategy": "Inspect hook callers and use a pure path-function probe if needed in the actual-trigger sweep."
+    },
+    {
+      "id": "CIS-K0-U0002",
+      "path": "output/template/.claude/scripts/check-dependencies.cjs",
+      "start_line": 171,
+      "end_line": 181,
+      "claim": "A PackageVersion missing its Version attribute skips both version validation and the package-name deny-list check.",
+      "actor": "check-dependencies central-package checker",
+      "trigger": "A readable PackageVersion has Include but no Version attribute",
+      "modality": "UNCERTAIN",
+      "domain": "UNCERTAIN",
+      "exceptions": "Other MSBuild tooling may reject the manifest; this concerns this checker's result only. Missing Include also skips the loop body.",
+      "enforcement_effect": "The continue at line 175 bypasses checkNugetName at line 181, even for a listed deprecated package.",
+      "closest_policy_ids": [],
+      "baseline_comparisons": [
+        {
+          "baseline_keys": [
+            "primary/K0/constraints.jsonl/EXTRA-K0-0028",
+            "replica/K0/constraints.jsonl/EXTRA-K0-0009"
+          ],
+          "reason": "Registered package-name errors are stated without this missing-Version exception.",
+          "assessment": "DIFFERENT_ACTION"
+        },
+        {
+          "baseline_keys": [
+            "primary/K0/coverage_ranges.jsonl/K0-S000348",
+            "replica/K0/coverage_ranges.jsonl/K0-S000344",
+            "independent/K0/BLIND_FINDINGS.jsonl/BF-K0-0122"
+          ],
+          "reason": "The loop is implementation or linked to pinning; independent discusses mandatory local CPM and floating/range/property versions, not bypass of the deny-list through an omitted Version.",
+          "assessment": "DIFFERENT_ACTION"
+        }
+      ],
+      "comparison_reason": "This exception changes whether a prohibited name is reported, independently of whether the version is pinned. Its normative relevance to a build-invalid form is unresolved.",
+      "distinguishing_behavioral_scenario": "Directory.Packages.props enables CPM and contains a readable PackageVersion Include='FluentValidation.AspNetCore' with no Version; this loop does not emit the deprecated-package error.",
+      "comparison_status": "UNCERTAIN_NOVELTY",
+      "confidence": "HIGH_SOURCE_UNCERTAIN_NORMATIVITY",
+      "status": "OPEN",
+      "open_question": "Is omission-triggered non-enforcement on this manifest form relevant as an effective exception, or only invalid-input implementation behavior?",
+      "next_evidence_strategy": "Pure copied-function probe and cross-check against declared checker obligations in the executable-enforcement pass."
+    }
+  ],
+  "next_action": "Finish K0 hook.cjs source read (lines 441..612; lines 1..440 already read), compare all branches to three-run union, then checkpoint."
+}

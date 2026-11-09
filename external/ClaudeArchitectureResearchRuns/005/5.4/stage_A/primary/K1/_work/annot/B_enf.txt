@@ -1,0 +1,207 @@
+# K1 — executable enforcement: settings.json, hooks/dispatch.cjs, scripts classify-command/actual-state/check-cochange/check-manifests and facets (read as code, never executed)
+
+@@ output/template/.claude/settings.json ;; Hook wiring (exec form); repo/meta.
+@scope hook configuration (session)
+1-11 IM ;; Hook wiring: PreToolUse Bash|PowerShell runs dispatch.cjs PreToolUse in exec form (node + args).
+12 EX [x.pre-fail-closed]
+13-56 IM ;; PostToolUse (Edit|Write|MultiEdit|Bash|PowerShell), PostToolUseFailure (Bash|PowerShell) and Stop wiring of dispatch.cjs in exec form.
+
+@@ output/template/.claude/hooks/dispatch.cjs ;; Hook entry point (all events).
+@scope hooks (dispatch.cjs)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-3 IM ;; Conformance comment; strict mode.
+5-12 DU [x.pre-fail-closed] ;; Header comment (launcher vs active root, exit-code contract, fail-closed PreToolUse, advisory Post/Stop) describing behaviour implemented below. ;; PreToolUse guards policy-critical commands and fails closed
+14-44 IM ;; Imports, tool sets, stdin reading and hook-input parsing (UTF-8/BOM/UTF-16; empty or malformed input throws), working-directory resolution.
+46 NN ;; Section comment.
+48-63 IM ;; Finding messages routing to add-dependency / architecture-decision; the finding kinds are decided in classify-command.cjs.
+65-70 IM ;; PreToolUse entry: non-shell tools ignored, missing command throws, command classified.
+71-75 EX [x.pre-ref-gate]
+76-79 IM ;; Any remaining finding blocks the command (exit 2) with its message.
+81 NN ;; Section comment.
+83-111 IM ;; Post-event wiring: feedback (exit 2) from the actual-state observation after shell commands (whole worktree, failed commands included) and Edit/Write/MultiEdit (edited file only).
+113 NN ;; Section comment.
+115-128 EX [x.stop-address-or-justify]
+130-141 IM ;; Event table; input/event mismatch throws.
+143-153 EX [x.pre-fail-closed]
+155-157 IM ;; Exports and entry point.
+
+C x.pre-fail-closed EX DEP-003,DEP-025,ARC-001 ENFORCED ;; The PreToolUse guard fails closed: internal errors, empty/malformed/mismatched hook input and host-level failures (onFailure block) block the command; Post and Stop failures are advisory (exit 1). ;; PreToolUse Bash/PowerShell ;; none ;; Fail-closed enforcement policy not in the oracle.
+C x.pre-ref-gate EX ARC-001,ARC-020 ENFORCED ;; dotnet project-reference add/remove commands are blocked before execution unless every named edge is recorded as an approved 'From -> To' in the decision register's Accepted decisions. ;; PreToolUse Bash/PowerShell ;; Recorded approval for every edge. ;; Reference-graph approval gate not in the oracle.
+C x.stop-address-or-justify EX PST-008,PST-010,TST-009 ENFORCED_ADVISORY ;; At Stop, co-change reminders block finishing once per content state: address each item or state why it does not apply; the hook never re-blocks its own continuation and is inactive (system message) outside a Git work tree. ;; Stop (dispatch.cjs + check-cochange.cjs) ;; none ;; Stop-gate mechanism not in the oracle.
+
+@@ output/template/.claude/scripts/classify-command.cjs ;; Pre-execution command classifier (PreToolUse).
+@scope PreToolUse Bash/PowerShell (classify-command.cjs via dispatch.cjs)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-3 IM ;; Conformance comment; strict mode.
+5-7 NN ;; Descriptive comment (token-level classification before execution; actual changes inspected afterwards).
+9-11 IM ;; Imports; maximum wrapper depth.
+13 NN ;; Section comment.
+15-97 IM ;; Lexer (quotes, line continuations, separators, redirections, comments stripped).
+99-154 IM ;; Executable names, prefix commands, directory changes, shell wrappers (bash -c, cmd /c, PowerShell -Command/-EncodedCommand).
+156 NN ;; Section comment.
+158-242 IM ;; Package-manager verb tables, exact-version detection (exact semver incl. prerelease suffix; local/URL specs count as pinned), peer-bypass pattern and argument parsing.
+243 OL [dep025.pre-peer-bypass]
+244 EX [x.pre-removal-blocked]
+245-249 OL [dep003.pre-exact-version]
+250-251 IM ;; Return; closing brace.
+253 NN ;; Section comment.
+255-300 IM ;; dotnet option table, exact NuGet version pattern, project-name derivation and argument parsing.
+301-306 EX [x.pre-ref-gate]
+307 EX [x.pre-removal-blocked]
+308-315 OL [dep003.pre-exact-version]
+317 NN ;; Section comment.
+319-333 IM ;; Traversal with directory tracking and wrapper recursion.
+334 EX [x.pre-unclassifiable]
+335-349 IM ;; Dispatch to dotnet/package-manager classifiers; exports.
+
+C dep025.pre-peer-bypass OL DEP-025 ENFORCED ;; npm/pnpm/yarn dependency commands with --force, -f or --legacy-peer-deps are blocked before execution and routed to add-dependency peer-conflict handling; there is no approval exception. ;; = ;; none ;;
+C x.pre-removal-blocked EX DEP-001,DEP-006 ENFORCED ;; Package removal commands (npm/pnpm/yarn remove variants, dotnet remove … package, dotnet package remove) are blocked before execution and routed to add-dependency (removal). ;; = ;; none ;; Removal gate not in the oracle.
+C dep003.pre-exact-version OL DEP-003 ENFORCED ;; Package install/add/update commands naming packages without an exact version (npm spec@x.y.z; dotnet --version x.y.z or id@version), bare dependency updates and npm audit fix are blocked before execution and routed to add-dependency version selection. ;; = ;; Exact versions, including prerelease suffixes, and local/URL specs pass. ;;
+C x.pre-unclassifiable EX - ENFORCED ;; Commands nested in more than three shell wrappers are blocked as unclassifiable; the command must be run directly. ;; = ;; none ;; Classifier-depth rule not in the oracle.
+
+@@ output/template/.claude/scripts/actual-state.cjs ;; Post-execution actual-state observation (PostToolUse, PostToolUseFailure).
+@scope PostToolUse / PostToolUseFailure (actual-state.cjs via dispatch.cjs)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-3 IM ;; Conformance comment; strict mode.
+5-9 DU [dep006.as-validate,x.as-refgraph] ;; Header comment describing the per-worktree snapshot and HEAD-relative reference-graph semantics implemented below. ;; Reference-graph changes count only while they differ from HEAD
+11-106 IM ;; Constants, relevance classes, Git context, per-worktree state file (Git dir or temp), snapshot load/save, relevant-file listing, HEAD-dirty paths, hashing, reference-edge extraction.
+107-129 EX [x.as-refgraph]
+131-181 IM ;; Observation setup: candidate paths (first observation vs HEAD; later vs previous snapshot; edited file only for edits), approvals, change attribution; loop start.
+182 OL [gov021.as-cs-reminder]
+183 OL [gov009.as-spec-reminder]
+184-187 IM ;; Branches; present manifests validated.
+188 OL [dep006.as-cpm-deleted]
+189 EX [x.as-manifest-deleted]
+190-204 IM ;; Reference-edge baselines feeding the graph check (unreadable project files are errors).
+205-208 EX [x.as-instr-check]
+210-230 IM ;; Snapshot recording; exports.
+
+C dep006.as-validate OL DEP-006,DEP-003,DEP-007,ARC-001 ENFORCED_ADVISORY ;; After shell commands (successful or failed) and Edit/Write/MultiEdit edits, changed manifests (.csproj, Directory.Packages.props, package.json) of the active worktree are validated with check-manifests and findings returned as feedback; the first observation checks files differing from HEAD. ;; = ;; NotebookEdit is not matched; an edit validates only the edited file. ;;
+C x.as-refgraph EX ARC-001,ARC-020 ENFORCED_ADVISORY ;; Project-reference edges added or removed relative to the previous observation and HEAD, and non-test projects added or removed, are errors unless an accepted decision records the edge ('From -> To') or names the project. ;; = ;; Recorded approval; committed history and reverted edits are not pending changes. ;; Reference-graph approval check not in the oracle.
+C gov021.as-cs-reminder OL GOV-021 ENFORCED_ADVISORY ;; A pending change to CUSTOM_SETTINGS.md returns feedback to run custom-settings. ;; = ;; none ;;
+C gov009.as-spec-reminder OL GOV-009,GOV-007 ENFORCED_ADVISORY ;; A pending change to SPECIFICATION.md returns feedback to check consistency with CUSTOM_SETTINGS.md and synchronize affected code, tests and docs. ;; = ;; none ;;
+C dep006.as-cpm-deleted OL DEP-006 ENFORCED_ADVISORY ;; Deleting Directory.Packages.props is an error. ;; = ;; none ;;
+C x.as-manifest-deleted EX DEP-007,DEP-001 ENFORCED_ADVISORY ;; Deleting a package.json produces a warning that dependency removals go through add-dependency. ;; = ;; none ;; Not in the oracle.
+C x.as-instr-check EX - ENFORCED_ADVISORY ;; A change to CLAUDE.md, the register or .claude/ instruction files runs check-instructions and returns its errors (template-maintenance). ;; repo/meta (instruction-system change) ;; none ;; Instruction-system checker invariants.
+
+@@ output/template/.claude/scripts/check-cochange.cjs ;; Co-change reminders (Stop hook, verify).
+@scope Stop hook and verify (check-cochange.cjs)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-35 IM ;; Conformance comment, imports, state constants, read-only Git helpers and working-tree changes.
+37-49 OL [tst009.cc-tests]
+51-109 IM ;; Facet reminder collection, content fingerprints, once-per-content-state reporting in hook mode (always in CLI mode).
+111-127 IM ;; Formatting, exports and CLI (NOT APPLICABLE outside Git).
+
+C tst009.cc-tests OL TST-009,TST-010 ENFORCED_ADVISORY ;; Backend production code changed without any backend test change produces a reminder to confirm coverage and probe preservation (verify step 4, development-workflow). ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/check-manifests.cjs ;; Manifest checker (manifest hooks, verify).
+@scope check-manifests.cjs (manifest hooks, verify)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-7 IM ;; Conformance comment, strict mode, imports.
+9-16 EX [x.cm-facets-required]
+18-23 IM ;; Owner pointers.
+24-28 EX [x.cm-deny-polly]
+29-32 EX [x.cm-polly-exception]
+33 OL [dep007.cm-tooling]
+35-48 EX [x.cm-facets-required]
+50-83 IM ;; Context (frame owns roles), project parsing, package loop.
+84-86 OL [dep006.cm-versionless]
+87-89 EX [x.cm-versionoverride]
+90-91 EX [x.cm-deny-polly]
+92-101 IM ;; Facet project checks; central-package check entry.
+102-104 OL [dep006.cm-cpm-flag]
+105-110 IM ;; PackageVersion parsing and loop.
+111-114 OL [dep003.cm-nuget-versions]
+115 IM ;; Closing brace.
+116 EX [x.cm-deny-polly]
+117 EX [x.cm-polly-exception]
+118-139 IM ;; Facet central-package checks; floating helper; package.json parsing (invalid JSON is an error); section loops.
+140-145 OL [dep003.cm-npm-versions]
+146 IM ;; Closing brace.
+147-151 OL [dep007.cm-tooling]
+152-179 IM ;; Facet package.json checks; manifest recognition; per-file dispatch (unreadable manifests are errors); repository scan entry.
+180-182 OL [dep024.cm-no-tests-dir]
+183-186 OL [dep007.cm-lockfile]
+187-188 IM ;; Return; closing brace.
+190 NN ;; Section comment.
+192-233 EX [x.cm-approval-records]
+235-256 IM ;; Exports and CLI (exit 1 on errors).
+
+C x.cm-facets-required EX - ENFORCED_ADVISORY ;; One role-named facet check per capability slot is composed statically; a missing required facet check (architecture, persistence, backend-testing) is an error; the optional frontend facet may be absent when its selection is none. ;; repo/meta (capability enforcement) ;; none ;; Capability-facet composition not in the oracle.
+C x.cm-deny-polly EX DEP-004,DEP-020 ENFORCED_ADVISORY ;; Microsoft.Extensions.Http.Polly and Polly.Extensions.Http in project or central package references are errors (deprecated resilience integration packages). ;; = ;; none ;; Concrete deny list not in the oracle.
+C x.cm-polly-exception EX DEP-020 ENFORCED_ADVISORY ;; Central versions for Polly or Polly.Core produce a warning that direct Polly usage is a documented exception. ;; = ;; none ;; Documentation requirement not in the oracle.
+C dep007.cm-tooling OL DEP-007 ENFORCED_ADVISORY ;; Build/test tooling (typescript, vitest, eslint, prettier, jest, @playwright/test, karma, jasmine-core, @types/*) in runtime dependencies produces a warning. ;; = ;; none ;;
+C dep006.cm-versionless OL DEP-006 ENFORCED_ADVISORY ;; A PackageReference declaring a version is an error (central package management). ;; = ;; none ;;
+C x.cm-versionoverride EX DEP-006 ENFORCED_ADVISORY ;; A PackageReference using VersionOverride produces a warning to record the reason. ;; = ;; none ;; Not in the oracle.
+C dep006.cm-cpm-flag OL DEP-006 ENFORCED_ADVISORY ;; Directory.Packages.props without ManagePackageVersionsCentrally=true is an error. ;; = ;; none ;;
+C dep003.cm-nuget-versions OL DEP-003 ENFORCED_ADVISORY ;; Missing, floating ('*') or range PackageVersion values are errors; prerelease versions are warnings ('allowed only when explicitly requested'). ;; = ;; none ;;
+C dep003.cm-npm-versions OL DEP-003 ENFORCED_ADVISORY ;; npm dependencies with empty, '*', 'x', 'latest' or 'next' versions are errors; alpha/beta/rc/next/canary/dev/preview versions are prerelease warnings. ;; = ;; Caret/tilde ranges are not flagged. ;;
+C dep024.cm-no-tests-dir OL DEP-024 ENFORCED_ADVISORY ;; A top-level tests/ directory produces a warning (backend tests live beside production projects). ;; = ;; none ;;
+C dep007.cm-lockfile OL DEP-007 ENFORCED_ADVISORY ;; A frontend package.json without package-lock.json beside it produces a warning. ;; = ;; none ;;
+C x.cm-approval-records EX ARC-020,GOV-017 ENFORCED ;; Approvals for Reserved reference-graph or project changes count only when recorded in a register Accepted-decisions row with a valid ISO date (placeholders do not count), or in a docs/decisions record it links, listing the edge as 'From -> To' or naming the project. ;; = ;; none ;; Approval-record format not in the oracle.
+
+@@ output/template/.claude/scripts/facets/architecture-style.cjs ;; Architecture facet check (clean-architecture).
+@scope architecture-style facet (check-manifests: manifest hooks, verify)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-43 IM ;; Conformance comment, imports, owners, layer tables (allowed production and typical test references), role derivation, check entry.
+44-47 OL [arc020.fa-unknown-role]
+49-51 IM ;; Reference loop.
+52-53 OL [arc001.fa-prod-test]
+54-56 OL [arc001.fa-inward]
+57-61 EX [x.fa-test-to-test]
+62-64 IM ;; Typical-scope lookup.
+65-69 OL [arc028.fa-test-refs]
+70-72 IM ;; Closing braces.
+73-85 OL [arc008.fa-no-aspnet]
+86-89 IM ;; Return; exports.
+
+C arc020.fa-unknown-role OL ARC-020 ENFORCED_ADVISORY ;; A backend project matching no frame role produces a warning that a new production project is Reserved. ;; = ;; none ;;
+C arc001.fa-prod-test OL ARC-001,ARC-028 ENFORCED_ADVISORY ;; A production project referencing a test project is an error. ;; = ;; none ;;
+C arc001.fa-inward OL ARC-001 ENFORCED_ADVISORY ;; A production project referencing a layer outside its allowed set (Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application, Infrastructure, Domain) is an error. ;; = ;; none ;;
+C x.fa-test-to-test EX ARC-028 ENFORCED_ADVISORY ;; A test project referencing another test project produces a warning. ;; = ;; none ;; Not in the oracle.
+C arc028.fa-test-refs OL ARC-028 ENFORCED_ADVISORY ;; Test projects referencing layers beyond their typical scope produce a warning (keep only if required) or an error when forbidden (e.g. Domain.Tests → Infrastructure). ;; = ;; none ;;
+C arc008.fa-no-aspnet OL ARC-008,ARC-002 ENFORCED_ADVISORY ;; Domain or Application using the Web SDK, the ASP.NET Core shared framework or Microsoft.AspNetCore.* packages is an error. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/facets/frontend-framework.cjs ;; Frontend facet check (angular).
+@scope frontend-framework facet (check-manifests: manifest hooks, verify)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-9 IM ;; Conformance comment, imports, owners.
+10-11 OL [dep015.ff-not-default]
+12-13 OL [dep007.ff-build-tooling]
+15-19 IM ;; Check entry (frontend/ manifests only) and loops.
+20-22 OL [dep015.ff-not-default]
+23-24 IM ;; Closing braces.
+25-28 OL [dep007.ff-build-tooling]
+29-33 IM ;; Return; exports.
+
+C dep015.ff-not-default OL DEP-015 ENFORCED_ADVISORY ;; Frontend package.json entries for @ngrx/*, axios, lodash(-es), bootstrap, @ng-bootstrap/*, ngx-bootstrap or tailwindcss produce a 'not added by default; confirm the concrete need' warning. ;; = ;; none ;;
+C dep007.ff-build-tooling OL DEP-007 ENFORCED_ADVISORY ;; Angular build tooling (@angular/cli, @angular/build, @angular-devkit/*, @angular/compiler-cli) in runtime dependencies produces a warning. ;; = ;; none ;;
+
+@@ output/template/.claude/scripts/facets/persistence-technology.cjs ;; Persistence facet check (ef-core).
+@scope persistence-technology facet (check-manifests and check-cochange: hooks, verify)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-9 IM ;; Conformance comment, imports, owners.
+10-17 OL [arc008.fp-no-ef-inner]
+19-31 IM ;; Path classifiers (migrations, seeding, model) and reminder setup.
+32-39 OL [pst008.fp-seed-reminder]
+40-47 EX [x.fp-migration-reminder]
+48-55 OL [pst010.fp-migration-review]
+56-59 IM ;; Return; exports.
+
+C arc008.fp-no-ef-inner OL ARC-008,ARC-002,DEP-009 ENFORCED_ADVISORY ;; Domain or Application referencing Microsoft.EntityFrameworkCore packages is an error. ;; = ;; none ;;
+C pst008.fp-seed-reminder OL PST-008 ENFORCED_ADVISORY ;; Persistence model changes (Domain, configurations, DbContext) without a development seeder change produce a co-change reminder. ;; Stop hook / verify (check-cochange) ;; none ;;
+C x.fp-migration-reminder EX PST-009,PST-010 ENFORCED_ADVISORY ;; Persistence model changes without a migration produce a reminder to confirm whether the schema changed. ;; Stop hook / verify (check-cochange) ;; none ;; Not in the oracle.
+C pst010.fp-migration-review OL PST-010 ENFORCED_ADVISORY ;; Changed migration files produce a reminder to review them as source code before committing. ;; Stop hook / verify (check-cochange) ;; none ;;
+
+@@ output/template/.claude/scripts/facets/test-framework.cjs ;; Backend-testing facet check (nunit).
+@scope test-framework facet (check-manifests: manifest hooks, verify)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+2-7 IM ;; Conformance comment, imports, owner.
+8-9 OL [tst001.ft-other-frameworks]
+11-12 IM ;; Check entry (test projects only).
+13-15 OL [tst001.ft-other-frameworks]
+16-17 IM ;; Closing brace; central check entry.
+18-22 OL [tst001.ft-other-frameworks]
+24 IM ;; Exports.
+
+C tst001.ft-other-frameworks OL TST-001 ENFORCED_ADVISORY ;; Test projects or central versions using xUnit, MSTest or TUnit in addition to or instead of NUnit produce a warning. ;; = ;; none ;;

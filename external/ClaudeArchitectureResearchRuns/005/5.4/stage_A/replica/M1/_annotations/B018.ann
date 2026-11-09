@@ -1,0 +1,145 @@
+# M1 / B018 — modern-csharp, persistence-change, project-structure references (backend-layout, solution-layout).
+
+C R191 OL PST-010 | MUST | Treat EF Core migrations as source code: review every generated migration before committing it (destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, delete behavior); do not casually alter existing migrations, and regenerate or edit an uncommitted migration only when that matches the project's migration workflow. | EF Core migrations | Editing an uncommitted migration per the project workflow.
+C R192 OL PST-008 | MUST | Whenever Domain or persistence changes affect seeded entities, update the development DbSeeder in the same change (new required or removed/renamed properties, changed relationships, new required related entities, changed enum/status values, new entity states, changed invariants) and review it together with the corresponding migration; recreating the Development database at any revision yields valid representative seed data. | seed data co-change | Already seeded rows of an existing database are not patched.
+C R193 OL DEP-022 | DEFAULT | Use the .slnx solution format (with the .sln exception stated in the technology stack). | solution file | .sln exception in the technology stack.
+C R194 OL DEP-023 | DEFAULT | Directory.Build.props holds shared .NET settings (TargetFramework, Nullable, ImplicitUsings, analysis/compiler settings) and no genuinely project-specific settings; properties duplicated by dotnet new in project files are removed. | shared .NET build configuration | none stated
+C R195 OL WF-005 | MUST | Build the affected projects and run the relevant tests for the change; for persistence changes run the persistence and integration tests and confirm the migration applies to a freshly created Development database before seeding. | verification | none stated
+C X29 EX DEP-008,DEP-003 | MUST | global.json pins the intended stable SDK line; when scaffolding select the current stable SDK for the target .NET release (no RC/preview SDK unless explicitly requested) and allow servicing through the chosen rollForward policy. | repository SDK configuration | Preview SDK explicitly requested. | DEP-008 fixes the .NET platform and DEP-003 package versions; no oracle policy requires an SDK pin file. | A repository without global.json does not follow the instruction.
+
+FILE .claude/skills/modern-csharp/SKILL.md | Knowledge skill (optional language technique).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 OL R51,R53 | do not modernize code merely to demonstrate newer syntax.
+16 NN | section heading
+18 NN | primary constructor technique (EXC-002)
+20-26 NN | primary constructor code example
+28-29 NN | constructor preference (EXC-002)
+31 NN | section heading
+33 NN | collection expression technique (EXC-002)
+35-39 NN | collection expression code example
+41 OL R53 |
+43 NN | section heading
+45-47 NN | record candidates (EXC-002)
+49 NN | section heading
+51-52 NN | required member technique (EXC-002)
+54-56 NN | required member code example
+58-59 NN | required member caveat (EXC-002)
+61 NN | section heading
+63 NN | pattern matching technique (EXC-002)
+65-72 NN | pattern matching code example
+74-75 NN | nesting guidance (EXC-002)
+77 NN | section heading
+79 NN | field keyword note (EXC-002)
+81-90 NN | field keyword code example
+92-93 OL R53 | Use it to remove an otherwise trivial backing field; do not rewrite manual
+95 NN | section heading
+97-98 NN | extension member technique (EXC-002)
+100-109 NN | extension member code example
+111-112 OL R53 | Traditional extension methods remain valid; do not convert them solely because
+114 NN | section heading
+116-117 NN | raw string technique (EXC-002)
+119-125 NN | raw string code example
+127 OL R113,R97 |
+129 NN | section heading
+131-132 NN | immutability guidance (EXC-002)
+134 NN | section heading
+136-139 OL R97 | tools. Use ordinary arrays, strings, and collections by default and introduce
+141 NN | section heading
+143-145 OL R142,R139 | before using it. Changing `LangVersion` or the target framework is a stack
+147 NN | section heading
+149-151 OL R147,R53 | mix unrelated architecture refactoring into syntax modernization.
+153 NN | section heading
+155-157 DU R53,R97 | avoid list restating modernization and performance guidance (remaining items EXC-002)
+
+FILE .claude/skills/persistence-change/SKILL.md | Workflow facet (capability persistence/ef-core).
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-15 OL R180 | read them first if they have not loaded.
+17 NN | section heading
+19-21 OL R192,R191 | Identify the changed entities, relationships, constraints, indexes, and column
+23 NN | section heading
+25-26 OL R31,R98 | Change the `IEntityTypeConfiguration<T>` mappings in the adapter layer; keep
+28 NN | section heading
+30-31 NN | migration command technique
+33-35 NN | migration command example
+37-42 OL R191 | Treat EF Core migrations as source code: review every generated migration before
+44 NN | section heading
+46-52 OL R192 | Whenever Domain or persistence changes affect seeded entities, update the
+54-57 OL R192,R105 | A migration of an existing development database does not require the seeder to
+59 NN | section heading
+61-68 OL R178 | update the EF Core mapping;
+70 NN | section heading
+72-75 OL R195,R169 | Build the affected projects, run the persistence and integration tests, and
+
+FILE .claude/skills/project-structure/references/backend-layout.md | Private reference of project-structure.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-12 NN | Domain directory tree
+14-18 OL R109,R34 | Do not create DDD-oriented
+20 NN | section heading
+22-32 NN | Application directory tree
+34 OL R109 |
+36-38 OL R42,R36 | persistence-technology types.
+39-42 OL R109,R36 | do not create it before such
+43-44 OL R4,R35 | no handler/CQRS/mediator structures.
+45-46 NN | DTO directory guidance (EXC-004)
+47-48 OL R70 | FluentValidation validators for Application-level input and
+49-51 OL R48 | never concrete Infrastructure
+53 NN | section heading
+55-60 NN | type-role suffix suggestions (EXC-004)
+62-67 NN | naming and bucket heuristics (EXC-004)
+69 NN | section heading
+71-81 NN | Infrastructure directory tree
+83-87 OL R43,R102 | entity configurations, concrete repositories (an Infrastructure-only generic
+88-90 OL R47 | technical and external implementations of Application
+91-94 OL R48 | registers Infrastructure-owned implementations and
+96 NN | section heading
+98-110 NN | Api directory tree
+112 OL R109 |
+114-115 OL R38 | not create Minimal API endpoint groups unless explicitly requested.
+116-117 OL R50 | transport-specific request/response contracts, when
+118 OL R109 |
+119-120 OL R40,R53 | cohesive API/composition extension methods; do not move
+121 OL R40 |
+123-126 NN | composition code example
+128 NN | section heading
+130-138 NN | test project tree
+140-144 OL R109,R151 | Create only useful test projects.
+146-148 OL R132 | the real host (`WebApplicationFactory<Program>`).
+150 NN | section heading
+152-166 OL R5 | -> no application project references
+168-170 OL R5 | reconsider the abstraction boundary instead.
+172 NN | section heading
+174-188 OL R6 | ProjectName.IntegrationTests
+190-192 OL R6 | Integration tests may transitively exercise Application, Infrastructure,
+
+FILE .claude/skills/project-structure/references/solution-layout.md | Private reference of project-structure.
+1 NN | header metadata
+3 NN | document heading
+5 NN | section heading
+7-24 NN | top-level layout tree (EXC-017)
+26-28 OL R109,R193 | directory or project immediately. Use the `.slnx` solution format (see the
+30 NN | section heading
+32-33 OL R151 | All backend .NET projects, including backend test projects, live under
+35 NN | section heading
+37-42 OL R151,R150 | `package-lock.json`, framework configuration, and source tree. Do not impose an
+44 NN | section heading
+46-51 OL R151 | Backend tests: beside the production projects under `backend/` (see
+53 OL R151 |
+55 NN | section heading
+57-59 OL R109 | create them only when
+61 NN | section heading
+63-66 OL R194 | `Nullable`, `ImplicitUsings`, analysis/compiler settings; no genuinely
+67-68 OL R60 | NuGet Central Package Management; versions in one
+69-72 EX X29 | pin the intended stable SDK line;
+74 NN | section heading
+76-78 OL R51 | Keep deterministic repository-wide formatting and code-style configuration in
+80 NN | section heading
+82-85 OL R110,R108 | Do not ignore files that are intentionally part of the
+87 NN | section heading
+89-92 OL R109,R168 | Examples that stay out of a new repository until a concrete requirement exists
+DONE

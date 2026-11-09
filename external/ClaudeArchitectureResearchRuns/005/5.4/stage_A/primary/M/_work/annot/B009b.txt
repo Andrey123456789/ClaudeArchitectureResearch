@@ -1,0 +1,62 @@
+# Batch B009 (part 2) — skills: ci-cd
+
+@@ output/template/.claude/skills/ci-cd/SKILL.md ;; Knowledge skill (on demand when creating/reviewing CI/CD pipelines).
+@scope on-demand knowledge skill ci-cd (pipelines)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+18-20 MX [x.cicd-artifacts-config,gov013.cicd-actual-stages] ;; Reproducible artifacts and keeping environment configuration outside artifacts are additional; stages for the actual project (not boilerplate) is GOV-013.
+22 NN ;; Heading.
+24-27 OL [wf017.cicd-discover]
+29 NN ;; Heading.
+31-35 NN ;; Example backend CI commands.
+37-38 OL [wf007.cicd-format-when-adopted] ;; ;; Run formatting/analyzers when the repository has adopted them as enforced
+40-42 NN ;; Example dotnet format command.
+44-45 EX [x.cicd-no-new-gates]
+47 NN ;; Heading.
+49-56 OL [wf018.cicd-npm-ci]
+58 NN ;; Heading.
+60 NN ;; Descriptive lead-in ('A typical workflow ...').
+62-104 NN ;; Illustrative GitHub Actions YAML (placeholder paths and versions).
+106-107 OL [wf018.cicd-adapt]
+109 NN ;; Heading.
+111-114 OL [wf017.cicd-services]
+116 NN ;; Heading.
+118-120 NN ;; Example vulnerability listing command.
+122-125 OL [wf020.cicd-findings] ;; ;; Treat
+127 NN ;; Heading.
+129-135 NN ;; Example dotnet publish command.
+137-138 EX [x.cicd-minimal-artifacts] ;; ;; Store or publish only the artifacts later stages
+140 NN ;; Heading.
+142-144 OL [dep018.cicd-docker]
+146 NN ;; Heading.
+148-150 EX [x.cicd-build-once]
+152 NN ;; Heading.
+154-156 MX [sec002.cicd-secrets,x.cicd-federated-identity] ;; CI secret mechanism instead of YAML values is SEC-001/SEC-002; preferring workload/federated identity is additional.
+158 NN ;; Heading.
+160-163 OL [wf019.cicd-migrations]
+165 NN ;; Heading.
+167-169 EX [x.cicd-env-protection]
+171 NN ;; Heading.
+173-176 EX [x.cicd-verify-pipeline]
+178 NN ;; Heading.
+180-182 MX [wf017.cicd-services,x.cicd-build-once,dep018.cicd-docker] ;; Generic-pipeline provider infrastructure and assuming Docker are oracle-linked; rebuilding different source per environment is the build-once extra.
+
+C x.cicd-artifacts-config EX WF-017 DEFAULT ;; Build deployable artifacts reproducibly and keep deployment/environment configuration outside compiled artifacts where practical. ;; = ;; Where practical. ;; Artifact reproducibility/config separation is conditional delivery technique outside the oracle (EXC-014).
+C gov013.cicd-actual-stages OL GOV-013,WF-017 MUST ;; Add pipeline stages for the actual project rather than generic boilerplate. ;; = ;; none ;;
+C wf017.cicd-discover OL WF-017,WF-001 MUST ;; Before writing a pipeline inspect the repository (backend, frontend, test projects, Dockerfiles, provider tests, generated clients, artifacts); do not assume PostgreSQL, Redis, Docker or frontend tooling. ;; = ;; none ;;
+C wf007.cicd-format-when-adopted OL WF-007,WF-017 DEFAULT ;; Run formatting/analyzer checks in CI when the repository has adopted them as enforced checks. ;; = ;; none ;;
+C x.cicd-no-new-gates EX WF-017,GOV-003 MUST_NOT ;; Do not turn an optional local formatter into a mandatory CI gate unless the project adopts that policy. ;; = ;; Project adopts the policy. ;; Restriction on CI gate design not stated in the oracle.
+C wf018.cicd-npm-ci OL WF-018 MUST ;; When an Angular frontend exists CI runs npm ci then the scripts the frontend defines (build, unit tests/lint when configured). ;; = ;; none ;;
+C wf018.cicd-adapt OL WF-018,WF-017 MUST ;; Adapt action/runtime versions to the repository's supported versions and add frontend test/lint commands only when the project defines them. ;; = ;; none ;;
+C wf017.cicd-services OL WF-017,GOV-013,TST-004 MUST ;; Provide external services in CI only when tests require them; do not hardcode one provider into a generic pipeline; keep integration environments isolated from Development/Production data. ;; = ;; none ;;
+C wf020.cicd-findings OL WF-020,GOV-014,DEP-003 MUST_NOT ;; Treat dependency findings per the project's security policy; do not upgrade packages automatically in CI unless automated updates are adopted. ;; = ;; Automated dependency updates adopted. ;;
+C x.cicd-minimal-artifacts EX WF-017 DEFAULT ;; Store or publish only the artifacts later stages need. ;; = ;; none ;; Artifact-retention rule outside the oracle.
+C dep018.cicd-docker OL DEP-018 MUST_NOT ;; Build/publish container images from CI only when the project deploys containers; do not add Docker to the pipeline merely because the skill covers it. ;; = ;; none ;;
+C x.cicd-build-once EX WF-017 PREFER ;; When artifact promotion is supported prefer promoting the same tested artifact/image through environments instead of recompiling; environment behaviour from runtime configuration; avoid rebuilding different source per environment without reason. ;; = ;; Deployment model supports promotion. ;; Build-once/promote preference is explicitly outside the oracle (EXC-014).
+C sec002.cicd-secrets OL SEC-002,SEC-001 MUST ;; Use the CI platform's secret/identity mechanism instead of values in pipeline YAML. ;; = ;; none ;;
+C x.cicd-federated-identity EX SEC-002 PREFER ;; Prefer workload/federated identity over long-lived deployment credentials when the platform supports it. ;; = ;; Platform support. ;; Credential-type preference not in the oracle.
+C wf019.cicd-migrations OL WF-019 MUST ;; A deployment that migrates makes the step explicit, uses approved credentials, runs at a controlled point and fails visibly; scripts/bundles may be generated in CI. ;; = ;; none ;;
+C x.cicd-env-protection EX WF-017 DEFAULT ;; Separate CI and CD as appropriate (green CI does not imply deployment) and use environment protection or approval appropriate to the hosting platform. ;; = ;; none ;; Deployment-gating practice outside the oracle.
+C x.cicd-verify-pipeline EX WF-017,SEC-001 MUST ;; Before considering a pipeline complete verify clean-environment restore, backend build, frontend build when present, configured tests, no developer-machine dependence, no secret exposure and expected artifacts. ;; = ;; none ;; Pipeline-completion checklist beyond WF-017.

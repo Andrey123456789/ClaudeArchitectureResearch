@@ -1,0 +1,53 @@
+# K0 / B004 — Run 2 replica annotation (blind). check-dependencies.cjs (verify, add-dependency, post-change hook).
+
+C X9 EX DEP-004,DEP-020,DEP-010 | MUST NOT (manifest check error) | The NuGet packages Microsoft.Extensions.Http.Polly, Polly.Extensions.Http, Serilog.Sinks.Elasticsearch and FluentValidation.AspNetCore are reported as errors (deprecated; use Microsoft.Extensions.Http.Resilience, Elastic.Serilog.Sinks, FluentValidation.DependencyInjectionExtensions). | .csproj PackageReference and Directory.Packages.props PackageVersion entries | none stated | DEP-004 requires a deprecation check before installation and DEP-020/DEP-010 set defaults, but no oracle policy turns specific packages into hard errors irrespective of an explicit decision. | Referencing FluentValidation.AspNetCore or Serilog.Sinks.Elasticsearch fails the manifest check and verify.
+C R144 OL DEP-006,DEP-023 | MUST (manifest check errors; VersionOverride notice) | Central Package Management: Directory.Packages.props must set ManagePackageVersionsCentrally true and must exist at the repository root when .csproj files exist; a PackageReference carrying a Version is an error; a VersionOverride gets a notice that it needs a concrete, reported reason. | NuGet manifests | VersionOverride with reason
+C R145 OL DEP-003 | MUST (manifest check errors; prerelease notice) | Pinned verified versions: a PackageVersion with an empty, floating (*) or range version is an error and a prerelease gets a notice (allowed only when explicitly requested); package.json dependency specs that are empty, *, latest, x or contain * are errors. | NuGet central versions and package.json | Caret/tilde ranges are not flagged; prerelease allowed when explicitly requested.
+C R146 OL ARC-009,DEP-011,DEP-020,DEP-002 | REQUIRES_APPROVAL (manifest check notices) | MediatR (mediator organization not adopted) and AutoMapper (mapping framework other than the approved one) get notices that they require an approved decision; direct Polly gets a notice that it is an explicit exception whose reason must be documented. | NuGet manifests | Approved decision / documented reason.
+C R147 OL DEP-015 | MUST NOT by default (manifest check notice) | @ngrx/*, @ngxs/*, axios, lodash, lodash-es, bootstrap, ngx-bootstrap, @ng-bootstrap/ng-bootstrap, tailwindcss and primeng in package.json get a notice that they are not added by default and need a concrete requirement. | package.json | concrete requirement
+C R148 OL DEP-007 | SHOULD (manifest check notices) | Build/test tooling (@angular/cli, @angular-devkit/*, @angular/build, @angular/compiler-cli, typescript, vitest, @vitest/*, jsdom, @playwright/test, karma*, jasmine*, @types/*, eslint*, @eslint/*, prettier) in runtime dependencies gets a notice (belongs in devDependencies); a package.json without an adjacent package-lock.json gets a notice to commit a consistent lockfile. | package.json | none stated
+C R149 OL ARC-001 | MUST (manifest check errors) | A production project may reference only inward layers (Domain: none; Application: Domain; Infrastructure: Application, Domain; Api: Application, Infrastructure, Domain); other production references and production -> test-project references are errors. | backend .csproj | References to unrecognized projects get a notice instead.
+C R150 OL ARC-020,DEP-024 | REQUIRES_APPROVAL (manifest check notices) | A project name not following backend/<Name>.<Layer>, or a reference to a project that is not a recognized layer, gets a notice that new production projects are Reserved. | backend .csproj | none stated
+C R151 OL ARC-028 | SHOULD (manifest check notice) | A test project referencing a production layer outside its typical scope (Domain.Tests -> Domain; Application.Tests -> Application, Domain; Infrastructure.Tests -> Infrastructure, Application, Domain; IntegrationTests -> Api) gets a notice to confirm the test scope requires it. | backend test .csproj | none stated
+
+FILE .claude/scripts/check-dependencies.cjs | Manifest checker; CLI exit 1 on errors; findings fed back by the post-change hook.
+1-2 NN | header comment (kind/scope/owner/loading)
+3-6 IM | usage comment (CLI forms, --root override)
+7 NN | conformance declaration listing the owning standards and decision IDs
+8 IM | comment: findings point to owners
+9 IM | strict-mode directive
+11-15 IM | imports and directories skipped by the manifest scan
+17-22 EX X9 |
+23-27 OL R146 |
+28 OL R147 |
+29 OL R148 |
+31-37 OL R149 |
+38-43 OL R151 |
+45-67 IM | manifest classification and project-role derivation from the <Name>.<Layer> naming convention
+69-115 IM | XML start-tag reader (malformed tags become errors so manifests are never accepted silently) and ProjectReference extraction
+117-118 IM | checkCsproj setup
+119-128 OL R144 | has a version; versions belong in Directory.Packages.props
+129-131 IM | package-name deny/decision lookup call and ProjectReference readability check
+133-138 IM | reference integrity check: a ProjectReference to a non-existent project is an error (mechanism)
+139-147 OL R149,R150 | dependencies point inward
+148-154 OL R151 |
+155-157 OL R150 |
+158 IM | function end
+160-164 MX X9,R146 | if (DEPRECATED_NUGET[key]) result.errors.push ⟫ deny-list errors (EXTRA X9) and approved-decision notices (oracle)
+166-170 OL R144 | ManagePackageVersionsCentrally must be true
+171-183 OL R145 | pin the verified stable version
+185-192 IM | package.json parsing (invalid JSON reported as an error)
+193-197 OL R145 | uses floating version
+198-200 OL R147 |
+201-203 OL R148 |
+204-205 IM | loop closing
+206-209 OL R148 | commit a consistent lockfile
+210 IM | function end
+212-228 IM | single-manifest dispatch; undecodable files reported as errors
+230-242 IM | manifest discovery skipping build output, dependency caches, dot-directories and nested repositories
+244-249 OL R144 | Directory.Packages.props is missing at the repository root
+250-257 IM | aggregation of per-manifest results
+259-303 IM | CLI entry point (repository scan or explicit files; exits 1 on errors) and exports
+
+O .claude/scripts/check-dependencies.cjs 206-209 PL R148 DEP-007 | commit a consistent lockfile | The notice says 'commit' a lockfile; recorded as oracle-linked lockfile consistency (DEP-007). The Git meaning of 'commit' is tracked as UNCERTAIN-K0-0001. | Missing lockfile produces a notice.
+DONE

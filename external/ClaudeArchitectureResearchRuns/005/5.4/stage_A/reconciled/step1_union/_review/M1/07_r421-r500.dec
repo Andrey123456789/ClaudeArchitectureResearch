@@ -1,0 +1,136 @@
+# M1 batch 7: regions r421-r500 (protocol v1.2.1)
+# r421-r427 health-check SKILL.md
+RD OVERLAP R:RULE-M1-0029 P:RULE-M1-0481 | P: readiness includes only dependencies required for meaningful readiness.
+RD OVERLAP R:RULE-M1-0029 P:RULE-M1-0482 | P: readiness stays unhealthy until required startup work completes; liveness not used for it.
+RD EXAMPLE_GENERAL R:RULE-M1-0028 P:RULE-M1-0483 | P: database health is a lightweight connectivity check.
+RD OVERLAP R:RULE-M1-0029 P:RULE-M1-0484 | P (AVOID): readiness cascades; external dependencies checked only when important to readiness.
+RD OVERLAP R:RULE-M1-0030 P:RULE-M1-0485 | P: small probe responses; diagnostic endpoints protected.
+CX X:BF-M1-0103 | Health checks avoid Error-level logs for every normal failed probe.
+SD P:EXTRA-M1-0168 X:BF-M1-0103 | S: health-check probes M: P AVOID, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M1-0028 P:RULE-M1-0486 | R (MUST): cheap, deterministic, no expensive or mutating database work; P (AVOID): expensive queries, long timeouts, large allocations, full workflows.
+# r428-r442 http-api SKILL.md
+RD OVERLAP R:RULE-M1-0018#a P:EXTRA-M1-0178 | P: consistent status-code behaviour across similar endpoints.
+RD DETAIL_DIFFERENCE R:RULE-M1-0019 P:RULE-M1-0499 | R: 200 [] not 404; P: 200 [] rather than 204 or 404.
+CX X:BF-M1-0104 | An empty collection is a successful collection result returned as 200 with [], preferred over 204.
+RD DETAIL_DIFFERENCE X:BF-M1-0104 P:RULE-M1-0499 | P additionally excludes 404.
+RD DETAIL_DIFFERENCE X:BF-M1-0104 R:RULE-M1-0019 | X excludes 204; R excludes 404.
+RD BROADER_NARROWER R:RULE-M1-0018#a P:RULE-M1-0500 | P: 201 only for a newly created API resource (PUT may create).
+RD BROADER_NARROWER R:RULE-M1-0018#a P:RULE-M1-0501 | P: 202 when processing is accepted but not complete.
+RD BROADER_NARROWER R:RULE-M1-0018#a P:RULE-M1-0502 | P: 204 without body.
+RD COMPOUND_PART R:RULE-M1-0020 P:RULE-M1-0504 | P: the 401 element.
+RD COMPOUND_PART R:RULE-M1-0020 P:RULE-M1-0505 | P: the 403 and deliberate-404 elements.
+RD OVERLAP R:RULE-M1-0019 P:RULE-M1-0506 | P: 404 for absent or deliberately hidden resources; zero-match collections 200 [].
+RD OVERLAP R:RULE-M1-0020 P:RULE-M1-0506 | both mention deliberate hiding with 404.
+SPLIT X:BF-M1-0105 | a@120-124: 406 when no acceptable response representation can be produced; not to be confused with 415. | b@147-151: 415 when the request representation is unsupported; 415 concerns the request body format and 406 the response format. | c@153-165: 422 for structurally valid but semantically invalid requests; follow an established 400-for-both convention; new APIs that distinguish them use 400 for contract errors and 422 for semantics. | d@167-178: 428 when a contract-required precondition is missing; other mandatory preconditions only when the contract defines them. | e@180-184: 429 for rate-limited requests with Retry-After when the retry time is known; validation failures are not represented as rate limiting.
+RD COMPOUND_PART P:EXTRA-M1-0181 X:BF-M1-0105#a | P combines the 406 and 415 statements.
+RD COMPOUND_PART P:EXTRA-M1-0181 X:BF-M1-0105#b | P combines the 406 and 415 statements.
+SD P:EXTRA-M1-0182 X:BF-M1-0105#c | S: semantic validation status M: P DEFAULT, X no modality E: established 400-for-both project convention (both) T: none
+SD P:EXTRA-M1-0183 X:BF-M1-0105#d | S: missing required preconditions M: P MUST, X no modality E: other preconditions only when the contract defines them (both) T: none
+SD P:EXTRA-M1-0184 X:BF-M1-0105#e | S: rate-limited requests M: P MUST, X no modality E: Retry-After only when known (both) T: none
+RD COMPOUND_PART R:RULE-M1-0021 P:RULE-M1-0507 | P: the 409 element plus 'not for malformed syntax'.
+RD COMPOUND_PART R:RULE-M1-0021 P:RULE-M1-0508 | P: the 412 element.
+RD OVERLAP R:RULE-M1-0064#a P:RULE-M1-0509 | P: 500 for unexpected failures handled centrally.
+RD OVERLAP R:RULE-M1-0067 P:RULE-M1-0509 | P: 500 responses use ProblemDetails.
+RD OVERLAP R:RULE-M1-0068 P:RULE-M1-0509 | P: 500 responses carry no internal details.
+SPLIT X:BF-M1-0106 | a@194-197: 502 only when this API is an intermediary receiving an invalid upstream response; not every dependency failure. | b@199-204: 503 when the service is temporarily unable to handle the request, with Retry-After when a meaningful retry time is known. | c@206-212: 504 only for an upstream timeout when this API is an intermediary; distinguish client cancellation, own timeouts and upstream timeouts. | d@214-221: Repeated POSTs that must not duplicate effects may use an Idempotency-Key; key reuse with a different payload is 409; idempotency is not claimed merely because duplicates are unlikely. | e@223-236: When HTTP-level optimistic concurrency is part of the contract prefer standard conditional semantics (ETag, If-Match, 412) and do not replace them with custom status codes.
+RD COMPOUND_PART P:EXTRA-M1-0185 X:BF-M1-0106#a | P combines the 502 and 504 statements.
+RD COMPOUND_PART P:EXTRA-M1-0185 X:BF-M1-0106#c | P combines the 502 and 504 statements.
+SD P:EXTRA-M1-0186 X:BF-M1-0106#b | S: temporary unavailability status M: P DEFAULT, X no modality E: Retry-After only when meaningful (both) T: none
+RD COMPOUND_PART X:BF-M1-0106#c P:RULE-M1-0510 | P: only the cancellation/timeout distinction.
+RD OVERLAP R:RULE-M1-0069 P:RULE-M1-0510 | R: client cancellation is not a server failure.
+RD COMPOUND_PART X:BF-M1-0106#d P:RULE-M1-0511 | P: only 'do not claim idempotency merely because duplicates are unlikely'.
+SD P:RULE-M1-0512 X:BF-M1-0106#e | S: HTTP optimistic concurrency M: P MUST, X no modality E: none in either T: when part of the contract
+RD OVERLAP R:RULE-M1-0021 P:RULE-M1-0512 | R: 412 for failed explicit preconditions.
+RD OVERLAP R:RULE-M1-0017 P:RULE-M1-0513 | P: Controllers translate Application outcomes into HTTP outcomes.
+RD COMPOUND_PART R:RULE-M1-0038 P:RULE-M1-0513 | P: the translation element only.
+RD COMPOUND_PART R:RULE-M1-0067 P:RULE-M1-0514 | P: stable machine-readable error codes rather than human-readable messages.
+# r443-r457 httpclient-factory SKILL.md
+RD OVERLAP R:RULE-M1-0047 P:RULE-M1-0515 | P: named/typed/keyed clients; outbound API clients in Infrastructure.
+RD OVERLAP R:RULE-M1-0089 P:RULE-M1-0516 | P: retry and circuit breaker only when semantics fit.
+RD OVERLAP R:RULE-M1-0047 P:RULE-M1-0517 | P: Application need not know the remote service uses HTTP.
+RD EXAMPLE_GENERAL R:RULE-M1-0055 P:RULE-M1-0518 | P: typed client captured in a singleton.
+RD EXAMPLE_GENERAL R:RULE-M1-0148 P:RULE-M1-0519 | P: no automatic keyed clients; no universally mandatory client model.
+RD EXAMPLE_GENERAL R:RULE-M1-0085 P:RULE-M1-0520 | P: no CancellationToken.None unless the work must outlive the request.
+RD OVERLAP R:RULE-M1-0088 P:RULE-M1-0491 | P: distinguish attempt and total timeouts.
+RD OVERLAP R:RULE-M1-0047 P:EXTRA-M1-0188 | P: no blind EnsureSuccessStatusCode; no exposure of every upstream status.
+RD COMPOUND_PART R:RULE-M1-0047 P:RULE-M1-0521 | P: the translation element only.
+RD OVERLAP R:RULE-M1-0090 P:RULE-M1-0522 | P: Retry-After on remote 429 when the policy supports it.
+RD OVERLAP R:RULE-M1-0089 P:RULE-M1-0523 | P: the pre-retry assessment checklist; PUT/DELETE not assumed safe.
+SD P:EXTRA-M1-0189 R:EXTRA-M1-0027 | S: per-request outbound HTTP values M: MUST_NOT both E: none in either T: none
+SPLIT X:BF-M1-0108 | a@159-161: Prefer System.Net.Http.Json / System.Text.Json where sufficient, with explicit serialization options when the external contract differs from the application's defaults. | b@161-162: Do not reuse internal Domain entities as remote API contracts to avoid mapping.
+SD P:EXTRA-M1-0190 X:BF-M1-0108#a | S: outbound HTTP serialization M: P PREFER, X no modality E: none in either T: none
+SD P:RULE-M1-0524 X:BF-M1-0108#b | S: remote API contracts M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M1-0031 P:RULE-M1-0524 | P: Domain entities not used as remote contracts.
+RD DIFFERENT_SCOPE R:RULE-M1-0087 P:RULE-M1-0525 | P (ALLOWED): direct HttpClient construction in focused tests; the lifetime rule concerns production code.
+RD DETAIL_DIFFERENCE R:RULE-M1-0087 P:RULE-M1-0526 | R adds the IHttpClientFactory/long-lived-strategy alternative.
+# r458-r468 httpclient-factory references/resilience.md
+RD OVERLAP R:RULE-M1-0089 P:RULE-M1-0487 | P: resilience policies match failure and operation semantics.
+RD EXAMPLE_GENERAL R:RULE-M1-0166 P:RULE-M1-0488 | P: no resilience mechanisms merely because they are available.
+RD DETAIL_DIFFERENCE R:RULE-M1-0140 P:RULE-M1-0489 | R adds the explicit documented-exception path for direct Polly and the manifest-check layer.
+RD EXAMPLE_GENERAL R:RULE-M1-0089 P:RULE-M1-0490 | P: review the standard handler's retry behaviour for state-changing requests.
+RD OVERLAP R:RULE-M1-0089 P:EXTRA-M1-0172 | P: do not retry non-transient failures.
+RD OVERLAP R:RULE-M1-0089 P:RULE-M1-0492 | P: no retry of non-idempotent operations, every exception/status, or hedged writes.
+RD COMPOUND_PART R:RULE-M1-0090 P:RULE-M1-0493 | P: prefer server retry guidance over an aggressive schedule.
+RD OVERLAP R:RULE-M1-0089 P:EXTRA-M1-0173 | P: no invented client-side Idempotency-Key.
+RD BROADER_NARROWER R:RULE-M1-0089 P:RULE-M1-0494 | P: duplicate-effect writes are unsafe to retry automatically.
+SPLIT X:BF-M1-0107 | a@80-82: Use hedging only for operations safe to execute multiple times; do not hedge state-changing operations. | b@86-90: Do not wrap normal persistence operations in a generic application-level retry pipeline; prefer the provider's execution strategy when it supports transient retry.
+SD P:RULE-M1-0495 X:BF-M1-0107#a | S: hedging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-M1-0175 R:EXTRA-M1-0026 X:BF-M1-0107#b | S: persistence retry M: MUST_NOT in P and R, X no modality E: none in any T: none
+RD EXAMPLE_GENERAL R:RULE-M1-0089 P:RULE-M1-0495 | P: hedging restricted to repeat-safe operations.
+RD OVERLAP R:RULE-M1-0085 P:RULE-M1-0496 | P: cancellation propagated through resilience pipelines.
+RD COMPOUND_PART P:RULE-M1-0496 R:RULE-M1-0091 | P adds propagation through resilience pipelines.
+RD EXAMPLE_GENERAL R:RULE-M1-0166 P:RULE-M1-0497 | P: OpenTelemetry not required solely because resilience pipelines exist.
+RD OVERLAP R:RULE-M1-0088 P:RULE-M1-0498 | P (AVOID): stacked handlers with overlapping strategies.
+# r469-r475 logging SKILL.md
+RD COMPOUND_PART R:RULE-M1-0057 P:RULE-M1-0527 | P: the no-interpolation element.
+RD COMPOUND_PART R:RULE-M1-0124 P:RULE-M1-0528 | P: sensitive-data rules apply at every level.
+RD OVERLAP R:RULE-M1-0066 P:RULE-M1-0529 | P: log at the boundary that handles or terminates; no log on plain rethrow.
+CX X:BF-M1-0111 | Prefer platform trace identifiers; add an explicit correlation identifier only when required; validate or normalize an externally accepted identifier before propagating it; propagate correlation/tracing context across outbound calls.
+RD COMPOUND_PART X:BF-M1-0111 P:EXTRA-M1-0193 | P: trace-identifier preference and propagation without the normalization element.
+RD COMPOUND_PART X:BF-M1-0111 P:RULE-M1-0530 | P: the normalization element only.
+RD EXAMPLE_GENERAL R:RULE-M1-0112 P:RULE-M1-0530 | P: externally supplied correlation identifiers.
+RD OVERLAP R:RULE-M1-0124 P:RULE-M1-0531 | P: no authorization headers or full sensitive bodies in logs.
+RD OVERLAP R:RULE-M1-0125 P:RULE-M1-0531 | P: log specific needed properties.
+RD EXAMPLE_GENERAL R:RULE-M1-0097#a P:RULE-M1-0532 | P: LoggerMessage source generation only for measured hot paths.
+RD DIFFERENT_STRENGTH R:EXTRA-M1-0028 P:EXTRA-M1-0194 | same logs-as-audit-database statement; R reports MUST NOT (review defect), P reports AVOID (F7).
+# r476-r482 logging references/serilog.md
+RD COMPOUND_PART R:RULE-M1-0058 P:RULE-M1-0533 | P: AddSerilog() rather than UseSerilog().
+RD COMPOUND_PART R:RULE-M1-0057 P:RULE-M1-0534 | P: message templates.
+RD COMPOUND_PART R:RULE-M1-0058 P:RULE-M1-0535 | P: levels, sinks and overrides in appsettings.
+RD OVERLAP R:RULE-M1-0058 P:RULE-M1-0536 | P: direct Serilog APIs only at composition/provider boundaries.
+RD EXAMPLE_GENERAL R:RULE-M1-0166 P:RULE-M1-0537 | P: sinks/enrichers beyond Console not baseline.
+RD OVERLAP R:RULE-M1-0125 P:RULE-M1-0538 | P: limit destructuring.
+CX X:BF-M1-0110@256-258 | Serilog.Sinks.Elasticsearch is deprecated; use the official Elastic.Serilog.Sinks package.
+SD P:EXTRA-M1-0197 X:BF-M1-0110 | S: Serilog Elasticsearch sink M: P DEFAULT, X no modality E: none beyond the Elasticsearch section scope (both) T: none
+RD EXAMPLE_GENERAL R:RULE-M1-0144 P:EXTRA-M1-0197 | R: check deprecation before installing; P: a specific deprecated sink.
+# r483-r491 modern-csharp SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M1-0053#a P:RULE-M1-0539 | P: specific syntax-only replacements.
+RD EXAMPLE_GENERAL R:RULE-M1-0051 P:RULE-M1-0539 | P: specific syntax-only replacements.
+RD EXAMPLE_GENERAL R:RULE-M1-0113 P:RULE-M1-0540 | P: raw SQL in raw string literals.
+RD OVERLAP R:RULE-M1-0097#a P:RULE-M1-0541 | P: Span/stackalloc/pooling only with profiling or a clear hot path.
+# [revised before M1 checkpoint: R RULE-M1-0139 split in 08; relation retargeted to part i]
+RD OVERLAP R:RULE-M1-0139#i P:RULE-M1-0542 | P: changing LangVersion or the target framework is a stack decision requiring approval.
+RD OVERLAP R:RULE-M1-0142#b P:RULE-M1-0542 | both: changing an approved technology needs approval.
+RD OVERLAP R:RULE-M1-0147 P:RULE-M1-0543 | P: modernization requests preserve behaviour and stay focused.
+RD OVERLAP R:RULE-M1-0097#a P:RULE-M1-0544 | P (AVOID): newest syntax for its own sake, record struct or Span<T> without reason.
+# r492-r499 persistence-change SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M1-0180#b P:RULE-M1-0545 | P: the persistence rules to read first.
+RD OVERLAP R:RULE-M1-0192 P:RULE-M1-0546 | P: impact assessment including seeded entities.
+RD OVERLAP R:RULE-M1-0031 P:RULE-M1-0547 | P: persistence configuration out of the core model where practical.
+SPLIT R:RULE-M1-0191 | a: Treat EF Core migrations as source code and review every generated migration before committing it (destructive schema changes, unexpected column recreation, data migrations, indexes, foreign keys, delete behavior). | b: Do not casually alter existing migrations; regenerate or edit an uncommitted migration only when that matches the project's migration workflow.
+SD P:RULE-M1-0548 R:RULE-M1-0191#a | S: generated EF Core migrations M: MUST both E: none in either T: before committing
+SD P:RULE-M1-0549 R:RULE-M1-0191#b | S: existing migrations M: MUST_NOT both E: uncommitted migration per the project workflow (both) T: none
+SPLIT R:RULE-M1-0192 | a: Whenever Domain or persistence changes affect seeded entities, update the development DbSeeder in the same change and review it together with the corresponding migration. | b: Recreating the Development database at any revision yields valid representative seed data; already seeded rows of an existing database are not patched.
+SD P:RULE-M1-0550 R:RULE-M1-0192#a | S: seed data co-change M: MUST both E: none in either T: in the same change
+SD P:RULE-M1-0551 R:RULE-M1-0192#b | S: Development seed data M: MUST both E: existing seeded rows are not patched (both) T: at any revision
+RD OVERLAP R:RULE-M1-0105 P:RULE-M1-0551 | R: never use the seeder to repair an existing Development database.
+RD EXAMPLE_GENERAL R:RULE-M1-0178 P:RULE-M1-0552 | R: run the workflow; P: the workflow steps.
+SPLIT R:RULE-M1-0195 | a: Build the affected projects and run the relevant tests for the change. | b: For persistence changes run the persistence and integration tests. | c: For persistence changes confirm the migration applies to a freshly created Development database before seeding.
+CX X:BF-M1-0112@73-74 | Confirm the migration applies to a freshly created Development database before seeding.
+SD P:EXTRA-M1-0205 R:RULE-M1-0195#c X:BF-M1-0112 | S: persistence changes M: MUST in P and R, X no modality E: none in any T: before seeding | labels: P EXTRA, R ORACLE_LINKED WF-005, X POTENTIAL_EXTRA
+RD COMPOUND_PART P:RULE-M1-0553 R:RULE-M1-0195#b | P adds building the affected projects.
+RD COMPOUND_PART P:RULE-M1-0553 R:RULE-M1-0195#a | P limits test running to persistence/integration tests.
+RD BROADER_NARROWER R:RULE-M1-0169 P:RULE-M1-0554 | P: production migration is explicit deployment work.
+# r500 project-structure SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M1-0180#b P:RULE-M1-0586 | P: the specific rules to read before scaffolding.
+REVIEWED r421-r500

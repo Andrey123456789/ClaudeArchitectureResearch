@@ -1,0 +1,76 @@
+# Owns: deterministic formatting and code-style analyzer configuration.
+# Scope: common. Loads: read by IDEs, dotnet format, and the build
+# (EnforceCodeStyleInBuild in Directory.Build.props).
+# Conventions themselves are described in .claude/rules/coding-style.md.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,jsonc,yml,yaml,ts,html,scss,css,js,mjs}]
+indent_size = 2
+
+[*.{csproj,props,targets,slnx,xml,config}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{cmd,bat,ps1}]
+end_of_line = crlf
+
+[*.cs]
+# Namespaces and usings
+csharp_style_namespace_declarations = file_scoped:suggestion
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = outside_namespace:suggestion
+
+# Unused/redundant using directives surface as build warnings for changed files
+dotnet_diagnostic.IDE0005.severity = warning
+
+# var usage: obvious types only
+csharp_style_var_for_built_in_types = false:silent
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:silent
+
+# Expression and pattern preferences
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+
+# Braces and layout
+csharp_prefer_braces = when_multiline:suggestion
+csharp_new_line_before_open_brace = all
+
+# Naming: PascalCase for types and members, I-prefix for interfaces
+dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum, record, delegate
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_rule.types_pascal_case.symbols = types
+dotnet_naming_rule.types_pascal_case.style = pascal_case
+dotnet_naming_rule.types_pascal_case.severity = suggestion
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_style.i_prefix.required_prefix = I
+dotnet_naming_style.i_prefix.capitalization = pascal_case
+dotnet_naming_rule.interfaces_i_prefix.symbols = interfaces
+dotnet_naming_rule.interfaces_i_prefix.style = i_prefix
+dotnet_naming_rule.interfaces_i_prefix.severity = suggestion
+
+# Async methods end with Async
+dotnet_naming_symbols.async_methods.applicable_kinds = method
+dotnet_naming_symbols.async_methods.required_modifiers = async
+dotnet_naming_style.async_suffix.required_suffix = Async
+dotnet_naming_style.async_suffix.capitalization = pascal_case
+dotnet_naming_rule.async_methods_suffix.symbols = async_methods
+dotnet_naming_rule.async_methods_suffix.style = async_suffix
+dotnet_naming_rule.async_methods_suffix.severity = suggestion
+
+# Test projects: NUnit test method names describe scenarios, not Async suffixes
+[backend/**/*Tests/**.cs]
+dotnet_naming_rule.async_methods_suffix.severity = none

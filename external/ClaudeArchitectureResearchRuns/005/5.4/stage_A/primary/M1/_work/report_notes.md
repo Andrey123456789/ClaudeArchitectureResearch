@@ -1,0 +1,14 @@
+## Candidate-specific notes (M1)
+
+### Instruction architecture observed
+- Always-loaded surface: `CLAUDE.md` plus six imports (`docs/technology-stack.md`, `docs/capability-selection.md`, and the four planning facets `docs/capabilities/{architecture,persistence,backend-testing,frontend}.md`). Path rules under `.claude/rules/` are flat with `paths:` frontmatter; workflow and knowledge skills under `.claude/skills/`; one agent (`code-reviewer`).
+- Capability system: `.claude/capabilities/<slot>/CONTRACT.md` and `<implementation>/MODULE.md` are maintainer metadata whose JSON blocks are consumed by `check-instructions.js`, `check-architecture.js` and `check-manifests.js`. Their tables were classified as NON_NORMATIVE (descriptive) while the enforced invariants (facet conformance, leak tokens, binds, facet headers, planning imports) were registered as EXTRA repo/meta constraints with ENFORCED modality.
+- Executable enforcement: PreToolUse gate (`scripts/lib/dependency-commands.js`) denies package and project-reference commands until the trailing markers `# add-dependency: checked` / `# project-reference: checked` are present and denies npm peer-override flags unless `# peer-override: approved-by-user` is present (fails closed); PostToolUse runs manifest, architecture, synchronization and instruction checks and returns WARN and ERROR findings as a blocking reason; Stop hook issues co-change reminders. Hooks were read, never executed.
+
+### Classification conventions applied
+- M1's `CLAUDE.md` has no separate normative-vocabulary section; modality was assigned from the wording of each clause (must/never → MUST/MUST_NOT; default/by default → DEFAULT; prefer/avoid → PREFER/AVOID; Reserved → REQUIRES_APPROVAL; hook/script behaviour → ENFORCED or ENFORCED_ADVISORY).
+- Restatements of oracle policies in skills/references are ORACLE_LINKED; new outcome-restricting imperatives, including in knowledge skills, private references, hook code and manifests, are EXTRA with the closest policy IDs; examples, permissive wording and investigation prompts (EXC-015 context) are NON_NORMATIVE with a reason; check-by-reference lists and decision tables are DUPLICATE unless they contain an item with no owner clause, in which case they are MIXED with the item registered as EXTRA (e.g. Minimal API endpoint filters in a Controller project; Swagger as a substitute for integration tests).
+- Repository/instruction-system rules (MAP placement, one owner per rule, trigger-role preservation, checker runs, capability replacement procedures) are recorded as EXTRA with scope notes; they constrain maintenance of the instruction system rather than product code.
+
+### Open items
+- Three LINK_UNCERTAIN constraints remain (collation default vs GOV-006; pre-mutation cache invalidation vs RUN-021; destructive Git operations "clearly required by an approved workflow" vs GOV-015). They are listed in `ORPHAN_SWEEP_REPORT.md` and are not resolved at Stage A.

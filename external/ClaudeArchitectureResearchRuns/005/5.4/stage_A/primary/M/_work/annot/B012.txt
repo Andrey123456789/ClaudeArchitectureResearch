@@ -1,0 +1,79 @@
+# Batch B012 — skills: dotnet-testing
+
+@@ output/template/.claude/skills/dotnet-testing/SKILL.md ;; Knowledge skill (on demand when writing/reviewing .NET tests).
+@scope on-demand knowledge skill dotnet-testing (backend tests)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13-16 NN ;; Pointers to policy owners.
+18-20 OL [gov012.proportional-tests]
+22 NN ;; Heading.
+24-45 NN ;; NUnit TestCase code example.
+47-48 NN ;; Permissive: Arrange/Act/Assert as a useful default with optional comments.
+50 NN ;; Heading.
+52-53 OL [tst005.clarity-over-brevity]
+55-68 NN ;; Explicit case-table code example.
+70-72 OL [tst005.table-over-algorithm] ;; ;; A longer explicit case table beats a shorter algorithmic test
+74 NN ;; Heading.
+76-79 NN ;; Descriptive list of good unit-test candidates (context for TST-002).
+81 NN ;; Heading.
+83-86 EX [x.tst-doubles]
+88 NN ;; Heading.
+90-97 OL [tst003.app-service-tests]
+99 NN ;; Heading.
+101-104 NN ;; Description of what WebApplicationFactory exercises.
+106-147 NN ;; Integration test code example.
+149-152 OL [tst004.testing-environment] ;; ;; Configure the `Testing` environment to use isolated test resources
+O 151-152 NN ;; Exposing Program via 'public partial class Program' is a technique hint for test access, not a rule. ;; ;; for example with a `public partial class Program` declaration.
+154 NN ;; Heading.
+156-163 OL [tst007.db-strategy]
+165 NN ;; Heading.
+167-169 OL [tst008.known-state-strategy]
+171 NN ;; Heading.
+173-176 OL [tst011.meaningful-persistence-tests]
+178 NN ;; Heading.
+180 OL [run004.fake-time]
+182-190 NN ;; FakeTimeProvider code example.
+192 NN ;; Heading.
+194-198 MX [tst004.external-doubles,x.tst-separate-slow] ;; Controlled doubles/local fakes for external systems are TST-004; keeping slow/unreliable external tests separate from fast runs is additional.
+200 NN ;; Heading.
+202-204 EX [x.tst-data-builders]
+206 NN ;; Heading.
+208-212 NN ;; Example test names (illustrate TST-012 pattern).
+214 NN ;; Heading.
+216-218 OL [tst009.regression-definition]
+220 NN ;; Heading.
+222-227 MX [tst010.probe-conversion,x.tst-review-probe] ;; Converting probes to maintained tests is TST-010; reviewing a probe before keeping it instead of committing as-is is additional.
+229 NN ;; Heading.
+231-233 NN ;; Definition of 'smoke test' (terminology).
+235 NN ;; Heading.
+237-238 OL [tst011.coverage-diagnostic]
+240 NN ;; Heading.
+242-244 OL [gov013.no-snapshot-default]
+246 NN ;; Heading.
+248-251 MX [tst003.no-implementation-asserts,x.tst-no-assertion-free,tst004.no-delays,tst007.no-needless-testcontainers] ;; Implementation-repeating assertions (TST-003), arbitrary delays (TST-004) and Testcontainers without fidelity need (TST-007) are oracle; assertion-free tests are an added anti-pattern.
+253 NN ;; Heading.
+255-266 DU ;; Decision-guide table restating testing.md/development-workflow/verify defaults (unit vs integration, WebApplicationFactory, provider fidelity, TimeProvider, stubs, regression tests, probes, smoke).
+
+C gov012.proportional-tests OL GOV-012 DEFAULT ;; Test the risks that matter and keep test infrastructure proportional (no enterprise-sized harness for a small project). ;; = ;; none ;;
+C tst005.clarity-over-brevity OL TST-005 DEFAULT ;; Test code should be simpler to reason about than production behaviour; optimize tests for clarity over line count. ;; = ;; none ;;
+C tst005.table-over-algorithm OL TST-005 PREFER ;; A longer explicit case table beats a shorter algorithmic test when it makes rules visible. ;; = ;; none ;;
+C x.tst-doubles EX TST-003 DEFAULT ;; Use fakes/stubs/mocks when they make an isolated test clearer; do not mock every collaborator mechanically; do not forbid mocking project-owned abstractions when isolation helps; mock/fake architectural boundaries when that clarifies behaviour. ;; = ;; none ;; Mock/fake choice is test technique outside the oracle (EXC-012).
+C tst003.app-service-tests OL TST-003,TST-002,TST-006 DEFAULT ;; Unit-test Application Services with controlled boundary doubles, asserting use-case results and meaningful side effects; interaction verification only when part of the contract; prefer integration tests when behaviour depends on EF Core, transactions, DI, serialization or HTTP. ;; = ;; Interaction is part of the contract. ;;
+C tst004.testing-environment OL TST-004 MUST ;; Configure the Testing environment with isolated resources so integration tests can never reach Development or Production databases. ;; = ;; none ;;
+C tst007.db-strategy OL TST-007 DEFAULT ;; Use the actual provider for provider-specific SQL/constraints/transactions/locking/indexes/raw SQL/mappings/migrations (Testcontainers a good option); a lighter isolated relational DB only when fidelity does not matter, stating the trade-off; InMemory only for narrowly scoped non-relational tests. ;; = ;; none ;;
+C tst008.known-state-strategy OL TST-008 MUST ;; Start from a known state by recreating/resetting the isolated test DB, using fitting transactions, seeding only needed data and using unique identifiers. ;; = ;; none ;;
+C tst011.meaningful-persistence-tests OL TST-011 MUST_NOT ;; Test repositories/EF mappings only for meaningful persistence behaviour, not one test per trivial Add/Get method. ;; = ;; none ;;
+C run004.fake-time OL RUN-004,TST-004 DEFAULT ;; Inject TimeProvider and control it with FakeTimeProvider in tests. ;; = ;; none ;;
+C tst004.external-doubles OL TST-004 MUST ;; At external boundaries use fakes/mocks, stub HttpMessageHandler or a local fake server; a dedicated sandbox only when the test explicitly targets that integration. ;; = ;; none ;;
+C x.tst-separate-slow EX TST-004 DEFAULT ;; Keep slow or unreliable external-system tests separate from ordinary fast runs. ;; = ;; none ;; Test-suite partitioning not required by the oracle.
+C x.tst-data-builders EX TST-008,GOV-012 DEFAULT ;; Keep test data explicit and minimal; introduce builders/fixtures/factories only when repeated setup becomes hard to read, not a generic test-data framework for a few objects. ;; = ;; none ;; Builder/fixture technique outside the oracle (EXC-012).
+C tst009.regression-definition OL TST-009 DEFAULT ;; A regression test reproduces the failure before the fix and passes after; none for problems that cannot realistically recur or are already covered. ;; = ;; none ;;
+C tst010.probe-conversion OL TST-010 MUST ;; Convert probes into maintained coverage (replay HTTP requests as WebApplicationFactory tests, database checks as integration tests, regression probes as focused tests). ;; = ;; none ;;
+C x.tst-review-probe EX TST-010 MUST ;; Review a temporary probe before keeping it as a permanent test rather than committing it as-is. ;; = ;; none ;; Additional review step on probe conversion.
+C tst011.coverage-diagnostic OL TST-011 MUST_NOT ;; Coverage is diagnostic, not a target; prioritize meaningful behaviour, edge cases and risky integrations. ;; = ;; none ;;
+C gov013.no-snapshot-default OL GOV-013,DEP-001 MUST_NOT ;; Do not introduce a snapshot-testing library by default; explicit assertions are usually clearer for small/important contracts. ;; = ;; Large stable outputs where explicit assertions get noisy. ;;
+C tst003.no-implementation-asserts OL TST-003 AVOID ;; Avoid assertions that merely repeat the implementation. ;; = ;; none ;;
+C x.tst-no-assertion-free EX TST-003 AVOID ;; Avoid assertion-free tests unless the behaviour is explicitly 'does not throw'. ;; = ;; Explicit 'does not throw' behaviour. ;; Test-hygiene rule not in the oracle.
+C tst004.no-delays OL TST-004 AVOID ;; Avoid arbitrary delays such as Task.Delay to make timing-sensitive tests pass. ;; = ;; none ;;
+C tst007.no-needless-testcontainers OL TST-007,GOV-013 AVOID ;; Avoid Testcontainers when no provider fidelity is required. ;; = ;; none ;;

@@ -1,0 +1,107 @@
+# M batch 8: regions r371-r430 (protocol v1.2)
+# r371-r374 health-check SKILL.md
+RD OVERLAP R:RULE-M-0035 P:RULE-M-0455 | R: liveness/readiness distinct, readiness may depend on required capabilities; P: include only dependencies required for meaningful readiness.
+RD EXAMPLE_GENERAL R:RULE-M-0034 P:RULE-M-0456 | R: health checks cheap, no expensive or mutating database work; P: database health is a lightweight connectivity check.
+SPLIT X:BF-M-0079 | a@81-84: Check an external dependency only when it matters to readiness and avoid readiness cascades; prefer a lightweight check of the needed capability. | b@95-97: Keep probe responses small and protect detailed diagnostics with network or authorization controls. | c@113-115: Avoid Error-level logs for every normal failed probe.
+SD P:RULE-M-0457 X:BF-M-0079#a | S: readiness checks M: P AVOID, X no modality E: none in either T: none | P's 'remote dependency chains' wording (lines 127-128) restates the same cascade concern
+SD P:RULE-M-0458 X:BF-M-0079#b | S: health probe responses M: P MUST, X no modality E: none in either T: none
+SD P:EXTRA-M-0144 X:BF-M-0079#c | S: health probe logging M: P AVOID, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M-0036 P:RULE-M-0458 | R: public health responses never expose secrets or internal diagnostics; P: small responses, detailed diagnostics protected.
+RD BROADER_NARROWER R:RULE-M-0035 P:RULE-M-0459 | R/rule includes 'readiness stays unhealthy until required startup work completes'; P (skill) states only that clause.
+RD DIFFERENT_STRENGTH R:RULE-M-0034 P:RULE-M-0460 | R/rule: health checks stay cheap (MUST); P (skill): avoid expensive queries, long timeouts, large allocations, workflows (AVOID).
+# r375-r386 http-api SKILL.md
+SD P:RULE-M-0473 R:RULE-M-0026 | S: successful collection queries with no matches (P via skill, R via rule and skill; F8) M: DEFAULT both E: none in either T: none | P's 'rather than 204' is implied by returning 200 with an empty collection
+SPLIT X:BF-M-0080 | a@42-43: Include a Location header identifying a created resource when a stable resource URI exists. | b@58-60: For 202 responses, when practical return an operation identifier or a Location to observe progress.
+SD P:EXTRA-M-0154 X:BF-M-0080#a | S: 201 responses M: P DEFAULT, X no modality E: stable resource URI exists (both) T: none
+SD P:EXTRA-M-0155 X:BF-M-0080#b | S: 202 responses M: P DEFAULT, X no modality E: when practical (both) T: none
+RD EXAMPLE_GENERAL R:RULE-M-0025#a P:RULE-M-0474 | R: choose success statuses by HTTP semantics; P: PUT may return 201 when it creates a resource.
+RD EXAMPLE_GENERAL R:RULE-M-0025#a P:RULE-M-0475 | P: 202 is for accepted but incomplete processing.
+RD EXAMPLE_GENERAL R:RULE-M-0025#a P:RULE-M-0476 | P: 204 for successful operations without a response body.
+SPLIT X:BF-M-0081 | a@78-81: Choose consistently whether a repeated DELETE of an absent resource returns 204 or 404, and do not mix them between equivalent resources. | b@87-89: Use 304 only for conditional requests whose cached representation is still valid, never as a generic business 'nothing changed' response. | c@95-99: 400 is for an invalid HTTP request (malformed, binding failure, uninterpretable), not for authentication failure.
+RD EXAMPLE_GENERAL P:EXTRA-M-0004 X:BF-M-0081#a | P/R/X group: keep status-code behavior consistent across similar endpoints (P also cites lines 78-81); X part a: the repeated-DELETE case.
+SD P:EXTRA-M-0156 X:BF-M-0081#b | S: 304 responses M: P MUST, X no modality E: none in either T: none
+SD P:RULE-M-0477 X:BF-M-0081#c | S: 400 responses M: P MUST_NOT (not for authentication), X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0027 P:RULE-M-0478 | P: meaning of 401 (skill detail).
+RD EXAMPLE_GENERAL R:RULE-M-0027 P:RULE-M-0479 | P: meaning of 403 (skill detail).
+RD OVERLAP R:RULE-M-0027 P:RULE-M-0480 | R: 401/403 and deliberate 404 hiding; P: 404 when the resource does not exist or is deliberately hidden, plus the empty-collection rule.
+SPLIT X:BF-M-0082 | a@121-150: Use 406 when no acceptable response representation can be produced and 415 when the request media type is unsupported; do not confuse them. | b@154-160: Use 422 for structurally valid requests with invalid semantic/business content; follow an established 400-for-both convention, otherwise 400 for contract errors and 422 for semantic errors. | c@169-178: Use 428 when a contract-required precondition such as If-Match is absent; other mandatory preconditions only when the contract defines them. | d@182-184: A rate-limited request returns 429 with Retry-After when the retry time is known; validation failures are not represented as rate limiting.
+SD P:EXTRA-M-0157 X:BF-M-0082#a | S: HTTP content negotiation responses M: P MUST, X no modality E: none in either T: none | X part a anchor spans the 406 and 415 paragraphs; the 409/412 text between them is not asserted
+SD P:EXTRA-M-0158 X:BF-M-0082#b | S: HTTP validation responses M: P DEFAULT, X no modality E: established 400-for-both convention (both) T: none
+SD P:EXTRA-M-0159 X:BF-M-0082#c | S: HTTP preconditions M: P MUST, X no modality E: other preconditions only when the contract defines them (both) T: none
+RD COMPOUND_PART P:EXTRA-M-0153 X:BF-M-0082#d | P adds 'inbound rate limiting is distinct from outbound resilience' (resilience reference).
+RD EXAMPLE_GENERAL R:RULE-M-0028 P:RULE-M-0481 | R: 409 for state conflicts; P lists the 409 cases and excludes malformed syntax.
+RD BROADER_NARROWER R:RULE-M-0028 P:RULE-M-0482 | R/rule covers 409 and 412; P (skill): a stale If-Match is normally 412, not 409.
+RD OVERLAP R:RULE-M-0073#a P:RULE-M-0483 | R: unexpected failures go to centralized handling; P: 500 for unexpected failures via centralized handling and ProblemDetails without internals.
+SPLIT X:BF-M-0083 | a@196-213: 502 and 504 are only for an API acting as an intermediary (invalid upstream response, upstream timeout); do not map every dependency failure or TaskCanceledException to them. | b@202-205: 503 for temporary inability, with Retry-After when a meaningful retry time is known. | c@221-231: With an idempotency key, reuse of the same key with a materially different payload is a reasonable 409, and idempotency is not claimed merely because duplicates are unlikely. | d@235-236: When HTTP optimistic concurrency is part of the contract prefer standard conditional request semantics over custom status codes.
+SD P:EXTRA-M-0160 X:BF-M-0083#a | S: 502/504 responses M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-M-0161 X:BF-M-0083#b | S: 503 responses M: P DEFAULT, X no modality E: none in either T: none
+RD COMPOUND_PART X:BF-M-0083#c P:RULE-M-0485 | X part c also covers the 409 for reused keys with different payloads; P: do not claim idempotency merely because duplicates are unlikely.
+SD P:RULE-M-0486 X:BF-M-0083#d | S: HTTP optimistic concurrency M: P PREFER, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M-0079 P:RULE-M-0484 | R: client cancellation is not a server failure; P: distinguish client-cancelled requests from timeouts when choosing a response.
+RD EXAMPLE_GENERAL R:RULE-M-0024 P:RULE-M-0487 | R: HTTP semantics belong to the API layer; P: Controllers translate Application outcomes into HTTP outcomes.
+# r387-r401 httpclient-factory SKILL.md
+RD OVERLAP R:RULE-M-0062 P:RULE-M-0488 | R: Infrastructure translates remote responses; P: choose the simplest client model, outbound clients normally live in Infrastructure.
+RD OVERLAP R:RULE-M-0062 P:RULE-M-0489 | P: Application need not know an external service uses HTTP.
+RD EXAMPLE_GENERAL R:RULE-M-0057 P:RULE-M-0490 | P: do not capture a transient typed client in a singleton without understanding lifetimes.
+RD EXAMPLE_GENERAL R:RULE-M-0148 P:RULE-M-0491 | P: do not choose keyed clients or make a client model mandatory automatically.
+CX X:BF-M-0087 | Use a DelegatingHandler only for genuine HTTP pipeline concerns (authorization header acquisition, correlation propagation, request signing), never for business decisions.
+SD P:EXTRA-M-0162 X:BF-M-0087 | S: outbound HTTP handlers M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0087 P:RULE-M-0492 | R: propagate CancellationToken when meaningful; P: pass the caller's token to outbound calls, not CancellationToken.None unless the operation must outlive the request.
+RD BROADER_NARROWER R:RULE-M-0080 P:RULE-M-0465 | R/rule: bounded time, per-attempt vs total timeouts, no overlapping mechanisms; P: distinguish attempt from total timeout, especially with retries.
+RD EXAMPLE_GENERAL R:RULE-M-0082 P:RULE-M-0494 | R: respect Retry-After; P: honor Retry-After on remote 429 when the policy supports it.
+RD OVERLAP R:RULE-M-0081 P:RULE-M-0495 | R: retry only when safe; P: timeout normally required, retry/circuit breaker optional, check transience, safety and idempotency before retrying.
+SPLIT X:BF-M-0088 | a@166-169: Apply per-request values such as dynamic access tokens to the specific request or through a handler; do not mutate shared DefaultRequestHeaders concurrently. | b@173-175: Prefer System.Net.Http.Json / System.Text.Json where sufficient and use explicit serialization options when the external contract differs. | c@175-176: Do not reuse internal Domain entities as remote API contracts merely to avoid mapping.
+SD P:EXTRA-M-0164 R:EXTRA-M-0021 X:BF-M-0088#a | S: outbound HTTP clients M: MUST_NOT in P and R, X no modality E: none in any T: per request
+SD P:EXTRA-M-0165 X:BF-M-0088#b | S: outbound HTTP serialization M: P PREFER, X no modality E: none in either T: none
+SD P:RULE-M-0496 X:BF-M-0088#c | S: outbound HTTP contracts M: P MUST_NOT, X no modality E: none in either T: none
+RD DETAIL_DIFFERENCE R:RULE-M-0089 P:RULE-M-0497 | P adds a permission (new HttpClient(testHandler) is fine in focused tests; the lifetime rule concerns production code).
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0462 | P: do not add resilience mechanisms merely because they are available.
+# r402-r410 httpclient-factory references/resilience.md
+CX X:BF-M-0084@16-17 | Observe retries, timeouts and circuit behavior when they materially affect operations.
+SD P:EXTRA-M-0147 X:BF-M-0084 | S: outbound resilience M: P DEFAULT, X no modality E: when material (both) T: none
+RD OVERLAP R:RULE-M-0081 P:RULE-M-0461 | R: retry only when safe; P: match resilience policies to the failure and operation semantics.
+RD OVERLAP R:RULE-M-0136 P:RULE-M-0463 | R: Microsoft resilience packages approved, direct Polly an exception; P: Application code uses the Microsoft resilience APIs rather than Polly directly.
+RD EXAMPLE_GENERAL R:RULE-M-0081 P:RULE-M-0464 | P: the standard resilience handler is optional; review its retries for state-changing requests.
+SPLIT X:BF-M-0085 | a@51-53: Do not retry validation errors, authentication/authorization failures, permanent 404 outcomes or deterministic business rejections. | b@67-70: Do not invent a client-side Idempotency-Key unless the remote service supports that contract.
+SD P:EXTRA-M-0148 X:BF-M-0085#a | S: outbound retries M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-M-0149 X:BF-M-0085#b | S: outbound idempotency M: P MUST_NOT, X no modality E: remote service supports the contract (both) T: none
+RD EXAMPLE_GENERAL R:RULE-M-0082 P:RULE-M-0467 | P: let the policy follow a remote Retry-After.
+RD EXAMPLE_GENERAL R:RULE-M-0081 P:RULE-M-0468 | P: if repeating a write could duplicate side effects, automatic retry is unsafe.
+SPLIT X:BF-M-0086 | a@92-95: Use hedging only for operations safe to execute multiple times, never for state-changing operations by default. | b@99-104: Do not wrap normal EF Core operations in a generic application-level retry pipeline by default; prefer provider execution strategies; an HTTP retry policy is not automatically appropriate for databases. | c@108-110: Retrying publication can duplicate delivery; use idempotent consumers, broker deduplication or outbox when required.
+SD P:RULE-M-0469 X:BF-M-0086#a | S: outbound resilience hedging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-M-0151 X:BF-M-0086#b | S: database resilience M: P MUST_NOT, X no modality E: none in either T: none
+RD DIFFERENT_STRENGTH R:EXTRA-M-0020 P:EXTRA-M-0151 | same EF retry-pipeline guidance; R reports DEFAULT (deviation with reason), P reports MUST_NOT.
+SD P:EXTRA-M-0152 X:BF-M-0086#c | S: message publishing M: P DEFAULT, X no modality E: when the business requirement needs it (both) T: none
+RD OVERLAP R:RULE-M-0084 P:RULE-M-0470 | R: caller cancellation is not retried; P: propagate cancellation through resilience pipelines.
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0471 | P: do not require OpenTelemetry solely because resilience handlers exist.
+RD OVERLAP R:RULE-M-0080 P:RULE-M-0472 | R: avoid overlapping timeout mechanisms; P (AVOID): stacked handlers with overlapping strategies.
+# r413-r422 logging SKILL.md and references/serilog.md
+CX X:BF-M-0091@42-51 | Choose log levels by operational meaning (Trace/Debug, Information, Warning, Error, Critical) and avoid logging every internal method call.
+RD COMPOUND_PART P:EXTRA-M-0166 X:BF-M-0091 | P adds 'log information that helps diagnose and operate' from lines 19-20, outside X's quote.
+RD BROADER_NARROWER R:RULE-M-0120 P:RULE-M-0498 | R/rule includes 'the log level does not make sensitive data safe'; P (skill) states only that clause.
+RD OVERLAP R:RULE-M-0078#a P:RULE-M-0499 | R: log an unexpected exception once at the handling boundary; P: log an exception where it is handled, no extra log when rethrowing.
+SPLIT X:BF-M-0092 | a@78-83: Prefer runtime trace identifiers for correlation; add an explicit correlation identifier only when a requirement needs one; propagate tracing context across outbound calls. | b@80-81: Validate or normalize a correlation identifier accepted from an external client before propagating it. | c@101-103: Do not use logs as an audit database unless a dedicated audit design has been adopted.
+SD P:EXTRA-M-0168 X:BF-M-0092#a | S: backend logging correlation M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-M-0500 X:BF-M-0092#b | S: externally supplied correlation identifiers M: P MUST, X no modality E: none in either T: before propagation
+SD P:EXTRA-M-0169 X:BF-M-0092#c | S: logging used as audit M: P AVOID, X no modality E: adopted audit design (both) T: none
+RD EXAMPLE_GENERAL R:RULE-M-0107 P:RULE-M-0500 | R: validate untrusted boundary data; P: validate external correlation ids.
+RD OVERLAP R:RULE-M-0121 P:RULE-M-0501 | R: no arbitrary bodies/objects in logs; P: watch authorization headers and bodies, log needed properties instead of whole objects.
+RD EXAMPLE_GENERAL R:RULE-M-0095#a P:RULE-M-0502 | P: source-generated LoggerMessage only for measured hot paths.
+RD OVERLAP R:RULE-M-0060 P:RULE-M-0503 | R: application code depends on ILogger<T>; P (AVOID): provider-specific logging APIs in Application code.
+RD OVERLAP R:RULE-M-0060 P:RULE-M-0504 | R: provider configuration in environment-aware configuration; P: levels, sinks and overrides in configuration.
+RD OVERLAP R:RULE-M-0060 P:RULE-M-0505 | P: direct Serilog APIs only at composition or provider-specific boundaries.
+RD EXAMPLE_GENERAL R:RULE-M-0069 P:RULE-M-0189 | P: Serilog sinks only when required; Console suffices for Development.
+RD OVERLAP R:RULE-M-0121 P:RULE-M-0506 | P: limit destructuring of large object graphs in logs.
+CX X:BF-M-0089 | When an application uses Serilog's static/bootstrap Log.Logger it flushes it on shutdown; purely host-managed logging follows the provider lifetime instead.
+SD P:EXTRA-M-0171 X:BF-M-0089 | S: Serilog lifecycle M: P DEFAULT, X no modality E: purely host-managed logging (both) T: on shutdown
+CX X:BF-M-0090@275-277 | Use the official Elastic.Serilog.Sinks package instead of the deprecated Serilog.Sinks.Elasticsearch.
+SD P:EXTRA-M-0172 X:BF-M-0090 | S: Serilog Elasticsearch sink M: P DEFAULT, X no modality E: only when Elasticsearch is used (P), implied by X's quote T: none
+RD OVERLAP R:RULE-M-0137#b P:EXTRA-M-0172 | R: the deprecated sink is not used without a concrete requirement; P: use the official replacement package.
+# r423-r430 modern-csharp SKILL.md, project-structure SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M-0065 P:RULE-M-0507 | R/rule: do not rewrite working code solely for newer syntax; P (skill): examples (backing fields, extension methods).
+RD EXAMPLE_GENERAL R:RULE-M-0095#a P:RULE-M-0509 | P: Span/stackalloc/pooling are performance tools; ordinary types by default.
+CX X:BF-M-0093 | Before using a language feature confirm the configured language version supports it; do not change LangVersion or the target framework to use newer syntax.
+SD P:EXTRA-M-0175 X:BF-M-0093 | S: backend C# language features M: P MUST_NOT, X no modality E: none in either T: before using the feature
+RD EXAMPLE_GENERAL R:RULE-M-0147 P:RULE-M-0510 | P: modernization requests stay focused and behavior-preserving.
+RD EXAMPLE_GENERAL R:RULE-M-0140#b P:RULE-M-0512 | P: for greenfield work explicitly read the listed architecture/stack rules before path rules load.
+REVIEWED r371-r430

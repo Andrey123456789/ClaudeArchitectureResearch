@@ -1,0 +1,147 @@
+# K0 batch 6: regions r243-r312 (protocol v1.2.1)
+# r243-r249 .claude/skills/caching/SKILL.md
+RD OVERLAP R:RULE-K0-0052 P:RULE-K0-0300 | P: expiration chosen by data semantics.
+RD OVERLAP R:RULE-K0-0053 P:RULE-K0-0301 | P (DEFINITION): invalidation strategies.
+RD EXAMPLE_GENERAL R:RULE-K0-0051 P:RULE-K0-0302 | P: user-specific responses cached only with user/authorization isolation.
+RD OVERLAP R:RULE-K0-0082 P:EXTRA-K0-0094 | P: decide explicitly what a cache failure does.
+RD OVERLAP R:RULE-K0-0041 P:RULE-K0-0303 | P: Application Services keep the Unit of Work flow and coordinate invalidation.
+RD EXAMPLE_GENERAL R:RULE-K0-0105 P:EXTRA-K0-0095 | P: test observable cache behaviour.
+SD P:EXTRA-K0-0096 R:EXTRA-K0-0026 | S: cached EF entities M: AVOID both E: none in either T: none
+# r250-r256 .claude/skills/ci-cd/SKILL.md
+SD P:RULE-K0-0304 R:RULE-K0-0193 | S: CI formatting gates M: MUST_NOT both E: adopted policy (both) T: none
+RD COMPOUND_PART P:RULE-K0-0305 R:RULE-K0-0194 | P adds npm ci and npm run build.
+SPLIT R:RULE-K0-0195 | a: Provide CI test services (SQL Server, PostgreSQL, Redis, brokers) only when tests require them; the generic template hardcodes no database provider. | b: The CI test environment stays isolated from Development and Production data.
+SD P:EXTRA-K0-0099 R:RULE-K0-0195#a | S: CI test services M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K0-0306 R:RULE-K0-0195#b | S: CI test environment M: MUST both E: none in either T: none
+SD P:EXTRA-K0-0100 R:RULE-K0-0196 | S: CI dependency automation M: MUST (P) = MUST NOT without explicit adoption (R) (F7) E: explicit adoption (both) T: none | labels: P EXTRA, R ORACLE_LINKED
+SPLIT X:BF-K0-0064 | a@97-97: Automatic dependency updates in CI need explicit adoption. | b@113-113: Where the deployment model supports it, promote the same tested artifact or image through environments instead of recompiling per environment; environment behavior comes from runtime configuration. | c@117-117: Prefer workload/federated identity over long-lived deployment credentials when the platform supports it.
+RD COMPOUND_PART P:EXTRA-K0-0100 X:BF-K0-0064#a | P adds treating audit findings per the security policy.
+SD P:EXTRA-K0-0102 X:BF-K0-0064#b | S: artifact promotion M: P DEFAULT, X no modality E: deployment model supports promotion (both) T: none
+SD P:EXTRA-K0-0103 X:BF-K0-0064#c | S: deployment identity M: P PREFER, X no modality E: platform supports it (both) T: none
+SPLIT R:RULE-K0-0197 | a: Store or publish only artifacts later stages need. | b: Build and publish container images from CI only when container deployment is part of the project.
+RD DIFFERENT_STRENGTH R:RULE-K0-0197#a P:EXTRA-K0-0101 | same artifact guidance; R record MUST NOT, P DEFAULT.
+SD P:RULE-K0-0307 R:RULE-K0-0197#b | S: CI container images M: MUST_NOT both E: none in either T: none
+RD OVERLAP R:RULE-K0-0121 P:RULE-K0-0308 | P: the CI platform's secret or identity mechanism.
+RD DIFFERENT_STRENGTH R:RULE-K0-0198 P:RULE-K0-0309 | same migration statement; R MUST, P DEFAULT.
+RD BROADER_NARROWER P:RULE-K0-0054 R:RULE-K0-0197#b | P: container artifacts generally (CLAUDE.md); R: CI image build/publish.
+# r257-r272 .claude/skills/code-review/SKILL.md
+RD DIFFERENT_STRENGTH R:RULE-K0-0199 P:RULE-K0-0310 | same statement; R MUST, P DEFINITION.
+SD P:RULE-K0-0311 R:RULE-K0-0200 | S: code review priorities M: MUST both E: none in either T: none
+SPLIT R:RULE-K0-0201 | a: Establish the reviewed scope and read changed code plus callers/contracts/dependencies, never isolated lines. | b: Identify intended behavior and tests, read the standards for touched scopes and load the knowledge skill for each changed technology area.
+SD P:RULE-K0-0312 R:RULE-K0-0201#a | S: code review scope M: MUST both E: none in either T: none
+CX X:BF-K0-0065@22-22 | Identify the changed behavior, error cases, effects and tests; read the standards for touched scopes and load the knowledge skill for each changed technology area (reported as required regardless of sufficient context).
+SD P:RULE-K0-0313 R:RULE-K0-0201#b X:BF-K0-0065 | S: code review preparation M: MUST (P, R), X no modality E: none in any T: none
+SD P:RULE-K0-0314 R:RULE-K0-0202 | S: specification conformance M: MUST both E: approved recorded details (both) T: none
+SD P:RULE-K0-0315 R:RULE-K0-0203 | S: correctness review M: MUST both E: none in either T: none
+SPLIT R:RULE-K0-0204 | a: Check backend changes against the architecture standard (Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Application Services, specific repositories, no DbContext/DbSet/IQueryable leaks, no independent repository commits, IUnitOfWork commit boundary). | b: Check proportionality: no unapproved Rich Domain, DDD, CQRS/MediatR/VSA, extra layers or project-wide Result. | c: Check frontend changes against the Angular standard without applying backend project-boundary rules mechanically.
+RD COMPOUND_PART R:RULE-K0-0204#c P:EXTRA-K0-0104 | R adds checking frontend changes against the Angular standard.
+RD OVERLAP R:RULE-K0-0204#b P:RULE-K0-0020 | P: new architectural styles/patterns are Reserved (CLAUDE.md).
+RD OVERLAP R:RULE-K0-0204#b P:RULE-K0-0024 | P: a project-wide Result model is Reserved.
+RD OVERLAP R:RULE-K0-0204#b P:RULE-K0-0011 | P: proportional architectural complexity.
+SD P:RULE-K0-0316 R:RULE-K0-0205 | S: unadopted patterns in review M: MUST_NOT both E: none in either T: none
+SPLIT R:RULE-K0-0206 | a: When relevant check commit/transaction behavior, destructive changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive logging, concurrency, migrations and cache consistency against the standards. | b: Check the seeder obligation for model/migration changes affecting seeded entities. | c: Use the full security-scan only for a requested audit, a materially security-sensitive change or a concrete finding.
+SD P:RULE-K0-0317 R:RULE-K0-0206#a | S: code review risk checks M: MUST both E: when relevant (both) T: none
+SD P:RULE-K0-0318 R:RULE-K0-0206#b | S: seeder obligation in review M: MUST both E: none in either T: none
+SD P:EXTRA-K0-0105 R:RULE-K0-0206#c | S: security-scan in review M: MUST_NOT (P) = MUST 'only for' (R) (F7) E: requested audit, security-sensitive change or concrete finding (both) T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K0-0319 R:RULE-K0-0207 | S: external calls in review M: MUST (P) and MUST NOT (R) label the same mixed sentence (check ...; do not demand unsafe retries) E: none in either T: none
+SD P:RULE-K0-0320 R:RULE-K0-0208 | S: test coverage in review M: MUST both E: equivalent coverage (both) T: none
+SD P:RULE-K0-0321 R:RULE-K0-0209 | S: performance findings M: MUST (P) and MUST NOT (R) label the same mixed sentence (report only with a credible reason; no speculative optimizations) E: none in either T: none
+RD DETAIL_DIFFERENCE R:RULE-K0-0210 P:RULE-K0-0322 | R adds reading the code before turning a warning into a finding; P adds using available compiler/analyzer/IDE/repository tools.
+SD P:EXTRA-K0-0106 R:RULE-K0-0211 | S: code review output M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED
+CX X:BF-K0-0066@61-64 | Severity definitions: Critical (data loss, security vulnerability, reliably broken core behavior; blocks use or merge immediately), High (likely defect or architecture/data-integrity issue; fix before merge), Medium (real maintainability, robustness or test gap), Low (non-blocking improvement).
+RD COMPOUND_PART P:EXTRA-K0-0106 X:BF-K0-0066 | P adds the per-finding fields and severity ordering.
+SPLIT R:RULE-K0-0212 | a: Do not manufacture findings to populate categories; with no meaningful findings say so and name important unverifiable areas. | b: No filler praise.
+SD P:RULE-K0-0323 R:RULE-K0-0212#a | S: code review output M: MUST_NOT both E: none in either T: none
+SD P:EXTRA-K0-0107 R:RULE-K0-0212#b | S: code review output M: MUST_NOT both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SPLIT R:RULE-K0-0213 | a: Do not rewrite working code during review unless asked. | b: Do not report tooling-owned formatting or assume every warning is a bug. | c: Do not demand personal style preferences.
+SD P:RULE-K0-0324 R:RULE-K0-0213#a | S: review discipline M: MUST_NOT both E: explicit request (both) T: none
+SD P:EXTRA-K0-0108 R:RULE-K0-0213#b | S: review discipline M: MUST_NOT both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K0-0325 R:RULE-K0-0213#c | S: review discipline M: MUST_NOT both E: none in either T: none
+# r273-r276 .claude/skills/configuration/SKILL.md
+SD P:EXTRA-K0-0109 R:RULE-K0-0214 | S: example numbers M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED
+SPLIT X:BF-K0-0067 | a@86-91: The JWT options example embeds a 32-character key minimum and a positive expiration (reported copy risk). | b@95-95: Configure<T>(section) without validation only discovers misconfiguration at runtime; AddOptions<T>().BindConfiguration(...).ValidateOnStart() fails fast (reported as presented broadly rather than for required settings).
+SD P:RULE-K0-0326 X:BF-K0-0067#b | S: options validation M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K0-0121 P:RULE-K0-0328 | P: appsettings.json holds structure and non-secret defaults.
+SPLIT X:BF-K0-0068 | a@141-141: appsettings.json holds structure and non-secret defaults; values come from user-secrets in development and from environment variables or a managed store when deployed. | b@150-150: Add Azure-specific packages only when the project actually runs on Azure.
+SD P:RULE-K0-0328 X:BF-K0-0068#a | S: configuration values M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-K0-0329 X:BF-K0-0068#b | S: Azure packages M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0114 P:RULE-K0-0329 | P: Azure packages only when the project runs on Azure.
+# r277-r282 .claude/skills/custom-settings/SKILL.md
+SPLIT X:BF-K0-0069 | a@14-14: A new or changed value not already defined by the specification or approved behavior must be confirmed as approved; otherwise raise a Decision Request first. | b@16-16: Do not record framework defaults the project has not intentionally overridden.
+SD P:RULE-K0-0330 R:RULE-K0-0215 X:BF-K0-0069#a | S: new or changed settings M: REQUIRES_APPROVAL (P, R), X no modality E: none in any T: none
+SPLIT R:RULE-K0-0217 | a: Record the setting with a stable descriptive name and purpose. | b: Do not record framework defaults the project has not intentionally overridden.
+SD P:RULE-K0-0332 R:RULE-K0-0217#a | S: recording settings M: MUST both E: none in either T: none
+SD P:EXTRA-K0-0110 R:RULE-K0-0217#b X:BF-K0-0069#b | S: framework defaults in CUSTOM_SETTINGS.md M: MUST_NOT (P) = MUST + 'do not' (R) (F7), X no modality E: none in any T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+RD DIFFERENT_STRENGTH R:RULE-K0-0216 P:RULE-K0-0331 | same SPECIFICATION.md conflict check; R REQUIRES_APPROVAL, P MUST.
+SPLIT R:RULE-K0-0218 | a: Search for the old value, setting name, validators/DTO constraints, Domain/Application checks, mapping constraints, frontend validation/UI hints, tests/test data, docs/examples and mirrored configuration; separate coincidences. | b: Update every affected implementation, validation, configuration, test, documentation and mirrored frontend/backend surface. | c: Prefer one normal source over duplicated literals.
+SD P:RULE-K0-0333 R:RULE-K0-0218#a | S: settings synchronization search M: MUST both E: unrelated numeric coincidences (both) T: none
+SD P:RULE-K0-0334 R:RULE-K0-0218#b | S: settings synchronization M: MUST both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-K0-0218#c P:EXTRA-K0-0111 | same single-source guidance; R record MUST, P PREFER.
+SD P:RULE-K0-0335 R:RULE-K0-0219 | S: shared constraints M: MUST both E: none in either T: none
+SD P:RULE-K0-0336 R:RULE-K0-0220 | S: schema-affecting settings M: MUST both E: none in either T: none
+SPLIT R:RULE-K0-0221 | a: Verify settings changes: search for stale references, build affected backend/frontend, run relevant tests, verify persistence changes, re-check SPECIFICATION.md, run verify. | b: Changing one literal alone does not establish synchronization; the setting is not declared synchronized until every surface is updated and verified.
+SD P:RULE-K0-0337 R:RULE-K0-0221#a | S: settings verification M: MUST both E: none in either T: none
+SD P:RULE-K0-0338 R:RULE-K0-0221#b | S: settings synchronization claims M: MUST_NOT (P) = MUST + 'not declared' (R) (F7) E: none in either T: none
+# r283-r291 .claude/skills/delivery-pipeline/SKILL.md
+SD P:EXTRA-K0-0112 R:RULE-K0-0223 | S: pipeline authoring M: MUST both E: none in either T: before writing pipeline files | labels: P EXTRA, R ORACLE_LINKED
+SD P:RULE-K0-0339 R:RULE-K0-0222 | S: container introduction M: MUST_NOT both E: none in either T: none
+SD P:RULE-K0-0340 R:RULE-K0-0224 | S: CI definitions M: MUST both E: none in either T: none
+RD OVERLAP R:RULE-K0-0193 P:RULE-K0-0341 | P: formatting/analyzer CI gates only when adopted.
+RD OVERLAP R:RULE-K0-0224 P:RULE-K0-0341 | P: backend CI restores, builds and tests with the repository's commands.
+SD P:RULE-K0-0342 R:RULE-K0-0225 | S: frontend CI M: MUST both E: none in either T: none
+SPLIT R:RULE-K0-0226 | a: Production database migrations are not applied automatically from normal startup by default; a production migration is an explicit, controlled deployment step with approved credentials (scripts/bundles may be generated earlier in CI). | b: The production migration step fails visibly. | c: Development seeding never runs in Production.
+SD P:RULE-K0-0343 R:RULE-K0-0226#a | S: production migrations M: MUST_NOT both E: none in either T: none
+SD P:EXTRA-K0-0113 R:RULE-K0-0226#b | S: production migration step M: MUST (P); R record MUST NOT, the part is equivalent to 'must not fail silently' (F7) E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K0-0344 R:RULE-K0-0226#c | S: Development seeding M: MUST_NOT both E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0120 P:RULE-K0-0345 | P: pipeline, container and build-argument files.
+RD OVERLAP R:RULE-K0-0121 P:RULE-K0-0345 | P: the platform secret or workload-identity mechanism.
+SD P:EXTRA-K0-0116 R:RULE-K0-0227 | S: pipeline verification M: MUST both E: frontend when present (both) T: none | labels: P EXTRA, R ORACLE_LINKED
+SPLIT X:BF-K0-0016 | a@31-31: Use environment protection or approvals where the hosting platform supports them. | b@35-35: For container changes build the image, start the app and check port/configuration, non-root execution and health-probe integration.
+SD P:EXTRA-K0-0115 X:BF-K0-0016#a | S: deployment protection M: P DEFAULT, X no modality E: platform support (both) T: none
+RD COMPOUND_PART P:EXTRA-K0-0116 X:BF-K0-0016#b | P adds the general pipeline verification steps.
+SD P:EXTRA-K0-0117 R:EXTRA-K0-0027 | S: delivery-pipeline output M: MUST both E: none in either T: none
+# r292-r296 .claude/skills/dependency-injection/SKILL.md
+RD DIFFERENT_STRENGTH R:RULE-K0-0228 P:EXTRA-K0-0118 | same registration guidance; R DEFAULT, P PREFER.
+RD OVERLAP R:RULE-K0-0228 P:EXTRA-K0-0119 | P: keyed services only for several implementations selected by key.
+RD OVERLAP R:RULE-K0-0228 P:EXTRA-K0-0120 | P (MUST_NOT): no Scrutor for a single decoration (R DEFAULT).
+RD OVERLAP R:RULE-K0-0228 P:EXTRA-K0-0121 | P: scanning only for genuine boilerplate, scanning the owning assembly.
+CX X:BF-K0-0017@14-14 | Application services, repositories and external adapters use interface-to-implementation registration at architectural boundaries; implementation-only helpers can be registered concretely.
+RD OVERLAP X:BF-K0-0017 P:EXTRA-K0-0118 | same guidance; P PREFER and R DEFAULT differ, no single merge target (convention).
+RD OVERLAP X:BF-K0-0017 R:RULE-K0-0228 | same guidance; no single merge target (convention).
+SPLIT X:BF-K0-0018 | a@146-146: A singleton or hosted service that needs scoped work creates a scope per operation and resolves a scoped orchestration service, not Infrastructure internals. | b@167-167: An application service depending on scoped repositories or the Unit of Work is itself scoped; registering it as a singleton captures them.
+SD P:RULE-K0-0346 X:BF-K0-0018#a | S: scoped work from singletons M: P MUST, X no modality E: none in either T: none
+SD P:RULE-K0-0347 X:BF-K0-0018#b | S: application service lifetimes M: P MUST, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-K0-0046 P:RULE-K0-0346 | P: scope per operation for singletons and hosted services.
+RD EXAMPLE_GENERAL R:RULE-K0-0046 P:RULE-K0-0347 | P: application services using scoped repositories are scoped.
+# r297-r310 .claude/skills/development-workflow/SKILL.md
+SD P:RULE-K0-0348 R:RULE-K0-0229 | S: new applications and substantial features M: MUST both E: none in either T: before planning or implementing
+RD DETAIL_DIFFERENCE R:RULE-K0-0230 P:RULE-K0-0349 | same check; R: before implementing; P: before planning.
+RD OVERLAP R:RULE-K0-0168 P:RULE-K0-0350 | P: classify every decision the plan needs.
+RD OVERLAP R:RULE-K0-0169 P:RULE-K0-0350 | P: Decision Requests for Reserved decisions.
+SPLIT R:RULE-K0-0231 | a: Inspect the relevant existing code (code, callers, contracts, tests, conventions) before any non-trivial change and apply standards and knowledge for touched areas. | b: When planning before files are opened, read the standards for the scopes to be changed. | c: Load the knowledge skill for each technology involved. | d: Route sub-tasks to their workflows.
+SD P:RULE-K0-0351 R:RULE-K0-0231#a | S: non-trivial changes M: MUST both E: none in either T: before the change
+SD P:RULE-K0-0352 R:RULE-K0-0231#b | S: planning M: MUST both E: none in either T: before files are opened
+CX X:BF-K0-0019@20-22 | Load the knowledge skill for each technology involved (reported as required regardless of relevance).
+SD P:RULE-K0-0353 R:RULE-K0-0231#c X:BF-K0-0019 | S: knowledge skills M: MUST (P, R), X no modality E: none in any T: none
+SD P:RULE-K0-0354 R:RULE-K0-0232 | S: implementation scope M: MUST both E: none in either T: none
+SD P:RULE-K0-0355 R:RULE-K0-0233 | S: regression tests M: DEFAULT both E: equivalent coverage (both) T: none
+SD P:RULE-K0-0356 R:RULE-K0-0234 | S: seeded entities M: MUST both E: none in either T: same change
+SPLIT R:RULE-K0-0235 | a: Treat EF Core migrations as source code: review every generated migration before committing (destructive changes, column recreation, data migrations, indexes, foreign keys, delete behavior). | b: Review the seeder together with any migration affecting seeded entities.
+SD P:RULE-K0-0357 R:RULE-K0-0235#a | S: migrations M: MUST both E: none in either T: before committing
+SD P:EXTRA-K0-0122 R:RULE-K0-0235#b | S: seeder review M: MUST both E: none in either T: none | labels: P EXTRA, R ORACLE_LINKED (whole record)
+SD P:RULE-K0-0358 R:RULE-K0-0236 | S: performance changes M: MUST both E: none in either T: none
+SD P:RULE-K0-0359 R:RULE-K0-0237 | S: public API changes M: REQUIRES_APPROVAL both E: none in either T: none
+SD P:RULE-K0-0360 R:RULE-K0-0238 | S: API deprecation M: MUST both E: none in either T: none
+SD P:RULE-K0-0361 R:RULE-K0-0239 | S: substantial work M: MUST both E: none in either T: before final verification
+SD P:RULE-K0-0362 R:RULE-K0-0240 | S: implementation completion M: MUST both E: none in either T: before declaring complete
+CX X:BF-K0-0020@81-81 | The development-workflow output states what changed and why, Delegated decisions taken, Decision Requests raised or still unresolved, and the verification report (reported as requiring enumeration of Delegated decisions).
+SD P:EXTRA-K0-0123 R:EXTRA-K0-0028 X:BF-K0-0020 | S: development-workflow output M: MUST (P, R), X no modality E: none in any T: none
+# r311-r312 .claude/skills/docker/SKILL.md
+CX X:BF-K0-0021@12-12 | Keep build tooling out of production runtime images (reported as broader than avoiding SDK images for convenience).
+SD P:RULE-K0-0363 X:BF-K0-0021 | S: production runtime images M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-K0-0076 P:RULE-K0-0363 | P: build tooling out of runtime images (R: runtime image, not the SDK image).
+RD OVERLAP R:RULE-K0-0076 P:RULE-K0-0364 | P: the .NET runtime image for non-ASP.NET workers.
+SPLIT X:BF-K0-0022 | a@51-51: Copy project files explicitly (no wildcard tricks that flatten the multi-project structure). | b@55-55: Copy project and build files before the full source so source changes do not invalidate the restore layer.
+RD COMPOUND_PART P:EXTRA-K0-0125 X:BF-K0-0022#a | P adds copying only repository-level build files that exist and restore needs.
+RD COMPOUND_PART P:EXTRA-K0-0126 X:BF-K0-0022#b | P adds updating the copy section and that a correct restore graph matters more than caching.
+REVIEWED r243-r312

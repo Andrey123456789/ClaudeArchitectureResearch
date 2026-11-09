@@ -1,0 +1,178 @@
+# Reviewer decisions for candidate L0 (Codex pass 0001 claims). Grammar: _tools/build.py docstring.
+# L0 ownership headers: knowledge skills "Level: 2 Technology · Owns: <X> technique and examples (knowledge) ·
+# Loads: on invocation"; project-structure and security-scan are "Level: 3 Project · Owns: ... procedure (workflow)";
+# security-scan/references/scan-layers.md "Owns: per-layer investigation prompts for security-scan (private
+# reference) · Loads: read by security-scan only" and line 5 "Investigation prompts, not automatic vulnerability
+# declarations". L0 has a single hook entry point .claude/hooks/claude-hook.mjs (events pre-bash, post-bash,
+# post-edit, stop). Reviewer conventions as in M/M1.
+
+@@ CIS-L0-0001
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: CONFIGURATION_DIRECTIVE (EditorConfig root marker)
+appl: actor=EditorConfig-aware tooling; action=stop ancestor .editorconfig lookup; trigger=resolving settings for repository files; modality=CONFIGURATION FACT; scope=repository files; exceptions=nested .editorconfig files still apply; timing=settings resolution; enforcement=tool behaviour, not executed; loading=not an instruction file
+compared: FG-L0-c24e86356f
+rationale: .editorconfig:3 'root = true' verified (header comment calls the file an enforcement asset for formatting). Same assessment as the identical M/M1 claims: format-defined lookup marker scoping the registered formatting values (FG-L0-c24e86356f and the split parts of BF-L0-0008), no agent obligation; both Claude runs classified it as IMPLEMENTATION.
+scenario: N/A as a constraint: repository formatting values are unchanged by root=false; only unspecified properties from outside the repository could be inherited.
+conf: MEDIUM
+open_issue: Methodology: revisit with the other five root=true claims if Stage 2 counts configuration-inheritance boundaries as constraints.
+
+@@ CIS-P0001-L0-C0001
+disp: ALREADY_REPRESENTED
+nature: PLACEMENT RULE (use-case-specific queries in concrete repositories)
+appl: actor=implementing agent; action=put use-case-specific queries in concrete repositories, not in a generic base; trigger=implementing persistence queries; modality=MUST; scope=paths of rules/1-architecture/persistence-boundary.md; exceptions=an Infrastructure-only generic base may remove real duplication; timing=standing; enforcement=instruction only; loading=path-scoped rule
+match: FG-L0-8fe0f1d9c9
+compared: FG-L0-f10421e7a2
+rationale: persistence-boundary.md:23 verified. Replica group FG-L0-8fe0f1d9c9 states 'use-case-specific queries belong in concrete repositories' with the same generic-base restriction; the primary group FG-L0-f10421e7a2 lacks only that clause.
+scenario: A use-case query placed in the generic Infrastructure base: forbidden by FG-L0-8fe0f1d9c9.
+conf: HIGH
+
+@@ CIS-L0-U0001
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (lexical approximation in the in-root path helper)
+appl: actor=claude-hook.mjs relativeInside; action=treat a relative path beginning with '..' as outside the root; trigger=post-edit of a file under a directory whose name starts with '..'; modality=NONE (implementation predicate); scope=post-edit checks; exceptions=post-bash discovery may still see the manifest; timing=after an edit; enforcement=static code read (postEdit returns at 555-556), not executed; loading=hook code
+compared: FG-L0-5d2fbbf043 FG-L0-f920699025
+rationale: claude-hook.mjs:143-147 and 548-556 verified. The helper's intended contract is 'inside the root'; the '..'-prefix test only misclassifies directory names starting with two dots. No instruction states or forbids this; it is an edge-case limitation of the post-edit trigger registered in FG-L0-5d2fbbf043, not a rule. Same assessment as candidate M.
+scenario: N/A as a constraint; effect: an edit of '..cache/package.json' skips post-edit checks.
+conf: MEDIUM
+
+@@ CIS-L0-U0002
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (porcelain parser drops rename/copy source paths)
+appl: actor=claude-hook.mjs changedFiles (stop); action=keep only the destination of a rename/copy; trigger=Stop with renamed/copied files; modality=NONE (heuristic coverage limit); scope=co-change reminders; exceptions=other changed paths still trigger; timing=Stop; enforcement=static code read; git -z field order from Git documentation, not executed; loading=hook code
+compared: FG-L0-3780374c01 FG-L0-51c4f99ca7 FG-L0-94a28b5811 FG-L0-a0ab1f3b42
+rationale: claude-hook.mjs:620-629 verified (the comment says 'skip the rename/copy source path'). The registered reminders (FG-L0-51c4f99ca7, FG-L0-3780374c01) are unchanged; dropping sources narrows heuristic coverage without creating an obligation or permission. Same assessment as M/M1.
+scenario: N/A as a constraint; effect: renaming the only Domain model file to a non-model path raises no model reminder.
+conf: MEDIUM
+
+@@ CIS-L0-U0003
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: ERROR HANDLING FOR MISCONFIGURATION (unknown event argument)
+appl: actor=claude-hook.mjs main dispatch; action=report an unknown event and exit 1 (failClosed is true only for pre-bash); trigger=launch with an event argument outside pre-bash/post-bash/post-edit/stop; modality=NONE under the frozen configuration; scope=hook launcher; exceptions=host onFailure handling not verified; timing=hook start; enforcement=static code read (lines 46-61, 704-708), not executed; loading=hook code
+compared: FG-L0-69195df14f FG-L0-c01d9476db FG-L0-5c6a0474f4 FG-L0-a9a5a79d44
+rationale: Verified: failClosed = event === 'pre-bash' (line 47), so an unknown event reaches unavailable() with failClosed false and exits 1. The frozen settings register only the four known events and the checker requires them (FG-L0-a9a5a79d44), so the branch is reachable only through misconfiguration or manual invocation; it governs no agent behaviour. Not a constraint. However, the existing primary group FG-L0-69195df14f lists 'unknown event' among the pre-bash fail-closed causes that exit 2, which the code does not support.
+scenario: N/A as a constraint; direct run with event 'unknown' exits 1, not 2.
+conf: MEDIUM
+open_issue: Attribution check for Step 2: FG-L0-69195df14f (primary EXTRA-L0-0031) says an unknown event exits 2 and blocks; static reading shows exit 1 (only pre-bash fails closed). Kept as a non-destructive note; the original group is unchanged.
+
+@@ CIS-L0-0002
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (frontmatter parser shape for rule paths)
+appl: actor=check-instructions.mjs; action=accept rule paths only as indented '- ' items; trigger=instruction check (manual or post-edit); modality=CHECKER ERROR; scope=.claude/rules frontmatter; exceptions=none; timing=maintenance/hook; enforcement=static code read, not executed; host parsing not verified; loading=tool script
+match: FG-L0-baa1b845c7
+compared: FG-L0-3b028448ff FG-L0-161d002c50
+rationale: check-instructions.mjs:84-95 verified: a non-empty value after 'paths:' stays a string; only following '- ' lines build an array, and the rule check needs an array (lines 169-170 per the claim). FG-L0-baa1b845c7 requires 'a non-empty paths list' and FG-L0-3b028448ff 'declares paths' without the representation boundary. Facet, consistent with M/M1.
+scenario: paths: ["backend/**"] instead of a dash list: intended list, checker reports the missing non-empty list.
+conf: HIGH
+facet: FG-L0-baa1b845c7 | NEW_BEHAVIOR_BOUNDARY | The checker accepts a rule's paths only as indented '- ' items under 'paths:'; an inline flow sequence such as paths: ["x"] stays a scalar string and fails the non-empty paths-list check.
+
+@@ CIS-L0-0003
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (skill name compared as the raw scalar)
+appl: actor=check-instructions.mjs; action=require the frontmatter name to equal the directory as an unquoted scalar; trigger=instruction check of skills; modality=CHECKER ERROR; scope=.claude/skills/*/SKILL.md; exceptions=list items lose surrounding quotes, scalars do not; timing=maintenance/hook; enforcement=static code read, not executed; loading=tool script
+match: FG-L0-56971bcd24
+compared: FG-L0-161d002c50
+rationale: check-instructions.mjs:90-94 verified: scalar values are stored verbatim (pair[2]), so name: "angular" keeps its quotes and fails the name comparison (line 200 per the claim). FG-L0-56971bcd24 requires 'matching frontmatter name' without the quoting boundary.
+scenario: name: "angular" in .claude/skills/angular: same YAML string, checker error.
+conf: HIGH
+facet: FG-L0-56971bcd24 | NEW_BEHAVIOR_BOUNDARY | The checker compares the frontmatter name as the raw scalar text: a quoted name keeps its quotes and fails the name-equals-directory check.
+
+@@ CIS-L0-0004
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (required-hook registration shape)
+appl: actor=check-instructions.mjs; action=require one registration entry with the required event and argument whose tools include every required tool; trigger=instruction check; modality=CHECKER ERROR; scope=.claude/settings.json; exceptions=none; timing=maintenance/hook; enforcement=static code read, not executed; loading=tool script
+match: FG-L0-a9a5a79d44
+compared: FG-L0-385914fe20 FG-L0-5c6a0474f4
+rationale: check-instructions.mjs:380-385 verified: registered.some(entry => same event && same arg && required.tools.every(...)). FG-L0-a9a5a79d44 states that the PreToolUse/PostToolUse/PostToolUseFailure/Stop registrations are required but not that every required tool must sit in one entry. Facet of the existing gate (same as candidate M); Codex NOVEL not confirmed as a distinct clause.
+scenario: Split the Bash|PowerShell pre-bash registration into one Bash and one PowerShell entry with identical settings: both tools routed, checker reports a missing registration.
+conf: HIGH
+facet: FG-L0-a9a5a79d44 | NEW_BEHAVIOR_BOUNDARY | Each required event/argument must be registered by a single entry whose tool list contains every required tool; equivalent coverage split across entries fails the check.
+
+@@ CIS-L0-U0004
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: FAILURE_MODE (unreadable directory silently skipped in fallback discovery outside Git)
+appl: actor=manifest-checks.mjs findManifests; action=skip a directory whose readdirSync fails, without a diagnostic; trigger=fallback discovery outside Git after a recognized dependency command; modality=NONE (absence of enforcement); scope=manifest discovery outside Git; exceptions=readable manifests still checked; timing=after the shell call; enforcement=static code read, not executed; loading=hook helper
+compared: FG-L0-5d2fbbf043 FG-L0-61f6c3a0f3
+rationale: manifest-checks.mjs:370-389 verified (catch at 376-377 returns). No source text promises a diagnostic for unreadable directories; the behaviour neither obliges nor permits anything and only narrows the validation registered in FG-L0-5d2fbbf043/FG-L0-61f6c3a0f3. Robustness gap for enforcement analysis, not a clause.
+scenario: N/A as a constraint; effect: a manifest under an unreadable directory is not validated and no warning appears.
+conf: MEDIUM
+
+@@ CIS-L0-0005
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: CONDITIONAL_LOADING_DIRECTIVE with a negative default (not all references at once)
+appl: actor=agent running the project-structure workflow; action=read the private references according to the task, not all at once; trigger=project-structure workflow; modality=DEFAULT-NEGATIVE; scope=references/solution-layout.md and references/backend-layout.md; exceptions=both may be read when both are needed; timing=before using the references; enforcement=instruction only; loading=workflow skill ('Owns: scaffolding and restructuring procedure (workflow) · Loads: on invocation')
+compared: FG-L0-1eac41dc0b FG-L0-ec91f2dc5c FG-L0-d1775bb1d0
+rationale: project-structure/SKILL.md:23-26 verified. Primary classified the line as routing (IMPLEMENTATION), replica as NON_NORMATIVE; no L0 group restricts reference loading. FG-L0-1eac41dc0b lists rules that must be read, FG-L0-ec91f2dc5c 'use knowledge skills only when relevant' concerns knowledge skills, FG-L0-d1775bb1d0 citation ownership. Same assessment as M/M1.
+scenario: Root .gitignore task needing only solution-layout.md: the agent loads backend-layout.md too; no existing group is violated, the source default is.
+conf: MEDIUM
+proposal: DEFAULT (negative) | project-structure workflow is running | Read the private references of project-structure according to the task, not all at once.
+
+@@ CIS-L0-U0005
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: PERMISSIVE TECHNIQUE NOTE ('a useful structure'; comments optional)
+appl: actor=test author using dotnet-testing; action=use Arrange/Act/Assert; trigger=writing tests; modality=DESCRIPTIVE/PERMISSIVE (no default or preference term); scope=dotnet-testing knowledge skill; exceptions=comments optional when phases are obvious; timing=standing; enforcement=none; loading=on-invocation knowledge skill ('.NET test technique and examples (knowledge)')
+compared: FG-L0-fd5fe0f96a
+rationale: dotnet-testing/SKILL.md:34 verified: 'Arrange / Act / Assert is a useful structure' carries no default, preference or obligation term (unlike candidate M1's 'useful default structure', which stays unresolved), and the second half is a permission. Both runs classified it as permissive technique (ORPHAN-L0-0220). Resolved.
+scenario: N/A: a clear test that interleaves phases violates no stated rule.
+conf: MEDIUM
+
+@@ CIS-L0-U0006
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE CONTRAST (FindAsync vs LINQ)
+appl: actor=agent using the ef-core knowledge skill; action=use LINQ for extra predicates, projection, related data or shaping; trigger=lookup beyond primary-key semantics; modality=TECHNIQUE; scope=ef-core knowledge skill (Tracking and lookups); exceptions=raw-SQL rules unchanged; timing=implementation; enforcement=none; loading=on-invocation knowledge skill
+compared: FG-L0-cc209bb5df FG-L0-587de8e4f7
+rationale: ef-core/SKILL.md:106 verified: one bullet saying when FindAsync fits and that LINQ is used otherwise. 'Start with clear LINQ' is registered (FG-L0-cc209bb5df); FindAsync cannot express shaping, so no further allowed/forbidden behaviour results. Same assessment as M/M1.
+scenario: N/A: a shaped lookup cannot be written with FindAsync; other mechanisms stay governed by the registered LINQ/raw-SQL rules.
+conf: HIGH
+
+@@ CIS-L0-U0007
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: ADVISORY ('consider')
+appl: actor=agent using the ef-core knowledge skill; action=consider keyset pagination; trigger=very large or frequently traversed datasets; modality=ADVISORY; scope=ef-core knowledge skill; exceptions=none stated; timing=design; enforcement=none; loading=on-invocation knowledge skill
+compared: FG-L0-39aa636880 FG-L0-8826f3e87a
+rationale: ef-core/SKILL.md:128 verified; advice to consider an option with no required outcome; primary rejected it (ORPHAN-L0-0222). Registered pagination rules unaffected. Same assessment as M/M1.
+scenario: N/A: deterministic offset pagination on large data is not forbidden.
+conf: MEDIUM
+
+@@ CIS-L0-U0008
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: RESPONSE CONTRACT (304 carries no representation)
+appl: actor=agent implementing conditional HTTP responses; action=return 304 without a representation; trigger=conditional request whose cached representation is still valid; modality=MUST (contract stated in a reference table); scope=http-api knowledge skill; exceptions=headers not addressed; timing=response generation; enforcement=none; loading=on-invocation knowledge skill ('HTTP API response technique and status-code reference')
+match: FG-L0-a43c2acc3d
+compared: FG-L0-c3af8cbd51
+rationale: http-api/SKILL.md:38 verified: the table cell reads '304 (no representation; not a business "nothing changed")'. FG-L0-a43c2acc3d (P EXTRA-L0-0122 + the 304 part of X BF-L0-0087) keeps the trigger and the business-response exclusion but drops 'no representation'; the 204 counterpart is registered as 'never with a body' (FG-L0-c3af8cbd51). Resolves the Codex uncertainty as a facet of the existing 304 group.
+scenario: 304 returned for a valid conditional cache hit while the resource body is serialised: FG-L0-a43c2acc3d satisfied, the source contract not.
+conf: MEDIUM
+facet: FG-L0-a43c2acc3d | NEW_BEHAVIOR_BOUNDARY | A 304 response carries no representation (the resource body is not sent).
+policy_hint: API-003 (non-binding)
+
+@@ CIS-L0-U0009
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNICAL_PREREQUISITE (LogContext needs the enricher)
+appl: actor=agent configuring Serilog; action=configure Enrich.FromLogContext; trigger=using LogContext; modality=TECHNICAL FACT ('requires'); scope=logging private reference serilog.md; exceptions=other context mechanisms not addressed; timing=configuration; enforcement=library behaviour; loading=private technique reference
+compared: FG-L0-8c9ca73b13 FG-L0-0d273c087a FG-L0-9f57cdb5cf
+rationale: serilog.md:111 verified: '`LogContext` requires `.Enrich.FromLogContext()`' is a library prerequisite; the normative parts of the same line (LogContext at provider boundaries FG-L0-8c9ca73b13, no large destructuring FG-L0-0d273c087a) are registered. Same assessment as M1.
+scenario: N/A: omitting the enricher is a functional defect of the technique, not a separate rule.
+conf: HIGH
+
+@@ CIS-L0-0006
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (investigation prompt of the supply-chain layer)
+appl: actor=agent running the security-scan workflow; action=review unexpected or untrusted NuGet sources; trigger=security scan covering the .NET dependency/supply-chain layer; modality=PROCEDURAL (investigation prompt); scope=security-scan workflow via scan-layers.md; exceptions=irrelevant checks are skipped; prompts are not automatic vulnerability declarations; timing=during the scan; enforcement=instruction only; loading=private reference read by security-scan only
+compared: FG-L0-35fef36ce5 FG-L0-a9e7b21d3e FG-L0-f7f7986ea8 FG-L0-d2ce44cdf5 FG-L0-1448d21f3f
+rationale: scan-layers.md:9 verified. The only groups anchored on this line are 'do not upgrade during a scan' (FG-L0-35fef36ce5) and the replica's focus rule; due diligence FG-L0-a9e7b21d3e concerns selecting a version, FG-L0-d2ce44cdf5 the layer list. The L0 union registers many other scan-layer prompts as review duties (e.g. FG-L0-131120755c certificate validation, FG-L0-041f2fee65 logging review), so this omitted prompt is an unrepresented procedural review step by the union's own granularity. Codex NOVEL confirmed as a distinct (workflow-scoped) proposal.
+scenario: A scan reviews vulnerable packages and licences and upgrades nothing, but never inspects an unexpected NuGet feed in nuget.config.
+conf: MEDIUM
+open_issue: The same line also lists vulnerable direct/transitive packages, advisory severity, actual usage and patched compatible versions; whether these are represented in L0 was not checked beyond this claim (no extraction).
+proposal: PROCEDURAL (review step) | security scan covering the .NET dependency and supply-chain layer | Review unexpected or untrusted NuGet sources as part of the dependency and supply-chain layer of a security scan.
+policy_hint: EXC-015 context / WF-020 (non-binding)
+
+@@ CIS-L0-0007
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (conditional lockfile review)
+appl: actor=agent running the security-scan workflow; action=review lockfiles; trigger=npm part of the supply-chain layer when integrity or unexpected dependency changes matter; modality=PROCEDURAL, conditional; scope=security-scan workflow via scan-layers.md; exceptions=only when integrity/unexpected changes matter; timing=during the scan; enforcement=instruction only; loading=private reference read by security-scan only
+compared: FG-L0-f126d8d95b FG-L0-cdc94584e5 FG-L0-78542f4433 FG-L0-f40bf092ce
+rationale: scan-layers.md:10 verified. FG-L0-f126d8d95b registers the production/development and direct/transitive distinctions of the same line; the lockfile groups (commit/keep consistent, do not delete during repair) concern maintenance, not inspection during a scan; replica dismissed the prompt. Unrepresented conditional review step, consistent with M1.
+scenario: A consistent committed lockfile contains an unexpected resolution change; the scan runs npm audit and classifies dependencies but never inspects the lockfile change.
+conf: MEDIUM
+proposal: PROCEDURAL (conditional review step) | security scan with npm dependencies where integrity or unexpected dependency changes matter | Review the lockfiles when package integrity or unexpected dependency changes matter.
+policy_hint: EXC-015 context / WF-020 (non-binding)

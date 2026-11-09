@@ -1,0 +1,194 @@
+# Blind view: seed 20261104. Claim and current source only. Write one line per record in BLIND_READING.txt: id | GROUP | FORCE | note
+# GROUP: CANONICAL, DELTA_OR_MIXED, EXTRA, NON_NORMATIVE. FORCE: BINDING, DEFAULT_CLASS, PERMISSION, NONE, MIXED.
+
+B01 K0 .claude/rules/common/security.md:3-14
+  claim: The common security rule file's path globs omit root scripts and many documentation files (reported trigger gap).
+  source: paths: - "backend/**/*" - "frontend/**/*" - "**/*.json" - "**/*.yml" - "**/*.yaml" - "**/*.csproj" - "**/*.props" - "**/*.targets" - "**/*.config" - "**/.env*" - "Dockerfile*" - "**/Dockerfile*" ---
+
+B02 K0 .claude/skills/configuration/SKILL.md:141-141
+  claim: appsettings.json holds structure and non-secret defaults; values come from user-secrets in development and from environment variables or a managed store when deployed.
+  source: `appsettings.json` holds structure and non-secret defaults (`rules/common/security.md` § Secrets); values come from user-secrets in development and from environment variables or a managed store in deployed environments:
+
+B03 L1 .claude/skills/logging/references/serilog.md:31-37
+  claim: The Serilog bootstrap example logs a fatal startup failure without rethrowing or setting a failure exit status (reported failure-visibility uncertainty).
+  source: } catch (Exception ex) { Log.Fatal(ex, "Application terminated unexpectedly"); } finally { await Log.CloseAndFlushAsync(); }
+
+B04 K0 .claude/hooks/hook.cjs:376-376
+  claim: The post-change hook observes only listed manifest and instruction surfaces (no imported props, lockfiles or npm configuration) and limits non-Git observation to twenty thousand entries (reported scope gaps).
+  source: const listed = t.repo.git(root, ['ls-files', '-z', '--cached', '--others', '--exclude-standard', '--', '*.csproj', '*Directory.Packages.props', '*Directory.Build.props', '*Directory.Build.targets', '*package.json', 'CLAUDE.md', 'SPECIFICATION.md', 'CUSTOM_SETTINGS.md', '.claude', REGISTER]); if (!listed.ok) throw new Error(`git ls-files failed in ${root}: ${listed.stderr}`);
+
+B05 L0 .claude/skills/git-workflow/SKILL.md:53-53
+  claim: Report the resulting Git state when useful (branch, commit, push target, PR status, remaining uncommitted changes).
+  source: Report the resulting state when useful: branch, commit created, push target, PR status, remaining uncommitted changes.
+
+B06 M1 docs/capability-selection.md:18-22
+  claim: Database string comparison follows the database/column collation; SQL Server defaults compare case-insensitively and accent-sensitively as a technology default, not an approved product semantic; changing the effective collation is a product decision.
+  source: - persistence / string comparison: equality, uniqueness, ordering, and lookup in database queries follow the database and column collation. SQL Server default collations compare case-insensitively and accent-sensitively. This is a technology default, not an approved product semantic; changing the effective collation is a product decision (`CLAUDE.md` § Product Sources).
+
+B07 K0 .claude/skills/dependency-injection/SKILL.md:14-14
+  claim: Interface-to-implementation registration at architectural boundaries, concrete registration for implementation-only helpers; prefer explicit registration in small and medium applications; keyed services, factories, decorators and scanning only for actual composition problems.
+  source: Application services, repositories and external adapters use interface-to-implementation registration at architectural boundaries; implementation-only helpers can be registered concretely. Prefer explicit registration in small and medium applications — keyed services, factories, decorators and convention scanning solve actual composition problems.
+
+B08 M .claude/hooks/stop-co-change.mjs:81-88
+  claim: The reminder state fingerprint covers at most 200 changed files.
+  source: // The fingerprint covers the current content of the relevant changed files // (bounded: at most 200 files, each by contentId), so the same paths changed // again remind again while an unchanged state stays silent. const relevant = [...changed].sort().filter((p) => isModel(p) || isSeeder(p) || isMigration(p) || isBackendProduction(p) || isBackendTest(p) || isFrontendProduction(p) || isFrontendTest(p)).slice(0, 200); const fingerprint = createHash('sha256') .update(JSON.stringify({ reminders, changed: [...changed].sort(), content: relevant.map((p) => [p, contentId(resolve(root, p))]) })) .digest('hex'); const stateDir = (process.env.CLAUDE_HOOK_STATE_DIR ?? '').trim() || gitDir;
+
+B09 L1 .claude/skills/project-structure/SKILL.md:24-24
+  claim: Add only references the layout shows; never an outward reference to make compilation easier.
+  source: 4. **Backend projects** — create the projects from `architecture.layout` on the approved .NET target. 5. **Project references** — add only the references `architecture.layout` shows; never an outward reference to make compilation easier. The project-graph hook asks for confirmation of every reference command; confirm only references the approved layout shows. 6. **Packages** — through `add-dependency`, resolving versions at install time; never copy stale versions from examples.
+
+B10 M .claude/hooks/hook-io.mjs:105-115
+  claim: Hook change detection uses SHA-256 content identity but switches to size and modification time for files above 1 MiB.
+  source: // Bounded identity of a file's current content: SHA-256 of its bytes, or size // and modification time above 1 MB; "missing" when the file does not exist. export function contentId(file) { try { const stat = statSync(file); if (!stat.isFile()) return 'not-a-file'; if (stat.size > 1024 * 1024) return `size:${stat.size}:mtime:${stat.mtimeMs}`; return createHash('sha256').update(readFileSync(file)).digest('hex'); } catch { return 'missing'; } }
+
+B11 L1 .claude/capabilities/backend-testing/nunit/commands.md:15-15
+  claim: NuGet versions live only in Directory.Packages.props; project PackageReference entries are versionless (never duplicate a central version; generated versions are moved).
+  source: `dotnet new nunit` writes package versions into the project file; move them into `Directory.Packages.props` and keep the `PackageReference` entries versionless.
+
+B12 L0 .claude/skills/ef-core/SKILL.md:35-37
+  claim: The EF Core mapping example embeds a monetary precision and an index without a local product-approval caveat (reported copy risk).
+  source: { builder.HasKey(x => x.Id); builder.Property(x => x.Total).HasPrecision(18, 2); builder.HasIndex(x => x.CreatedAt); }
+
+B13 K1 .claude/skills/project-structure/references/solution-layout.md:38-38
+  claim: Frontend unit and E2E tests stay inside the workspace, never under backend/.
+  source: The frontend workspace lives outside the .NET tree in `frontend/ProjectName.Web/` and owns its `package.json`, `package-lock.json`, framework configuration, `tsconfig` files, `src/`, and `public/`. Do not impose an obsolete directory structure when the current framework CLI generates a different supported one. Frontend unit/component tests stay inside the workspace (normally colocated with the code); frontend E2E tests, when introduced, also stay inside it (e.g. `frontend/ProjectName.Web/e2e/`). Never place frontend tests under `backend/`.
+
+B14 L0 .claude/rules/2-technology/fluentvalidation.md:11-11
+  claim: Application-level validators live in Application and are registered with FluentValidation.DependencyInjectionExtensions from Application's own registration.
+  source: - Use FluentValidation for explicit request and use-case validation where validation is needed — required application input, string and collection constraints, ranges, cross-property and conditional rules — while each rule stays at the owning boundary defined in `1-architecture/outcomes.md`. - Application-level validators live in Application and are registered with `FluentValidation.DependencyInjectionExtensions` from Application's own registration. - Follow the project's established validation invocation pattern rather than adding a second competing mechanism; do not adopt a deprecated or legacy ASP.NET automatic-validation integration package unless a concrete project requirement justifies it (default).
+
+B15 K1 .claude/scripts/facets/persistence-technology.cjs:48-55
+  claim: Changed migration files produce a reminder to review them as source code before committing.
+  source: } if (migrations.length) { reminders.push({ id: 'persistence-migration-review', message: `migration files changed (${migrations.length}); review them as source code before committing`, owner: OWNER_WF, paths: migrations, }); } return reminders;
+
+B16 K1 .claude/skills/ci-cd/SKILL.md:76-76
+  claim: Provide CI integration-test services (database, cache, broker) only when tests require them; do not hardcode a database provider into a generic pipeline.
+  source: Provide services (the selected database server, cache, broker) only when tests require them, as CI service containers or Testcontainers, isolated from Development and Production data; do not hardcode a database provider into a generic pipeline. Testing technique: the backend-testing knowledge facet named in the decision register.
+
+B17 M .claude/skills/dependency-injection/SKILL.md:76-78
+  claim: Use keyed services only when implementations are selected by a known key; decorators when the same cross-cutting behaviour wraps an abstraction; assembly scanning only for genuinely repetitive registration and over the assembly that owns the services.
+  source: Use keyed services when multiple implementations of the same abstraction are selected by a known key, not when a normal single registration or a simple explicit factory is clearer.
+
+B18 M .claude/scripts/check-manifests.mjs:341-343
+  claim: A PackageReference VersionOverride is flagged as needing a concrete, documented reason.
+  source: } if (attrs.versionoverride !== undefined) { result.notes.push({ file: rel, message: `${id}: VersionOverride "${attrs.versionoverride}" needs a concrete, documented reason` }); } if (central && attrs.include && !central.has(attrs.include.toLowerCase())) {
+
+B19 M1 .claude/skills/git-workflow/SKILL.md:41-42
+  claim: One logical change per commit with its protecting tests; no artificial tiny commits.
+  source: Before committing, inspect the staged diff and include only the intended logical change. Do not stage unrelated files merely because they are modified.
+
+B20 K1 .claude/skills/caching/SKILL.md:75-75
+  claim: Decide whether a cache failure falls back to the source, fails the request or returns stale data.
+  source: Application Services keep their normal repository/Unit of Work workflow; coordinate required invalidation through an abstraction instead of bypassing repositories or `IUnitOfWork`. Decide whether a cache failure falls back to the source, fails the request, or returns stale data. Never cache tracked persistence entities across Unit of Work boundaries.
+
+B21 M1 .claude/skills/build-fix/SKILL.md:176-183
+  claim: Do not change declared SDK/Node/framework/language versions because the local machine differs; report an unresolvable toolchain limitation instead of editing source.
+  source: Determine whether the failure comes from source code or from the local toolchain (`dotnet --info`, `dotnet --version`, `node --version`, `npm --version`; `global.json`, target framework, framework package versions, `package-lock.json`, CI/runtime version configuration). Do not change the repository's declared SDK, Node, framework, or language version merely because the local machine has a different version. If the required toolchain is unavailable and cannot be resolved safely, report the limitation instead of editing source code to compensate.
+
+B22 K0 .claude/skills/http-api/SKILL.md:68-68
+  claim: 422 for structurally valid but semantically invalid content; follow an established 400-for-both convention, otherwise new APIs use 400 for invalid request contracts and 422 for invalid semantics.
+  source: **422 Unprocessable Content** — syntactically and structurally valid, but semantically or business-invalid content: impossible values, a business-rule rejection that is not a state conflict, incompatible fields such as `startDate > endDate`. Some APIs use `400` for both transport and semantic validation; follow an established convention. New APIs that distinguish them use `400` for an invalid HTTP/request contract and `422` for a valid structure with invalid semantics.
+
+B23 L0 .claude/rules/2-technology/angular.md:15-15
+  claim: Tie manual subscription lifetimes to the component/service lifecycle with current Angular facilities.
+  source: - Avoid manual nested RxJS subscriptions; prefer composition operators when stream composition expresses the behavior clearly (default). - When manually subscribing from Angular framework-managed code, tie the subscription's lifetime to the component or service lifecycle using the project's current Angular facilities. - Prefer functional HTTP interceptors for new code and keep interceptor responsibilities cross-cutting; never put feature business logic in an interceptor (default).
+
+B24 M Directory.Build.props:9-9
+  claim: Nullable reference types are enabled for every project.
+  source: <TargetFramework>net10.0</TargetFramework> <Nullable>enable</Nullable> <ImplicitUsings>enable</ImplicitUsings>
+
+B25 M1 .claude/scripts/check-architecture.js:75-79
+  claim: Backend projects are expected to end with the frame suffixes (.Domain, .Application, .Infrastructure, .Api, .Domain.Tests, .Application.Tests, .Infrastructure.Tests, .IntegrationTests); others are flagged.
+  source: } for (const [name, p] of info) { const { names: refs, unreadable } = projectReferences(p.xml); if (p.cls.kind === 'unknown') { findings.push(finding('WARN', p.file, `project ${name} does not match a frame layer or test-project role; adding a project or layer is Reserved (${ctx.owner}).`)); continue; }
+
+B26 M1 CLAUDE.md:93-98
+  claim: For an unclear decision, any 'yes' to five questions makes it Reserved: does it add, remove or replace a dependency, framework or infrastructure capability; change a project, layer or reference boundary; establish a convention other code must follow; change observable behavior or a public contract; or would it be expensive to reverse once other code depends on it.
+  source: For an unclear case, any "yes" makes it Reserved: (1) does it add, remove, or replace a dependency, framework, or infrastructure capability? (2) does it change a project, layer, or reference boundary? (3) does it establish a convention other code is expected to follow? (4) does it change observable behavior or a public contract? (5) would it be expensive to reverse once other code depends on it?
+
+B27 L1 .claude/skills/template-maintenance/SKILL.md:18-18
+  claim: Always-needed planning policy in CLAUDE.md or an imported always rule; path-specific policy in a rule whose paths cover its scope; procedure obligations in the owning workflow.
+  source: 3. **Capability** — content specific to a selected slot implementation goes into that module's facets (`.claude/capabilities/<slot>/<implementation>/MODULE.md` lists them) and declares `Capability:`; everything else uses roles and `<slot>.<facet>` references, never implementation names. 4. **Trigger** — always-needed planning policy goes into `CLAUDE.md` or an imported always rule; path-specific policy into a rule whose `paths` cover at least its scope; procedure obligations into the owning workflow. 5. **One owner** — add the rule once; elsewhere use a pointer or a yes/no check that names the owner.
+
+B28 L0 .claude/skills/caching/SKILL.md:51-51
+  claim: Choose expiration from data semantics; invalidate by removing keys after successful mutations, short TTL with tolerated staleness, tags/groups or versioned keys.
+  source: Choose expiration from data semantics: change frequency, regeneration cost, acceptable staleness, memory footprint, behavior when the source is unavailable. Invalidation strategies: remove the affected key after a successful mutation; short TTL with tolerated staleness; tag/group invalidation; versioned keys.
+
+B29 M .claude/skills/project-structure/references/solution-layout.md:101-103
+  claim: Keep deterministic formatting/code-style configuration in .editorconfig and prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.
+  source: Deterministic repository-wide formatting and code-style configuration lives here. Prefer enforceable tooling configuration over restating mechanical formatting rules in instructions.
+
+B30 M .claude/skills/http-api/SKILL.md:235-236
+  claim: When HTTP optimistic concurrency is part of the contract prefer standard conditional request semantics (ETag/If-Match/412) over custom status codes.
+  source: When HTTP-level optimistic concurrency is part of the contract, prefer standard conditional request semantics over custom status codes:
+
+B31 L0 .claude/hooks/claude-hook.mjs:600-612
+  claim: Rules live in level directories with paths front matter.
+  source: if (relative === 'CLAUDE.md' || (relative.startsWith('.claude/') && /\.(md|json|mjs)$/.test(relative) && !relative.startsWith('.claude/settings.local'))) { const checkerFile = [path.join(root, CHECKER), path.join(launcherRoot, CHECKER)].find(file => existsSync(file)); if (!checkerFile) unavailable(`instruction-structure check after editing ${relative} is unavailable: ${CHECKER} is missing.`); const { checkInstructions } = await import(pathToFileURL(checkerFile).href); const result = checkInstructions(root); if (result.errors.length > 0) { feedback([ `Instruction-structure check failed after editing ${relative} (${TEMPLATE_MAINTENANCE}):`, ...result.errors.map(error => ` - ${error}`), ]); } } }
+
+B32 K1 .claude/skills/caching/SKILL.md:13-13
+  claim: Define consistency semantics (acceptable staleness, invalidation) before writing cache code.
+  source: Policy: `.claude/rules/backend/runtime.md` (need, keys, lifetimes, invalidation), `.claude/rules/backend/architecture.md` (cache technology boundaries). Adding a distributed cache is a Reserved infrastructure decision (`CLAUDE.md`). Clear reasons to cache: measured expensive repeated work, high read volume, expensive remote calls — with acceptable staleness semantics; a value being read frequently is not by itself a reason. Define consistency semantics — acceptable staleness and invalidation — before writing cache code, and measure before caching solely for performance.
+
+B33 L0 .claude/rules/3-project/decisions.md:49-49
+  claim: Physical layout: backend production and test projects under backend/<Name>.<Layer>/, the Angular workspace under frontend/<Name>.Web/ (unit and component tests inside the workspace, E2E under frontend/<Name>.Web/e2e/, never under backend/), maintained documentation under docs/; keep them separated and create no top-level tests/ directory.
+  source: - Repository-level `Directory.Build.props` holds genuinely shared .NET build settings and `Directory.Packages.props` holds Central Package Management versions; project-specific settings stay in their owning projects. - Physical layout: backend production and test projects under `backend/<Name>.<Layer>/`, the Angular workspace under `frontend/<Name>.Web/`, maintained documentation under `docs/`. Keep them clearly separated and do not create a separate top-level `tests/` directory. Project mapping: `layout.md`.
+
+B34 M1 .claude/hooks/post-tool-use.js:169-183
+  claim: On the initial manifest snapshot (no saved state for the active root) no change, removal or move notes are emitted; manifest and architecture validation still run and report findings.
+  source: function shellChecks(command, tool) { const recognized = changesManifests(command, tool); const delta = manifestChanges(); const msgs = []; if (recognized) { msgs.push(...report(checkManifests([]), MANIFEST_TITLE)); msgs.push(...report(checkArchitecture([]).findings, ARCHITECTURE_TITLE)); } else if (delta) { const touched = [...delta.changed, ...delta.removed, ...delta.moved.flat()]; if (delta.changed.length) msgs.push(...report(checkManifests(delta.changed), MANIFEST_TITLE)); if (touched.some(isProject)) msgs.push(...report(checkArchitecture([]).findings, ARCHITECTURE_TITLE)); } if (delta && !delta.initial) msgs.push(...changeNotes(delta, recognized)); if (delta) delta.save(); return msgs; }
+
+B35 L1 .editorconfig:40-41
+  claim: Prefer braces (suggestion).
+  source: # Braces and layout csharp_prefer_braces = true:suggestion csharp_new_line_before_open_brace = all
+
+B36 K0 .claude/skills/health-check/SKILL.md:80-80
+  claim: Health checks are not a code-quality grading system.
+  source: Health checks as a code-quality grading system; database writes or business transactions from probes; every dependency on liveness; expensive queries; secrets or stack traces in payloads; remote dependency chains without operational justification.
+
+B37 K1 .claude/skills/architecture-decision/SKILL.md:49-49
+  claim: For a capability selection change read the slot CONTRACT.md and the current module manifest.
+  source: 1. Read `.claude/capabilities/<slot>/CONTRACT.md` and the current module manifest (`.claude/capabilities/<slot>/<implementation>/MODULE.md`). 2. For the proposed implementation, map every contract item to a concrete mechanism. An item without a mechanism (for example a persistence implementation without a migration mechanism) must be named in the Decision Request under *Blocked* — never silently dropped.
+
+B38 K1 .claude/scripts/check-manifests.cjs:100-117
+  claim: The manifest checker parses project files textually (Include references, raw attributes) without evaluating MSBuild conditions, properties or imports (reported uncertainty).
+  source: function parseProject(root, rel, source) { const text = lib.stripXmlComments(source === undefined ? lib.readText(root, rel) : source); const dir = path.posix.dirname(rel); const projectTag = lib.xmlElements(text, 'Project')[0]; const sdk = (projectTag && projectTag.attrs.Sdk) || ''; const packages = lib.xmlElements(text, 'PackageReference').map(e => ({ id: e.attrs.Include || e.attrs.Update || '', version: e.attrs.Version || e.child.Version || '', versionOverride: e.attrs.VersionOverride || e.child.VersionOverride || '', })); // Only an Include adds a reference edge (Update/Remove items or a missing Include reference nothing). const projectRefs = lib.xmlElements(text, 'ProjectReference').filter(e => e.attrs.Include).map(e => { const include = e.attrs.Include.replace(/\\/g, '/'); const target = path.posix.normalize(path.posix.join(dir, include)); return { include, target, name: path.posix.
+
+B39 M1 .claude/scripts/check-instructions.js:353-388
+  claim: Implementation leak tokens are matched lexically across prose and examples, so a legitimate explanatory mention of another implementation can be blocked (reported ambiguity).
+  source: // Implementation-name leaks, workflow facet roles, and binds. const frame = modules.find((m) => m.slot === 'architecture'); const detailTokens = (frame && frame.manifest.enforcement && frame.manifest.enforcement.detailTokens) || []; const scanned = [...files, ...enforcementFiles()].filter((f) => !ALLOW_ALL_TOKENS.includes(f) && !f.startsWith('.claude/capabilities/')); const usedBinds = new Map(); for (const f of scanned) { const text = common.readText(f); const owner = common.capabilityOf(text); const isWorkflow = /^>\s*Workflow\b/.test(common.firstContentLine(text)); for (const m of modules) { if (owner && owner.slot === m.slot) continue; for (const hit of findTokens(text, m.manifest.leakTokens || [])) { if (owner) { const binds = ((modules.find((x) => x.slot === owner.slot) || {}).manifest || {}).binds || []; if (binds.some((b) => b.target === `${m.slot}/${m.implementation}`)) continu
+
+B40 M1 .claude/capabilities/frontend/CONTRACT.md:14-15
+  claim: Clearing the optional frontend selection removes the module's facets and its planning import; nothing outside the listed facets may need to change (check-instructions.js errors on imported/present planning facets of unselected slots).
+  source: Clearing the selection removes the module's facets and its planning import; nothing outside the facets listed in the manifest needs to change.
+
+B41 L1 .claude/hooks/manifest-policy.json:10-13
+  claim: Direct Polly is flagged as requiring approval (documented exception to the Microsoft resilience packages).
+  source: ], "approvalRequired": [ { "id": "Polly", "reason": "direct Polly usage is a documented exception to the Microsoft resilience packages", "owner": "add-dependency" }, { "prefix": "AutoMapper", "reason": "another mapping framework is a Reserved library addition (Mapster is the approved option)", "owner": "CLAUDE.md § Decision control" } ] },
+
+B42 L1 .claude/skills/security-scan/SKILL.md:17-17
+  claim: Do not suppress a real secret because it sits in a Development file.
+  source: 3. Assign severity from exploitability, reachability, impact, and application context — never from a suspicious pattern, an OWASP category, or a raw CVSS score alone. 4. Do not suppress a real secret because it sits in a Development file. 5. Do not require security mechanisms the project does not need.
+
+B43 K1 .claude/scripts/classify-command.cjs:212-212
+  claim: dotnet help is exempt; package commands accept two-to-four numeric version components; recognized removals always block; reference commands are classified regardless of consequence.
+  source: /** DEP-003 exception: the command form of a version the user explicitly requested and that is recorded; the post-change check enforces its manifest. */ function recordedVersion(cwd, ecosystem, id, version) { try {
+
+B44 L0 .claude/rules/0-core/runtime-principles.md:3-3
+  claim: The technology-neutral runtime rule file loads only for backend C# paths (reported: frontend runtime work lacks automatic coverage).
+  source: paths: - "backend/**/*.cs" ---
+
+B45 K0 .claude/rules/common/security.md:39-39
+  claim: Never disable certificate validation to make an integration work.
+  source: - Production traffic carrying credentials or sensitive data must use TLS. Respect the actual hosting topology: TLS may terminate in the application, a reverse proxy, ingress controller, gateway or hosting platform, and in-app HTTP-to-HTTPS redirection is not required when the deployment already provides the secure transport boundary. - Never disable certificate validation to make an integration work.
+
+B46 M .claude/skills/caching/SKILL.md:85-87
+  claim: Choose cache expiration from data semantics (change rate, regeneration cost, staleness, memory, source-unavailable behaviour) rather than a universal default.
+  source: Choose expiration from data semantics rather than a universal default: how often the data changes, regeneration cost, acceptable staleness, memory footprint, and failure behavior when the source is unavailable.
+
+B47 K0 .claude/skills/custom-settings/SKILL.md:15-15
+  claim: Check SPECIFICATION.md for conflicts with the setting.
+  source: 1. If the value is new or changed and not already defined by the specification or existing approved behavior, confirm it was approved (CLAUDE.md § Product sources); otherwise raise a Decision Request first. 2. Check `SPECIFICATION.md` for conflicts (CLAUDE.md § Product sources). 3. Record the setting with a stable descriptive name and its purpose. Do not record framework defaults the project has not intentionally overridden.
+
+B48 L1 .claude/rules/2-technology/backend-libraries.md:3-3
+  claim: The backend-libraries rule file loads only for backend paths (reported: a repository-root Dockerfile edit may not load the container rules).
+  source: paths: - "backend/**/*" ---

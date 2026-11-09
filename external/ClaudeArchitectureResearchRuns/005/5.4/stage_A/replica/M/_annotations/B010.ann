@@ -1,0 +1,109 @@
+# M / B010 — code-review, configuration, custom-settings.
+
+C R169 OL WF-010 | MUST | The review is independent and read-only (no edits or rewrites of working code unless asked); code-review is the canonical procedure that the code-reviewer agent runs and other workflows reference instead of redefining review criteria. | code review | Explicit request to change code.
+C R170 OL WF-011 | MUST | Review prioritizes correctness, security/authorization, data integrity/persistence, architectural boundaries, concurrency/integration, missing meaningful tests, maintainability, then credible evidence-backed performance; style preferences are not elevated above behavioral defects; code is not reported as a violation merely for differing from an unadopted pattern. | code review | none stated
+C R171 OL WF-011 | MUST | Before judging, the review reads the changed code with enough surrounding code (callers, contracts, dependencies), identifies intended behavior and tests, and reads the rules whose paths match the changed files; no review of isolated lines. | code review | none stated
+C R172 OL GOV-003 | MUST NOT | Do not weaken required specified behavior or introduce unapproved product behavior: new length or numeric limits, reserved names or values, newly required fields, extra workflow restrictions, additional user-visible validation or new observable string-comparison semantics (including through database configuration or framework defaults when the specification is silent). | product behavior | Detail explicitly approved by the user with durable sources synchronized.
+C R173 OL GOV-005 | DEFAULT | Internal implementation details that do not change observable product behavior are not product-behavior decisions and need no approval. | product behavior | none stated
+C R174 OL WF-012 | MUST NOT | Do not manufacture review findings: no hypothetical failures without a plausible execution path, no findings to populate categories, tool output is evidence rather than authority; when no meaningful findings exist say so and state important areas that could not be verified; no filler praise. | code review | none stated
+C R175 OL WF-007 | MUST | Scope deep checks by risk: the full security-scan procedure runs only when the user requested a security audit, the change is materially security-sensitive or a concrete finding justifies broader investigation; normal security review of changed code is part of every review. | code review and verification | none stated
+C R176 OL TST-009 | DEFAULT | For a bug fix with plausible recurrence expect a regression test unless equivalent coverage already exists; do not request duplicate tests. | tests for bug fixes | Equivalent coverage exists.
+C R177 OL GOV-021 | MUST | When an approved CUSTOM_SETTINGS.md value is added, changed or removed, record it under a stable name with value and purpose and identify and update every affected implementation, validation, configuration, test, documentation and mirrored frontend/backend surface (old value and setting name, validators and DTO constraints, Domain/Application checks, database mapping, frontend validation and UI hints, tests and test data, documentation, mirrored configuration), updating only affected behavior; search for stale references, build, test and run verify; one changed literal does not establish synchronization. | CUSTOM_SETTINGS.md changes | none stated
+C R178 OL PST-009 | MUST | When a settings change affects schema constraints, indexes, column lengths or other persistence metadata: update the EF Core mapping, create the appropriate migration per the project's workflow without casually altering existing migrations, verify Development seeding remains valid and update provider-sensitive tests when provider behavior matters. | schema-affecting settings | Editing an uncommitted migration per the normal workflow.
+C R180 OL GOV-001 | MUST | When SPECIFICATION.md is non-empty treat it as the authoritative source for project-specific functional requirements and observable product behavior; an empty template specification is intentional. | product requirements | Empty template specification.
+C R181 OL GOV-009 | REQUIRES_APPROVAL | SPECIFICATION.md and CUSTOM_SETTINGS.md must not contradict each other; if they appear to conflict, stop and ask which source must be corrected rather than choosing one; resolve conflicts before changing implementation. | product sources | none stated
+C R182 OL GOV-011 | MUST NOT | Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers or incidental implementation constants in CUSTOM_SETTINGS.md; framework defaults the project has not intentionally overridden are not settings. | CUSTOM_SETTINGS.md | none stated
+C R183 OL GOV-008 | MUST | Record approved project-level tunable product limits and defaults (maximum lengths, page-size defaults and maximums, retention periods, numeric thresholds) in CUSTOM_SETTINGS.md; SPECIFICATION.md owns behavioral intent and CUSTOM_SETTINGS.md the approved concrete values. | product settings | none stated
+C X16 EX WF-011,WF-012 | MUST | Code-review findings are reported ordered by severity, each with severity, file/location, what is wrong, why it matters and the smallest reasonable fix, using the fixed severity scale Critical / High / Medium / Low with defined meanings. | code review output | none stated | WF-011/WF-012 govern priorities and honesty of findings; the oracle does not prescribe a findings format or severity scale. | A review that lists issues without location, impact or severity does not follow the workflow.
+
+FILE .claude/skills/code-review/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13 NN | section heading
+15-18 OL R169,R1 | The review is independent and read-only: do not edit files or rewrite working
+20-21 NN | role distinction between code-review and verify
+23 NN | section heading
+25-34 OL R170 | Prioritize findings in this order:
+36-37 OL R170 | Do not elevate style preferences above behavioral defects or bury important
+39 NN | section heading
+41-44 OL R171 | do not review isolated lines.
+46 NN | section heading
+48-49 OL R171 | Identify the behavior added or changed, expected error cases, persistence or
+51-52 OL R171,R140 | Read the `.claude/rules/*.md` files whose `paths` match the changed files, and
+54-66 NN | technique routing table (EXC-016)
+68-69 OL R180,R183 | When `SPECIFICATION.md` is non-empty it is the authoritative product contract;
+71 NN | section heading
+73-83 OL R172 | Does the implementation introduce unapproved product behavior
+85-88 OL R156,R173 | Do not confuse internal implementation details with product
+90 NN | section heading
+92-96 OL R174 | Do not invent hypothetical failures.
+98 NN | section heading
+100-113 DU R39,R45,R46,R43,R49,R50,R52,R142,R148 | architecture review checklist restating architecture and Decision Control rules
+115-118 OL R170 | Do not report a violation merely because the implementation differs from a
+120 NN | section heading
+122-127 DU R13,R14,R17,R23,R19,R110,R16 | frontend review checklist restating Angular rules
+129 NN | section heading
+131-136 DU R52,R109,R110,R107,R105,R120,R93,R9 | data and security checklist restating owning rules
+138-141 OL R175 | do not turn every review into a full OWASP audit.
+143 NN | section heading
+145-148 DU R87,R80,R81,R62 | integration checklist restating outbound-call rules
+150 NN | section heading
+152-156 OL R176,R163,R133 | focusing on behavior rather than line count. For bug fixes, look for a
+158 NN | section heading
+160-164 OL R85,R95,R91 | not recommend caching, compiled queries, pooling, `ValueTask`, or similar
+166 NN | section heading
+168-171 OL R174 | read the code before turning a tool warning
+173 NN | section heading
+175-184 EX X16 | For each finding provide: severity,
+186-188 OL R174 | Do not invent findings to populate categories.
+190 NN | section heading
+192-195 OL R170,R169,R174 | Do not rewrite working code during a review unless asked, report formatting
+
+FILE .claude/skills/configuration/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-16 NN | pointers to policy owners
+18 NN | section heading
+20-22 OL R59 | application services receive typed options instead.
+24 NN | section heading
+26-29 NN | provider precedence (EXC-013)
+31 NN | section heading
+33-54 NN | options pattern code example
+56-65 NN | appsettings example
+67-69 OL R80 | Numeric values in examples are illustrative, not approved defaults.
+71 NN | section heading
+73-97 NN | options injection code examples
+99 NN | section heading
+101-113 NN | custom validation code example
+115 NN | section heading
+117-119 OL R69,R106 | add Azure-specific dependencies only when
+121-128 NN | key vault code example
+130 NN | section heading
+132-146 NN | named options code example
+148 NN | section heading
+150-170 OL R59 | // BAD - stringly typed configuration access inside a service
+172-186 OL R105,R106 | // Secrets come from user-secrets (development) or environment
+188-197 OL R59 | // GOOD - fail fast at startup
+199 NN | section heading
+201-210 DU R59,R106 | decision table restating options and secret mechanisms
+
+FILE .claude/skills/custom-settings/SKILL.md | Workflow skill.
+1-7 NN | front matter (name, routing description)
+9 NN | header metadata
+11 NN | document heading
+13-19 OL R181,R182,R140 | conflict before changing implementation.
+21 NN | section heading
+23-29 OL R177,R183 | Record it in `CUSTOM_SETTINGS.md` with a stable descriptive name, its value,
+31 NN | section heading
+33-36 OL R177 | mirrored frontend/backend surface. Changing one literal alone does not
+38-50 OL R177 | Separate occurrences that express the setting from unrelated numeric
+52 NN | section heading
+54-63 OL R178 | - update the EF Core mapping;
+65 NN | section heading
+67-69 OL R21 | When frontend and backend expose the same constraint, backend validation stays
+71 NN | section heading
+73-78 OL R177,R181,R168 | Search for stale references to the old value.
+80 OL R177 |
+DONE

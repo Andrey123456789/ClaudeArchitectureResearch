@@ -1,0 +1,3 @@
+# Pass 0003 — Orphan / non-normative challenge
+
+Family3. Order L0, M, K1, M1, L1, K0. Use all previous orphan resolutions and coverage classifications as challenge targets, not truth labels. Inspect rejected and ORACLE_LINKED source contexts for independent procedural duties, technical prerequisites, defaults and exceptions. Reuse verified source index and prior reads for full-file accounting; inspect relevant contexts anew, with explicit line ranges and reasons for portions not reread. Compare each plausible action to the complete semantic union and prior iterative findings. Preserve unresolved cases; do not inflate discoveries by reciting them. Every file/batch receives durable accounting.

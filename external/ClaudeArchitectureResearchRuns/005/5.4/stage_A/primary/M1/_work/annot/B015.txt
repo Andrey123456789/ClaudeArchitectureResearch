@@ -1,0 +1,169 @@
+# Batch B015 — skills: ef-core (capability facet persistence/ef-core), git-workflow
+
+@@ output/template/.claude/skills/ef-core/SKILL.md ;; Capability-owned knowledge skill (persistence/ef-core), on demand.
+@scope on-demand knowledge skill ef-core (backend persistence)
+1-7 IM ;; Frontmatter.
+9 NN ;; Banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15-21 OL [arc007.ef-contracts]
+23 NN ;; Heading.
+25 EX [x.ef-entity-config]
+27-56 NN ;; DbContext and configuration examples.
+58-59 OL [arc002.config-out-of-model]
+61 NN ;; Heading.
+63-80 NN ;; Registration example (SQL Server provider).
+82-83 OL [dep009.recorded-provider]
+85 NN ;; Heading.
+87-108 NN ;; Repository example.
+110-111 OL [arc016.stage-commit]
+113 NN ;; Heading.
+115-125 NN ;; UnitOfWork example.
+127-128 OL [arc017.same-context]
+130 NN ;; Heading.
+132-143 EX [x.ef-persistence-layout] ;; Persistence folder layout inside the adapter project (also assumed by the co-change patterns).
+145 NN ;; Heading.
+147-153 NN ;; Generic base example.
+155-156 OL [arc015.full-ef]
+158 NN ;; Heading.
+160-161 OL [run006.projection]
+163-176 NN ;; Projection example.
+178-179 OL [run006.no-overfetch]
+181 NN ;; Heading.
+183-186 EX [x.ef-tracking]
+188 NN ;; Heading.
+190-191 NN ;; Permissive: when FindAsync fits.
+193-197 NN ;; FindAsync example.
+199-200 NN ;; Technical fact: LINQ needed for predicates/projection.
+202 NN ;; Heading.
+204-208 MX [run006.no-lazy,x.ef-query-shape] ;; No lazy loading by default is RUN-006; explicit query shape and split-query verification are added technique.
+210 NN ;; Heading.
+212-213 MX [run006.db-pagination,x.ef-deterministic-order] ;; Database-side pagination is RUN-006; always deterministic order is added.
+215-230 NN ;; Pagination example.
+232-233 NN ;; Advisory keyset pagination.
+235 NN ;; Heading.
+237 NN ;; Descriptive suitability of bulk operations.
+239-243 NN ;; Code example.
+245-247 EX [x.ef-bulk-ops]
+249 NN ;; Heading.
+251-254 MX [arc018.explicit-tx,x.ef-no-distributed-tx] ;; Explicit transactions only for concrete atomicity needs is ARC-018; no distributed transactions via EF APIs is added.
+256 NN ;; Heading.
+258-260 OL [run008.compiled-queries]
+262 NN ;; Heading.
+264-265 NN ;; Permissive: interceptors suit infrastructure cross-cutting behaviour.
+267-295 NN ;; AuditInterceptor example.
+297 EX [x.ef-no-business-in-interceptors]
+299 NN ;; Heading.
+301-302 NN ;; Pointers to seeding policy and location.
+304-309 OL [pst006.anchor-detection,pst001.scenarios]
+311-355 NN ;; DbSeeder and initialization extension example.
+357 NN ;; Lead-in.
+359-364 NN ;; Development-only startup wiring example.
+366-368 OL [pst007.match-model,pst005.migrations-first]
+370 NN ;; Heading.
+372-375 MX [x.ef-migration-scripts,wf019.explicit-deploy-step] ;; Pointers to persistence-change; preferring generated idempotent scripts is added; production migration as explicit deployment step is WF-019.
+377 NN ;; Heading.
+379-382 OL [run012.query-optimization]
+384 NN ;; Heading.
+386-389 OL [run008.raw-sql,sec004.raw-sql-params]
+391 NN ;; Heading.
+393-396 MX [dep006.ef-package-placement,x.ef-tooling-packages] ;; SqlServer provider in the adapter project follows DEP-009/DEP-006; Design package in the startup project and the dotnet-ef tool are tooling technique.
+397-398 OL [dep026.localdb] ;; ;; Local Development connection string in `appsettings.Development.json`
+400-406 NN ;; LocalDB connection string example.
+408-409 OL [sec001.appsettings-no-secrets]
+411 NN ;; Heading.
+413-420 MX [x.ef-no-fire-and-forget,run006.no-lazy,run008.compiled-queries] ;; Check-by-reference list; fire-and-forget EF operations has no owner clause in the cited rules (added); other items restate owner rules.
+422 NN ;; Heading.
+424-440 DU ;; Decision table restating persistence-technology.md/architecture.md/testing defaults.
+
+C arc007.ef-contracts OL ARC-007,ARC-016,ARC-017,ARC-019 MUST ;; EF Core lives in the adapter layer; the use-case layer defines specific repositories and IUnitOfWork implemented with EF Core; IUnitOfWork delegates to the same scoped AppDbContext. ;; = ;; none ;;
+C x.ef-entity-config EX ARC-019 DEFAULT ;; Keep entity configuration separate with IEntityTypeConfiguration<T>. ;; = ;; none ;; EF technique not in the oracle.
+C arc002.config-out-of-model OL ARC-002 MUST ;; Keep persistence-specific configuration out of core-model entities where practical. ;; = ;; Where practical. ;;
+C dep009.recorded-provider OL DEP-009,DEP-001 MUST ;; Use the provider recorded in capability-selection.md; do not add another provider because it appears in an example. ;; = ;; none ;;
+C arc016.stage-commit OL ARC-016 DEFAULT ;; Repositories stage changes; committing is the Unit of Work's job. ;; = ;; none ;;
+C arc017.same-context OL ARC-017 MUST ;; The Unit of Work and repositories of one use case work on the same scoped AppDbContext. ;; = ;; none ;;
+C x.ef-persistence-layout EX ARC-027,PST-003 DEFAULT ;; Adapter-layer persistence layout: Persistence/{AppDbContext.cs, UnitOfWork.cs, Configurations/, Repositories/, Migrations/, Seeding/{DbSeeder.cs, DatabaseInitializationExtensions.cs}}. ;; = ;; none ;; Folder convention outside the oracle (co-change detection assumes it).
+C arc015.full-ef OL ARC-015,ARC-019 MUST_NOT ;; Concrete repositories may use the full EF Core API; do not force complex queries through a generic CRUD abstraction. ;; = ;; none ;;
+C run006.projection OL RUN-006 PREFER ;; For read-only queries needing selected data prefer database-side projection. ;; = ;; none ;;
+C run006.no-overfetch OL RUN-006 AVOID ;; Projection is not mandatory when the entity is needed; avoid loading a full aggregate for a few scalars. ;; = ;; none ;;
+C x.ef-tracking EX RUN-006 DEFAULT ;; Tracking queries for entities modified in the current UoW; AsNoTracking for read-only entity queries; not mechanically on DTO projections. ;; = ;; none ;; Tracking technique (EXC-011).
+C run006.no-lazy OL RUN-006 AVOID ;; Avoid lazy loading by default (hidden database access, N+1). ;; = ;; none ;;
+C x.ef-query-shape EX RUN-006 PREFER ;; Prefer explicit query shape (projection or Include/ThenInclude); consider split queries for large collection includes and verify generated SQL/performance. ;; = ;; none ;; Query technique (EXC-011).
+C run006.db-pagination OL RUN-006 MUST ;; Apply filtering, ordering and pagination in the database. ;; = ;; none ;;
+C x.ef-deterministic-order EX RUN-006 MUST ;; Paged queries always use a deterministic order. ;; = ;; none ;; Not stated in RUN-006.
+C x.ef-bulk-ops EX RUN-021,ARC-016 MUST_NOT ;; Do not casually mix ExecuteUpdateAsync/ExecuteDeleteAsync with tracked entities for the same rows; understand transaction/consistency implications. ;; = ;; none ;; Bulk-operation caution not in the oracle.
+C arc018.explicit-tx OL ARC-018 DEFAULT ;; An explicit transaction fits only when a concrete use case needs several operations or SaveChangesAsync calls to be atomic. ;; = ;; none ;;
+C x.ef-no-distributed-tx EX ARC-018 MUST_NOT ;; Do not attempt to solve distributed transactions with EF Core transaction APIs. ;; = ;; none ;; Not stated in the oracle.
+C run008.compiled-queries OL RUN-008 DEFAULT ;; Normal LINQ by default; compiled queries only for a measured hot path; no compiled queries or raw SQL without evidence. ;; = ;; none ;;
+C x.ef-no-business-in-interceptors EX API-011,ARC-019 MUST_NOT ;; Do not hide business behaviour in persistence interceptors. ;; = ;; none ;; Interceptor restriction not in the oracle (EXC-011).
+C pst006.anchor-detection OL PST-006 MUST ;; Use representative root/anchor entities to detect existing data. ;; = ;; none ;;
+C pst001.scenarios OL PST-001,PST-007 DEFAULT ;; Seed representative scenarios (created, active, completed, archived, optional values/relationships, status values, boundary states); complex graphs described by task requirements rather than invented. ;; = ;; none ;;
+C pst007.match-model OL PST-007 MUST ;; Concrete seed entities and states must match the current Domain and persistence model. ;; = ;; none ;;
+C pst005.migrations-first OL PST-005,PST-004 MUST ;; For a new local database the developer applies migrations first; Development startup then populates the empty schema. ;; = ;; none ;;
+C x.ef-migration-scripts EX WF-019 PREFER ;; For controlled production deployment generated idempotent migration scripts are often preferable. ;; = ;; none ;; Deployment-artifact preference beyond WF-019.
+C wf019.explicit-deploy-step OL WF-019 MUST ;; Production migration runs as an explicit deployment step. ;; = ;; none ;;
+C run012.query-optimization OL RUN-001,RUN-012 MUST ;; Start with clear LINQ; before specialized optimization inspect round trips, columns, N+1, indexes, SQL, plans, materialized volume, tracking. ;; = ;; none ;;
+C run008.raw-sql OL RUN-008 DEFAULT ;; Raw SQL only when EF cannot express the query effectively or measured performance justifies it. ;; = ;; none ;;
+C sec004.raw-sql-params OL SEC-004 MUST ;; For raw SQL prefer parameterization-preserving forms (FromSql/FromSqlInterpolated/ExecuteSql) over string concatenation. ;; = ;; none ;;
+C dep006.ef-package-placement OL DEP-006,DEP-009 MUST ;; Add Microsoft.EntityFrameworkCore.SqlServer through add-dependency in the adapter-layer project. ;; = ;; none ;;
+C x.ef-tooling-packages EX DEP-006 DEFAULT ;; Add Microsoft.EntityFrameworkCore.Design to the startup project when migrations are created from the CLI, and use the dotnet-ef tool. ;; = ;; When migrations come from the CLI. ;; Tooling technique not in the oracle.
+C dep026.localdb OL DEP-026 DEFAULT ;; Provide a LocalDB Development connection string in appsettings.Development.json (adapt the database name). ;; = ;; none ;;
+C sec001.appsettings-no-secrets OL SEC-001,SEC-002,DEP-026 MUST ;; Keep appsettings.json free of secrets; credential-bearing values go to user-secrets. ;; = ;; none ;;
+C x.ef-no-fire-and-forget EX RUN-002 MUST_NOT ;; Do not use fire-and-forget EF asynchronous operations. ;; = ;; none ;; Not stated in the oracle or the cited owner rules.
+
+@@ output/template/.claude/skills/git-workflow/SKILL.md ;; Workflow skill routed from CLAUDE.md for any Git operation.
+@scope workflow git-workflow
+1-6 IM ;; Frontmatter.
+8 NN ;; Banner.
+10 NN ;; Heading.
+12 NN ;; Heading.
+14-15 OL [gov015.explicit-only]
+17-18 OL [gov019.never-discard]
+19-26 OL [gov020.inspect]
+28-29 OL [gov020.minimal]
+31 NN ;; Heading.
+33-34 OL [wf022.staged-scope]
+36 NN ;; Heading.
+38-41 EX [x.git-branch-naming]
+43 NN ;; Heading.
+45-47 MX [gov016.worktree-focus,x.git-one-branch] ;; Separate branches/worktrees and focused worktrees are GOV-016; one branch not checked out in multiple worktrees is added.
+48-50 OL [gov019.worktree-removal]
+52 NN ;; Heading.
+54-56 MX [wf022.no-unrelated-commits,x.git-commit-granularity] ;; Not combining unrelated fixes is WF-022; one logical change with tests and no tiny commits is added.
+58-59 EX [x.git-commit-messages]
+61-68 NN ;; Example commit messages.
+70-71 EX [x.git-commit-messages]
+73 NN ;; Heading.
+75-80 MX [gov020.pre-push,x.git-verify-before-push,gov015.force-push,x.git-protected-branches] ;; Pre-push state checks and explicit-request force pushes are oracle-linked; verification-before-push and absolute protection of main/master/shared branches are added.
+82 NN ;; Heading.
+84-89 MX [gov019.merge-no-discard,x.git-merge-practice] ;; Inspecting/not discarding uncommitted work is GOV-019/GOV-020; convention following, conflict resolution approach and re-verification are added.
+91 NN ;; Heading.
+93-96 MX [x.git-pr,wf009.pr-honest] ;; Verify-before-PR, focus and description content are added; no false claims about checks is WF-009.
+98 NN ;; Heading.
+100-103 MX [gov020.destructive-inspect,u.git-destructive-approved-workflow] ;; Inspecting what will be lost is GOV-020; permission when 'clearly required by an approved workflow' is an unresolved possible relaxation of GOV-015.
+105 NN ;; Heading.
+107-109 EX [x.git-report]
+
+C gov015.explicit-only OL GOV-015 MUST_NOT ;; Perform repository-changing Git operations only when explicitly requested, never merely because implementation is complete. ;; = ;; none ;;
+C gov019.never-discard OL GOV-019 MUST_NOT ;; Never discard, overwrite, reset, clean or destroy user work to ease a Git operation. ;; = ;; none ;;
+C gov020.inspect OL GOV-020 MUST ;; Before a repository-changing operation inspect relevant state (git status, git diff, git diff --cached). ;; = ;; none ;;
+C gov020.minimal OL GOV-020 MUST ;; Use the minimum Git operation required and do not silently clean unrelated changes. ;; = ;; none ;;
+C wf022.staged-scope OL WF-022 MUST ;; Before committing inspect the staged diff, include only the intended logical change, do not stage unrelated files. ;; = ;; none ;;
+C x.git-branch-naming EX GOV-016 DEFAULT ;; Follow an existing branch-naming convention, otherwise prefixes like feature/, fix/, refactor/, test/, docs/, chore/; meaningful names; do not rename existing user branches for it. ;; = ;; Existing convention. ;; Branch naming not in the oracle.
+C gov016.worktree-focus OL GOV-016 MUST ;; Parallel streams use separate branches/worktrees; keep each worktree focused on its branch's concern. ;; = ;; none ;;
+C x.git-one-branch EX GOV-016 MUST_NOT ;; One branch must not be checked out simultaneously in multiple normal worktrees. ;; = ;; none ;; Not stated in GOV-016.
+C gov019.worktree-removal OL GOV-019 MUST_NOT ;; Before removing a worktree verify changes are committed/preserved; never remove one with uncommitted user work. ;; = ;; none ;;
+C wf022.no-unrelated-commits OL WF-022 MUST_NOT ;; Do not combine unrelated fixes or refactors in a commit. ;; = ;; none ;;
+C x.git-commit-granularity EX WF-022 PREFER ;; Prefer one logical change per commit with implementation and protecting tests together by default; no artificial tiny commits. ;; = ;; none ;; Commit granularity beyond WF-022.
+C x.git-commit-messages EX - DEFAULT ;; Follow the repository commit convention or Conventional Commits; use the body for important motivation/constraints/migration notes; do not narrate obvious diffs. ;; = ;; Existing convention. ;; Commit-message convention not in the oracle.
+C gov020.pre-push OL GOV-020,WF-022 MUST ;; Before pushing confirm branch and working/staged state and avoid pushing unrelated commits. ;; = ;; none ;;
+C x.git-verify-before-push EX WF-003 MUST ;; Ensure relevant verification has completed before pushing. ;; = ;; none ;; Pre-push verification gate not in the oracle.
+C gov015.force-push OL GOV-015 MUST_NOT ;; Never force-push a shared branch unless the user explicitly requests history rewriting with understood consequences. ;; = ;; Explicit request. ;;
+C x.git-protected-branches EX GOV-015 MUST_NOT ;; Treat main, master and other protected/shared branches as non-rewritable. ;; = ;; none ;; Stricter than GOV-015.
+C gov019.merge-no-discard OL GOV-019,GOV-020 MUST_NOT ;; Before merge/rebase inspect uncommitted work and do not automatically stash, reset or discard it. ;; = ;; none ;;
+C x.git-merge-practice EX GOV-015 MUST ;; Follow team convention or explicit request for merge vs rebase; resolve conflicts from intended combined behaviour (not mechanical ours/theirs); run relevant verification afterwards. ;; = ;; none ;; Merge practice beyond the oracle.
+C x.git-pr EX WF-003,WF-022 MUST ;; Run verify before preparing a PR; PRs have a focused purpose; descriptions explain what/why/how verified and compatibility/migration notes. ;; = ;; none ;; PR rules not in the oracle.
+C wf009.pr-honest OL WF-009 MUST_NOT ;; Do not claim checks were run if they were not. ;; = ;; none ;;
+C gov020.destructive-inspect OL GOV-020,GOV-019 MUST ;; Treat reset --hard, clean, force pushes, branch deletion and shared-history rebase as high-risk and inspect what will be lost before executing. ;; = ;; none ;;
+C u.git-destructive-approved-workflow LU GOV-015 ALLOWED ;; Perform destructive Git operations only when explicitly requested or clearly required by an approved workflow. ;; = ;; Approved workflow. ;; Open question: does 'clearly required by an approved workflow' relax GOV-015's explicit-request condition, or is an approved workflow equivalent to an explicit request?
+C x.git-report EX WF-009 ALLOWED ;; Report the actual resulting state after Git operations when useful. ;; = ;; When useful. ;; Reporting practice beyond the oracle.

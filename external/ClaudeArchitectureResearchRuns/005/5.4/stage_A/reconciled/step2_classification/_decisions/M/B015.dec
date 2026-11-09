@@ -1,0 +1,78 @@
+# M B015 — logging/references/serilog.md, skills modern-csharp (EXC-002), project-structure, references/backend-layout.md (EXC-004)
+1 XP m=D c=M rel=DEP-021 | Two-stage bootstrap-logger initialization when startup logging matters; host-managed setup for simpler apps (EXC-013 Serilog technique).
+  e: simpler applications without startup-logging needs
+  s: An app with critical startup logging configured only through host-managed Serilog: allowed by DEP-021; M's default adds a bootstrap logger.
+2 CO DEP-021 m=D | Levels, sinks and overrides kept in environment-aware configuration (DEP-021).
+3 CO DEP-021 m=M c=M | Direct Serilog APIs (Log.Logger, LogContext) only at composition/provider boundaries; application code depends on ILogger<T> (DEP-021).
+4 CO RUN-014~ m=M c=M | Limit destructuring of large object graphs in logs (RUN-014 minimum useful context).
+5 XP m=D c=M rel=DEP-021 | Flush the static/bootstrap Log.Logger on shutdown; follow the provider lifetime for host-managed logging (Serilog technique).
+  s: A static bootstrap logger never flushed on shutdown: not addressed by the oracle; M's technique flushes it.
+6 XP m=D c=M rel=DEP-004 | Use Elastic.Serilog.Sinks instead of the deprecated Serilog.Sinks.Elasticsearch when writing to Elasticsearch: DEP-004 requires checking deprecation, not a particular replacement.
+  t: only when Elasticsearch is the sink
+  s: Keeping the deprecated sink after an explicit DEP-004 review: allowed by the oracle; M's guidance names the official replacement.
+7 XP m=D c=M rel=RUN-009 | Collection expressions when the target type is clear; required for construction contracts (not instead of validation); no deeply nested patterns; field keyword for trivial backing fields (EXC-002 language technique).
+  s: A required member used in place of constructor validation of an invariant: allowed by RUN-009; M's guidance advises against it.
+8 XP m=D c=M rel=RUN-009 | Records for immutable DTOs, genuine Value Objects and messages; identity/lifecycle entities stay classes; immutability when natural (EXC-002).
+  s: Modelling an entity with identity as a record: allowed by the oracle; M's default keeps it a class.
+9 CO RUN-009 m=MN | Do not rewrite clear existing code solely because newer syntax exists (RUN-009 no mechanical modernization).
+10 CO RUN-008~ SEC-004~ m=MN c=M | Raw string literals do not make raw SQL appropriate (RUN-008 raw SQL only for demonstrated need).
+11 CO RUN-008 RUN-001~ m=D | Span/stackalloc/pooling are performance tools; ordinary types by default (RUN-008, RUN-001).
+12 CO DEP-008~ RUN-009~ m=MN c=M | Confirm the configured language version supports a feature; do not change LangVersion or the target framework for newer syntax (decided platform, DEP-008).
+13 CO RUN-009 GOV-014 WF-005~ | Explicitly requested modernization preserves behavior, stays focused, favors readability, builds/tests, no unrelated refactoring.
+14 CO RUN-009~ RUN-008~ m=SN | Avoid newest syntax for its own sake, record struct merely to avoid allocations, mass constructor conversion.
+15 CO WF-001~ c=M | Greenfield work reads the owning rules and CLAUDE.md sections explicitly before path rules load (WF-001 apply applicable rules).
+16 IA m=D | Same decision as calibration: project-structure SKILL.md:23-24 selects which private reference files to read per task (instruction loading/routing); outside oracle scope.
+17 CO WF-005 | Run the relevant tests (WF-005).
+18 CO ARC-001~ DEP-024~ DEP-002~ ARC-027~ GOV-013~ WF-005~ | Scaffolding goals restating existing policies.
+19 CO GOV-013 ARC-027 m=MN | Determine actual needs; no optional infrastructure scaffolded for possible later use.
+20 CO DEP-002 DEP-011~ | Baseline stack; conditional technologies only when required.
+21 CD DEP-022~ m=D k=P c=M | <Name>.slnx follows DEP-022; remainder: global.json, .gitignore and README.md are created as repository-wide scaffold files (EXC-017 scaffolding lineage).
+  x: global.json, .gitignore and README.md created as repository-wide scaffold files
+  s: A new solution without global.json or README.md satisfies all policies; M's scaffolding creates them.
+22 CO ARC-027 | Only required top-level directories and repository-wide files (ARC-027).
+23 CO DEP-023 m=D | Keep the provided .editorconfig and Directory.*.props at the repository root (DEP-023).
+24 CO ARC-001~ DEP-024~ | Create the Domain, Application, Infrastructure and Api projects under backend/ (ARC-001 layers, DEP-024 layout).
+25 CO DEP-023 m=M c=M | Target framework from Directory.Build.props and removal of duplicated shared properties written by dotnet new (DEP-023 shared settings at repository level).
+26 CO ARC-001 m=MN | Only the described references; never an outward reference to compile (ARC-001).
+27 CO DEP-003 DEP-006~ | Baseline packages through add-dependency with versions resolved at implementation time and recorded centrally; no stale example versions.
+28 CO ARC-027 m=MN | Only useful test projects; Domain.Tests/Infrastructure.Tests only for concrete need (ARC-027 no speculative projects).
+29 CD DEP-024~ m=D k=P c=M | No separate top-level tests directory (DEP-024); remainder: Angular unit/component tests colocated with the code, E2E under the workspace (e.g. frontend/<Name>.Web/e2e/).
+  x: Angular unit/component tests colocated with the code they test
+  s: Angular specs gathered in frontend/<Name>.Web/src/tests/: no top-level tests directory (DEP-024 satisfied); M's default colocates them.
+30 CO DEP-024 DEP-014 c=M | Frontend workspace under frontend/<Name>.Web/ with the current Angular CLI and baseline stack (DEP-024 layout, DEP-014).
+31 CO ARC-027 m=MN | Only directories required by the initial implementation (ARC-027).
+32 CO WF-019~ SEC-001~ m=MN | No Production credentials or Production migration automation when scaffolding.
+33 CO DEP-026 m=D | Development configuration for SQL Server projects (DEP-026).
+34 CD WF-005 WF-003 WF-009~ m=M k=W c=M | Scaffolding completion requires restore, builds, relevant tests, then verify; never report success for a non-building solution (WF-005/003/009). Remainder: inspect references by running check-manifests.mjs and inspect the final repository tree.
+  x: running check-manifests.mjs and inspecting the final tree before scaffolding completion
+  s: Scaffolding verified by build, tests and verify only: satisfies the oracle; M's step also requires the script and tree inspection.
+35 CO ARC-001 ARC-027~ WF-005~ | Adding a project: responsibility identified, minimum references preserving direction, shared configuration updated, build/test.
+36 CO ARC-027 m=MN | No extra projects merely to look sophisticated (ARC-027).
+37 CO GOV-014 WF-001~ WF-005~ c=M | Reorganization procedure: inspect, concrete problem, preserve behavior, small steps, consistent namespaces/references, no unrelated work, verify.
+38 CO GOV-014 RUN-011~ m=MN | Do not force an established project to match the template without concrete value.
+39 CO ARC-001~ DEP-002~ ARC-027~ WF-005~ DEP-026~ GOV-014~ | Project-structure completion criteria restating existing policies.
+40 CO ARC-005 ARC-027~ m=MN | DDD-oriented directories only when an approved design needs them (ARC-005, ARC-027).
+41 XP m=D c=M rel=ARC-027,DEP-024 | Role-based backend folder layout (Application Abstractions/Persistence, Abstractions/ExternalServices, Services, DTOs, Validation, DependencyInjection.cs; Infrastructure Persistence/{Configurations,Repositories,Migrations,Seeding}, Services) (EXC-004 layout lineage).
+  e: folders only when needed
+  s: Feature-folder organization inside Application (Orders/, Customers/) without these role folders: allowed by the oracle; M's default layout is role-based.
+42 CO ARC-027 m=MN | Abstractions/ExternalServices only when such dependencies exist (ARC-027).
+43 CO ARC-009 m=MN | No handler/CQRS/MediatR structures (ARC-009).
+44 CO ARC-027 m=MN | DTOs folder not a generic dumping ground (ARC-027).
+45 CO ARC-023 ARC-001~ m=MN | Application DependencyInjection.cs never registers concrete Infrastructure implementations (ARC-023, ARC-001).
+46 XP m=D c=M rel=RUN-009,ARC-027 | Type-role suffixes (Service, Dto, Request/Response, Result/Outcome, Validator, Rules/Policy, Factory, Mapper, Adapter), no ambiguous names, subdirectories only when a flat directory is hard to navigate (EXC-004 naming heuristics).
+  s: A class named TaskWorkflow holding validation rules: allowed by the oracle; M's naming guidance asks for TaskWorkflowRules or similar.
+47 CO ARC-027~ m=SN st=W | Avoid generic Models/Helpers/Common/Utils buckets when a specific responsibility can be named (conditional form of ARC-027).
+48 CO ARC-015 m=Y | Infrastructure-only generic repository base allowed when it removes real duplication (ARC-015).
+49 CO ARC-023 m=D | Infrastructure DependencyInjection.cs registers persistence, repositories, IUnitOfWork, adapters, provider, HttpClient and resilience when used (ARC-023).
+50 CO ARC-029 m=D | Api Contracts for transport-specific contracts when used (ARC-029).
+51 CO ARC-027 m=MN | Middleware folder only when custom middleware exists (ARC-027).
+52 XP m=MN c=M rel=ARC-012,GOV-012 | Keep Api Extensions cohesive; do not move arbitrary code out of Program.cs solely to make it shorter (organization guidance beyond ARC-012).
+  s: Moving all Program.cs registrations into a generic StartupExtensions class purely for length: allowed by the oracle; M forbids it.
+53 CO DEP-026 m=D | appsettings.json and appsettings.Development.json with a credential-free LocalDB default (DEP-026).
+54 CO DEP-026 SEC-002~ | Credential-bearing local values through user-secrets, non-secret structure in configuration (DEP-026).
+55 CO API-017 DEP-012~ m=D | Swagger generation and UI exposed at /swagger in Development (API-017, DEP-012).
+56 CD ARC-001~ WF-007~ m=M k=W c=M | After adding project references run check-manifests.mjs from the repository root to check the graph: added procedural step with the candidate's checker (same reading as FG-M-9bc849bf2c).
+  x: running check-manifests.mjs after adding project references
+  s: References verified by building and reviewing the csproj: satisfies ARC-001/WF-007; M's step requires the script.
+57 XW m=D c=M rel=ARC-001 | Add project references with the dotnet CLI (procedure technique).
+  s: Editing ProjectReference elements by hand: allowed by the oracle; M's default uses the CLI.

@@ -1,0 +1,378 @@
+# L1 — B009 skills: http-api, httpclient-factory (+ resilience), logging (+ serilog), modern-csharp (knowledge); project-structure (workflow) + references
+
+@@ output/template/.claude/skills/http-api/SKILL.md ;; Knowledge skill (HTTP semantics reference; EXC-009 context).
+@scope on-demand knowledge skill http-api (backend Controllers)
+1-4 IM ;; Frontmatter.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 EX [x.consistent-status]
+12 NN ;; Heading.
+14 OL [api003.ha-200,api004.ha-empty]
+15 MX [api003.ha-201,x.201-location] ;; 201 only for a created API resource (PUT may create) is API-003; including Location when a stable URI exists is added.
+17-19 NN ;; CreatedAtAction example.
+21 MX [api003.ha-202,x.202-operation] ;; 202 for accepted-but-incomplete processing is API-003; returning an operation id or Location is added.
+22 MX [api003.ha-204,x.consistent-status] ;; 204 without a body is API-003; one consistent convention for repeated DELETE of an absent resource is added.
+23 EX [x.http-304]
+25 NN ;; Heading.
+27 OL [api005.ha-400]
+28 MX [api005.ha-401-403,x.auth-middleware-statuses] ;; 401 vs 403 semantics restate API-005; middleware normally producing them is the added mechanism convention.
+29 OL [api004.ha-404]
+30 EX [x.http-406-415]
+31 OL [api006.ha-409]
+32 OL [api006.ha-412]
+33 EX [x.http-422]
+34 EX [x.http-428]
+35 EX [x.http-429]
+37 NN ;; Heading.
+39 OL [api007.ha-500]
+40 EX [x.http-502-504]
+41 EX [x.http-503]
+42 MX [x.http-502-504,api021.ha-distinguish] ;; 504 intermediary semantics are added; distinguishing client cancellation, own timeout and upstream timeout is API-021/RUN-019.
+44 NN ;; Heading.
+46 MX [x.ha-idempotency-key,run016.ha-no-false-idempotency] ;; The Idempotency-Key convention is added; claiming idempotency only when implemented is RUN-016.
+48 MX [api006.ha-conditional,x.http-428] ;; Standard conditional requests (ETag/If-Match/412) instead of custom codes is API-006; 428 for an absent required precondition is the added 428 rule.
+50 NN ;; Heading.
+52-59 NN ;; Controller mapping example.
+61 OL [api002.ha-stable-codes]
+63 NN ;; Heading.
+65-87 DU ;; Decision table restating the semantics above.
+
+C x.consistent-status EX API-003 MUST ;; Keep status behaviour consistent across similar endpoints (e.g. one convention for repeated DELETE of an absent resource: 204 or 404). ;; = ;; none ;; Not in the oracle.
+C api003.ha-200 OL API-003 DEFAULT ;; 200 for successful GET, PUT/PATCH returning the representation, operation POSTs without a created resource and queries returning data. ;; = ;; none ;;
+C api004.ha-empty OL API-004 DEFAULT ;; An empty collection is 200 with [], clearer than 204. ;; = ;; none ;;
+C api003.ha-201 OL API-003 MUST ;; 201 when the HTTP operation created a new API resource; PUT may return 201 when it creates the target. ;; = ;; none ;;
+C x.201-location EX API-003 DEFAULT ;; Include Location (CreatedAtAction) when a stable URI exists. ;; = ;; Stable URI exists. ;; Not in the oracle.
+C api003.ha-202 OL API-003 MUST ;; 202 when processing is accepted but incomplete (long-running, background, queued work). ;; = ;; none ;;
+C x.202-operation EX API-003 DEFAULT ;; Return an operation id or Location where 202 progress is observable. ;; = ;; none ;; Not in the oracle.
+C api003.ha-204 OL API-003 MUST ;; 204 for success with no body; a 204 never carries a body. ;; = ;; none ;;
+C x.http-304 EX API-003 MUST ;; 304 only for conditional requests with a still-valid cached representation; never a generic 'nothing changed' business response. ;; = ;; none ;; EXC-009 context.
+C api005.ha-400 OL API-005,API-010 MUST ;; 400 when the request itself is invalid (malformed JSON, shape, binding, formatting, missing transport input); never for authentication failure. ;; = ;; none ;;
+C api005.ha-401-403 OL API-005 MUST ;; 401 when authentication is missing or failed; 403 when authenticated but not permitted (not fixable by resending credentials). ;; = ;; none ;;
+C api004.ha-404 OL API-004,API-005 MUST ;; 404 when the resource does not exist or the API deliberately hides it. ;; = ;; none ;;
+C x.http-406-415 EX API-003 MUST ;; 406 when no acceptable representation can be produced; 415 for unsupported request body formats. ;; = ;; none ;; EXC-009 context.
+C api006.ha-409 OL API-006 MUST ;; 409 for valid requests conflicting with current state (uniqueness, transitions, concurrent operations, reused idempotency keys); not for malformed syntax. ;; = ;; none ;;
+C api006.ha-412 OL API-006 MUST ;; 412 when a supplied precondition is false. ;; = ;; none ;;
+C x.http-422 EX API-003 DEFAULT ;; 422 for structurally valid but semantically invalid requests; follow an established 400-for-both convention; new distinguishing APIs use 400 for contract errors and 422 for semantics. ;; = ;; Established convention. ;; Not in the oracle.
+C x.http-428 EX API-006 MUST ;; 428 when the contract requires a precondition the client omitted (missing If-Match → 428; stale → 412). ;; = ;; none ;; Not in API-006.
+C x.http-429 EX API-003 MUST ;; 429 for rate-limited requests with Retry-After when known; never for validation failures. ;; = ;; none ;; Not in the oracle.
+C api007.ha-500 OL API-007,API-002 MUST ;; 500 for unexpected internal failures, via centralized handling and ProblemDetails. ;; = ;; none ;;
+C x.http-502-504 EX API-003 MUST_NOT ;; 502/504 only when acting as an intermediary (invalid upstream response / upstream timeout); do not map every dependency failure to 502. ;; = ;; none ;; EXC-009 context.
+C x.http-503 EX API-003 DEFAULT ;; 503 for temporary inability (maintenance, critical dependency unavailable, overload) with Retry-After when meaningful. ;; = ;; none ;; Not in the oracle.
+C api021.ha-distinguish OL API-021,RUN-019 MUST ;; Distinguish client cancellation, own timeout and upstream timeout; not every TaskCanceledException is a 504. ;; = ;; none ;;
+C x.ha-idempotency-key EX RUN-016 DEFAULT ;; For a POST that must not duplicate effects consider an Idempotency-Key stored with request/result per the contract. ;; = ;; none ;; Not in the oracle.
+C run016.ha-no-false-idempotency OL RUN-016 MUST_NOT ;; Claim idempotency only when it is implemented. ;; = ;; none ;;
+C api006.ha-conditional OL API-006 MUST ;; Use standard conditional requests (ETag, If-Match → 412) for HTTP optimistic concurrency, not custom status codes. ;; = ;; none ;;
+C api002.ha-stable-codes OL API-002,FE-009 MUST ;; Machine-readable clients rely on stable error codes or contract fields, never human-readable messages. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/httpclient-factory/SKILL.md ;; Knowledge skill (technique only).
+@scope on-demand knowledge skill httpclient-factory (backend outbound HTTP)
+1-4 IM ;; Frontmatter.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 NN ;; Rule pointers and route to the resilience reference.
+12 NN ;; Heading.
+14-24 NN ;; Adapter boundary example.
+26 OL [arc025.hcf-shape]
+28 NN ;; Heading.
+30 EX [x.hcf-client-styles]
+32-35 NN ;; Client registration example.
+37 MX [x.hcf-client-styles,arc022.hcf-typed-singleton] ;; Keyed clients only when clearer is part of the added client-style guidance; not capturing transient typed clients in singletons is ARC-022.
+39 NN ;; Heading.
+41 EX [x.hcf-handlers]
+43-53 NN ;; Delegating handler example.
+55 NN ;; Heading.
+57 OL [run003.hcf-pass-token,run015.hcf-timeouts]
+59 NN ;; Heading.
+61 MX [arc025.hcf-translate,x.hcf-no-blind-ensure] ;; Translating remote responses into the abstraction's outcomes is ARC-025; not calling EnsureSuccessStatusCode blindly is added.
+63-70 NN ;; Response mapping example.
+72 EX [x.hcf-no-status-passthrough]
+74 NN ;; Heading.
+76 OL [run016.hcf-retry-safety]
+78 NN ;; Heading.
+80 EX [x.hcf-headers,x.hcf-json-contracts]
+82 NN ;; Heading.
+84 MX [x.hcf-adapter-tests,run005.hcf-tests-ok] ;; Handler-based adapter tests are added; constructing HttpClient directly in focused tests being fine (lifetime rule targets production) is a RUN-005 scope clarification.
+86 NN ;; Heading.
+88 MX [run005.hcf-anti-list,x.hcf-client-styles,x.hcf-headers,x.hcf-no-status-passthrough] ;; Anti-patterns restating RUN-005/RUN-016/RUN-017/ARC-025/RUN-003/GOV-013; a mandated single client model, dynamic tokens in shared headers and uniform upstream status mapping restate the added rules.
+
+C arc025.hcf-shape OL ARC-025,ARC-007 MUST ;; The use-case layer defines the outbound abstraction and the implementation layer implements it; the use case need not know the remote service speaks HTTP. ;; = ;; none ;;
+C x.hcf-client-styles EX RUN-005 DEFAULT ;; Named, typed and keyed clients are all valid; choose the simplest for consumer and lifetime; keyed only when keyed DI is clearer; no single mandatory model. ;; = ;; none ;; Not in the oracle.
+C arc022.hcf-typed-singleton OL ARC-022 MUST_NOT ;; Do not capture a transient typed client inside a singleton without understanding the lifetime consequences. ;; = ;; none ;;
+C x.hcf-handlers EX ARC-025 MUST_NOT ;; DelegatingHandler only for genuine pipeline concerns (tokens, correlation, signing), never business decisions. ;; = ;; none ;; Not in the oracle.
+C run003.hcf-pass-token OL RUN-003,RUN-019 MUST ;; Pass the caller's token; CancellationToken.None only when the operation intentionally outlives the request. ;; = ;; none ;;
+C run015.hcf-timeouts OL RUN-015 MUST ;; Choose timeouts from the remote operation and latency budget; distinguish per-attempt from total timeouts with resilience pipelines. ;; = ;; none ;;
+C arc025.hcf-translate OL ARC-025 MUST ;; Translate remote responses into the abstraction's outcomes. ;; = ;; none ;;
+C x.hcf-no-blind-ensure EX ARC-025 MUST_NOT ;; Do not call EnsureSuccessStatusCode() blindly when specific statuses carry meaning. ;; = ;; none ;; Not in the oracle.
+C x.hcf-no-status-passthrough EX API-003,ARC-025 MUST_NOT ;; Do not forward every upstream status to the own API or map every upstream failure to one status; outbound retry and inbound response are separate decisions. ;; = ;; none ;; Not in the oracle.
+C run016.hcf-retry-safety OL RUN-016 MUST ;; Before enabling retry decide transience, repeat safety, remote idempotency and duplicate risk; PUT/DELETE are not operationally safe merely by HTTP definition; POST/PATCH need idempotency keys, natural idempotency or deduplication. ;; = ;; none ;;
+C x.hcf-headers EX RUN-005 MUST_NOT ;; Stable headers on the client, per-request values per request or via a handler; never mutate shared DefaultRequestHeaders concurrently. ;; = ;; none ;; Not in the oracle.
+C x.hcf-json-contracts EX ARC-025,ARC-002 MUST_NOT ;; Prefer System.Net.Http.Json/System.Text.Json with explicit options when contracts differ; do not reuse domain entities as remote contracts. ;; = ;; none ;; Not in the oracle.
+C x.hcf-adapter-tests EX TST-003 DEFAULT ;; Test adapters with a controlled HttpMessageHandler (method/path, headers, payload, mapping, cancellation/failure). ;; = ;; none ;; Not in the oracle.
+C run005.hcf-tests-ok OL RUN-005 ALLOWED ;; Constructing HttpClient directly in a focused test is fine; the lifetime rule concerns production code. ;; = ;; Tests only. ;;
+C run005.hcf-anti-list OL RUN-005,RUN-016,RUN-017,ARC-025,RUN-003,GOV-013 AVOID ;; Avoid per-request HttpClient, unsafe retries without idempotency analysis, unbounded retries, leaking HttpResponseMessage, ignored cancellation and resilience pipelines without understanding. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/httpclient-factory/references/resilience.md ;; Private reference of httpclient-factory (resilience technique; EXC-007 context).
+@scope private reference of on-demand skill httpclient-factory (resilience)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep020.res-mex-apis]
+7 NN ;; Heading.
+9-12 NN ;; Standard handler example.
+14 OL [run016.res-standard-handler,run015.res-no-overlap]
+16 NN ;; Heading.
+18 MX [run015.res-attempt-total,x.cfg-operational-values] ;; Attempt and total timeouts are RUN-015; values from real latency requirements rather than examples is the added operational-values rule.
+19 MX [run016.res-retry-safety,x.res-retry-categories,x.res-no-invented-key] ;; Retrying only transient, duplicate-safe failures is RUN-016; the explicit category lists and not inventing an unsupported Idempotency-Key are added.
+20 OL [run017.res-retry-after]
+21 EX [x.res-circuit-breaker]
+22 NN ;; Acceptable/unacceptable fallback examples illustrating RUN-018 (captured in backend-code.md).
+23 OL [run016.res-hedging]
+24 EX [x.res-inbound-429]
+26 NN ;; Heading.
+28 EX [x.res-db-resilience]
+30 NN ;; Heading.
+32 EX [x.res-messaging]
+34 NN ;; Heading.
+36 MX [x.res-observe,gov013.res-no-otel] ;; Observing retries/timeouts/circuits where operationally important is added; resilience not requiring OpenTelemetry restates GOV-013/DEP-002.
+38 NN ;; Heading.
+40-50 DU ;; Decision table restating the guidance above.
+
+C dep020.res-mex-apis OL DEP-020 DEFAULT ;; Microsoft resilience packages by default (direct Polly only as documented exception); application code configures them through the Microsoft.Extensions resilience APIs. ;; = ;; none ;;
+C run016.res-standard-handler OL RUN-016 MUST ;; The standard handler helps when its behaviour fits; it is not mandatory and its retry behaviour needs review for state-changing requests. ;; = ;; none ;;
+C run015.res-no-overlap OL RUN-015 AVOID ;; Avoid stacking handlers with overlapping strategies. ;; = ;; none ;;
+C run015.res-attempt-total OL RUN-015 MUST ;; Set attempt and total-operation timeouts. ;; = ;; none ;;
+C run016.res-retry-safety OL RUN-016 MUST_NOT ;; Retry only plausibly transient failures; never non-idempotent operations without duplicate prevention; ask what a resend does after a lost response. ;; = ;; none ;;
+C x.res-retry-categories EX RUN-016 MUST_NOT ;; Transient: selected network failures, temporary unavailability, rate limiting when allowed, transient provider database failures; never validation, auth failures, permanent 404 or deterministic business rejection. ;; = ;; none ;; Explicit categories beyond RUN-016.
+C x.res-no-invented-key EX RUN-016 MUST_NOT ;; Do not invent a client-side Idempotency-Key unless the remote service supports it. ;; = ;; none ;; Not in RUN-016.
+C run017.res-retry-after OL RUN-017 DEFAULT ;; Prefer the server's Retry-After guidance over an independent aggressive schedule. ;; = ;; none ;;
+C x.res-circuit-breaker EX RUN-015 DEFAULT ;; Circuit breakers when repeated calls to a failing dependency add load/latency, with production visibility; skip without a repeated-failure scenario. ;; = ;; none ;; EXC-007 context.
+C run016.res-hedging OL RUN-016 MUST_NOT ;; Hedge only operations safe to run several times (typically idempotent reads); never writes by default. ;; = ;; none ;;
+C x.res-inbound-429 EX API-003 DEFAULT ;; Inbound rate limiting is separate from outbound resilience; rejected requests get 429 with Retry-After when useful. ;; = ;; none ;; Not in the oracle.
+C x.res-db-resilience EX RUN-016 MUST_NOT ;; Do not wrap normal ORM operations in a generic application retry pipeline; prefer the provider execution strategy; HTTP retry policies are not database policies. ;; = ;; none ;; EXC-007 context.
+C x.res-messaging EX RUN-016 DEFAULT ;; Publication retries can duplicate delivery; use idempotent consumers, deduplication or an outbox when needed; never claim exactly-once because a retry exists. ;; = ;; When needed. ;; Not in the oracle.
+C x.res-observe EX - DEFAULT ;; Observe retry counts, timeouts, circuit state, rate-limit rejections and dependency latency where operationally important, with the adopted telemetry stack. ;; = ;; Where operationally important. ;; Not in the oracle.
+C gov013.res-no-otel OL GOV-013,DEP-002 MUST_NOT ;; Resilience alone does not require OpenTelemetry. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/logging/SKILL.md ;; Knowledge skill (technique only).
+@scope on-demand knowledge skill logging (backend)
+1-4 IM ;; Frontmatter.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 NN ;; Rule pointers and route to the Serilog reference.
+12 NN ;; Heading.
+14-17 NN ;; Structured vs interpolated example.
+19 NN ;; Heading.
+21-25 MX [x.log-levels,sec010.log-debug-not-safe,api009.log-expected-not-errors] ;; Level semantics are added; Trace/Debug never safe for sensitive data restates SEC-010; expected outcomes not being errors restates API-009.
+27 NN ;; Heading.
+29 OL [api012.log-at-boundary]
+31 NN ;; Heading.
+33-38 NN ;; Scope example.
+40 MX [x.log-correlation,sec003.log-validate-correlation] ;; Correlation-id policy is added; validating/normalizing client-supplied ids is SEC-003.
+42 NN ;; Heading.
+44 OL [run014.log-specific-props]
+46 NN ;; Heading.
+48 OL [run008.log-source-gen]
+50-56 NN ;; LoggerMessage example.
+58 NN ;; Heading.
+60 MX [run013.log-anti-list,x.log-no-audit-db] ;; Anti-patterns restating RUN-013/API-012/API-009/SEC-010/RUN-014/DEP-021; logs as an audit database without an adopted audit design is added.
+62 NN ;; Heading.
+64-71 DU ;; Decision table restating the technique above.
+
+C x.log-levels EX RUN-013 DEFAULT ;; Levels by operational meaning: Trace/Debug diagnostics, Information for meaningful events (not every call), Warning for recovered/degraded states, Error for failures needing attention, Critical when the application cannot continue. ;; = ;; none ;; Not in the oracle.
+C sec010.log-debug-not-safe OL SEC-010 MUST_NOT ;; Trace/Debug are never a safe place for sensitive data. ;; = ;; none ;;
+C api009.log-expected-not-errors OL API-009 DEFAULT ;; Expected business outcomes such as NotFound or validation rejection are normally not errors. ;; = ;; none ;;
+C api012.log-at-boundary OL API-012 MUST ;; Log at the boundary that handles or terminates the failure; no extra log when rethrowing without handling. ;; = ;; none ;;
+C x.log-correlation EX RUN-013 PREFER ;; Prefer platform trace identifiers; explicit correlation ids only for a concrete need; propagate tracing context across outbound calls. ;; = ;; none ;; EXC-013 context.
+C sec003.log-validate-correlation OL SEC-003 MUST ;; Validate or normalize correlation ids accepted from clients. ;; = ;; none ;;
+C run014.log-specific-props OL RUN-014,SEC-010 MUST ;; Log specific properties instead of serialized objects/bodies; avoid authorization headers and sensitive full bodies; prefer stable technical identifiers over personal data. ;; = ;; none ;;
+C run008.log-source-gen OL RUN-008 DEFAULT ;; Normal structured logging suffices; source-generated logging for measured high-volume hot paths. ;; = ;; none ;;
+C run013.log-anti-list OL RUN-013,API-012,API-009,SEC-010,RUN-014,DEP-021 AVOID ;; Avoid interpolated messages, duplicate exception logging, expected outcomes as errors, secrets in logs, whole-object dumps without review and provider-specific APIs in use-case code. ;; = ;; none ;;
+C x.log-no-audit-db EX RUN-013 AVOID ;; Do not use logs as an audit database without an adopted audit design. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/logging/references/serilog.md ;; Private reference of the logging skill (Serilog technique).
+@scope private reference of on-demand skill logging (Serilog)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep021.serilog-boundaries]
+7 NN ;; Heading.
+9 EX [x.serilog-bootstrap]
+11-39 NN ;; Bootstrap and AddSerilog example.
+41 EX [x.serilog-flush]
+43 NN ;; Heading.
+45 MX [dep001.serilog-sinks-needed,x.cfg-operational-values] ;; Configuring only needed sinks (Console enough locally; others optional) restates DEP-001/DEP-010; illustrative numeric limits are the added operational-values rule.
+47-70 NN ;; Example Serilog configuration.
+72 NN ;; Descriptive Override matching semantics.
+74 NN ;; Heading.
+76 NN ;; Descriptive effect of request logging.
+78-85 NN ;; Request logging example.
+87 NN ;; Heading.
+89 OL [run014.serilog-destructure]
+90-91 NN ;; Technique notes (LogContext requires FromLogContext; Serilog.Expressions filters).
+93 NN ;; Heading.
+95 EX [x.serilog-elastic-sink]
+97 NN ;; Heading.
+99-108 DU ;; Decision table summarizing options (audit-trail row restates the audit-design condition).
+
+C dep021.serilog-boundaries OL DEP-021 MUST ;; Keep direct Serilog APIs (Log.Logger, LogContext) at composition or provider-specific boundaries (application code on ILogger<T>). ;; = ;; none ;;
+C x.serilog-bootstrap EX DEP-021 DEFAULT ;; Two-stage bootstrap when startup failures must be logged before DI/configuration exist; host-managed setup otherwise. ;; = ;; none ;; Not in the oracle.
+C x.serilog-flush EX DEP-021 MUST ;; Flush the static/bootstrap logger on shutdown when used; host-managed logging follows the provider lifetime. ;; = ;; none ;; Not in the oracle.
+C dep001.serilog-sinks-needed OL DEP-001,DEP-010 MUST ;; Configure only sinks and enrichers the project needs; Console is enough locally; File/Seq/OpenTelemetry/Elasticsearch are options, not baseline dependencies. ;; = ;; none ;;
+C run014.serilog-destructure OL RUN-014 DEFAULT ;; Prefer destructuring to selected properties and keep destructuring limits configured. ;; = ;; none ;;
+C x.serilog-elastic-sink EX DEP-004 MUST_NOT ;; Serilog.Sinks.Elasticsearch is deprecated; use Elastic.Serilog.Sinks when Elasticsearch is the chosen store. ;; = ;; Elasticsearch chosen. ;; Not in the oracle.
+
+@@ output/template/.claude/skills/modern-csharp/SKILL.md ;; Knowledge skill (technique only).
+@scope on-demand knowledge skill modern-csharp (backend C#)
+1-4 IM ;; Frontmatter.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 OL [run009.mc-when-clearer]
+12 NN ;; Heading.
+14 NN ;; Descriptive: primary constructors suit simple DI.
+16-20 NN ;; Primary constructor example.
+22 MX [x.mc-constructors,run009.mc-no-mechanical-ctor] ;; When to prefer a regular constructor is added; never converting constructors mechanically is RUN-009.
+24 NN ;; Heading.
+26 MX [x.mc-records,run008.mc-no-record-struct] ;; Record vs class guidance is added; avoiding record struct merely to dodge allocations is RUN-008.
+28 NN ;; Heading.
+30 EX [x.mc-feature-usage]
+31 MX [x.mc-feature-usage,run009.mc-no-rewrite-initializers] ;; Collection expressions when the target type is clear is added; not rewriting existing initializers just to modernize is RUN-009.
+32 EX [x.mc-feature-usage]
+33 EX [x.mc-feature-usage]
+35-41 NN ;; field keyword example.
+43 OL [run009.mc-extensions-valid]
+45-53 NN ;; Extension member example.
+55 OL [run008.mc-raw-strings]
+56 EX [x.mc-var]
+58 NN ;; Heading.
+60 EX [x.mc-visibility-sealed]
+61 EX [x.mc-naming]
+62 MX [x.mc-nested-types,run011.mc-no-reorder] ;; Nested-type locality is added; not reorganizing a file only for member order is RUN-011.
+63 EX [x.mc-immutability]
+65 NN ;; Heading.
+67 OL [run008.mc-spans]
+69 NN ;; Heading.
+71 EX [x.mc-langversion-check,x.mc-langversion-approval]
+73 NN ;; Heading.
+75 OL [run009.mc-modernization-task]
+
+C run009.mc-when-clearer OL RUN-009 DEFAULT ;; Use a feature when it makes code clearer, safer or simpler, never to demonstrate newer syntax; consistency and readability beat maximal feature use. ;; = ;; none ;;
+C x.mc-constructors EX RUN-009 PREFER ;; Use a regular constructor when validation/initialization is non-trivial, explicit fields read better, the codebase uses that style or capture would obscure the class. ;; = ;; none ;; Not in the oracle.
+C run009.mc-no-mechanical-ctor OL RUN-009 MUST_NOT ;; Never convert constructors mechanically. ;; = ;; none ;;
+C x.mc-records EX RUN-009 DEFAULT ;; Records for intentional value semantics (immutable DTOs, value objects, messages); identity/lifecycle entities stay classes unless record semantics genuinely help. ;; = ;; none ;; Not in the oracle.
+C run008.mc-no-record-struct OL RUN-008 AVOID ;; Avoid record struct merely to dodge allocations. ;; = ;; none ;;
+C x.mc-feature-usage EX RUN-009 DEFAULT ;; required for valid-construction contracts (not invariant validation); collection expressions when the target type is clear; patterns/switch when they clarify, no deep nesting; field keyword to remove trivial backing fields. ;; = ;; none ;; Not in the oracle.
+C run009.mc-no-rewrite-initializers OL RUN-009 MUST_NOT ;; Do not rewrite existing initializers just to modernize. ;; = ;; none ;;
+C run009.mc-extensions-valid OL RUN-009 MUST_NOT ;; Extension members when they improve an API; ordinary extension methods remain valid (no mechanical conversion). ;; = ;; none ;;
+C run008.mc-raw-strings OL RUN-008,SEC-004 MUST_NOT ;; Raw string literals are never an excuse for raw SQL. ;; = ;; none ;;
+C x.mc-var EX RUN-009 DEFAULT ;; var when the type is obvious or unimportant; explicit types when they aid understanding; follow the project convention. ;; = ;; none ;; Not in the oracle.
+C x.mc-visibility-sealed EX RUN-009 DEFAULT ;; Keep implementation details non-public; sealed to communicate non-inheritance, not as a speculative JIT optimization. ;; = ;; none ;; Not in the oracle.
+C x.mc-naming EX RUN-024 DEFAULT ;; PascalCase types/methods/properties/public members, camelCase parameters/locals, meaningful names, private-field naming per convention. ;; = ;; none ;; Beyond RUN-024.
+C x.mc-nested-types EX RUN-024 ALLOWED ;; Small private or nested supporting types may stay with their owner for locality. ;; = ;; none ;; Not in the oracle.
+C run011.mc-no-reorder OL RUN-011 MUST_NOT ;; Do not reorganize a file only to satisfy a preferred member order. ;; = ;; none ;;
+C x.mc-immutability EX RUN-009 PREFER ;; Prefer immutability when it models the domain naturally, not where controlled mutation is simpler. ;; = ;; none ;; Not in the oracle.
+C run008.mc-spans OL RUN-008,RUN-001 DEFAULT ;; Span/stackalloc/pooling/preallocated buffers/source-generated serialization only for demonstrated allocation-heavy hot paths, verified; ordinary collections by default. ;; = ;; none ;;
+C x.mc-langversion-check EX RUN-009 MUST ;; Confirm the configured language version supports a feature. ;; = ;; none ;; Not in the oracle.
+C x.mc-langversion-approval EX DEP-008,ARC-020 REQUIRES_APPROVAL ;; Changing LangVersion or the target framework requires approval. ;; = ;; none ;; DEP-008 gates only preview/RC moves.
+C run009.mc-modernization-task OL RUN-009,GOV-014,WF-005 MUST ;; When asked to modernize preserve behaviour, keep it focused, favour readability, build and test, no architecture refactoring mixed in. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/SKILL.md ;; Workflow skill routed from CLAUDE.md for scaffolding and restructuring.
+@scope workflow project-structure (solution creation, projects, references, repository layout)
+1-4 IM ;; Frontmatter.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10 IM ;; Policy pointers and loading guidance (read references as needed).
+12-16 IM ;; Reference and facet routes.
+18 NN ;; Heading.
+20 OL [arc027.ps-scope]
+21 OL [dep002.ps-stack-conditional]
+22 OL [arc027.ps-required-only]
+23 OL [dep008.ps-target]
+24 MX [arc001.ps-mapped-refs,x.pre-ask-reference] ;; Adding only layout-mapped references and never outward ones is ARC-001; confirming the hook's reference prompts only for layout references is the added gate.
+25 OL [dep003.ps-no-stale]
+26 MX [arc027.ps-useful-tests,x.frontend-test-placement] ;; Useful test projects placed per layout restate ARC-027/ARC-028; frontend tests inside the workspace with E2E under e2e/ is added.
+27 OL [dep024.ps-frontend-workspace]
+28 OL [arc027.ps-minimal-dirs]
+29 OL [dep026.ps-dev-config,wf019.ps-no-prod]
+30 OL [wf005.ps-verify,wf009.ps-no-false-success]
+32 NN ;; Heading.
+34 OL [arc020.ps-new-project]
+35 OL [arc027.ps-responsibility]
+36 OL [arc001.ps-min-refs]
+37 OL [dep023.ps-shared-config]
+38 OL [wf005.ps-build-test]
+40 NN ;; Heading.
+42-48 OL [gov014.ps-reorg]
+50 OL [gov014.ps-no-forced-template]
+52 NN ;; Heading.
+54 DU ;; Check list against Decision control, patterns not adopted and engineering discipline; items owned and captured there.
+56 NN ;; Heading.
+58 OL [wf005.ps-completion]
+
+C arc027.ps-scope OL ARC-027,GOV-013,DEP-018 MUST_NOT ;; Determine scope first; do not scaffold optional infrastructure because it may be useful later. ;; = ;; none ;;
+C dep002.ps-stack-conditional OL DEP-002,DEP-011 MUST ;; Read the stack decisions and baseline packages; conditional technologies only when the capability is needed. ;; = ;; none ;;
+C arc027.ps-required-only OL ARC-027,DEP-024 MUST_NOT ;; Create only required top-level directories and repository files. ;; = ;; none ;;
+C dep008.ps-target OL DEP-008 DEFAULT ;; Create backend projects from the layout on the approved .NET target. ;; = ;; none ;;
+C arc001.ps-mapped-refs OL ARC-001,ARC-028 MUST_NOT ;; Add only references the layout shows; never an outward reference to make compilation easier. ;; = ;; none ;;
+C dep003.ps-no-stale OL DEP-003 MUST_NOT ;; Packages through add-dependency with versions resolved at install time; never copy stale versions from examples. ;; = ;; none ;;
+C arc027.ps-useful-tests OL ARC-027,ARC-028 MUST_NOT ;; Only useful test projects, placed and referenced per the layout. ;; = ;; none ;;
+C x.frontend-test-placement EX DEP-024 DEFAULT ;; Frontend unit/component tests stay inside the frontend workspace (colocated); E2E, when used, under frontend/<Name>.Web/e2e/. ;; = ;; none ;; Not in the oracle.
+C dep024.ps-frontend-workspace OL DEP-024,DEP-014 DEFAULT ;; When in scope create the frontend workspace under frontend/<Name>.Web/ with the frontend commands facet. ;; = ;; Frontend in scope. ;;
+C arc027.ps-minimal-dirs OL ARC-027 MUST_NOT ;; Only internal directories the initial implementation uses; no empty trees. ;; = ;; none ;;
+C dep026.ps-dev-config OL DEP-026,PST-004 MUST ;; Development configuration per the dev-config rule and seeding per the seeding rule. ;; = ;; none ;;
+C wf019.ps-no-prod OL WF-019,SEC-001 MUST_NOT ;; No Production credentials or Production migration automation while scaffolding. ;; = ;; none ;;
+C wf005.ps-verify OL WF-005,WF-003,ARC-001 MUST ;; Verify scaffolding: restore, build solution and frontend, run tests, inspect references with check-architecture.mjs, inspect the tree, confirm Development configuration, then run verify. ;; = ;; none ;;
+C wf009.ps-no-false-success OL WF-009,WF-005 MUST_NOT ;; Never report scaffolding as successful when the solution does not build. ;; = ;; none ;;
+C arc020.ps-new-project OL ARC-020 REQUIRES_APPROVAL ;; Confirm a new assembly is justified; a new production project or layer is Reserved. ;; = ;; none ;;
+C arc027.ps-responsibility OL ARC-027 MUST ;; Identify the new project's architectural or technical responsibility. ;; = ;; none ;;
+C arc001.ps-min-refs OL ARC-001 MUST ;; Add only the minimum references, preserving dependency direction. ;; = ;; none ;;
+C dep023.ps-shared-config OL DEP-023 DEFAULT ;; Update shared build/package configuration when necessary. ;; = ;; When necessary. ;;
+C wf005.ps-build-test OL WF-005 MUST ;; Build and test the affected solution after adding a project. ;; = ;; none ;;
+C gov014.ps-reorg OL GOV-014,ARC-027 MUST ;; Reorganize: inspect tree/references, identify a concrete problem, preserve behaviour, small reviewable steps, consistent namespaces/references, no unrelated feature work, verify. ;; = ;; none ;;
+C gov014.ps-no-forced-template OL GOV-014,ARC-027 MUST_NOT ;; Do not force an established project to match the template without concrete value. ;; = ;; none ;;
+C wf005.ps-completion OL WF-005,ARC-001,ARC-027,GOV-014 MUST ;; Complete when structure matches scope, references respect boundaries, approved technology is used, nothing speculative added, builds and relevant tests pass, Development configuration works and nothing unrelated was reorganized. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/references/baseline-packages.md ;; Private reference of project-structure (baseline packages).
+@scope private reference of workflow project-structure (baseline packages, Development configuration)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [dep003.bp-install-time]
+7-8 NN ;; Table header.
+9-16 MX [dep011.bp-conditional,x.bp-package-placement] ;; Package choices and their conditions restate DEP-010/DEP-012/DEP-013/DEP-011/DEP-017/DEP-001; the target project for each package is an added placement convention.
+18 MX [x.fv-single-mechanism,x.ad-no-deprecated-resilience,dep012.bp-not-addopenapi] ;; Avoiding deprecated automatic-validation and Polly integration packages restates the added deny rules; AddOpenApi not being the default for Swagger UI is DEP-012.
+20 NN ;; Heading.
+22 MX [dep026.bp-dev-config,sec001.bp-no-committed-secrets,x.bp-launch-profile] ;; Development configuration per dev-config (DEP-026) and never committing real credentials (SEC-001) are oracle-linked; the launch-profile convention is added.
+
+C dep003.bp-install-time OL DEP-003 MUST ;; Resolve every package version at install time through add-dependency. ;; = ;; none ;;
+C dep011.bp-conditional OL DEP-010,DEP-012,DEP-013,DEP-011,DEP-017,DEP-001 DEFAULT ;; Baseline/conditional packages: FluentValidation (+DI extensions) when validation is needed; Serilog.AspNetCore (sinks only when required); Swashbuckle; Mvc.Testing with the first integration test; Mapster only for mapping volume; resilience packages only for real needs; Asp.Versioning only after adoption. ;; = ;; none ;;
+C x.bp-package-placement EX DEP-006 DEFAULT ;; Package placement: validation in the use-case project; logging provider, Swashbuckle and Asp.Versioning in the entry-point project; resilience in the implementation project; Mvc.Testing in the integration-test project. ;; = ;; none ;; Placement convention not in the oracle.
+C dep012.bp-not-addopenapi OL DEP-012 DECIDED ;; Do not make built-in AddOpenApi()/MapOpenApi() the default when interactive Swagger UI testing is required. ;; = ;; none ;;
+C dep026.bp-dev-config OL DEP-026 DEFAULT ;; The entry-point project carries appsettings.json and appsettings.Development.json; the local connection default follows the dev-config rule. ;; = ;; none ;;
+C sec001.bp-no-committed-secrets OL SEC-001 MUST_NOT ;; Real usernames, passwords, tokens, production hosts and production connection strings are never committed. ;; = ;; none ;;
+C x.bp-launch-profile EX WF-006 DEFAULT ;; Configure the launch profile so a Development run can open /swagger when helpful, with HTTP/HTTPS URLs consistent with the profile. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/project-structure/references/solution-layout.md ;; Private reference of project-structure (repository layout).
+@scope private reference of workflow project-structure (repository layout)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 OL [arc027.sl-optional-when-needed]
+7-25 NN ;; Target repository tree (comments restate DEP-024/ARC-027 captured at 5, 29 and decisions.md).
+27 NN ;; Heading.
+29 MX [dep024.sl-frontend-workspace,x.frontend-test-placement] ;; Workspace ownership, no obsolete structure and never placing frontend tests under backend/ restate DEP-024/DEP-014; colocated tests and e2e/ placement are added.
+31 NN ;; Heading.
+33 OL [dep023.sl-build-props]
+34 OL [dep006.sl-cpm]
+35 MX [x.global-json,dep008.sl-stable-sdk] ;; Pinning the SDK line in global.json with a servicing rollForward policy is added; selecting the current stable SDK (no RC/preview unless requested) is DEP-008.
+36 EX [x.tooling-over-instructions]
+38 NN ;; Heading.
+40 MX [x.gitignore,dep026.sl-dont-ignore-dev] ;; The ignore list is an added convention; not ignoring the Development configuration contract is DEP-026.
+42 NN ;; Heading.
+44 OL [dep018.sl-optional-infra]
+
+C arc027.sl-optional-when-needed OL ARC-027 MUST_NOT ;; Create optional directories and projects only when needed. ;; = ;; none ;;
+C dep024.sl-frontend-workspace OL DEP-024,DEP-014 MUST_NOT ;; The frontend workspace owns its manifest, lockfile, configuration and sources; do not impose an obsolete structure; never place frontend tests under backend/. ;; = ;; none ;;
+C dep023.sl-build-props OL DEP-023 DEFAULT ;; Directory.Build.props holds genuinely shared settings; project-specific settings stay in projects. ;; = ;; none ;;
+C dep006.sl-cpm OL DEP-006 MUST ;; Directory.Packages.props holds CPM versions in one place. ;; = ;; none ;;
+C x.global-json EX DEP-008,DEP-023 DEFAULT ;; Pin the intended SDK line in global.json with a rollForward policy allowing normal patch/feature-band servicing. ;; = ;; none ;; Not in the oracle.
+C dep008.sl-stable-sdk OL DEP-008,DEP-003 MUST ;; Pin the current stable SDK of the target release; no RC/preview unless explicitly requested. ;; = ;; Explicit request. ;;
+C x.tooling-over-instructions EX RUN-009 PREFER ;; Keep deterministic formatting/code style in .editorconfig; prefer enforceable tooling over restating mechanical formatting in instructions. ;; = ;; none ;; Repo/meta preference.
+C x.gitignore EX SEC-001 DEFAULT ;; Ignore generated and local artifacts (bin, obj, .vs, node_modules, dist, TestResults, coverage, local secret/config overrides). ;; = ;; none ;; Not in the oracle.
+C dep026.sl-dont-ignore-dev OL DEP-026 MUST_NOT ;; Do not ignore files intentionally part of the Development configuration contract. ;; = ;; none ;;
+C dep018.sl-optional-infra OL DEP-018,GOV-013 MUST_NOT ;; Docker files, deployment manifests, Kubernetes, cloud/messaging infrastructure and additional services appear only for a concrete requirement. ;; = ;; none ;;

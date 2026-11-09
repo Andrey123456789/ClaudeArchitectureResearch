@@ -1,0 +1,11 @@
+"""Source review for C04, read on current v2 bytes. Entailment against GOV-015 and DEP-007 with a falsifying case for each candidate. The Git cases ran in disposable fixtures; no live agent ran."""
+OWNER = {'M': '.claude/rules/dependencies.md', 'M1': '.claude/rules/dependencies.md', 'L0': '.claude/rules/3-project/package-management.md', 'L1': '.claude/rules/3-project/package-management.md', 'K0': '.claude/rules/common/dependencies.md', 'K1': '.claude/rules/frontend/dependencies.md'}
+KEEP = {'M': 'keep the lockfile consistent when packages change', 'M1': 'keep the lockfile consistent when adding packages', 'L0': 'the lockfile consistent with every change', 'L1': 'the lockfile consistent', 'K0': 'the lockfile consistent with every dependency change', 'K1': 'must stay together and consistent'}
+REVIEW = []
+for c in OWNER:
+    REVIEW.append(dict(policy='GOV-015', candidate=c, verdict='HOLDS', quotes=[(OWNER[c], 'when an authorized commit is part of this task, include both files'), (OWNER[c], 'without creating a Git commit'), ('CLAUDE.md', 'mentions committing is not that authority')],
+                       note='GOV-015: no commit unless explicitly requested. Before C04 the dependency owner gave an unconditional commit step that only the Git clause overrode. The step now agrees with the clause, so a reader of the path-scoped rule alone reaches the same answer. No Git permission machinery was added.',
+                       counterexample='A dependency change with no commit authority, interactive or headless, or under a generic approved workflow: both files change, no commit. A named commit authority: one commit holding both files. Both modelled in a real Git fixture.'))
+    REVIEW.append(dict(policy='DEP-007', candidate=c, verdict='HOLDS', quotes=[(OWNER[c], KEEP[c]), (OWNER[c], 'deliberately adopts another'), (OWNER[c], 'devDependencies')],
+                       note='DEP-007: npm by default, package-lock consistent, tooling in the right category. It never asked for a commit, and all three duties stay as they were.',
+                       counterexample='A package.json changed with a stale or missing lockfile and no commit authority: still a violation of the consistency duty, and the conditional clause does not excuse it.'))

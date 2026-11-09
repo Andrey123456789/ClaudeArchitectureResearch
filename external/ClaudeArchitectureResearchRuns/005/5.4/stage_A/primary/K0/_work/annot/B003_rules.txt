@@ -1,0 +1,441 @@
+# K0 — standards (STD) under .claude/rules/<scope>/
+
+@@ output/template/.claude/rules/common/security.md ;; Path-scoped (backend, frontend, json/yaml, project/config files, .env, Dockerfiles).
+@scope path-scoped: backend/**, frontend/**, configuration, project and container files
+1-15 IM ;; Frontmatter path scope.
+17 NN ;; Banner (kind, scope, owner, loading metadata).
+19 NN ;; Heading.
+21 IM ;; See-also routing pointer.
+23 NN ;; Heading.
+25 OL [sec001.no-secrets]
+26 OL [sec002.secret-mechanisms]
+28 NN ;; Heading.
+30 OL [sec003.untrusted-input]
+32 NN ;; Heading.
+34 OL [sec005.server-authz]
+36 NN ;; Heading.
+38 OL [sec007.tls]
+39 OL [sec007.no-cert-disable]
+41 NN ;; Heading.
+43 OL [sec010.no-sensitive-logs]
+44 OL [run014.no-payload-logs]
+46 NN ;; Heading.
+48 OL [sec013.fail-safe]
+49 OL [sec014.no-insecure-fallback]
+
+C sec001.no-secrets OL SEC-001 MUST_NOT ;; Never hardcode or commit real secrets, credentials, private keys, access/refresh tokens or production connection strings in source-controlled files, example configuration included. ;; = ;; none ;;
+C sec002.secret-mechanisms OL SEC-002 DEFAULT ;; Local secret mechanism (dotnet user-secrets) for development; environment-specific injection or a managed secret store for deployed environments; do not assume an unchosen cloud provider. ;; = ;; none ;;
+C sec003.untrusted-input OL SEC-003 MUST ;; Treat data crossing the trusted boundary (requests, uploads, external responses when assumptions matter, message payloads, user-provided identifiers/filters) as untrusted and validate it at the owning layer. ;; = ;; none ;;
+C sec005.server-authz OL SEC-005 MUST ;; Authorization is enforced on the server; client guards, hidden/disabled buttons and client checks are UX, not a security boundary. ;; = ;; none ;;
+C sec007.tls OL SEC-007 MUST ;; Production traffic carrying credentials or sensitive data uses TLS; respect the hosting topology (TLS may terminate outside the app; in-app redirection not required when the deployment provides the boundary). ;; = ;; none ;;
+C sec007.no-cert-disable OL SEC-007 MUST_NOT ;; Never disable certificate validation to make an integration work. ;; = ;; none ;;
+C sec010.no-sensitive-logs OL SEC-010 MUST_NOT ;; Never log passwords, tokens, private keys, auth secrets or full payment credentials; avoid PII without a concrete operational need permitted by privacy policy; prefer stable technical identifiers; log level does not make sensitive data safe. ;; = ;; none ;;
+C run014.no-payload-logs OL RUN-014 MUST_NOT ;; Do not serialize arbitrary request bodies, domain objects or sensitive payloads into logs by default; log the minimum useful non-sensitive context. ;; = ;; none ;;
+C sec013.fail-safe OL SEC-013 DEFAULT ;; Security-sensitive authorization, permission and required-control checks fail safely; lookup/configuration failures do not silently become success. ;; = ;; none ;;
+C sec014.no-insecure-fallback OL SEC-014 MUST_NOT ;; A required security control that cannot be configured correctly must not fall back to an insecure mode; prefer visible startup/configuration failure. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/common/dependencies.md ;; Path-scoped (manifests).
+@scope path-scoped: *.csproj, Directory.*.props, package.json, package-lock.json
+1-8 IM ;; Frontmatter path scope.
+10 NN ;; Banner (kind, scope, owner, loading metadata).
+12 NN ;; Heading.
+14 IM ;; Workflow routing pointer (add-dependency) and pointer to the decision register.
+16 NN ;; Heading.
+18 OL [dep001.need]
+20 NN ;; Heading.
+22 MX [dep006.cpm,x.versionoverride-reason] ;; CPM and versionless references are DEP-006; the VersionOverride concrete-reported-reason condition is added.
+23 OL [dep006.narrow]
+25 NN ;; Heading.
+27 OL [dep007.npm-default]
+28 OL [dep007.lockfile]
+29 OL [dep007.dev-deps]
+
+C dep001.need OL DEP-001,DEP-011 MUST ;; Add a dependency only for a concrete current requirement, never for hypothetical future use; an approved conditional technology is added only when its capability is actually needed. ;; = ;; none ;;
+C dep006.cpm OL DEP-006 MUST ;; NuGet Central Package Management: versions in Directory.Packages.props; PackageReference entries versionless by default and never duplicating central versions. ;; = ;; none ;;
+C x.versionoverride-reason EX DEP-006 MUST ;; A VersionOverride needs a concrete reason that is reported. ;; = ;; Concrete reported reason. ;; VersionOverride condition not in the oracle.
+C dep006.narrow OL DEP-006 MUST ;; Keep each package reference in the narrowest project that requires it; never add a package to every project merely because they share a solution. ;; = ;; none ;;
+C dep007.npm-default OL DEP-007 MUST ;; npm is the package manager of the Angular workspace unless the project deliberately adopts another. ;; = ;; Deliberate change. ;;
+C dep007.lockfile OL DEP-007 MUST ;; Commit package.json and package-lock.json and keep the lockfile consistent with every dependency change. ;; = ;; none ;;
+C dep007.dev-deps OL DEP-007 MUST ;; Build and test tooling belongs in devDependencies unless there is a concrete reason. ;; = ;; Concrete reason. ;;
+
+@@ output/template/.claude/rules/common/repository-layout.md ;; Path-scoped (backend, frontend, docs, solution).
+@scope path-scoped: backend/**, frontend/**, docs/**, *.slnx
+1-7 IM ;; Frontmatter path scope.
+9 NN ;; Banner (kind, scope, owner, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Pointer to decisions D-16, D-17, D-18.
+15 IM ;; Workflow routing pointer (project-structure).
+17 OL [arc027.no-speculative-structure]
+18 OL [arc027.create-when-real]
+
+C arc027.no-speculative-structure OL ARC-027 MUST_NOT ;; Physical structure follows actual responsibilities: no speculative projects, infrastructure, empty directory trees or generic Common/Helpers/Utils buckets to look architectural. ;; = ;; none ;;
+C arc027.create-when-real OL ARC-027 MUST ;; Create a project, directory or documentation folder only when it holds real content with a cohesive, nameable responsibility. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/architecture.md ;; Path-scoped (backend .cs and .csproj).
+@scope path-scoped: backend/**/*.cs, backend/**/*.csproj
+1-5 IM ;; Frontmatter path scope.
+7 NN ;; Banner (kind, scope, owner, loading metadata).
+9 NN ;; Heading.
+11 IM ;; Pointer to decisions D-01, D-02, D-04.
+13 IM ;; Enforced-by pointer (check-dependencies.cjs).
+15 NN ;; Heading.
+17 OL [arc001.inward]
+18 OL [arc001.no-outer]
+20 NN ;; Heading.
+22 OL [arc002.domain-independent]
+23 OL [arc003.simple-entities]
+24 OL [arc004.rich-domain-approval]
+25 OL [arc005.no-ddd-theater]
+27 NN ;; Heading.
+29 OL [arc006.app-services]
+30 OL [arc007.abstractions]
+31 OL [arc008.app-no-ef]
+33 NN ;; Heading.
+35 OL [arc010.thin-controllers]
+36 OL [arc011.controller-no-logic]
+37 OL [arc012.composition-root]
+38 OL [arc029.no-dup-dto]
+40 NN ;; Heading.
+42 OL [arc013.specific-repos]
+43 OL [arc014.no-iqueryable]
+44 OL [arc015.no-generic-repo]
+46 NN ;; Heading.
+48 OL [arc016.uow]
+49 OL [arc017.shared-uow]
+50 OL [arc018.no-tx]
+52 NN ;; Heading.
+54 OL [arc019.ef-boundary]
+56 NN ;; Heading.
+58 OL [arc021.ctor-injection]
+59 OL [arc022.lifetimes]
+60 OL [arc023.registration]
+
+C arc001.inward OL ARC-001 MUST ;; Dependencies point inward: Domain references no application project; Application→Domain; Infrastructure→Application, Domain; Api→Application and Infrastructure only for composition and registration. ;; = ;; none ;;
+C arc001.no-outer OL ARC-001,ARC-002,ARC-008 MUST_NOT ;; Inner layers never depend on outer layers; Domain/Application never reference Infrastructure-specific types; reconsider the abstraction boundary instead of an outward dependency. ;; = ;; none ;;
+C arc002.domain-independent OL ARC-002 MUST ;; Domain stays independent of EF Core, ASP.NET Core, HTTP, persistence, external-service implementation and mapping-library concerns. ;; = ;; none ;;
+C arc003.simple-entities OL ARC-003 DEFAULT ;; Simple domain entities; CRUD and straightforward workflow rules in Application Services; validation rules, immutable fields, status transitions or edit rules alone do not justify a Rich Domain Model. ;; = ;; none ;;
+C arc004.rich-domain-approval OL ARC-004 REQUIRES_APPROVAL ;; Move behaviour into Domain only for non-trivial invariants that materially benefit from domain encapsulation; otherwise Rich Domain/DDD tactical patterns require approval unless the approved specification requires them. ;; = ;; Approved specification requires the design. ;;
+C arc005.no-ddd-theater OL ARC-005 MUST_NOT ;; No factories, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar merely to appear domain-driven. ;; = ;; none ;;
+C arc006.app-services OL ARC-006 DEFAULT ;; Application Services orchestrate use cases (Domain objects, repositories, external abstractions, Unit of Work); a large service is a signal to reconsider responsibilities, not to add another pattern. ;; = ;; none ;;
+C arc007.abstractions OL ARC-007 MUST ;; Define persistence and external-service abstractions in Application when use cases require them; keep infrastructure details out. ;; = ;; none ;;
+C arc008.app-no-ef OL ARC-008 MUST_NOT ;; Application must not use DbContext, DbSet<T>, EF Core APIs, provider-specific types or ASP.NET Core transport types. ;; = ;; none ;;
+C arc010.thin-controllers OL ARC-010 MUST ;; Controllers stay thin: bind and validate HTTP input, invoke Application services, translate outcomes into HTTP responses. ;; = ;; none ;;
+C arc011.controller-no-logic OL ARC-011 MUST_NOT ;; Controllers contain no business logic, do not access DbContext or concrete repositories, and do not construct infrastructure services manually. ;; = ;; none ;;
+C arc012.composition-root OL ARC-012,ARC-011 DEFAULT ;; Program.cs is the composition root and may register Infrastructure implementations; Controllers still do not consume Infrastructure implementation types. ;; = ;; none ;;
+C arc029.no-dup-dto OL ARC-029 MUST_NOT ;; Do not duplicate equivalent DTOs across API and Application merely for layer-shaped types; transport contracts when separation gives a concrete boundary benefit. ;; = ;; none ;;
+C arc013.specific-repos OL ARC-013 DEFAULT ;; Specific repository interfaces for cohesive Application persistence needs (defined in Application, implemented in Infrastructure), not table-mirroring generic CRUD. ;; = ;; none ;;
+C arc014.no-iqueryable OL ARC-014 MUST_NOT ;; Repository interfaces never expose IQueryable<T>, DbSet<T>, DbContext, EF expressions or provider types; return materialized entities, collections, projections or result models. ;; = ;; none ;;
+C arc015.no-generic-repo OL ARC-015 MUST_NOT ;; Application must not depend on IGenericRepository<T> or another generic CRUD contract; a generic base may exist only in Infrastructure to remove real duplication. ;; = ;; none ;;
+C arc016.uow OL ARC-016 DEFAULT ;; IUnitOfWork is the use-case commit boundary: repositories stage changes and do not call SaveChangesAsync; Application Services decide when to commit. ;; = ;; none ;;
+C arc017.shared-uow OL ARC-017 MUST ;; Repositories in one use case share the scoped Unit of Work and DbContext; IUnitOfWork never becomes a repository container or service locator. ;; = ;; none ;;
+C arc018.no-tx OL ARC-018 DEFAULT ;; No explicit transaction APIs until a concrete use case needs control beyond SaveChangesAsync. ;; = ;; none ;;
+C arc019.ef-boundary OL ARC-019 MUST ;; EF Core is used fully inside Infrastructure and never leaks into Application; do not cripple repository implementations to preserve a generic abstraction. ;; = ;; none ;;
+C arc021.ctor-injection OL ARC-021 DEFAULT ;; Constructor injection for required dependencies; avoid service-locator and property injection. ;; = ;; none ;;
+C arc022.lifetimes OL ARC-022 MUST ;; Service lifetimes must be valid; never capture a shorter-lived dependency in a longer-lived service. ;; = ;; none ;;
+C arc023.registration OL ARC-023 DEFAULT ;; Registration stays with the owning layer; Api remains the composition root. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/persistence.md ;; Path-scoped (backend .cs, appsettings).
+@scope path-scoped: backend/**/*.cs, backend/**/appsettings*.json
+1-5 IM ;; Frontmatter path scope.
+7 NN ;; Banner (kind, scope, owner, loading metadata).
+9 NN ;; Heading.
+11 IM ;; Pointer to decision D-04.
+13 IM ;; See-also routing pointers.
+15 NN ;; Heading.
+17 OL [run006.db-efficiency]
+19 NN ;; Heading.
+21 OL [dep026.dev-connection]
+23 NN ;; Heading.
+25 OL [pst001.seed-default]
+26 OL [pst002.seed-infra]
+27 OL [pst003.seeder-location]
+28 OL [pst004.dev-only]
+29 OL [pst005.no-migrate]
+30 OL [pst006.leave-existing]
+31 OL [pst007.valid-seed]
+
+C run006.db-efficiency OL RUN-006 DEFAULT ;; Filter and project in the database when practical; avoid unnecessary round trips, over-fetching and N+1; paginate potentially large results. ;; = ;; none ;;
+C dep026.dev-connection OL DEP-026,SEC-001 DEFAULT ;; appsettings.Development.json provides a usable local SQL Server connection string when it holds no secret credentials; credential-bearing values come from user-secrets or another approved local mechanism. ;; = ;; none ;;
+C pst001.seed-default OL PST-001 DEFAULT ;; An empty Development database receives a small deterministic representative seed dataset covering meaningful states and relationships. ;; = ;; none ;;
+C pst002.seed-infra OL PST-002 MUST ;; Development seeding is an Infrastructure/bootstrap concern; it may use AppDbContext directly without repositories or IUnitOfWork. ;; = ;; none ;;
+C pst003.seeder-location OL PST-003 MUST ;; Substantial seed construction lives in a dedicated internal seeder behind a narrow Infrastructure initialization extension, not in Program.cs, DbContext/entity configuration or migrations. ;; = ;; none ;;
+C pst004.dev-only OL PST-004,WF-019 MUST_NOT ;; Automatic development seeding runs only in Development, never Production; the development seeder is never test setup. ;; = ;; none ;;
+C pst005.no-migrate OL PST-005 MUST_NOT ;; The seeder must not call Database.Migrate()/EnsureCreated() or otherwise create/upgrade schema; migrations are applied separately before seeding. ;; = ;; none ;;
+C pst006.leave-existing OL PST-006 MUST_NOT ;; When representative data exists leave it unchanged; never synchronize, repair, upgrade, overwrite or recreate an existing Development database; developers recreate explicitly. ;; = ;; none ;;
+C pst007.valid-seed OL PST-007 MUST ;; Seed entities preserve Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive or random combinations. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/api.md ;; Path-scoped (backend .cs).
+@scope path-scoped: backend/**/*.cs
+1-4 IM ;; Frontmatter path scope.
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Pointer to decisions D-01, D-07, D-15.
+12 IM ;; See-also routing pointer.
+14 NN ;; Heading.
+16 OL [api001.transport-owner]
+17 OL [api002.problem-details]
+18 MX [api003.status-semantics,x.api-status-consistency] ;; Status choice by semantics is API-003; consistent status behaviour across similar endpoints is added.
+19 OL [api004.empty-collection]
+20 OL [api005.401-403]
+21 OL [api006.409-412]
+23 NN ;; Heading.
+25 OL [api013.versioning-need]
+26 OL [api014.no-silent-break]
+27 OL [api015.one-strategy]
+28 OL [arc026.no-version-models]
+30 NN ;; Heading.
+32 OL [api016.swagger-accurate]
+33 OL [api017.swagger-dev]
+
+C api001.transport-owner OL API-001 MUST ;; HTTP status codes and transport semantics belong to the API layer; Application/Domain never return IActionResult, ProblemDetails or ASP.NET Core status codes. ;; = ;; none ;;
+C api002.problem-details OL API-002 DEFAULT ;; ProblemDetails for non-validation failures and ValidationProblemDetails for request validation; machine-readable error contracts stay stable and safe. ;; = ;; none ;;
+C api003.status-semantics OL API-003 MUST ;; Choose 200/201/202/204 by actual HTTP semantics; not 200 for everything, 201 for an internal insert or 202 for completed work. ;; = ;; none ;;
+C x.api-status-consistency EX API-003 MUST ;; Keep status behaviour consistent across similar endpoints. ;; = ;; none ;; Cross-endpoint consistency obligation not in the oracle.
+C api004.empty-collection OL API-004 DEFAULT ;; A successful collection query with zero matches returns 200 with an empty collection, not 404. ;; = ;; none ;;
+C api005.401-403 OL API-005 MUST ;; 401 for missing/failed authentication, 403 for a non-permitted principal; 404 hiding must be a deliberate consistent security policy. ;; = ;; none ;;
+C api006.409-412 OL API-006 MUST ;; 409 for a valid request conflicting with current state; 412 when an explicit HTTP precondition such as If-Match fails. ;; = ;; none ;;
+C api013.versioning-need OL API-013 MUST_NOT ;; Do not introduce API versioning merely because an API exists; only for published compatibility or coexisting client generations. ;; = ;; none ;;
+C api014.no-silent-break OL API-014 MUST_NOT ;; A version relied on by external clients must not change incompatibly; a breaking change needs a new version or an explicitly approved compatibility strategy. ;; = ;; none ;;
+C api015.one-strategy OL API-015 DEFAULT ;; When versioning is required use one strategy consistently, URL-segment unless requirements justify another. ;; = ;; none ;;
+C arc026.no-version-models OL ARC-026 MUST_NOT ;; No separate Domain or persistence models merely because the external API has multiple versions; isolate version-specific transport contracts at the API boundary. ;; = ;; none ;;
+C api016.swagger-accurate OL API-016 MUST ;; Swagger/OpenAPI metadata describes the running API (routes, important statuses, schemas, authentication) and never speculative responses. ;; = ;; none ;;
+C api017.swagger-dev OL API-017 DEFAULT ;; Swagger UI enabled in Development; elsewhere only when deployment requirements explicitly justify it. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/error-handling.md ;; Path-scoped (backend .cs).
+@scope path-scoped: backend/**/*.cs
+1-4 IM ;; Frontmatter path scope.
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Pointer to decision D-05.
+12 IM ;; See-also routing pointer.
+14 NN ;; Heading.
+16 OL [api007.central-handler]
+17 OL [api008.no-exposure]
+18 OL [api012.log-once]
+20 NN ;; Heading.
+22 OL [api009.expected-outcomes]
+23 OL [api011.no-business-exceptions]
+25 NN ;; Heading.
+27 OL [api010.validation-boundaries]
+29 NN ;; Heading.
+31 OL [api021.cancellation]
+
+C api007.central-handler OL API-007 DEFAULT ;; Unexpected failures propagate to centralized IExceptionHandler handling; avoid repetitive catch/log/rethrow; catch only to recover, translate, apply a defined fallback, add context preserving the original, or clean up. ;; = ;; none ;;
+C api008.no-exposure OL API-008 MUST_NOT ;; Public API errors never expose stack traces, SQL, connection strings, internal paths, secret values or sensitive exception details. ;; = ;; none ;;
+C api012.log-once OL API-012 MUST ;; Unexpected exceptions are logged once, by default at the handling boundary, never repeatedly across layers and the global handler. ;; = ;; none ;;
+C api009.expected-outcomes OL API-009,ARC-020 DEFAULT ;; Represent expected outcomes explicitly when useful (null, bool, typed outcome) without forcing Result<T> or HTTP-named categories in Application; a project-wide Result model is Reserved. ;; = ;; none ;;
+C api011.no-business-exceptions OL API-011 MUST_NOT ;; Business exceptions are not the default architecture; never throw/catch merely to jump between expected branches. ;; = ;; none ;;
+C api010.validation-boundaries OL API-010 MUST ;; FluentValidation for explicit request/use-case validation where appropriate; each concern at its owning boundary (API transport, Application use-case rules, Domain invariants, Infrastructure external assumptions); no Domain invariants moved into validators merely because the library exists; no mechanical duplication. ;; = ;; none ;;
+C api021.cancellation OL API-021 MUST_NOT ;; Client-request cancellation is not a server failure: never map it to a generic 500 or log it as an unhandled error. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/csharp.md ;; Path-scoped (backend .cs).
+@scope path-scoped: backend/**/*.cs
+1-4 IM ;; Frontmatter path scope.
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Pointer to decision D-03.
+12 IM ;; Enforced-by pointer (.editorconfig).
+14 NN ;; Heading.
+16 OL [run009.conventions]
+17 OL [run011.no-style-rewrites]
+18 OL [run024.file-conventions]
+19 EX [x.cs-primary-ctor]
+20 EX [x.cs-records]
+21 EX [x.cs-visibility]
+22 EX [x.cs-var,x.cs-naming]
+24 NN ;; Heading.
+26 OL [run002.async-io]
+27 OL [run003.cancellation-token]
+29 NN ;; Heading.
+31 OL [run004.timeprovider]
+33 NN ;; Heading.
+35 OL [run001.clear-first]
+36 OL [run008.measured-optimizations]
+
+C run009.conventions OL RUN-009 DEFAULT ;; Follow existing conventions and .editorconfig; modern C# when it improves clarity, never mechanical modernization. ;; = ;; none ;;
+C run011.no-style-rewrites OL RUN-011 MUST_NOT ;; No style-only rewrites outside the requested change unless explicitly asked; do not mix large formatting/modernization with functional work. ;; = ;; none ;;
+C run024.file-conventions OL RUN-024 DEFAULT ;; New code: file-scoped namespaces when consistent; one primary top-level type per matching file; Async suffix on Task/ValueTask methods unless a contract makes it inappropriate; no reorganization merely for member ordering. ;; = ;; none ;;
+C x.cs-primary-ctor EX RUN-009 PREFER ;; Prefer primary constructors for simple injection/initialization and regular constructors when validation is non-trivial, explicit fields read better or the codebase uses that style; no mechanical conversion. ;; = ;; none ;; Constructor-style guidance not in the oracle.
+C x.cs-records EX RUN-009 PREFER ;; Prefer records where value semantics/immutability are intended and classes where identity, lifecycle, inheritance or framework behaviour matters; do not turn every DTO or Domain type into a record. ;; = ;; none ;; Record/class guidance not in the oracle.
+C x.cs-visibility EX RUN-009 MUST ;; Keep implementation details non-public unless they belong to the public API; use sealed only to communicate deliberate design intent, not as speculative optimization. ;; = ;; none ;; Visibility/sealed rule not in the oracle.
+C x.cs-var EX RUN-009 PREFER ;; Prefer var when the type is obvious or unimportant and an explicit type when it aids understanding. ;; = ;; none ;; var guidance not in the oracle.
+C x.cs-naming EX RUN-009,RUN-024 MUST ;; Standard .NET naming (PascalCase types/members, camelCase parameters/locals, meaningful names); private fields follow the repository convention. ;; = ;; none ;; Naming convention not in the oracle.
+C run002.async-io OL RUN-002 MUST ;; Use async APIs for asynchronous I/O and never block them with .Result, .Wait() or similar. ;; = ;; none ;;
+C run003.cancellation-token OL RUN-003 MUST ;; Propagate CancellationToken when cancellation is meaningful; no cancellation parameters on purely synchronous code without a use case. ;; = ;; none ;;
+C run004.timeprovider OL RUN-004 DEFAULT ;; TimeProvider for clock-dependent logic needing deterministic tests; stored timestamps and explicit dates are not clock dependencies; no mechanical replacement. ;; = ;; none ;;
+C run001.clear-first OL RUN-001 DEFAULT ;; Clear correct code first; no specialized optimizations without a concrete reason; prefer measurement/profiling for non-trivial optimization. ;; = ;; none ;;
+C run008.measured-optimizations OL RUN-008 DEFAULT ;; Compiled queries, ValueTask<T>, ArrayPool/MemoryPool and manual pooling, custom serialization, aggressive caching and raw SQL for performance only for a measured or clearly demonstrated need. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/integrations.md ;; Path-scoped (backend .cs).
+@scope path-scoped: backend/**/*.cs
+1-4 IM ;; Frontmatter path scope.
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Pointer to decision D-12.
+12 OL [run005.httpclient-lifetime]
+13 OL [arc025.no-transport-leak]
+14 OL [run015.bounded-time]
+15 OL [run016.safe-retry]
+16 OL [run017.retry-after]
+17 OL [run018.fallback]
+18 OL [run019.cancellation-not-transient]
+
+C run005.httpclient-lifetime OL RUN-005 MUST_NOT ;; Never create and dispose an HttpClient per request; use IHttpClientFactory or another long-lived strategy. ;; = ;; none ;;
+C arc025.no-transport-leak OL ARC-025 MUST ;; Infrastructure translates remote HTTP responses into Application-facing abstractions; HttpResponseMessage and transport concerns never leak into Application. ;; = ;; none ;;
+C run015.bounded-time OL RUN-015 MUST ;; External I/O calls have a bounded execution time; avoid overlapping timeout mechanisms with unclear combined behaviour. ;; = ;; none ;;
+C run016.safe-retry OL RUN-016 MUST ;; Retry only when repetition is safe; never retry state-changing operations automatically without idempotency or another duplicate-prevention mechanism. ;; = ;; none ;;
+C run017.retry-after OL RUN-017 DEFAULT ;; Respect Retry-After or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively. ;; = ;; none ;;
+C run018.fallback OL RUN-018 MUST ;; Use a fallback only when its result is semantically acceptable; never hide a correctness failure behind a convenient default. ;; = ;; none ;;
+C run019.cancellation-not-transient OL RUN-019 MUST_NOT ;; Caller cancellation is not a transient failure; never classify it as one or turn it into repeated outbound attempts. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/caching.md ;; Path-scoped (backend .cs).
+@scope path-scoped: backend/**/*.cs
+1-4 IM ;; Frontmatter path scope.
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 DU [arc020.reserved-infra] ;; Restates the CLAUDE.md Reserved category (distributed caching).
+12 OL [run007.cache-need]
+13 OL [arc024.cache-boundary]
+14 OL [run020.cache-keys]
+15 OL [run023.cache-lifetime]
+16 OL [run021.cache-invalidation]
+
+C run007.cache-need OL RUN-007 DEFAULT ;; Caching is an optimization, not an architecture requirement; introduce it only for a clear measured or reasoned need and choose the implementation by deployment, consistency and staleness requirements, never merely because a value is read often. ;; = ;; none ;;
+C arc024.cache-boundary OL ARC-024 MUST ;; Cache technology stays out of Domain; infrastructure cache APIs never leak into Application without a deliberate boundary abstraction. ;; = ;; none ;;
+C run020.cache-keys OL RUN-020 MUST ;; Cache keys uniquely represent the value and include every relevant dimension (identifier, tenant, user, locale, query parameters); avoid global keys for user/tenant-specific data. ;; = ;; none ;;
+C run023.cache-lifetime OL RUN-023 MUST ;; Every cache entry has a lifetime or another explicit invalidation strategy. ;; = ;; none ;;
+C run021.cache-invalidation OL RUN-021 MUST ;; Invalidate/update cache entries consistently with successful mutations; the cache never becomes a second source of truth. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/hosting.md ;; Path-scoped (backend .cs, appsettings, Dockerfiles).
+@scope path-scoped: backend/**/*.cs, appsettings, backend Dockerfiles
+1-7 IM ;; Frontmatter path scope.
+9 NN ;; Banner (kind, scope, owner, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Pointer to decisions D-06, D-14.
+15 IM ;; See-also routing pointer.
+17 NN ;; Heading.
+19 OL [run022.typed-options]
+21 NN ;; Heading.
+23 OL [run013.structured-logging]
+24 OL [dep021.add-serilog]
+26 NN ;; Heading.
+28 OL [api018.cheap-health]
+29 OL [api019.liveness-readiness]
+30 OL [api020.no-health-leak]
+32 NN ;; Heading.
+34 OL [dep019.runtime-image]
+
+C run022.typed-options OL RUN-022 DEFAULT ;; Strongly typed options validated at startup when missing/invalid values prevent correct or secure operation; direct IConfiguration access only in the composition root, provider setup and infrastructure registration. ;; = ;; none ;;
+C run013.structured-logging OL RUN-013 DEFAULT ;; ILogger<T> with structured message templates and stable property names; avoid interpolation that makes structured values opaque. ;; = ;; none ;;
+C dep021.add-serilog OL DEP-021 DEFAULT ;; When Serilog is configured use DI-integrated AddSerilog with environment-aware provider configuration; application code depends on ILogger<T>. ;; = ;; none ;;
+C api018.cheap-health OL API-018 MUST ;; Health checks stay cheap and deterministic, never business workflows or expensive/mutating database work. ;; = ;; none ;;
+C api019.liveness-readiness OL API-019 MUST ;; Liveness must not depend on external dependencies whose unavailability causes restart loops (by default no database or remote API checks); readiness may depend on required capabilities and must reflect startup completion and required-dependency availability. ;; = ;; none ;;
+C api020.no-health-leak OL API-020 MUST_NOT ;; Publicly reachable health responses never expose secrets, credentials, connection details, stack traces or unnecessary diagnostics. ;; = ;; none ;;
+C dep019.runtime-image OL DEP-019 DEFAULT ;; Production containers use an appropriate runtime image (ASP.NET Core runtime for APIs), not the SDK image for convenience; avoid switching to root to bypass filesystem problems. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend/security.md ;; Path-scoped (backend .cs, appsettings).
+@scope path-scoped: backend/**/*.cs, backend/**/appsettings*.json
+1-5 IM ;; Frontmatter path scope.
+7 NN ;; Banner (kind, scope, owner, loading metadata).
+9 NN ;; Heading.
+11 IM ;; See-also routing pointer.
+13 DU [arc020.reserved-auth] ;; Restates the CLAUDE.md Reserved category (authentication architecture).
+15 NN ;; Heading.
+17 OL [sec004.parameterized-sql]
+19 NN ;; Heading.
+21 OL [sec006.explicit-authz]
+22 OL [sec016.no-custom-auth]
+23 OL [sec017.token-validation]
+24 OL [sec018.no-enumeration]
+26 NN ;; Heading.
+28 OL [sec008.no-custom-crypto]
+30 NN ;; Heading.
+32 OL [sec009.cors]
+34 NN ;; Heading.
+36 OL [sec015.upload-metadata]
+
+C sec004.parameterized-sql OL SEC-004 MUST ;; Use parameterized database access (EF Core LINQ or supported parameterization of raw SQL, Dapper, ADO.NET); never concatenate untrusted input into SQL. ;; = ;; none ;;
+C sec006.explicit-authz OL SEC-006,SEC-005 MUST ;; Explicit reviewable authorization by default (global/fallback policies, attributes, endpoint configuration); anonymous access deliberate and visible; avoid redundant [Authorize] under a secure global policy. ;; = ;; none ;;
+C sec016.no-custom-auth OL SEC-016 MUST_NOT ;; No custom token/password security, password hashing or reset-token cryptography when ASP.NET Core authentication or Identity covers the requirement. ;; = ;; none ;;
+C sec017.token-validation OL SEC-017 MUST ;; For Bearer/OIDC validate what the issuer requires (issuer, audience, signature/signing authority, lifetime); never disable validation to make a token work. ;; = ;; none ;;
+C sec018.no-enumeration OL SEC-018 MUST_NOT ;; Authentication failures never expose detail that reveals secrets or account state; login avoids account-enumeration leaks where relevant. ;; = ;; none ;;
+C sec008.no-custom-crypto OL SEC-008 MUST_NOT ;; No custom cryptography when a reviewed platform mechanism fits; Data Protection is for application-generated protected payloads, not universal database encryption. ;; = ;; none ;;
+C sec009.cors OL SEC-009 DEFAULT ;; Narrowest CORS policy satisfying actual browser clients; never credentialed cross-origin requests with an unrestricted origin policy. ;; = ;; none ;;
+C sec015.upload-metadata OL SEC-015 MUST_NOT ;; Do not treat client-provided file metadata such as MIME type as authoritative when handling or security depends on actual content. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/backend-tests/testing.md ;; Path-scoped (backend test projects).
+@scope path-scoped: backend test projects
+1-5 IM ;; Frontmatter path scope.
+7 NN ;; Banner (kind, scope, owner, loading metadata).
+9 NN ;; Heading.
+11 IM ;; Pointer to decisions D-08, D-01.
+13 NN ;; Heading.
+15 OL [tst001.nunit]
+16 OL [tst002.narrowest-level]
+17 OL [tst006.waf]
+19 NN ;; Heading.
+21 OL [tst003.behavior]
+22 OL [tst005.explicit-cases]
+23 OL [tst012.names]
+24 OL [tst011.no-low-value]
+26 NN ;; Heading.
+28 OL [tst004.isolation]
+29 OL [tst008.known-state]
+30 OL [tst007.provider-fidelity]
+32 NN ;; Heading.
+34 OL [arc028.test-refs]
+
+C tst001.nunit OL TST-001 DEFAULT ;; NUnit for backend automated tests (an established project deliberately using another framework follows it); no second framework without a concrete reason. ;; = ;; Established project framework. ;;
+C tst002.narrowest-level OL TST-002 DEFAULT ;; Narrowest test level that meaningfully verifies the behaviour; integration tests when wiring, HTTP, EF Core, persistence, serialization, authentication or interaction is the subject; no fixed ratio. ;; = ;; none ;;
+C tst006.waf OL TST-006 DEFAULT ;; WebApplicationFactory-based integration tests when routing, binding, middleware, authentication, DI, repositories, EF Core or persistence must be proven. ;; = ;; none ;;
+C tst003.behavior OL TST-003 MUST ;; Tests verify observable behaviour, not private methods, call sequences, implementation classes or refactoring details, and do not reproduce the algorithm; interaction verification only when the interaction is the specified behaviour. ;; = ;; none ;;
+C tst005.explicit-cases OL TST-005 DEFAULT ;; Explicit declarative cases ([TestCase]) for small finite spaces instead of loops, branching, LINQ or generated machinery. ;; = ;; none ;;
+C tst012.names OL TST-012 DEFAULT ;; Descriptive names communicating scenario/condition and expected behaviour (e.g. MethodOrScenario_Condition_ExpectedBehavior) unless the project has a convention. ;; = ;; none ;;
+C tst011.no-low-value OL TST-011 MUST_NOT ;; Do not generate low-value tests merely to increase coverage. ;; = ;; none ;;
+C tst004.isolation OL TST-004,RUN-004 MUST ;; Tests are deterministic, order-independent and isolated from Production/Development data, uncontrolled external systems and shared mutable state; no wall-clock reliance when TimeProvider can make time deterministic; never Production data. ;; = ;; none ;;
+C tst008.known-state OL TST-008 MUST ;; Tests start from a known state, own their setup and never depend on development seeding or execution order. ;; = ;; none ;;
+C tst007.provider-fidelity OL TST-007 DEFAULT ;; Use the actual provider when relational/provider behaviour matters (Testcontainers optional); never claim provider fidelity from a different provider such as EF Core InMemory. ;; = ;; none ;;
+C arc028.test-refs OL ARC-028 MUST_NOT ;; Test projects never reference production projects more broadly than their scope requires and follow the inward dependency discipline. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/frontend/angular.md ;; Path-scoped (frontend ts/html/scss/css).
+@scope path-scoped: frontend/**
+1-7 IM ;; Frontmatter path scope.
+9 NN ;; Banner (kind, scope, owner, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Pointer to decisions D-09, D-10.
+15 IM ;; See-also routing pointer.
+17 NN ;; Heading.
+19 OL [fe001.standalone-feature]
+20 OL [fe007.feature-structure]
+22 NN ;; Heading.
+24 OL [fe002.presentation-focus]
+25 OL [fe003.data-access]
+26 OL [fe008.interceptors]
+28 NN ;; Heading.
+30 OL [fe004.signals-rxjs]
+31 OL [fe006.simple-state]
+32 OL [fe011.no-nested-subscriptions]
+33 OL [fe012.subscription-lifetime]
+35 NN ;; Heading.
+37 OL [fe005.lazy-loading]
+39 NN ;; Heading.
+41 OL [fe009.error-contract]
+42 OL [fe010.reactive-forms]
+44 NN ;; Heading.
+46 OL [sec011.csrf]
+47 OL [sec012.token-storage]
+
+C fe001.standalone-feature OL FE-001 DEFAULT ;; Modern standalone Angular APIs for new code (no NgModules for ordinary new features unless required), organized primarily by feature. ;; = ;; none ;;
+C fe007.feature-structure OL FE-007 MUST ;; Feature-oriented structure: no application-wide technical buckets, no empty architecture folders; feature code stays in its feature; core/shared small; no move to shared merely because two components of one feature use it. ;; = ;; none ;;
+C fe002.presentation-focus OL FE-002 MUST ;; Pages/components focus on presentation and UI orchestration; no moving trivial presentation logic into services merely to shrink components. ;; = ;; none ;;
+C fe003.data-access OL FE-003 MUST ;; Backend communication in explicit feature data-access services or another explicit HTTP boundary; no scattered HttpClient calls; never import backend Domain entities; frontend API models follow the published contract. ;; = ;; none ;;
+C fe008.interceptors OL FE-008 DEFAULT ;; Functional interceptors for new code, limited to cross-cutting concerns; never feature business logic in interceptors. ;; = ;; none ;;
+C fe004.signals-rxjs OL FE-004 DEFAULT ;; Signals for synchronous local UI state, RxJS for async streams, HTTP composition, cancellation or event pipelines; avoid mechanical conversions. ;; = ;; none ;;
+C fe006.simple-state OL FE-006 DEFAULT ;; Simple component, signal or feature-service state before any state-management library. ;; = ;; none ;;
+C fe011.no-nested-subscriptions OL FE-011 DEFAULT ;; Avoid manual nested RxJS subscriptions; prefer composition operators. ;; = ;; none ;;
+C fe012.subscription-lifetime OL FE-012 MUST ;; Manual subscriptions from framework-managed code have their lifetime tied to the component/service lifecycle with current Angular facilities. ;; = ;; none ;;
+C fe005.lazy-loading OL FE-005 DEFAULT ;; Route-level lazy loading for meaningful features; not for every tiny component. ;; = ;; none ;;
+C fe009.error-contract OL FE-009 MUST ;; Follow the documented API error contract; centralize reusable ProblemDetails parsing when practical; never infer business behaviour from human-readable messages. ;; = ;; none ;;
+C fe010.reactive-forms OL FE-010 MUST ;; Reactive forms for non-trivial forms when useful; frontend validation is UX and never replaces backend validation, integrity or security enforcement. ;; = ;; none ;;
+C sec011.csrf OL SEC-011 MUST ;; When browser cookies carry authentication automatically the design includes CSRF protection; an Angular frontend does not remove the risk. ;; = ;; none ;;
+C sec012.token-storage OL SEC-012 MUST_NOT ;; Choose browser token storage by threat model; never claim one mechanism is universally secure; tokens are never logged. ;; = ;; none ;;

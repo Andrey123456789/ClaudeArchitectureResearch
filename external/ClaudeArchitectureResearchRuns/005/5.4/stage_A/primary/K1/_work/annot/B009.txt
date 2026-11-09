@@ -1,0 +1,294 @@
+# K1 — skills: configuration, custom-settings, delivery-change, dependency-injection, development-workflow, docker, dotnet-testing
+
+@@ output/template/.claude/skills/configuration/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge configuration (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Policy pointers.
+15 NN ;; Heading.
+17 OL [run022.cfg-direct-access]
+19 NN ;; Heading.
+21 NN ;; Descriptive provider precedence.
+23 NN ;; Heading.
+25-41 NN ;; Options class with startup validation example.
+43 EX [x.cfg-operational-values]
+45-51 NN ;; Validation delegate example.
+53 OL [run022.cfg-validate-on-start]
+55 NN ;; Heading.
+57-60 NN ;; Descriptive list of options interfaces and named options (technique).
+62-74 NN ;; Avoid/prefer example contrasting string lookups with typed options.
+76 NN ;; Heading.
+78 OL [sec002.cfg-secrets]
+80-85 NN ;; Key Vault example.
+87 NN ;; Heading.
+89-90 NN ;; Table header.
+91-98 DU [run022.typed-options,sec002.secret-mechanisms] ;; Technique decision guide; validation and secret rows restate RUN-022/SEC-002, the interface rows are descriptive technique.
+
+C run022.cfg-direct-access OL RUN-022 DEFAULT ;; Direct IConfiguration access belongs in the composition root, provider setup and infrastructure registration; ordinary services consume typed options instead of keys and parsing. ;; = ;; none ;;
+C x.cfg-operational-values EX GOV-010,RUN-015 MUST ;; Numeric example values are illustrative, not approved defaults; choose retry counts, timeouts and limits from actual integration and deployment requirements; complex rules use a validation delegate. ;; = ;; none ;; Not in the oracle.
+C run022.cfg-validate-on-start OL RUN-022 PREFER ;; Prefer AddOptions<T>().BindConfiguration(...).ValidateOnStart() over Configure<T>(section), which defers misconfiguration to runtime. ;; = ;; none ;;
+C sec002.cfg-secrets OL SEC-002,SEC-001 DEFAULT ;; appsettings.json holds structure and non-secret defaults only; development secrets from dotnet user-secrets, deployed secrets from environment/platform injection or the chosen store; Azure Key Vault only when the project actually runs on Azure. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/custom-settings/SKILL.md ;; Workflow (CUSTOM_SETTINGS.md changes).
+@scope workflow custom-settings (CUSTOM_SETTINGS.md value added, changed, removed, reviewed or applied)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 IM ;; Governing-policy pointer and workflow ownership.
+16 NN ;; Heading.
+18 OL [gov010.cs-approved]
+19 OL [gov009.cs-conflict-stop]
+20 MX [gov011.cs-belongs,x.cs-no-framework-defaults] ;; Belonging in the file per CLAUDE.md restates GOV-011/GOV-008; excluding framework defaults not intentionally overridden is added.
+22 NN ;; Heading.
+24 MX [gov010.cs-record,x.cs-single-source] ;; Recording name, value and purpose restates GOV-010; avoiding duplicated literals across layers is added.
+26 NN ;; Heading.
+28 OL [gov021.cs-search-update]
+30 NN ;; Heading.
+32 OL [pst009.cs-persistence]
+34 NN ;; Heading.
+36 OL [fe010.cs-backend-authoritative]
+38 NN ;; Heading.
+40 OL [gov021.cs-verify]
+42 NN ;; Heading.
+44 EX [x.cs-report]
+
+C gov010.cs-approved OL GOV-010 REQUIRES_APPROVAL ;; The value is approved (new values proposed with a reason and approved first). ;; = ;; none ;;
+C gov009.cs-conflict-stop OL GOV-009 REQUIRES_APPROVAL ;; A conflict with SPECIFICATION.md stops the workflow until the user decides which source to correct. ;; = ;; none ;;
+C gov011.cs-belongs OL GOV-011,GOV-008 MUST ;; The value belongs in CUSTOM_SETTINGS.md per CLAUDE.md (Product sources). ;; = ;; none ;;
+C x.cs-no-framework-defaults EX GOV-011,GOV-008 MUST_NOT ;; Do not record a framework default the project has not intentionally overridden. ;; = ;; none ;; Not in the oracle.
+C gov010.cs-record OL GOV-010,GOV-008 MUST ;; Record the setting with a stable descriptive name, value and purpose. ;; = ;; none ;;
+C x.cs-single-source EX GOV-021 PREFER ;; Avoid duplicating the same literal across layers when a single source in code or configuration is appropriate. ;; = ;; none ;; Not in the oracle.
+C gov021.cs-search-update OL GOV-021 MUST ;; Search for the old value, setting name, validators/DTO constraints, Domain/Application checks, persistence mapping, frontend validation/hints, tests/test data, docs/examples and mirrored configuration; distinguish coincidences; update every affected surface and only affected behaviour. ;; = ;; none ;;
+C pst009.cs-persistence OL PST-009 MUST ;; Schema-relevant changes: update the mapping, create the appropriate migration per the workflow, verify Development seeding, update provider-sensitive tests; do not casually alter existing migrations; run persistence-change. ;; = ;; none ;;
+C fe010.cs-backend-authoritative OL FE-010 MUST ;; When both sides expose the same constraint backend validation stays authoritative; frontend validation and messages stay synchronized for UX and are never relied on for security or integrity. ;; = ;; none ;;
+C gov021.cs-verify OL GOV-021,WF-003 MUST ;; Before completion search for stale references, build affected projects, run relevant tests, verify persistence changes, recheck SPECIFICATION.md, then run verify; changing one literal alone does not establish synchronization. ;; = ;; none ;;
+C x.cs-report EX WF-009 MUST ;; Report the setting, old → new value, every updated surface, migration created and the verify result. ;; = ;; none ;; Workflow output contract not in the oracle.
+
+@@ output/template/.claude/skills/delivery-change/SKILL.md ;; Workflow (delivery).
+@scope workflow delivery-change (CI/CD, containers, deployment)
+1-9 IM ;; Frontmatter (name, routing description).
+11 NN ;; Banner (kind, scope, capability, loading metadata).
+13 NN ;; Heading.
+15 IM ;; Read-first and technique pointers; containers optional per the register.
+17 NN ;; Heading.
+19 EX [x.dc-discover]
+21 NN ;; Heading.
+23 OL [wf017.dc-ci-truthful]
+24 OL [wf018.dc-scripts-npm-ci]
+25 MX [wf007.dc-gates-adopted,x.cicd-audit-policy,x.dc-no-auto-upgrades] ;; Gates only when adopted restates WF-007; audit per security policy restates the ci-cd extra; no automatic upgrades unless adopted is added.
+26 IM ;; Pointer to ci-cd integration-test infrastructure.
+28 NN ;; Heading.
+30 MX [dep018.dc-artifacts-when-deployed,x.cicd-artifacts-needed,sec001.dc-image-surfaces] ;; Images only when deployed restates DEP-018; images, build arguments and Compose files as secret surfaces restate SEC-001; publishing only needed artifacts is the ci-cd extra.
+32 NN ;; Heading.
+34 MX [wf019.dc-prod-migrations,x.cicd-migration-fails-visibly] ;; Explicit, controlled production migration with approved credentials restates WF-019; failing visibly is the ci-cd extra.
+35 OL [pst004.dc-no-prod-seeding]
+37 NN ;; Heading.
+39 MX [sec002.dc-secrets,x.cicd-federated-identity,x.dc-env-protection] ;; Platform secret mechanism restates SEC-002; federated identity preference and deployment protection are added.
+41 NN ;; Heading.
+43 MX [x.dc-verify,wf009.dc-report-status] ;; PASS / NOT RUN / NOT APPLICABLE reporting restates WF-009; the pipeline verification checklist is added.
+
+C x.dc-discover EX GOV-013,WF-001 MUST ;; Inspect the repository before writing a pipeline or container file; do not assume a database provider, cache, container or frontend tooling; add stages for the actual project, not generic boilerplate. ;; = ;; none ;; Not in the oracle.
+C wf017.dc-ci-truthful OL WF-017,WF-015 MUST ;; CI definitions live in source control, reproduce supported build/test commands and never hide failures (no suppressed tests, ignored exit codes or continue-on-error for required checks). ;; = ;; none ;;
+C wf018.dc-scripts-npm-ci OL WF-018 MUST ;; Frontend CI uses scripts that exist in package.json and npm ci when a maintained lockfile supports it; never invent scripts or reflexively replace lockfile installs. ;; = ;; none ;;
+C wf007.dc-gates-adopted OL WF-007 MUST ;; Enforced formatting/analyzer gates only when the project adopted them. ;; = ;; none ;;
+C x.dc-no-auto-upgrades EX DEP-003 MUST_NOT ;; No automatic package upgrades unless the project adopted automated updates. ;; = ;; Adopted automation. ;; Not in the oracle.
+C dep018.dc-artifacts-when-deployed OL DEP-018 MUST_NOT ;; Build images and deployable artifacts only when the project deploys them. ;; = ;; none ;;
+C sec001.dc-image-surfaces OL SEC-001 MUST_NOT ;; Images, build arguments and committed Compose files are source-controlled surfaces subject to the secrets rule. ;; = ;; none ;;
+C wf019.dc-prod-migrations OL WF-019 MUST_NOT ;; Production migrations must not run automatically from normal startup by default; they are an explicit deployment step at a controlled point with approved credentials. ;; = ;; none ;;
+C pst004.dc-no-prod-seeding OL PST-004,WF-019 MUST_NOT ;; Development seeding never runs in Production. ;; = ;; none ;;
+C sec002.dc-secrets OL SEC-002,SEC-001 MUST ;; Pipeline secrets come from the CI platform's secret/identity mechanism. ;; = ;; none ;;
+C x.dc-env-protection EX - DEFAULT ;; A green CI build does not imply every branch deploys; use environment protection or approval where the platform supports it. ;; delivery ;; Platform support. ;; Not in the oracle.
+C x.dc-verify EX WF-003,WF-006 MUST ;; Before completion verify the pipeline restores from a clean environment, builds backend and frontend, runs configured tests, does not depend on developer-machine state, exposes no secrets and produces expected artifacts. ;; = ;; none ;; Not in the oracle.
+C wf009.dc-report-status OL WF-009 MUST ;; Report each pipeline verification item as PASS / NOT RUN / NOT APPLICABLE. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/dependency-injection/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge dependency-injection (backend)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 IM ;; Policy pointers.
+16 NN ;; Heading.
+18 EX [x.di-boundaries]
+20-47 NN ;; Layer registration example.
+49 EX [x.di-explicit-prefer]
+51 NN ;; Heading.
+53-54 NN ;; Table header.
+55-58 DU [arc022.lifetimes] ;; Lifetime table restating the lifetime rule.
+60 OL [arc022.di-captive]
+62-72 NN ;; Scope-per-operation example.
+74 NN ;; Heading.
+76 EX [x.di-keyed-when]
+78-87 NN ;; Keyed services example.
+89 NN ;; Heading.
+91 NN ;; Descriptive definition of a decorator.
+93-104 NN ;; Decorator example.
+106 EX [x.di-scrutor-not-for-single]
+108 NN ;; Heading.
+110 EX [x.di-scanning-when]
+112-118 NN ;; Scanning example.
+120 NN ;; Heading.
+122 NN ;; Lead-in.
+124-135 NN ;; Factory example.
+137 IM ;; Pointer to configuration.
+
+C x.di-boundaries EX ARC-021,ARC-023 DEFAULT ;; Use abstractions at architectural boundaries (Application services, repositories, external adapters); concrete registration is fine for implementation-only helpers. ;; = ;; none ;; Not in the oracle.
+C x.di-explicit-prefer EX GOV-012 PREFER ;; Prefer explicit registration in small and medium applications; scanning, keyed services, factories or decorators only for actual composition problems. ;; = ;; none ;; Not in the oracle.
+C arc022.di-captive OL ARC-022,ARC-007 MUST_NOT ;; Never register an Application service depending on scoped repositories as a singleton; a singleton/hosted service needing scoped work creates a scope per operation and resolves a scoped orchestration service, not Infrastructure internals. ;; = ;; none ;;
+C x.di-keyed-when EX GOV-012 DEFAULT ;; Keyed services for several implementations selected by a known key, not when a single registration or simple factory is clearer. ;; = ;; none ;; Not in the oracle.
+C x.di-scrutor-not-for-single EX DEP-001,GOV-013 MUST_NOT ;; Do not add Scrutor for a single decoration when normal composition is simpler. ;; = ;; none ;; Not in the oracle.
+C x.di-scanning-when EX GOV-012,ARC-023 DEFAULT ;; Use assembly scanning only when registration volume creates genuine boilerplate, scanning the assembly that owns the services. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/development-workflow/SKILL.md ;; Workflow (any application-code change).
+@scope workflow development-workflow (feature, fix, refactor, performance, API change, new application)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 IM ;; Governing-policy pointer.
+16 NN ;; Heading.
+18 OL [gov002.dw-read-spec]
+20 NN ;; Heading.
+22 OL [wf001.dw-inspect]
+24 NN ;; Heading.
+26 OL [gov018.dw-challenge]
+27 OL [gov017.dw-classify]
+28 IM ;; Routing lead-in.
+30-31 NN ;; Table header.
+32-36 IM ;; Routing table (add-dependency, persistence-change, custom-settings, project-structure, delivery-change).
+38 NN ;; Heading.
+40 OL [gov014.dw-scope]
+42 OL [tst009.dw-regression]
+43 OL [run012.dw-perf]
+44 MX [api022.dw-deprecation,api014.breaking-reserved,x.reserved-versioning] ;; Deprecation steps restate API-022; breaking changes as Reserved restate API-014; adopting versioning as Reserved restates the CLAUDE.md extra.
+46 NN ;; Heading.
+48 OL [gov007.dw-durable-source]
+50 NN ;; Heading.
+52 OL [wf002.dw-code-review]
+54 NN ;; Heading.
+56 OL [wf003.dw-verify]
+58 NN ;; Heading.
+60 MX [x.dw-report,gov017.dw-report-unresolved] ;; Reporting unresolved Decision Requests restates GOV-017; the report contents are added.
+
+C gov002.dw-read-spec OL GOV-002,GOV-009 MUST ;; Before planning or implementing a new application or substantial feature read SPECIFICATION.md (and CUSTOM_SETTINGS.md for tunable values); handle gaps and conflicts per CLAUDE.md. ;; = ;; none ;;
+C wf001.dw-inspect OL WF-001 MUST ;; Before any non-trivial change inspect the relevant code, read the applicable standards for the touched areas and load relevant knowledge skills (facets named in the register). ;; = ;; none ;;
+C gov018.dw-challenge OL GOV-018 MUST ;; Apply the challenge obligation to a questionable request before implementing. ;; = ;; none ;;
+C gov017.dw-classify OL GOV-017 MUST ;; Classify each consequential choice per decision control; Reserved choices go to architecture-decision. ;; = ;; none ;;
+C gov014.dw-scope OL GOV-014 MUST ;; Keep the change inside the requested scope. ;; = ;; none ;;
+C tst009.dw-regression OL TST-009 DEFAULT ;; For a meaningful bug with plausible recurrence add a regression test that fails before and passes after the fix unless equivalent coverage exists. ;; = ;; Equivalent coverage exists. ;;
+C run012.dw-perf OL RUN-012 MUST ;; Performance-motivated change: identify the bottleneck, preserve behaviour, simplest effective optimization, maintain tests, benchmark/profile non-obvious or complex optimizations. ;; = ;; none ;;
+C api022.dw-deprecation OL API-022 MUST ;; Deprecating an externally consumed version: mark it in versioning metadata, document the replacement, communicate a realistic migration period and removal timeline, keep it working for the promised support period; never remove it without considering the support contract. ;; = ;; none ;;
+C gov007.dw-durable-source OL GOV-007 MUST ;; When a new behavioural rule is approved update the durable source of truth in the same change, including SPECIFICATION.md when appropriate; tunable values via custom-settings, decisions via architecture-decision. ;; = ;; none ;;
+C wf002.dw-code-review OL WF-002 MUST ;; For substantial feature work or a new application run code-review (or the code-reviewer agent) before final verification and fix confirmed findings. ;; = ;; none ;;
+C wf003.dw-verify OL WF-003 MUST ;; Before declaring implementation complete run verify at the depth scope and risk require. ;; = ;; none ;;
+C gov017.dw-report-unresolved OL GOV-017 MUST ;; Report every unresolved Decision Request. ;; = ;; none ;;
+C x.dw-report EX WF-009 MUST ;; Summarize what changed and why, the verify report and approvals obtained. ;; = ;; none ;; Workflow output contract not in the oracle.
+
+@@ output/template/.claude/skills/docker/SKILL.md ;; Knowledge skill (on demand; delivery).
+@scope on-demand knowledge docker (delivery)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 MX [dep018.dk-optional,dep019.dk-no-build-tooling,x.dk-principles] ;; Containers as optional restates DEP-018; build tooling out of production images restates DEP-019; external configuration, reproducible images and Docker concerns out of Domain/Application are added.
+15 NN ;; Heading.
+17-44 NN ;; Multi-stage Dockerfile example.
+46 EX [x.dk-copy-explicit]
+48 NN ;; Heading.
+50 OL [dep019.dk-runtime-nonroot]
+52 NN ;; Heading.
+54 MX [x.dk-runtime-config,sec001.dk-secret-surfaces] ;; Secret mechanisms and credential surfaces restate SEC-001/SEC-002; passing environment configuration at runtime is added.
+56 NN ;; Heading.
+58 MX [x.dk-compose-actual-infra,sec001.dk-local-passwords] ;; Local passwords in ignored configuration restate SEC-001; only services the project uses is added.
+60-71 NN ;; Compose example.
+73 NN ;; Heading.
+75 EX [x.dk-probes]
+77 NN ;; Heading.
+79 EX [x.dk-static-frontend]
+81 NN ;; Heading.
+83 EX [x.dk-dockerignore]
+85 NN ;; Heading.
+87 EX [x.dk-image-variants]
+89 NN ;; Heading.
+91 DU [wf019.dc-prod-migrations,pst004.dev-only] ;; Restates that container deployment does not change the migration and seeding policies.
+93 NN ;; Heading.
+95 EX [x.dk-verify]
+
+C dep018.dk-optional OL DEP-018 MUST_NOT ;; Containers are optional infrastructure (decision register). ;; = ;; none ;;
+C dep019.dk-no-build-tooling OL DEP-019 DEFAULT ;; Keep build tooling out of production images. ;; = ;; none ;;
+C x.dk-principles EX DEP-018,ARC-002 DEFAULT ;; Keep configuration external, images reproducible and Docker concerns out of Domain/Application code. ;; = ;; none ;; Not in the oracle.
+C x.dk-copy-explicit EX DEP-023 MUST ;; Copy only repository-level build files that exist and restore needs; copy project files explicitly (no flattening wildcards) and update the section when the solution changes; never trade a correct restore graph for layer caching. ;; = ;; none ;; Not in the oracle.
+C dep019.dk-runtime-nonroot OL DEP-019 DEFAULT ;; ASP.NET runtime image for ASP.NET Core and an appropriate runtime image for workers; the built-in non-root app user when it fits, with proper ownership/permissions for written directories. ;; = ;; none ;;
+C x.dk-runtime-config EX SEC-002 DEFAULT ;; Pass environment-specific configuration at runtime (ASPNETCORE_ENVIRONMENT, ConnectionStrings__Default, Authentication__Authority). ;; = ;; none ;; Not in the oracle.
+C sec001.dk-secret-surfaces OL SEC-001,SEC-002 MUST ;; Supply secrets through platform/container secret mechanisms; check the Dockerfile, committed Compose files, build arguments and copied appsettings for credentials. ;; = ;; none ;;
+C x.dk-compose-actual-infra EX GOV-013,DEP-018 MUST ;; Use Compose for local infrastructure only when beneficial and add only services the project uses. ;; = ;; none ;; Not in the oracle.
+C sec001.dk-local-passwords OL SEC-001,SEC-002 MUST ;; Keep local passwords in an ignored .env or similar mechanism. ;; = ;; none ;;
+C x.dk-probes EX API-019 DEFAULT ;; Expose liveness/readiness through ASP.NET Core health checks and prefer orchestrator-native HTTP probes; for in-container health commands verify the executable exists or add an explicit probe, weighing extra packages in production images. ;; = ;; none ;; Not in the oracle.
+C x.dk-static-frontend EX DEP-018 DEFAULT ;; Build static frontend assets in a Node stage and serve them with the selected hosting strategy (a web server image is not mandatory); keep API base URLs and environment configuration compatible. ;; = ;; none ;; Not in the oracle.
+C x.dk-dockerignore EX - MUST ;; Exclude .git, .vs, bin, obj, node_modules, TestResults and coverage, but not tests the image build runs or files restore/build needs. ;; delivery ;; none ;; Not in the oracle.
+C x.dk-image-variants EX RUN-008,GOV-013 DEFAULT ;; Start with standard images; Alpine, chiseled, trimming or Native AOT only when compatibility and deployment requirements justify them, verifying globalization, native dependencies, reflection and diagnostics. ;; = ;; none ;; Not in the oracle.
+C x.dk-verify EX WF-006,SEC-001 MUST ;; Build the image and verify startup, port/configuration, non-root behaviour, health-probe integration and absence of accidental secrets/files; run meaningful tests outside or in the pipeline. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/dotnet-testing/SKILL.md ;; Knowledge skill (backend-testing facet, on demand).
+@scope on-demand knowledge dotnet-testing (backend tests)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Policy and technique pointers.
+15 EX [x.dt-proportional-infra]
+17 NN ;; Heading.
+19-37 NN ;; NUnit example.
+39 EX [x.dt-aaa-constraint]
+41 NN ;; Heading.
+43 OL [tst005.dt-testcase-rows]
+45-55 NN ;; TestCase table example.
+57 EX [x.dt-one-scenario]
+59 NN ;; Heading.
+61 EX [x.dt-unit-candidates]
+63 OL [tst003.dt-app-service-tests]
+65 NN ;; Heading.
+67 NN ;; Descriptive statement of what WebApplicationFactory exercises.
+69-99 NN ;; Integration test example.
+101 OL [tst004.dt-testing-env]
+103 NN ;; Heading.
+105 MX [tst008.dt-known-state,x.dt-state-tradeoff] ;; Known state, own setup and never touching production data restate TST-008/TST-004; choosing the database strategy explicitly with its trade-off is added.
+107 NN ;; Heading.
+109 OL [run004.dt-faketime]
+111-114 NN ;; FakeTimeProvider example.
+116 NN ;; Heading.
+118 MX [tst004.dt-no-external,x.dt-slow-separate] ;; Never calling uncontrolled external services restates TST-004; separating slow/unreliable tests is added.
+120 NN ;; Heading.
+122 EX [x.dt-test-data]
+124 NN ;; Heading.
+126 OL [tst012.dt-naming]
+128 NN ;; Heading.
+130 OL [tst009.dt-regression,tst010.dt-probes]
+132 NN ;; Heading.
+134 MX [x.dt-smoke-definition,tst011.dt-coverage,x.dt-snapshots] ;; Coverage as diagnostic restates TST-011; the smoke-test definition and snapshot guidance are added.
+136 NN ;; Heading.
+138 MX [tst003.dt-no-impl-repeat,x.dt-no-assertion-free,tst004.dt-no-delays,tst007.dt-testcontainers-need] ;; Anti-patterns restating TST-003/TST-004/TST-007; assertion-free tests have no owner clause and are registered.
+140 NN ;; Heading.
+142-143 NN ;; Table header.
+144-152 DU [tst005.explicit-cases,tst006.waf,tst007.provider-fidelity,run004.timeprovider,tst009.dt-regression,tst010.dt-probes,x.dt-smoke-definition] ;; Decision guide restating the rules and guidance above.
+
+C x.dt-proportional-infra EX GOV-012,TST-011 DEFAULT ;; Do not build test infrastructure without a concrete testing need; a small project does not need an enterprise harness. ;; = ;; none ;; Not in the oracle.
+C x.dt-aaa-constraint EX TST-003 DEFAULT ;; Arrange/Act/Assert is a useful default (comments optional when obvious); use the NUnit constraint model (Assert.That). ;; = ;; none ;; Not in the oracle.
+C tst005.dt-testcase-rows OL TST-005 DEFAULT ;; Explicit cases are [TestCase] rows with the expected value as an argument rather than TestCaseSource generators or computed expectations; a longer explicit table beats a shorter algorithmic test. ;; = ;; none ;;
+C x.dt-one-scenario EX TST-003 PREFER ;; Prefer one observable scenario per test; multi-step tests when the sequence itself is the scenario. ;; = ;; none ;; Not in the oracle.
+C x.dt-unit-candidates EX TST-002,TST-003 DEFAULT ;; Unit-test candidates: domain behaviour owned by Domain, calculations, state transitions, validation, Application orchestration with simple fakes; do not mock every collaborator mechanically nor forbid mocking project-owned abstractions. ;; = ;; none ;; Not in the oracle.
+C tst003.dt-app-service-tests OL TST-003,TST-002,TST-006 DEFAULT ;; Application Service tests replace abstractions with controlled doubles and assert results and meaningful side effects; call-count assertions only when the interaction is the contract; prefer integration tests when persistence semantics, transactions, DI, serialization or HTTP matter. ;; = ;; none ;;
+C tst004.dt-testing-env OL TST-004 MUST ;; Configure the Testing environment with isolated test resources so integration tests can never reach a Development or Production database. ;; = ;; none ;;
+C tst008.dt-known-state OL TST-008,TST-004 MUST ;; Start from a known state (recreate/reset the isolated database, fitting transactions, only needed data, unique identifiers); never modify production data. ;; = ;; none ;;
+C x.dt-state-tradeoff EX TST-007 MUST ;; Choose the test-database strategy by what the test must prove (provider fidelity vs application/API integration) and be explicit about the trade-off. ;; = ;; none ;; Not in the oracle.
+C run004.dt-faketime OL RUN-004,TST-004 DEFAULT ;; Inject TimeProvider and control it with FakeTimeProvider in tests. ;; = ;; none ;;
+C tst004.dt-no-external OL TST-004 MUST_NOT ;; Never call uncontrolled external services from normal test runs; use fakes, stub handlers or local fake servers; a sandbox only when the test explicitly targets that integration. ;; = ;; none ;;
+C x.dt-slow-separate EX TST-004 DEFAULT ;; Keep slow or unreliable external-system tests out of ordinary fast runs. ;; = ;; none ;; Not in the oracle.
+C x.dt-test-data EX TST-008,GOV-012 DEFAULT ;; Keep test data explicit and minimal; builders/fixtures only when repeated setup becomes hard to read; no generic test-data framework for a few objects. ;; = ;; none ;; Not in the oracle.
+C tst012.dt-naming OL TST-012 DEFAULT ;; MethodOrScenario_StateOrCondition_ExpectedBehavior naming unless an established project convention exists. ;; = ;; none ;;
+C tst009.dt-regression OL TST-009 DEFINITION ;; A regression test reproduces the failure before the fix and passes after; skip it when recurrence is unrealistic or coverage exists. ;; = ;; none ;;
+C tst010.dt-probes OL TST-010 MUST ;; Convert temporary behavioural checks (ad-hoc requests, scripts, test methods, manual DB checks) into maintained tests (e.g. WebApplicationFactory tests); verify that existing coverage really exercises the behaviour; review probes before promoting them. ;; = ;; none ;;
+C x.dt-smoke-definition EX WF-006 DEFINITION ;; A smoke test is a small set of fast checks that a built or deployed application is basically operational, not every integration test. ;; = ;; none ;; Not in the oracle.
+C tst011.dt-coverage OL TST-011 MUST_NOT ;; Coverage is diagnostic, not a target; prioritize meaningful behaviour, edge cases and risky integrations. ;; = ;; none ;;
+C x.dt-snapshots EX TST-003,DEP-001 DEFAULT ;; Snapshot testing for large stable outputs only; no snapshot library by default; explicit assertions for small or important contracts. ;; = ;; none ;; Not in the oracle.
+C tst003.dt-no-impl-repeat OL TST-003 AVOID ;; Avoid assertions that merely repeat the implementation. ;; = ;; none ;;
+C x.dt-no-assertion-free EX TST-003 AVOID ;; Avoid assertion-free tests unless the behaviour is 'does not throw'. ;; = ;; none ;; No owner clause for this item.
+C tst004.dt-no-delays OL TST-004 AVOID ;; Avoid arbitrary delays such as Task.Delay to make timing-sensitive tests pass. ;; = ;; none ;;
+C tst007.dt-testcontainers-need OL TST-007 AVOID ;; Avoid Testcontainers when no provider fidelity is required. ;; = ;; none ;;

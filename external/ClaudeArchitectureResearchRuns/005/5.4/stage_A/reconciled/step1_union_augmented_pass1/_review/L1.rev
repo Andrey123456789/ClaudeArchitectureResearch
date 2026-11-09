@@ -1,0 +1,259 @@
+# Reviewer decisions for candidate L1 (Codex pass 0001 claims). Grammar: _tools/build.py docstring.
+# L1 ownership headers: knowledge skills "Level: 2-technology · Owns: <X> technique · Loading: on demand" (angular,
+# dotnet-testing, ef-core are capability facets "Owns: ... technique and examples"); git-workflow, security-scan
+# "Level: 0-core · Owns: ... procedure · Loading: on invocation"; project-structure "Level: 3-project · Owns:
+# scaffolding and restructuring procedure"; scan-layers.md "Owns: layer-by-layer investigation technique ...
+# (private reference of security-scan) · Loading: read by security-scan"; capabilities/frontend/angular/commands.md
+# "Facet: frontend.commands · Owns: frontend scaffold, install, build, test, audit commands and build-fix notes ·
+# Loading: read by project-structure, verify, build-fix, development-workflow, security-scan".
+# Revisions CIS-L1-U0008-R1 / U0009-R1 / U0010-R1 change only closest_policy_ids to RUN-022 (applied, non-binding).
+
+@@ CIS-L1-0001
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: CONFIGURATION_DIRECTIVE (EditorConfig root marker)
+appl: actor=EditorConfig-aware tooling; action=stop ancestor .editorconfig lookup; trigger=resolving settings for repository files; modality=CONFIGURATION FACT; scope=repository files; exceptions=nested .editorconfig files still apply; timing=settings resolution; enforcement=tool behaviour, not executed; loading=not an instruction file
+compared: FG-L1-5d16334fbd FG-L1-7a42211469 FG-L1-750d02a508 FG-L1-e87ce2918c
+rationale: .editorconfig:2 'root = true' verified. Same assessment as the identical M/M1/L0 claims: a format-defined lookup marker scoping the registered formatting/style values, with no agent obligation; both Claude runs classified it as IMPLEMENTATION.
+scenario: N/A as a constraint: repository values are unchanged by root=false; only unspecified properties from outside the repository could be inherited.
+conf: MEDIUM
+open_issue: Methodology: revisit with the other five root=true claims if Stage 2 counts configuration-inheritance boundaries as constraints.
+
+@@ CIS-L1-0002
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: PROCEDURAL INSTRUCTION (working directory for frontend commands)
+appl: actor=agent running frontend commands via the frontend.commands facet; action=run frontend workspace commands from the workspace directory frontend/<Name>.Web/; trigger=running install/build/test/lint/audit commands of an existing workspace; modality=MUST (imperative); scope=frontend.commands capability facet; exceptions=the initial scaffold command creates the workspace from the repository root; timing=whenever these commands run; enforcement=instruction only; loading=capability facet read by project-structure, verify, build-fix, development-workflow and security-scan (not always loaded)
+compared: FG-L1-2af01b370e FG-L1-124e24d760 FG-L1-a272c571b8 FG-L1-b26abc5d23 FG-L1-6927a2a49d FG-L1-c52d07c934
+rationale: commands.md:5 verified. The same line's other sentences are registered (install only through add-dependency FG-L1-2af01b370e; workspace location FG-L1-124e24d760), and the facet's other command imperatives are registered (npm ci FG-L1-c52d07c934, inspect package.json FG-L1-6927a2a49d/FG-L1-b26abc5d23), but no L1 group states the working-directory instruction (grep). By the union's own granularity for this facet it is an unrepresented procedural clause. Its practical weight is low (many violations simply fail); recorded as a proposal, not an EXTRA verdict. Codex NOVEL confirmed as distinct.
+scenario: The agent runs 'npm --prefix frontend/<Name>.Web run build' from the repository root: build succeeds, all registered groups hold, the stated working-directory procedure is not followed.
+conf: MEDIUM
+proposal: MUST (procedural) | running commands of the frontend workspace (frontend.commands facet) | Run the frontend workspace commands from the workspace directory (frontend/<Name>.Web/).
+policy_hint: DEP-024 (Codex suggestion; not adjudicated)
+
+@@ CIS-L1-U0001
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (lexical approximation in the in-root path helper)
+appl: actor=project.mjs toRepoRelative used by post-change-checks editFlow; action=treat a relative path beginning with '..' as outside the root; trigger=edit of a file under a directory whose name starts with '..'; modality=NONE (implementation predicate); scope=immediate post-edit validation; exceptions=later shell snapshots may still validate the manifest; timing=after an edit; enforcement=static code read, not executed; loading=helper code
+compared: FG-L1-b6b14303cc FG-L1-eda5a833fc
+rationale: project.mjs:74-81 verified (comment: 'null when the path escapes the root'). The '..'-prefix test only misclassifies directory names starting with two dots; no instruction states or forbids this; it narrows the registered post-edit validation (FG-L1-b6b14303cc) in an edge case. Same assessment as M/L0.
+scenario: N/A as a constraint; effect: an edit of '..cache/package.json' skips immediate validation.
+conf: MEDIUM
+
+@@ CIS-L1-U0002
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (policy-file source selection between launcher and active configuration)
+appl: actor=post-change-checks packageRules; action=read manifest-policy.json from the launcher's hook directory and capability facets from the resolved configuration root; trigger=hook launched from one template copy while the active configuration root is another (linked worktree); modality=NONE (mechanism); scope=package deny/approval feedback; exceptions=identical launcher and active configuration; timing=after edits/shell calls; enforcement=static code read (post-change-checks.mjs:22,33-38; project.mjs:59-68), not executed; loading=hook code
+compared: FG-L1-b6b14303cc FG-L1-63ba3ec344 FG-L1-fa3f632e96 FG-L1-2773711466
+rationale: Verified statically: `here` is the launcher's hooks directory, `config` is the active template root when one is found. The registered gates (deny/approval-listed packages FG-L1-63ba3ec344, FG-L1-fa3f632e96, FG-L1-2773711466; actual-state validation FG-L1-b6b14303cc) are unchanged; which copy of the policy file is read is an internal mechanism that obliges or permits nothing for the agent. It can matter only when two worktrees carry different policy files; recorded as an enforcement-consistency observation, not a clause.
+scenario: N/A as a constraint; effect: a deny-list edit in a linked worktree is not used by a hook launched from the other worktree.
+conf: MEDIUM
+
+@@ CIS-L1-U0003
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (stat-based change identity outside Git)
+appl: actor=post-change-checks snapshot (scan fallback); action=identify manifest changes by size and mtime; trigger=no Git working tree and a previous scan snapshot; modality=NONE (change-detection limit); scope=shell-call revalidation outside Git; exceptions=first observation validates all; direct edits are validated separately; timing=after shell calls; enforcement=static code read (lines 140-145), not executed; loading=hook code
+compared: FG-L1-b6b14303cc FG-L1-813deb8be8
+rationale: post-change-checks.mjs:140-145 verified (the comment says content is read only for changed files). A same-size, same-mtime rewrite escapes revalidation; this is an implementation limit of the registered actual-state validation (FG-L1-b6b14303cc), not an obligation or permission.
+scenario: N/A as a constraint; effect: a shell rewrite that preserves size and mtime outside Git is not revalidated.
+conf: MEDIUM
+
+@@ CIS-L1-U0004
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: HOOK_RUNTIME_BEHAVIOR (identity key of the deny-once retry gate)
+appl: actor=pre-shell-command PreToolUse dependency gate; action=treat commands as identical after trimming and collapsing every whitespace run to one space, including inside quoted arguments; trigger=retry of a dependency-classified command within the 30-minute grace period; modality=ENFORCEMENT PREDICATE; scope=dependency-changing shell commands in the active root; exceptions=force/reference classifications are handled earlier; timing=PreToolUse; enforcement=static code read (line 185); Codex reports a pure-copy probe, not re-run here; loading=hook code
+match: FG-L1-1001431838
+compared: FG-L1-1c1d40efd7 FG-L1-bb27864162 FG-L1-a272c571b8
+rationale: pre-shell-command.mjs:185-190 verified: key = command.trim().replace(/\s+/g, ' '). FG-L1-1001431838 says the 'identical command' is allowed on retry; the designed key is whitespace-normalised, so a command differing only in whitespace runs (also inside quotes, e.g. a different quoted path) reuses the allowance. Recorded as a precise boundary of the existing gate; it adds no agent obligation (the gate is already registered as an effective reminder in FG-L1-1c1d40efd7).
+scenario: 'npm install "./a  b.tgz"' is denied; 'npm install "./a b.tgz"' (a different path) is then allowed because both normalise to the same key.
+conf: HIGH
+facet: FG-L1-1001431838 | NEW_BEHAVIOR_BOUNDARY | 'Identical' means equal after trimming and collapsing every whitespace run to a single space, including inside quoted arguments; commands that differ only in such whitespace share one retry allowance.
+
+@@ CIS-P0001-L1-C0001
+disp: ALREADY_REPRESENTED
+nature: HOOK_RUNTIME_BEHAVIOR (advisory fallback outside Git)
+appl: actor=stop-cochange Stop hook; action=emit one advisory message asking for manual seed, migration and test co-change checks; trigger=active project not a Git working tree or git unavailable; modality=ADVISORY; scope=Stop event; exceptions=stop_hook_active exits early; repeated identical state suppressed; timing=Stop; enforcement=static code read; loading=hook code
+match: FG-L1-674df3dc2f FG-L1-76b897a07d FG-L1-7630c2d979
+rationale: stop-cochange.mjs:46-47 verified. The union carries the fallback in member fields: replica RULE-L1-0045 (in FG-L1-674df3dc2f) has exceptions 'outside Git only an advisory system message', and RULE-L1-0035 / EXTRA-L1-0007 (in FG-L1-76b897a07d / FG-L1-7630c2d979) mark the seeder and migration reminders 'Git-only'; replica segment L1-S000257 states the manual-check request. The behaviour is represented, though only at member level (group neutral texts omit it).
+scenario: Stop in a non-Git workspace yields the manual-check advisory instead of blocking reminders, as recorded in those members.
+conf: MEDIUM
+
+@@ CIS-L1-0003
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (literal block-list shape for rule paths)
+appl: actor=check-instructions.mjs; action=require 'paths:' followed by a newline and indented '- ' entries; trigger=instruction check of .claude/rules; modality=CHECKER FAILURE (exit 1); scope=rule frontmatter; exceptions=none; timing=after instruction changes; enforcement=static code read, not executed; host parsing not verified; loading=script
+match: FG-L1-c88f78ae50
+compared: FG-L1-d670ef54ad FG-L1-4e9c51d84f
+rationale: check-instructions.mjs:373-374 verified: regex /^paths:\s*\n((?:\s+-\s+.+\n?)+)/m. FG-L1-c88f78ae50 requires 'non-empty paths frontmatter' without the representation boundary; an inline flow sequence fails. Facet of the existing gate (same as M/M1/L0); Codex NOVEL not confirmed as a distinct clause.
+scenario: paths: ["backend/**/*"] instead of a dash list: same scope, checker reports 'rule must declare non-empty "paths:" frontmatter'.
+conf: HIGH
+facet: FG-L1-c88f78ae50 | NEW_BEHAVIOR_BOUNDARY | The checker accepts rule paths only as 'paths:' followed by a newline and indented '- ' entries; a non-empty inline YAML sequence fails the non-empty paths check.
+
+@@ CIS-L1-0004
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (skill name compared as raw text)
+appl: actor=check-instructions.mjs; action=compare the raw 'name:' text with the directory name; trigger=instruction check of skills; modality=CHECKER FAILURE; scope=.claude/skills/*/SKILL.md; exceptions=none; timing=after instruction changes; enforcement=static code read, not executed; loading=script
+match: FG-L1-9ee67d2955
+compared: FG-L1-08e0027fd4
+rationale: check-instructions.mjs:477-479 verified: fmName is the raw regex capture, so quotes are kept. FG-L1-9ee67d2955 (and Codex FG-L1-08e0027fd4) require matching names without the quoting boundary.
+scenario: name: "verify" in skills/verify: same YAML string, checker failure.
+conf: HIGH
+facet: FG-L1-9ee67d2955 | NEW_BEHAVIOR_BOUNDARY | The checker compares the raw frontmatter name text with the directory: a quoted name keeps its quotes and fails the match.
+
+@@ CIS-L1-0005
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: PROHIBITION inside a commit-message instruction
+appl: actor=agent writing a commit message in the git-workflow; action=do not narrate the obvious diff in the body; trigger=writing a commit message; modality=MUST_NOT (editorial); scope=git-workflow skill; exceptions=repository convention governs format; obviousness is a judgement; timing=commit time; enforcement=instruction only; loading=workflow skill (Level 0-core, on invocation)
+match: FG-L1-1d7bb82de5
+compared: FG-L1-674061d1aa
+rationale: git-workflow/SKILL.md:22 verified. FG-L1-1d7bb82de5 (primary EXTRA-L1-0141) cites this line and keeps 'use the body for motivation/constraints/migration notes' but drops 'do not narrate the obvious diff'; protocol F6 (text cited by the group, not stated). A body can contain motivation and an additional line-by-line narration, so the omitted half restricts behaviour the group text allows.
+scenario: A commit body gives the motivation and then restates every renamed variable: the group's positive guidance holds, the source prohibition does not.
+conf: MEDIUM
+facet: FG-L1-1d7bb82de5 | NEW_BEHAVIOR_BOUNDARY | The commit-message body does not narrate the obvious diff.
+policy_hint: WF-022 (Codex suggestion; not adjudicated)
+
+@@ CIS-L1-0006
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: CONDITIONAL_LOADING_DIRECTIVE (read references only as needed)
+appl: actor=agent running the project-structure workflow; action=read the listed references and facets only as needed for their topic; trigger=project-structure workflow; modality=DEFAULT-NEGATIVE ('only as needed'); scope=references/solution-layout.md, references/baseline-packages.md, architecture.layout, backend-platform rule, slot command facets; exceptions=steps that need a reference may read it; timing=before using them; enforcement=instruction only; loading=workflow skill (Level 3-project, on invocation)
+compared: FG-L1-b0aabd2878 FG-L1-2a8d939b5e
+rationale: project-structure/SKILL.md:10-16 verified. Primary classified the line as pointers/loading guidance (IMPLEMENTATION), replica as policy pointers; no L1 group restricts reference loading (the Codex baseline refs RULE-L1-0511/0398, RULE-L1-0034 concern required reads and verification). Same assessment as M/M1/L0.
+scenario: Narrow backend reference change: the agent also loads the frontend command facet and baseline-packages.md; existing groups hold, the 'only as needed' default does not.
+conf: MEDIUM
+proposal: DEFAULT (negative) | project-structure workflow is running | Read the project-structure references and facets only as needed for their listed topic.
+
+@@ CIS-L1-U0005
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: DESCRIPTIVE GUIDANCE ('a useful error contract carries ... when clients need one')
+appl: actor=agent using the aspnet-error-handling knowledge skill; action=include a stable machine-readable error code; trigger=clients need one; modality=DESCRIPTIVE; scope=aspnet-error-handling knowledge skill; exceptions=only when clients need one; timing=contract design; enforcement=none; loading=on-demand knowledge skill ('exception, validation, and outcome-mapping technique')
+compared: FG-L1-859b304b1d
+rationale: aspnet-error-handling/SKILL.md:64 verified. The sentence describes what a useful contract contains, with judgement qualifiers, in a technique skill; both runs rejected it as descriptive (ORPHAN-L1-0246). The enforceable contract rule is FG-L1-859b304b1d (stable safe machine-readable problem-details), which already makes a needed but missing stable code a contract defect. Resolved; no additional clause.
+scenario: N/A: a stable safe ProblemDetails contract is governed by FG-L1-859b304b1d; the sentence adds no separate obligation.
+conf: MEDIUM
+
+@@ CIS-L1-U0006
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: DESCRIPTIVE GUIDANCE ('... a correlation/trace identifier when appropriate')
+appl: actor=agent using the aspnet-error-handling knowledge skill; action=include a correlation/trace identifier; trigger=when appropriate (unspecified); modality=DESCRIPTIVE; scope=aspnet-error-handling knowledge skill; exceptions=appropriateness left to judgement; timing=contract design; enforcement=none; loading=on-demand knowledge skill
+compared: FG-L1-859b304b1d FG-L1-5bd806d4d0 FG-L1-6a59d2372c
+rationale: Same sentence as CIS-L1-U0005; 'when appropriate' gives no identifiable trigger and the statement is descriptive. Trace-identifier policy is registered (FG-L1-5bd806d4d0, FG-L1-6a59d2372c). Resolved.
+scenario: N/A: omitting a trace id where its appropriateness is undefined violates no stated rule.
+conf: MEDIUM
+
+@@ CIS-L1-U0007
+disp: ALREADY_REPRESENTED
+nature: TECHNIQUE IMPERATIVE (provider-based HttpClient configuration) covered by registered standalone-API rules
+appl: actor=agent using the angular knowledge skill; action=configure the HTTP client through providers (provideHttpClient); trigger=configuring Angular HttpClient; modality=IMPERATIVE TECHNIQUE; scope=angular knowledge skill; exceptions=integration or legacy needs may require NgModules; timing=implementation; enforcement=none; loading=on-demand capability knowledge facet
+match: FG-L1-74648b54f4 FG-L1-34be702ec3
+compared: FG-L1-496e1abb92 FG-L1-49b6227757
+rationale: angular/SKILL.md:63-67 verified. The Codex scenario (client configured through a legacy module without an integration need) is already forbidden by FG-L1-74648b54f4 ('Modern standalone Angular APIs for new code') and FG-L1-34be702ec3 ('Do not introduce NgModules for ordinary feature work unless an integration or legacy dependency requires them'); provider-based configuration is the standalone way to satisfy them. No additional behaviour.
+scenario: HttpClientModule imported for new feature work without an integration need: forbidden by FG-L1-34be702ec3.
+conf: MEDIUM
+
+@@ CIS-L1-U0008
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE TABLE (framework API for per-scope refreshed options)
+appl: actor=agent using the configuration knowledge skill; action=use IOptionsSnapshot<T>; trigger=values refreshed per scope/request; modality=REFERENCE TABLE ('Need | Use'); scope=configuration knowledge skill; exceptions=none; timing=implementation; enforcement=none; loading=on-demand knowledge skill ('configuration and options technique')
+compared: FG-L1-60b660abb4 FG-L1-8af5c9583e FG-L1-5cb81d6c69
+rationale: configuration/SKILL.md:52 verified; revision CIS-L1-U0008-R1 applied (closest policy RUN-022, metadata only). The table maps lifetimes to the framework types that provide them; the normative rules (typed, validated options; no scattered key lookups) are registered (FG-L1-60b660abb4, FG-L1-8af5c9583e). Both runs classified the table as technique. Resolved.
+scenario: N/A: correctly refreshed typed options obtained another way violate no registered or additional rule.
+conf: MEDIUM
+policy_hint: RUN-022 (per revision; not adjudicated)
+
+@@ CIS-L1-U0009
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE TABLE (framework API for observing changes)
+appl: actor=agent using the configuration knowledge skill; action=use IOptionsMonitor<T>.CurrentValue; trigger=observing configuration changes over time (background services); modality=REFERENCE TABLE; scope=configuration knowledge skill; exceptions=none; timing=implementation; enforcement=none; loading=on-demand knowledge skill
+compared: FG-L1-60b660abb4 FG-L1-8af5c9583e
+rationale: configuration/SKILL.md:53 verified; revision CIS-L1-U0009-R1 applied (metadata only). Same reasoning as CIS-L1-U0008.
+scenario: N/A: as for CIS-L1-U0008.
+conf: MEDIUM
+policy_hint: RUN-022 (per revision; not adjudicated)
+
+@@ CIS-L1-U0010
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE TABLE (named options)
+appl: actor=agent using the configuration knowledge skill; action=use named options; trigger=several configurations of one options type; modality=REFERENCE TABLE; scope=configuration knowledge skill; exceptions=none; timing=implementation; enforcement=none; loading=on-demand knowledge skill
+compared: FG-L1-60b660abb4 FG-L1-8af5c9583e
+rationale: configuration/SKILL.md:54 verified; revision CIS-L1-U0010-R1 applied (metadata only). Same reasoning as CIS-L1-U0008.
+scenario: N/A: as for CIS-L1-U0008.
+conf: MEDIUM
+policy_hint: RUN-022 (per revision; not adjudicated)
+
+@@ CIS-L1-U0011
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: PERMISSION in a technique note (AAA comments optional)
+appl: actor=test author using dotnet-testing; action=omit phase comments when phases are obvious; trigger=writing tests; modality=PERMISSION; scope=dotnet-testing knowledge facet; exceptions=none; timing=standing; enforcement=none; loading=on-demand capability knowledge facet
+compared: FG-L1-9aca219bf4 FG-L1-edbae2174d
+rationale: dotnet-testing/SKILL.md:44 verified: 'Arrange/Act/Assert is a useful structure; comments are optional when the phases are obvious' (same wording as candidate L0, no default/preference term). The permission restricts nothing and is the absence of a comment requirement that no registered group imposes. Both runs classified it as a permissive note. Resolved.
+scenario: N/A: no registered rule requires AAA comments, so the permission changes no allowed/forbidden behaviour.
+conf: MEDIUM
+
+@@ CIS-L1-U0012
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE CONTRAST (FindAsync vs LINQ)
+appl: actor=agent using the ef-core knowledge facet; action=use LINQ when predicates, projection or related data are involved; trigger=entity lookup beyond primary-key semantics; modality=TECHNIQUE; scope=ef-core knowledge facet; exceptions=raw-SQL gate unchanged; timing=implementation; enforcement=none; loading=on-demand capability knowledge facet
+compared: FG-L1-690fbe0db4 FG-L1-224f34f214 FG-L1-2b0f39fc57
+rationale: ef-core/SKILL.md:79 verified: one bullet saying when FindAsync fits and that LINQ is used otherwise. 'Start with clear LINQ' (FG-L1-690fbe0db4) and the raw-SQL gate (FG-L1-224f34f214) are registered. Same assessment as M/M1/L0.
+scenario: N/A: a filtered lookup cannot be expressed with FindAsync alone; loading then filtering in memory is already contrary to database-side filtering (FG-L1-d7441df401).
+conf: HIGH
+
+@@ CIS-L1-U0013
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: ADVISORY ('consider')
+appl: actor=agent using the ef-core knowledge facet; action=consider keyset pagination; trigger=very large or frequently traversed sets; modality=ADVISORY; scope=ef-core knowledge facet; exceptions=none; timing=design; enforcement=none; loading=on-demand capability knowledge facet
+compared: FG-L1-2e00206e5c FG-L1-5314734853 FG-L1-d7441df401
+rationale: ef-core/SKILL.md:81 verified; primary segment calls keyset 'advisory' while registering database paging (FG-L1-2e00206e5c) and deterministic ordering (FG-L1-5314734853) from the same line. Same assessment as M/M1/L0.
+scenario: N/A: deterministic offset paging is not forbidden.
+conf: MEDIUM
+
+@@ CIS-L1-U0014
+disp: ALREADY_REPRESENTED
+nature: DECISION-TABLE SUMMARY (hedging after measurement) in a private technique reference
+appl: actor=agent choosing outbound resilience technique; action=use hedging for a latency-sensitive idempotent read after measurement; trigger=consulting the resilience decision table; modality=TABLE SUMMARY of registered defaults; scope=httpclient-factory private reference resilience.md; exceptions=never writes by default; timing=design; enforcement=none; loading=private reference of an on-demand knowledge skill
+match: FG-L1-56b4faff0f FG-L1-ab373021a8
+compared: FG-L1-6a3adcbf43 FG-L1-193ee8a138
+rationale: resilience.md:48 verified; the reference body (line 23) gives the hedging safety condition registered as FG-L1-56b4faff0f, and the governing performance default (rules/0-core/backend-code.md:12, FG-L1-ab373021a8) prefers measurement or profiling evidence for non-trivial optimisations. The table row combines these; primary labelled the table a restatement (DUPLICATE) and replica technique. A technique reference does not own policy, so 'after measurement' is read as the table form of the registered measurement default, not a stricter rule.
+scenario: Hedging introduced for an idempotent read without any measurement: contrary to the measurement preference in FG-L1-ab373021a8; hedging a write: contrary to FG-L1-56b4faff0f.
+conf: MEDIUM
+
+@@ CIS-L1-0007
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (investigation prompt of the supply-chain layer)
+appl: actor=agent running the security-scan workflow; action=review unexpected or untrusted NuGet sources; trigger=scan covering the .NET dependency/supply-chain layer; modality=PROCEDURAL (investigation prompt); scope=security-scan workflow via scan-layers.md; exceptions=only applicable surfaces; not an automatic vulnerability declaration; timing=during the scan; enforcement=instruction only; loading=private reference read by security-scan
+compared: FG-L1-e8c55a537f FG-L1-087900f3fe FG-L1-e52b9bf6fd
+rationale: scan-layers.md:9 verified. Groups on this line cover only 'do not upgrade during a scan' (FG-L1-e8c55a537f) and the focus rule; no L1 group mentions package sources (grep). The L1 union registers other scan prompts as review duties (e.g. FG-L1-5821a256da log review), so this omitted prompt is an unrepresented procedural step. Codex NOVEL confirmed as distinct (workflow-scoped).
+scenario: A scan reviews advisories and upgrades nothing but never inspects an unexpected NuGet feed.
+conf: MEDIUM
+proposal: PROCEDURAL (review step) | security scan covering the .NET dependency and supply-chain layer | Review unexpected or untrusted NuGet sources as part of the dependency and supply-chain layer of a security scan.
+policy_hint: EXC-015 context / WF-020 (non-binding)
+
+@@ CIS-L1-0008
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (conditional lockfile review, frontend)
+appl: actor=agent running the security-scan workflow; action=review lockfiles; trigger=frontend dependency scan when integrity or unexpected dependency changes matter; modality=PROCEDURAL, conditional; scope=security-scan workflow via scan-layers.md; exceptions=only when integrity/unexpected changes matter; timing=during the scan; enforcement=instruction only; loading=private reference read by security-scan
+compared: FG-L1-38ffea25a7 FG-L1-1321d671af FG-L1-43db559e85 FG-L1-c52d07c934
+rationale: scan-layers.md:10 verified. FG-L1-38ffea25a7 registers the dependency-category distinctions of the same line; lockfile groups concern maintenance/installation, not inspection during a scan; replica dismissed the prompt. Consistent with M1/L0.
+scenario: An unexpectedly changed lockfile is not inspected although the audit classifies findings correctly.
+conf: MEDIUM
+proposal: PROCEDURAL (conditional review step) | security scan with frontend dependencies where integrity or unexpected dependency changes matter | Review the lockfiles when package integrity or unexpected dependency changes matter.
+policy_hint: EXC-015 context / WF-020 (non-binding)
+
+@@ CIS-L1-0009
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (production debug/development flags in the configuration layer)
+appl: actor=agent running the security-scan workflow; action=review production debug/development flags; trigger=scan covering the secrets and configuration layer; modality=PROCEDURAL (investigation prompt); scope=security-scan workflow via scan-layers.md; exceptions=only applicable surfaces; not an automatic vulnerability declaration; timing=during the scan; enforcement=instruction only; loading=private reference read by security-scan
+compared: FG-L1-b8e7f36df1 FG-L1-93a5d935e8 FG-L1-d08af16e1a FG-L1-0839fd096c
+rationale: scan-layers.md:19 verified; both runs classified the review list as investigation prompts and no L1 group mentions debug/development flags (grep). The registered neighbours concern surface discovery, fail-safe startup and 'not automatically safe' items. Unrepresented review step, consistent with the other scan-layer proposals.
+scenario: A scan verifies secrets and fail-safe configuration but never looks at a production configuration that enables a debug feature flag.
+conf: MEDIUM
+open_issue: The same line also lists certificate-validation bypasses, credential-bearing URLs, verbose production error configuration and committed .env files; not checked beyond this claim (no extraction).
+proposal: PROCEDURAL (review step) | security scan covering the secrets and configuration layer | Review production debug/development flags as part of the secrets and configuration layer of a security scan.
+policy_hint: EXC-015 context / WF-020 (non-binding)
+
+@@ CIS-L1-U0015
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNICAL_PREREQUISITE (LogContext needs the enricher)
+appl: actor=agent configuring Serilog; action=enable Enrich.FromLogContext; trigger=using LogContext.PushProperty; modality=TECHNICAL FACT ('requires'); scope=logging private reference serilog.md; exceptions=none; timing=configuration; enforcement=library behaviour; loading=private technique reference
+compared: FG-L1-d8a716f67f FG-L1-36e12d0f5b
+rationale: serilog.md:90 verified: a library prerequisite stated inside a technique bullet; both runs classified it as technique. Same assessment as M1/L0.
+scenario: N/A: omitting the enricher is a functional defect of the chosen technique, not a separate rule.
+conf: HIGH

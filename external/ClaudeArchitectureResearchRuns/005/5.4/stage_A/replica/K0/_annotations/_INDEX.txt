@@ -1,0 +1,389 @@
+RULE-K0-0001 OR WF-010 [MUST (tool-enforced: disallowedTools)] The code-reviewer subagent performs an independent read-only review: Write, Edit, MultiEdit and NotebookEdit are disallowed; it must not edit, create 
+RULE-K0-0002 OR WF-010 [MUST] code-review is the canonical procedure: the reviewer reads .claude/skills/code-review/SKILL.md if not already loaded, follows it from scope to output,
+RULE-K0-0003 OR DEP-003,DEP-004,DEP-005 [MUST (PreToolUse: permissionDecision deny; fails closed)] Dependency addition/update commands (npm/pnpm/yarn install|add naming a package, update/upgrade/dedupe, npm audit fix, ng add, ng update <pkg>, dotnet
+EXTRA-K0-0001 EX DEP-001,DEP-003 [MUST (PreToolUse deny; PostToolUse confirmation message on removed manifests)] Dependency-removal commands (npm uninstall|remove|rm|r|un|unlink, pnpm/yarn remove, dotnet remove package, dotnet package remove, Uninstall-Package) a
+RULE-K0-0004 OR DEP-025 [MUST NOT (PreToolUse deny message)] A dependency command using --force or --legacy-peer-deps (npm -f included) receives the instruction to resolve the actual peer-dependency conflict ins
+EXTRA-K0-0002 EX ARC-001,ARC-020,ARC-028,GOV-017 [MUST (Reserved; PreToolUse deny; PostToolUse finding)] Changing the project reference graph (dotnet add|remove reference, dotnet reference add|remove, or a .csproj ProjectReference change) is Reserved unle
+RULE-K0-0005 OR GOV-015 [MUST NOT (PreToolUse: permissionDecision ask)] Repository-changing Git commands (every subcommand not in the read-only list or read-only argument forms, e.g. commit, push, merge, rebase, reset, add
+EXTRA-K0-0003 EX - [MUST (PostToolUse feedback, decision block)] When instruction files change (CLAUDE.md, the decision register, .claude/** except .hook-state and settings.local.json), check-instructions runs and i
+RULE-K0-0006 OR GOV-021 [MUST (PostToolUse message; Stop reminder)] A CUSTOM_SETTINGS.md change triggers the instruction to run the custom-settings workflow to synchronize every affected surface, and at Stop a reminder
+RULE-K0-0007 OR GOV-009,GOV-003 [MUST (PostToolUse message)] A SPECIFICATION.md change triggers the instruction to confirm it stays consistent with CUSTOM_SETTINGS.md and records only approved behavior.
+RULE-K0-0008 OR ARC-020,GOV-017 [MUST (PostToolUse message)] Removing a project file is reported as a project-graph change to confirm as intended and approved (CLAUDE.md Decisions; project-structure).
+RULE-K0-0009 OR WF-005,GOV-014 [MUST (PostToolUse message)] A moved manifest/project is reported so that every reference to it is updated (project-structure).
+RULE-K0-0010 OR PST-008 [SHOULD (Stop: decision block once per exact state)] When Domain .cs files or Infrastructure/Persistence Configurations/AppDbContext change without any Seeding/DbSeeder change (and a DbSeeder.cs exists),
+RULE-K0-0011 OR PST-010 [SHOULD (Stop: decision block once per exact state)] When migration files (excluding .Designer.cs and ModelSnapshot.cs) are added or changed, the agent is stopped once to review them before committing.
+RULE-K0-0012 OR TST-009,TST-010 [SHOULD (Stop: decision block once per exact state)] When production code (backend .cs or frontend .ts, excluding tests, .spec.ts and migrations) changed without any test change, the agent is stopped onc
+EXTRA-K0-0004 EX - [MUST] Instruction artifacts are organized by two questions: the Kind (OP, DEC, STD, KNW, WF, ENF, IN) decides mechanism, location and loading; the Scope (co
+EXTRA-K0-0005 EX - [MUST (checked by check-instructions)] Conformance dependencies point WF -> KNW -> STD -> DEC -> OP and ENF -> STD/DEC (declared in the header and Conforms to: lines); routing pointers (See
+EXTRA-K0-0006 EX - [MUST] The maintainer map lists every artifact with its owner, loading, enforcement and 'Extend here' routing; the Decision -> Affects view is generated from
+EXTRA-K0-0007 EX ARC-002,DEP-011 [MUST] Domain stays independent of mapping-library concerns (in addition to EF Core, ASP.NET Core, HTTP, persistence and external-service concerns).
+EXTRA-K0-0008 EX RUN-009,RUN-024 [PREFER / imperative (path-scoped backend standard)] Backend C# style rules: prefer primary constructors for simple DI/initialization (regular constructors when validation is non-trivial or the codebase 
+UNCERTAIN-K0-0001 LI GOV-015,DEP-007 [MUST (imperative in a standard)] 'Commit package.json and package-lock.json, and keep the lockfile consistent with every dependency change.'
+RULE-K0-0013 OR API-001 [MUST] HTTP status codes and transport response semantics belong to the API layer; Application and Domain must not return IActionResult, ProblemDetails or AS
+RULE-K0-0014 OR API-002 [DEFAULT] ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request validation; keep machine-readable error contracts stable and 
+RULE-K0-0015 OR API-003 [MUST] Choose 200/201/202/204 by actual HTTP semantics (not 200 for everything, 201 merely for an internal insert, 202 for completed work); keep status behav
+RULE-K0-0016 OR API-004 [DEFAULT] A successful collection query with zero matches returns 200 with an empty collection, not 404.
+RULE-K0-0017 OR API-005 [MUST] 401 for missing/failed authentication, 403 for an authenticated principal not permitted; 404 to hide a protected resource must be a deliberate, consis
+RULE-K0-0018 OR API-006 [MUST] 409 for a valid request conflicting with current state; 412 when an explicit HTTP precondition such as If-Match fails.
+RULE-K0-0019 OR API-013 [MUST NOT] Do not introduce API versioning merely because an API exists; add it only for published compatibility or coexisting client generations.
+RULE-K0-0020 OR API-014 [MUST] Once relied on by external clients, an API version must not change incompatibly without compatibility treatment: a breaking change requires a new vers
+RULE-K0-0021 OR API-015 [DEFAULT] When explicit versioning is required, use one strategy consistently — URL-segment versioning unless requirements justify another.
+RULE-K0-0022 OR ARC-026 [MUST NOT] Do not create separate Domain or persistence models merely because the API has multiple versions; isolate version-specific transport contracts at the 
+RULE-K0-0023 OR API-016 [MUST] Swagger/OpenAPI metadata describes the API that actually runs (routes, important statuses, schemas, authentication behavior) and does not document spe
+RULE-K0-0024 OR API-017,DEP-012 [DEFAULT] Swagger UI is enabled in Development and exposed elsewhere only when deployment requirements explicitly justify it.
+RULE-K0-0025 OR ARC-001 [MUST] Dependencies point inward: Domain references no other application project; Application references Domain; Infrastructure references Application and Do
+RULE-K0-0026 OR ARC-001,ARC-008 [MUST NOT] Inner layers never depend on outer layers and Domain/Application do not reference Infrastructure-specific types; when a feature seems to need Domain -
+RULE-K0-0027 OR ARC-002 [MUST] Domain stays independent of EF Core, ASP.NET Core, HTTP, persistence and external-service implementation concerns.
+RULE-K0-0028 OR ARC-003 [DEFAULT] Simple domain entities; CRUD-oriented and straightforward workflow rules belong in Application Services; validation rules, immutable fields, status tr
+RULE-K0-0029 OR ARC-004 [REQUIRES_APPROVAL] Move behavior into Domain only when non-trivial invariants or behavior materially benefit from domain-level encapsulation; otherwise a Rich Domain Mod
+RULE-K0-0030 OR ARC-005 [MUST NOT] Do not add factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Obj
+RULE-K0-0031 OR ARC-006,GOV-013 [DEFAULT] Application Services orchestrate use cases; a large service is a signal to reconsider responsibilities, not a reason for another architectural pattern
+RULE-K0-0032 OR ARC-007 [MUST] Define persistence and external-service abstractions in Application when use cases require them; keep infrastructure details out of Application.
+RULE-K0-0033 OR ARC-008 [MUST NOT] Application must not use DbContext, DbSet<T>, EF Core APIs, provider-specific types or ASP.NET Core transport types.
+RULE-K0-0034 OR ARC-010 [MUST] Controllers stay thin: bind and validate HTTP input, invoke Application services, translate outcomes to HTTP responses.
+RULE-K0-0035 OR ARC-011 [MUST NOT] Controllers do not contain business logic, access DbContext or concrete repositories, or construct infrastructure services manually.
+RULE-K0-0036 OR ARC-012 [DEFAULT] Program.cs is the composition root and may register Infrastructure implementations; Controllers still do not consume Infrastructure implementation typ
+RULE-K0-0037 OR ARC-029 [MUST NOT] Do not duplicate equivalent DTOs across API and Application merely to create layer-shaped types; introduce transport-specific contracts when separatio
+RULE-K0-0038 OR ARC-013,ARC-007 [DEFAULT] Specific repository interfaces represent actual cohesive Application persistence needs, not table-mirroring generic CRUD contracts; defined in Applica
+RULE-K0-0039 OR ARC-014 [MUST NOT] Repository interfaces do not expose IQueryable<T>, DbSet<T>, DbContext, EF Core expressions or provider types; LINQ-to-EF stays in Infrastructure; ret
+RULE-K0-0040 OR ARC-015 [MUST NOT] Application does not depend on IGenericRepository<T> or another generic CRUD contract; a generic repository/base class may exist only as an Infrastruc
+RULE-K0-0041 OR ARC-016 [DEFAULT] IUnitOfWork is the commit boundary: repositories stage changes and do not call SaveChangesAsync independently; Application Services decide when to com
+RULE-K0-0042 OR ARC-017,ARC-021 [MUST] Repositories in one use case share the same scoped Unit of Work and DbContext; repositories are injected explicitly; IUnitOfWork is not a repository c
+RULE-K0-0043 OR ARC-018 [DEFAULT] No explicit transaction APIs until a concrete use case needs control beyond a normal SaveChangesAsync.
+RULE-K0-0044 OR ARC-019 [MUST] EF Core is an Infrastructure implementation detail: use it fully inside Infrastructure, never leak its concepts into Application, and do not cripple r
+RULE-K0-0045 OR ARC-021 [DEFAULT] Constructor injection for required dependencies; avoid service-locator and property-injection patterns.
+RULE-K0-0046 OR ARC-022 [MUST] Service lifetimes must be valid; never capture a shorter-lived dependency inside a longer-lived service.
+RULE-K0-0047 OR ARC-023 [DEFAULT] Registration stays with the owning layer: Application registers Application services, Infrastructure registers persistence and adapters, Api remains t
+RULE-K0-0048 OR ARC-020 [REQUIRES_APPROVAL] Distributed caching is Reserved.
+RULE-K0-0049 OR RUN-007 [DEFAULT] Caching is an optimization, not an architecture requirement: introduce it only for a clear measured or reasoned need and choose the implementation by 
+RULE-K0-0050 OR ARC-024 [MUST] Cache technology stays out of Domain; infrastructure cache APIs do not leak into Application without a deliberate boundary abstraction.
+RULE-K0-0051 OR RUN-020 [MUST] Cache keys uniquely represent the cached value with every relevant dimension (identifier, tenant, user when user-specific, locale, query parameters); 
+RULE-K0-0052 OR RUN-023 [MUST] Every cache entry has a lifetime or another explicit invalidation strategy.
+RULE-K0-0053 OR RUN-021 [MUST] Invalidate or update cache entries consistently with successful underlying mutations; the cache never becomes a second source of truth.
+RULE-K0-0054 OR RUN-009 [DEFAULT] Follow the repository's conventions and .editorconfig; use modern C# when it improves clarity but do not mechanically modernize working code (includin
+RULE-K0-0055 OR RUN-011,GOV-014 [MUST NOT] No style-only rewrites outside the requested change unless explicitly asked; avoid mixing large formatting or modernization changes with functional wo
+RULE-K0-0056 OR RUN-024,RUN-011 [DEFAULT] New code: file-scoped namespaces when consistent; one primary top-level type per file named after it (small private/nested types may stay); Async suff
+RULE-K0-0057 OR RUN-002 [MUST] Use async APIs for asynchronous I/O and never block them with .Result, .Wait() or similar sync-over-async patterns.
+RULE-K0-0058 OR RUN-003 [MUST] Propagate CancellationToken through asynchronous operations when cancellation is meaningful; no cancellation parameters on purely synchronous code wit
+RULE-K0-0059 OR RUN-004 [DEFAULT] Use TimeProvider for logic whose behavior depends on the current clock and needs deterministic tests; stored timestamps and explicit dates are not clo
+RULE-K0-0060 OR RUN-001 [DEFAULT] Clear, correct code first; no specialized optimizations without a concrete reason; prefer measurement/profiling evidence for non-trivial optimization.
+RULE-K0-0061 OR RUN-008 [DEFAULT] Compiled queries, ValueTask<T>, ArrayPool/MemoryPool and manual pooling, custom serialization, aggressive caching and raw SQL for performance only for
+RULE-K0-0062 OR API-007 [DEFAULT] Unexpected failures propagate to centralized IExceptionHandler handling without repetitive catch/log/rethrow; catch only where the layer can recover, 
+RULE-K0-0063 OR API-008 [MUST NOT] Public API errors do not expose stack traces, SQL, connection strings, internal paths, secret values or sensitive exception details.
+RULE-K0-0064 OR API-012 [MUST] Unexpected exceptions are logged once, by default at the handling boundary, not repeatedly across repository, Application, Controller and global handl
+RULE-K0-0065 OR API-009 [DEFAULT] Represent common expected outcomes explicitly when useful (null, bool, typed outcome) without forcing a generic Result<T> and without HTTP-named outco
+RULE-K0-0066 OR ARC-020 [REQUIRES_APPROVAL] A project-wide Result model is Reserved.
+RULE-K0-0067 OR API-011 [MUST NOT] Do not establish business exceptions as the default architecture or throw/catch exceptions merely to jump between normal branches.
+RULE-K0-0068 OR API-010,DEP-010 [MUST] Use FluentValidation for explicit request/use-case validation where appropriate and keep each concern at its owning boundary (API transport, Applicati
+RULE-K0-0069 OR API-021 [MUST NOT] Normal client-request cancellation is not a server failure: do not map it to a generic 500 or log it as an unhandled error.
+RULE-K0-0070 OR RUN-022 [DEFAULT] Strongly typed options validated at startup when missing/invalid values prevent correct or secure operation; no scattered string-based IConfiguration 
+RULE-K0-0071 OR RUN-013,DEP-010 [DEFAULT] ILogger<T> with structured message templates and stable property names; avoid interpolation that makes structured values opaque.
+RULE-K0-0072 OR DEP-021 [DEFAULT] When Serilog is configured use DI-integrated AddSerilog with environment-aware configuration; application code depends on ILogger<T>.
+RULE-K0-0073 OR API-018 [MUST] Health checks stay cheap and deterministic, not business workflows or expensive/mutating database work.
+RULE-K0-0074 OR API-019 [MUST] Liveness does not depend on external dependencies whose unavailability would cause restart loops (by default no database or remote API checks); readin
+RULE-K0-0075 OR API-020 [MUST NOT] Publicly reachable health responses do not expose secrets, credentials, connection details, stack traces or unnecessary diagnostics.
+RULE-K0-0076 OR DEP-019 [DEFAULT] Production containers use an appropriate runtime image (the ASP.NET Core runtime image for APIs) rather than the SDK image for convenience and avoid s
+RULE-K0-0077 OR RUN-005 [MUST NOT] Never create and dispose a new HttpClient per request; use IHttpClientFactory or another long-lived strategy.
+RULE-K0-0078 OR ARC-025 [MUST] Infrastructure translates remote HTTP responses into Application-facing abstractions; HttpResponseMessage and transport concerns do not leak into Appl
+RULE-K0-0079 OR RUN-015 [MUST] External I/O calls have a bounded execution time appropriate to the operation; avoid overlapping timeout mechanisms with unclear combined behavior.
+RULE-K0-0080 OR RUN-016 [MUST] Retry only when repeating is safe; never automatically retry state-changing operations without idempotency or another concrete duplicate-prevention me
+RULE-K0-0081 OR RUN-017 [DEFAULT] Respect Retry-After or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively.
+RULE-K0-0082 OR RUN-018 [MUST] Use a fallback only when semantically acceptable; never hide a correctness failure behind a convenient default.
+RULE-K0-0083 OR RUN-019 [MUST NOT] Caller cancellation is not a transient failure: do not classify it as one or turn it into repeated outbound attempts.
+RULE-K0-0084 OR RUN-006 [DEFAULT] Filter and project in the database when practical, avoid unnecessary round trips, over-fetching and N+1, paginate potentially large result sets.
+RULE-K0-0085 OR DEP-026 [DEFAULT] For the SQL Server baseline, appsettings.Development.json provides a usable local Development connection string when it contains no secret credentials
+RULE-K0-0086 OR PST-001 [DEFAULT] An empty Development database receives a small deterministic representative seed dataset covering meaningful entity states and relationships.
+RULE-K0-0087 OR PST-002 [MUST] Development seeding is an Infrastructure/bootstrap concern that may use AppDbContext directly without Application repositories or IUnitOfWork.
+RULE-K0-0088 OR PST-003 [MUST] Substantial seed construction lives in a dedicated internal seeder (e.g. Persistence/Seeding/DbSeeder.cs) behind a narrow Infrastructure initializatio
+RULE-K0-0089 OR PST-004,TST-008 [MUST NOT] Automatic development seeding runs only in Development, never automatically in Production; the seeder is never test setup.
+RULE-K0-0090 OR PST-005 [MUST NOT] The seeder does not call Database.Migrate() or EnsureCreated() or otherwise create/upgrade schema; migrations are applied separately before seeding.
+RULE-K0-0091 OR PST-006 [MUST NOT] When representative data exists, leave it unchanged: no synchronization, repair, upgrade, overwrite or recreation of an existing Development database;
+RULE-K0-0092 OR PST-007 [MUST] Seed entities preserve current Domain invariants and valid relationships; prefer readable deterministic examples over exhaustive/random combinations.
+RULE-K0-0093 OR ARC-020 [REQUIRES_APPROVAL] Authentication architecture changes are Reserved.
+RULE-K0-0094 OR SEC-004 [MUST] Use parameterized database access (EF Core LINQ, supported parameterization of raw SQL, Dapper or ADO.NET); never build SQL by concatenating untrusted
+RULE-K0-0095 OR SEC-006 [MUST] Default to explicit, reviewable authorization (global/fallback policies, attributes, endpoint configuration); anonymous access is deliberate and visib
+RULE-K0-0096 OR SEC-016 [MUST NOT] Do not implement custom token or password security, password hashing or reset-token cryptography when ASP.NET Core authentication/Identity covers the 
+RULE-K0-0097 OR SEC-017 [MUST] For Bearer/OIDC validate what the actual issuer requires (issuer, audience where applicable, signature/signing authority, lifetime); never disable val
+RULE-K0-0098 OR SEC-018 [MUST NOT] Authentication failures do not expose detail that unnecessarily reveals secrets or account state; login avoids account-enumeration leaks where relevan
+RULE-K0-0099 OR SEC-008 [MUST NOT] No custom cryptography when a well-reviewed platform mechanism is appropriate; Data Protection suits application-generated protected payloads, not uni
+RULE-K0-0100 OR SEC-009 [DEFAULT] The narrowest CORS policy satisfying actual browser-client requirements; never combine credentialed cross-origin requests with an unrestricted origin 
+RULE-K0-0101 OR SEC-015 [MUST NOT] Do not treat client-provided file metadata such as MIME type as authoritative when handling or a security decision depends on actual content.
+RULE-K0-0102 OR TST-001,DEP-013 [DEFAULT] NUnit for backend automated tests; in an established project deliberately using another framework follow it; do not introduce a second test framework 
+RULE-K0-0103 OR TST-002 [DEFAULT] Choose the narrowest meaningful test level (unit for isolated logic; integration when framework wiring, HTTP, EF Core, persistence, serialization, aut
+RULE-K0-0104 OR TST-006 [DEFAULT] WebApplicationFactory-based integration tests when routing, binding, middleware, authentication, DI, repositories, EF Core or persistence is what the 
+RULE-K0-0105 OR TST-003 [MUST] Tests verify observable behavior, not implementation details (no private methods, exact internal call sequences, specific implementation classes or in
+RULE-K0-0106 OR TST-005 [DEFAULT] Explicit declarative cases (e.g. [TestCase] rows) for small finite input/state spaces instead of loops, branching, LINQ or generated case machinery.
+RULE-K0-0107 OR TST-012 [DEFAULT] Descriptive test names communicating scenario/condition and expected behavior (e.g. MethodOrScenario_Condition_ExpectedBehavior) unless an established
+RULE-K0-0108 OR TST-011 [MUST NOT] Do not generate low-value tests merely to increase coverage percentage.
+RULE-K0-0109 OR TST-004,RUN-004 [MUST] Tests are deterministic, order-independent and isolated from Production and Development data, uncontrolled external systems and shared mutable state, 
+RULE-K0-0110 OR TST-008 [MUST] Tests start from a known state and own their setup; they do not depend on development seeding or test execution order.
+RULE-K0-0111 OR TST-007 [DEFAULT] Use the actual database provider when relational/provider behavior matters (Testcontainers optional); never claim provider fidelity from a different p
+RULE-K0-0112 OR ARC-028 [MUST NOT] Test projects do not reference production projects more broadly than their test scope requires and follow the inward dependency discipline.
+RULE-K0-0113 OR DEP-003,DEP-004,DEP-005 [MUST] Adding or updating a package runs the add-dependency workflow (version, deprecation, vulnerability and license checks).
+RULE-K0-0114 OR DEP-001,DEP-011 [MUST] Add a dependency only for a concrete current requirement; no packages for hypothetical future use; an approved conditional technology is added only wh
+RULE-K0-0115 OR DEP-006 [MUST] Use NuGet Central Package Management: versions in Directory.Packages.props; project PackageReference entries versionless by default (a VersionOverride
+RULE-K0-0116 OR DEP-006 [MUST] Keep each package reference in the narrowest project that requires it; do not add a package to every project merely because they share a solution.
+RULE-K0-0117 OR DEP-007 [MUST] npm is the package manager for the Angular workspace unless the project deliberately adopts another; build and test tooling goes in devDependencies un
+RULE-K0-0118 OR DEP-007 [MUST] Keep package-lock.json consistent with every dependency change.
+RULE-K0-0119 OR ARC-027 [MUST NOT] Physical structure follows actual responsibilities: no speculative projects, infrastructure, empty trees or generic Common/Helpers/Utils buckets; crea
+RULE-K0-0120 OR SEC-001 [MUST NOT] Never hardcode or commit real secrets, credentials, private keys, access/refresh tokens or production connection strings in source-controlled files, e
+RULE-K0-0121 OR SEC-002 [DEFAULT] A local secret mechanism such as dotnet user-secrets for development and environment-specific injection or a managed secret store appropriate to the h
+RULE-K0-0122 OR SEC-003 [MUST] Treat data crossing the trusted boundary as untrusted (HTTP requests, uploads, external responses when assumptions matter, message payloads, identifie
+RULE-K0-0123 OR SEC-005 [MUST] Authorization is enforced on the server; route guards, hidden/disabled buttons and client checks are UX, not a security boundary.
+RULE-K0-0124 OR SEC-007 [MUST] Production traffic carrying credentials or sensitive data uses TLS, respecting hosting topology (in-app HTTP-to-HTTPS redirection not required when de
+RULE-K0-0125 OR SEC-007 [MUST NOT] Never disable certificate validation to make an integration work.
+RULE-K0-0126 OR SEC-010 [MUST NOT] Never log passwords, tokens, private keys, authentication secrets or full payment credentials; avoid PII without a concrete need permitted by privacy 
+RULE-K0-0127 OR RUN-014 [MUST NOT] Do not serialize arbitrary request bodies, domain objects or sensitive payloads into logs by default; log minimal useful non-sensitive context.
+RULE-K0-0128 OR SEC-013 [DEFAULT] Security-sensitive authorization, permission and required-control checks fail safely; failures never silently turn into success.
+RULE-K0-0129 OR SEC-014 [MUST NOT] A required security control that cannot be configured correctly does not fall back to an insecure mode; prefer visible startup/configuration failure.
+RULE-K0-0130 OR FE-001,DEP-014 [DEFAULT] Modern standalone Angular APIs for new code (no NgModules for ordinary new features unless an integration/legacy dependency requires them), organized 
+RULE-K0-0131 OR FE-007 [MUST] Feature-oriented structure: no application-wide technical buckets (components/, services/, models/) spreading a feature, no empty architecture folders
+RULE-K0-0132 OR FE-002 [MUST] Pages and components focus on presentation and UI orchestration; trivial presentation logic is not moved into services merely to shrink components.
+RULE-K0-0133 OR FE-003 [MUST] Backend communication lives in explicit feature data-access services or another HTTP boundary; no HttpClient calls scattered through components; never
+RULE-K0-0134 OR FE-008 [DEFAULT] Functional interceptors for new code, limited to cross-cutting concerns; never feature business logic in an interceptor.
+RULE-K0-0135 OR FE-004 [DEFAULT] Signals for synchronous local UI state; RxJS when async streams, HTTP composition, cancellation or event pipelines express behavior more clearly; no m
+RULE-K0-0136 OR FE-006 [DEFAULT] Simple component, signal or feature-service state before any state-management library.
+RULE-K0-0137 OR FE-011 [DEFAULT] Avoid manual nested RxJS subscriptions; prefer composition operators when they express behavior clearly.
+RULE-K0-0138 OR FE-012 [MUST] A manual subscription from framework-managed code has its lifetime tied to the component/service lifecycle using current Angular facilities.
+RULE-K0-0139 OR FE-005 [DEFAULT] Route-level lazy loading for meaningful features; not for every tiny component.
+RULE-K0-0140 OR FE-009 [MUST] Follow the documented API error contract: centralize reusable ProblemDetails parsing when practical; never infer business behavior from arbitrary huma
+RULE-K0-0141 OR FE-010 [MUST] Reactive forms for non-trivial forms when useful; frontend validation is UX and backend validation, data integrity and security enforcement remain aut
+RULE-K0-0142 OR SEC-011 [MUST] When browser cookies carry authentication credentials automatically, include CSRF protection; do not assume Angular removes the risk.
+RULE-K0-0143 OR SEC-012,SEC-010 [MUST NOT] Choose browser token storage by the application's threat model; never claim one storage mechanism is universally secure; tokens are never logged.
+EXTRA-K0-0009 EX DEP-004,DEP-020,DEP-010 [MUST NOT (manifest check error)] The NuGet packages Microsoft.Extensions.Http.Polly, Polly.Extensions.Http, Serilog.Sinks.Elasticsearch and FluentValidation.AspNetCore are reported as
+RULE-K0-0144 OR DEP-006,DEP-023 [MUST (manifest check errors; VersionOverride notice)] Central Package Management: Directory.Packages.props must set ManagePackageVersionsCentrally true and must exist at the repository root when .csproj f
+RULE-K0-0145 OR DEP-003 [MUST (manifest check errors; prerelease notice)] Pinned verified versions: a PackageVersion with an empty, floating (*) or range version is an error and a prerelease gets a notice (allowed only when 
+RULE-K0-0146 OR ARC-009,DEP-011,DEP-020,DEP-002 [REQUIRES_APPROVAL (manifest check notices)] MediatR (mediator organization not adopted) and AutoMapper (mapping framework other than the approved one) get notices that they require an approved d
+RULE-K0-0147 OR DEP-015 [MUST NOT by default (manifest check notice)] @ngrx/*, @ngxs/*, axios, lodash, lodash-es, bootstrap, ngx-bootstrap, @ng-bootstrap/ng-bootstrap, tailwindcss and primeng in package.json get a notice
+RULE-K0-0148 OR DEP-007 [SHOULD (manifest check notices)] Build/test tooling (@angular/cli, @angular-devkit/*, @angular/build, @angular/compiler-cli, typescript, vitest, @vitest/*, jsdom, @playwright/test, ka
+RULE-K0-0149 OR ARC-001 [MUST (manifest check errors)] A production project may reference only inward layers (Domain: none; Application: Domain; Infrastructure: Application, Domain; Api: Application, Infra
+RULE-K0-0150 OR ARC-020,DEP-024 [REQUIRES_APPROVAL (manifest check notices)] A project name not following backend/<Name>.<Layer>, or a reference to a project that is not a recognized layer, gets a notice that new production pro
+RULE-K0-0151 OR ARC-028 [SHOULD (manifest check notice)] A test project referencing a production layer outside its typical scope (Domain.Tests -> Domain; Application.Tests -> Application, Domain; Infrastruct
+EXTRA-K0-0010 EX - [MUST (structure checker error)] Every instruction artifact carries the first-line header 'Kind
+EXTRA-K0-0011 EX - [MUST (structure checker error)] Standards live directly in .claude/rules/<scope>/<topic>.md for scopes common, backend, backend-tests, frontend, delivery; the header Scope equals the
+EXTRA-K0-0012 EX - [MUST (structure checker error)] Skill and agent structure: skill frontmatter name equals the directory and has a concrete description (20+ characters); KNW skills load on demand and 
+EXTRA-K0-0013 EX - [MUST (structure checker error)] Knowledge skills and their private references must not contain normative wording (must, never, requires approval) on a line without an owner reference
+EXTRA-K0-0014 EX GOV-017 [MUST (structure checker error)] Exactly one decision register (docs/architecture/decision-register.md) carries Kind DEC and CLAUDE.md imports exactly it; register rows are 'D-xx
+EXTRA-K0-0015 EX - [MUST (structure checker error)] References must resolve: backticked file/skill/agent references and '§ section' references must point to existing targets and headings; unknown hyphen
+EXTRA-K0-0016 EX - [MUST (structure checker error)] Manual tool invocations in instruction files must be root-aware: node "$(git rev-parse --show-toplevel)/.claude/..." instead of a command relative to 
+EXTRA-K0-0017 EX - [MUST (structure checker error)] Hook configuration: every hook is a command hook in exec form (executable-only command, args [${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>, <event>] w
+RULE-K0-0152 OR DEP-002,DEP-011,ARC-020 [MUST] Use the approved technology from the decision register and a conditional technology only when its capability is now needed; a new major library or fra
+RULE-K0-0153 OR DEP-020 [DEFAULT] When resilience is required prefer Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for general pipelines; a di
+RULE-K0-0154 OR DEP-017 [DEFAULT] When Controller API versioning has been explicitly adopted use the Controller integration of Asp.Versioning (e.g. Asp.Versioning.Mvc with Asp.Versioni
+EXTRA-K0-0018 EX DEP-010,DEP-004 [MUST] Register FluentValidation validators with FluentValidation.DependencyInjectionExtensions; do not add a deprecated or legacy ASP.NET automatic-validati
+RULE-K0-0155 OR DEP-003 [MUST] For every NuGet or npm addition or update determine the latest stable version compatible with target framework/runtime and peers, verify it from the r
+RULE-K0-0156 OR DEP-004 [MUST] Before installation check, for the exact selected version, deprecation status, known vulnerabilities from advisory data and the license from official 
+RULE-K0-0157 OR DEP-005 [REQUIRES_APPROVAL] Paid/commercial packages are not installed automatically: present explicit choices with reasonable free alternatives (or say none exist), never substi
+RULE-K0-0158 OR DEP-006 [MUST] NuGet installs add the version to Directory.Packages.props and a versionless PackageReference to the narrowest project that needs it.
+RULE-K0-0159 OR DEP-007 [MUST] npm installs go into the Angular workspace with the right category (--save-dev for build/test tooling) and keep package-lock.json consistent.
+RULE-K0-0160 OR DEP-025 [MUST NOT] Never use --force or --legacy-peer-deps merely to bypass incompatible peer dependencies; resolve the actual compatibility problem.
+RULE-K0-0161 OR WF-005,WF-007 [MUST] After a dependency change restore and build the affected projects and run check-dependencies.
+RULE-K0-0162 OR DEP-004,GOV-014 [MUST] Inspect vulnerability information (dotnet package list --vulnerable --include-transitive; npm audit) with context; do not upgrade or replace unrelated
+EXTRA-K0-0019 EX DEP-001,GOV-014 [MUST] Remove a dependency that is no longer used when that is part of the current change and safe to verify; do not leave dead references behind.
+RULE-K0-0163 OR GOV-014 [MUST NOT] Do not perform unrelated dependency cleanup during a narrowly scoped task.
+EXTRA-K0-0020 EX DEP-004,DEP-005,WF-009 [MUST] The add-dependency output reports package, selected version and why, license, deprecation and vulnerability status, approval obtained (if needed), fil
+RULE-K0-0164 OR DEP-014,DEP-015,GOV-012 [DEFAULT] Use Angular Material components consistently for common UI primitives where they meet the requirement; wrap a Material component in a custom abstracti
+RULE-K0-0165 OR WF-016 [DEFAULT] When OpenAPI client generation is adopted keep generated code separate from handwritten feature logic and regenerate it when the API contract changes.
+RULE-K0-0166 OR TST-003,TST-002,DEP-014 [SHOULD] Frontend test targets are meaningful component behavior, validation, data-access request mapping, important route/auth behavior and complex reactive s
+RULE-K0-0167 OR RUN-001 [DEFAULT] Start with route lazy loading and sensible rendering and data access; specialized memoization, virtual scrolling or custom change-detection work follo
+EXTRA-K0-0021 EX API-013,DEP-017,ARC-020 [MUST (Reserved)] Adopting API versioning is Reserved (D-15).
+RULE-K0-0168 OR GOV-017,GOV-005 [MUST] Classify a decision by stating it and its options and applying CLAUDE.md decision classes: Decided follows the existing entry, Delegated is decided an
+RULE-K0-0169 OR GOV-017,ARC-020,GOV-018 [MUST] Present a Decision Request (title, context, 2-3 options incl. keeping the current decision, recommendation, Blocked work, Proceeding-with compliant wo
+RULE-K0-0170 OR GOV-017 [MUST] An explicit user instruction to adopt a specific option counts as approval; in an autonomous or headless run continue only with the 'Proceeding with' 
+RULE-K0-0171 OR GOV-007 [MUST] When a new behavioral rule is approved update the durable source of truth, including SPECIFICATION.md when appropriate.
+RULE-K0-0172 OR GOV-010,GOV-021 [MUST] An approved tunable value is recorded in CUSTOM_SETTINGS.md and then synchronized with custom-settings.
+RULE-K0-0173 OR GOV-017,GOV-007 [MUST] An approved project or architecture decision is recorded as a register entry (add or update).
+EXTRA-K0-0022 EX GOV-017 [MUST] Decision propagation: find everything a decision touches via its register entry and Affects list; after approval edit every artifact in Affects so eac
+EXTRA-K0-0023 EX GOV-017,GOV-007 [MUST (conditional)] When rationale, alternatives or consequences need more than the register sentence add an ADR docs/decisions/NNNN-<slug>.md (Status, Date, Register, Co
+EXTRA-K0-0024 EX - [MUST] Changes to .claude/ instruction files are instruction-system maintenance: ask the user to run /template-maintenance for structural changes and run che
+EXTRA-K0-0025 EX GOV-017,WF-009 [MUST] The architecture-decision output is the Decision Request (when pending) or the recorded outcome: register entry, ADR path if any, artifacts updated, c
+RULE-K0-0174 OR SEC-016,GOV-013 [MUST] Choose the authentication scheme by the actual application (Bearer/OIDC for an SPA calling an API; cookies for server-rendered apps; Identity when the
+RULE-K0-0175 OR WF-015,GOV-014 [MUST] Build-fix restores the affected scope to green without hiding failures, weakening behavior or introducing unrelated changes.
+RULE-K0-0176 OR WF-013 [MUST] Reproduce and diagnose the actual failure (narrowest reproducing command with the repository's actual .slnx/projects; complete output read and grouped
+RULE-K0-0177 OR WF-014 [MUST] Small bounded iterations: rerun the narrowest failing verification after each meaningful fix, expand only after the focused failure is resolved; stop 
+RULE-K0-0178 OR WF-015 [MUST NOT] Never weaken, delete, skip or suppress relevant tests, compiler, TypeScript, lint or analyzer failures merely to pass; do not weaken a strong assertio
+RULE-K0-0179 OR GOV-014,RUN-009,ARC-001 [MUST] Preserve architecture and project conventions while fixing; a green build obtained by violating architecture (e.g. Application -> Infrastructure refer
+RULE-K0-0180 OR WF-005,WF-007 [MUST] Determine the affected scope (backend, Angular, both, contract/client generation, dependencies, toolchain) and do not run unrelated build systems mere
+RULE-K0-0181 OR WF-018 [MUST] For Angular inspect package.json first and use scripts that actually exist; do not invent script names or assume a test runner (an existing project ma
+RULE-K0-0182 OR ARC-001 [MUST NOT] Never solve a dependency problem with an invalid project reference (e.g. Application -> Infrastructure).
+RULE-K0-0183 OR WF-015,FE-001,DEP-014,DEP-015 [MUST NOT] Frontend repairs do not convert code to any to silence TypeScript, disable strict mode, suppress template diagnostics without understanding, add NgMod
+RULE-K0-0184 OR WF-016,WF-013 [MUST] For full-stack/contract failures determine the authoritative contract; do not patch both sides into inconsistent shapes merely to compile; with OpenAP
+RULE-K0-0185 OR GOV-014 [MUST] If expected behavior intentionally changed, update the test to express the new contract and confirm the change was actually requested.
+RULE-K0-0186 OR DEP-006,DEP-007 [MUST] During package-related repair respect Central Package Management and do not delete package-lock.json reflexively.
+RULE-K0-0187 OR GOV-014,WF-013 [MUST] For upgrade fallout distinguish compile errors from runtime behavior changes, check official migration documentation, update obsolete APIs deliberatel
+RULE-K0-0188 OR GOV-014,DEP-008,WF-009 [MUST NOT] Do not change the repository's declared SDK, Node, framework or language version merely because the local machine differs; report an unavailable toolc
+RULE-K0-0189 OR WF-016 [DEFAULT] When generated output is wrong or its source changed, fix the authoritative source (OpenAPI document, generator input, EF Core model, build configurat
+RULE-K0-0190 OR GOV-014,WF-008 [MUST] If a fix introduces new failures decide whether they reveal a legitimate dependency or revert/correct the fix; never leave the repository knowingly wo
+RULE-K0-0191 OR WF-005,WF-003,TST-010 [MUST] A repair is complete when the affected scope is green (builds, affected tests, consistent contracts, no known new regression, no accidental workaround
+RULE-K0-0192 OR WF-009 [MUST] Report repairs with backend build, frontend build and tests as PASS / NOT RUN / NOT APPLICABLE plus failure, root cause, changes and remaining issues;
+EXTRA-K0-0026 EX RUN-021,ARC-017 [AVOID (listed common mistake)] Caching EF tracked entities across Unit of Work boundaries is listed as a mistake to avoid.
+RULE-K0-0193 OR WF-007 [MUST NOT] An optional local formatter does not become a mandatory CI gate without the project adopting that policy.
+RULE-K0-0194 OR WF-018 [MUST] Frontend CI runs the unit-test and lint scripts the workspace actually defines, adding them only when the project defines them.
+RULE-K0-0195 OR TST-004,GOV-013 [MUST] Provide CI test services (SQL Server, PostgreSQL, Redis, brokers) only when tests require them; the generic template hardcodes no database provider an
+RULE-K0-0196 OR DEP-003,DEP-004 [MUST NOT] Automatic dependency updates in CI need explicit adoption; dependency-audit findings are treated per the project's security policy.
+RULE-K0-0197 OR DEP-018 [MUST NOT] Store or publish only artifacts later stages need; build and publish container images from CI only when container deployment is part of the project.
+RULE-K0-0198 OR WF-019 [MUST] Migration scripts or bundles may be generated in CI and are executed by an explicit deployment step.
+RULE-K0-0199 OR WF-010,WF-003 [MUST] Code review examines the actual changed behavior and reports concrete defects or risks; it is not the completion checklist — verify runs the final bui
+RULE-K0-0200 OR WF-011 [MUST] Prioritize findings: correctness; security and authorization; data integrity and persistence; architectural boundary violations; concurrency and integ
+RULE-K0-0201 OR WF-001,WF-010 [MUST] Establish the reviewed scope, read changed code plus callers/contracts/dependencies (never isolated lines), identify intended behavior and tests, read
+RULE-K0-0202 OR GOV-003,GOV-006,GOV-001,GOV-005 [MUST] Check specification conformance in both directions (approved CUSTOM_SETTINGS values are intended behavior): flag missing/weakened required behavior an
+RULE-K0-0203 OR WF-012 [MUST] Look for correctness defects (conditions, state transitions, null/empty, async/cancellation, error mapping, lifetimes, side effects, races) and report
+RULE-K0-0204 OR WF-011,GOV-012,ARC-020 [MUST] Check backend changes against the architecture standard (Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Applicatio
+RULE-K0-0205 OR WF-012 [MUST NOT] Do not report a violation merely because the implementation differs from a pattern the project has not adopted; do not require unadopted patterns (Med
+RULE-K0-0206 OR WF-007,PST-008 [MUST] When relevant check commit/transaction behavior, destructive changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive lo
+RULE-K0-0207 OR RUN-016,WF-011 [MUST NOT] Check external calls for cancellation, time limits, idempotency, retry safety, failure translation and lifetime; do not demand retries for operations 
+RULE-K0-0208 OR TST-009,TST-010,TST-011 [MUST] Check that changed behavior has useful maintained coverage; for bug fixes look for the regression test; confirm probe preservation; do not demand dupl
+RULE-K0-0209 OR WF-011,RUN-008 [MUST NOT] Report performance only with a credible reason; do not recommend compiled queries, pooling, caching, ValueTask or similar optimizations speculatively.
+RULE-K0-0210 OR WF-021 [MUST NOT] Review needs no MCP server or specific analyzer; tool output is evidence, not authority — read the code before turning a warning into a finding.
+RULE-K0-0211 OR WF-011 [MUST] Each finding states severity, location, what is wrong, why it matters and the smallest fix, ordered by severity (Critical, High, Medium, Low).
+RULE-K0-0212 OR WF-012 [MUST NOT] Do not manufacture findings to populate categories; with no meaningful findings say so and name important unverifiable areas; no filler praise.
+RULE-K0-0213 OR WF-010,WF-011,WF-012 [MUST NOT] Review discipline: do not rewrite working code during review unless asked, report tooling-owned formatting, demand personal style preferences or assum
+RULE-K0-0214 OR GOV-010,RUN-015 [MUST] Numbers in configuration examples are illustrative; choose retry counts, timeouts and limits from actual integration and deployment requirements.
+RULE-K0-0215 OR GOV-010 [REQUIRES_APPROVAL] A new or changed setting not already defined by the specification or approved behavior must be confirmed as approved; otherwise raise a Decision Reque
+RULE-K0-0216 OR GOV-009 [REQUIRES_APPROVAL] Check SPECIFICATION.md for conflicts before synchronizing a setting.
+RULE-K0-0217 OR GOV-008,GOV-011 [MUST] Record the setting with a stable descriptive name and purpose; do not record framework defaults the project has not intentionally overridden.
+RULE-K0-0218 OR GOV-021 [MUST] Search for the old value, setting name, validators/DTO constraints, Domain/Application checks, mapping constraints, frontend validation/UI hints, test
+RULE-K0-0219 OR FE-010 [MUST] Where frontend and backend expose the same constraint, backend validation stays authoritative and frontend validation/messages follow it for UX.
+RULE-K0-0220 OR PST-009 [MUST] When a setting change affects schema constraints, indexes, column lengths or other persistence metadata: update the EF Core mapping, create the approp
+RULE-K0-0221 OR GOV-021,GOV-009,WF-003 [MUST] Verify settings changes: search for stale references, build affected backend/frontend, run relevant tests, verify persistence changes, re-check SPECIF
+RULE-K0-0222 OR DEP-018 [MUST NOT] Containers are optional (D-14): introduce Docker or container publishing only when the project has adopted containers.
+RULE-K0-0223 OR WF-001,GOV-013 [MUST] Inspect what actually exists before writing pipeline or container files; do not assume PostgreSQL, Redis, Docker or frontend tooling; add stages for t
+RULE-K0-0224 OR WF-017 [MUST] CI definitions are kept in source control, reproduce the repository's supported build and test commands and never hide build or test failures (no supp
+RULE-K0-0225 OR WF-018 [MUST] Frontend CI uses scripts that exist in package.json (never invented) and npm ci whenever a maintained lockfile supports it, not reflexive npm install.
+RULE-K0-0226 OR WF-019,PST-004 [MUST NOT] Production database migrations are not applied automatically from normal startup by default; a production migration is an explicit, controlled deploym
+RULE-K0-0227 OR WF-017,WF-004,WF-006 [MUST] Verify a pipeline: restore from a clean environment, build backend and frontend (when present), run configured tests, no developer-machine state, no e
+EXTRA-K0-0027 EX WF-009 [MUST] The delivery-pipeline output lists files changed, stages and the commands they run, what was verified and any hosting-platform assumption still needin
+RULE-K0-0228 OR GOV-012,GOV-013,ARC-007 [DEFAULT] Use interface-to-implementation registration at architectural boundaries (concrete registration for implementation-only helpers); prefer explicit regi
+RULE-K0-0229 OR GOV-002 [MUST] For a new application or substantial feature read SPECIFICATION.md before planning or implementing, and CUSTOM_SETTINGS.md when it holds values.
+RULE-K0-0230 OR GOV-018,GOV-004,GOV-006,GOV-010 [MUST] Check the request against the challenge obligation and the product-source rules (gaps, string semantics, tunable values) before implementing.
+RULE-K0-0231 OR WF-001 [MUST] Inspect the relevant existing code (code, callers, contracts, tests, conventions) before any non-trivial change; apply standards and knowledge for tou
+RULE-K0-0232 OR GOV-014 [MUST] Stay within the requested scope.
+RULE-K0-0233 OR TST-009 [DEFAULT] For a meaningful bug with plausible recurrence add a regression test that fails before and passes after the fix, unless equivalent coverage exists.
+RULE-K0-0234 OR PST-008,PST-006 [MUST] Whenever a Domain or persistence change affects seeded entities (new required/removed/renamed properties, changed relationships, required related enti
+RULE-K0-0235 OR PST-010,PST-008 [MUST] Treat EF Core migrations as source code: review every generated migration before committing (destructive changes, column recreation, data migrations, 
+RULE-K0-0236 OR RUN-012 [MUST] Performance-motivated changes: identify the bottleneck, preserve behavior, simplest effective optimization, add/maintain tests, benchmark or profile n
+RULE-K0-0237 OR API-014,GOV-017 [REQUIRES_APPROVAL] Classify a public API contract change as compatible or breaking; a breaking change to a relied-on contract follows the versioning rules and is Reserve
+RULE-K0-0238 OR API-022 [MUST] Deprecating an externally consumed API version: mark it in versioning metadata, document the replacement, communicate a realistic migration and remova
+RULE-K0-0239 OR WF-002 [MUST] For substantial feature work or a newly implemented application run code-review (agent code-reviewer) before final verification.
+RULE-K0-0240 OR WF-003,WF-007 [MUST] Before declaring implementation complete run verify with checks appropriate to scope and risk.
+EXTRA-K0-0028 EX WF-009,GOV-017 [MUST] The development-workflow output states what changed and why, the Delegated decisions taken, Decision Requests raised or still unresolved, and the veri
+RULE-K0-0241 OR GOV-013,GOV-012 [MUST NOT] Test the risks that matter and build test infrastructure only for a concrete testing need (no enterprise-sized harness for a small project, no generic
+RULE-K0-0242 OR TST-010 [MUST] Turn temporary behavioral probes (HTTP requests, shell/PowerShell scripts, ad-hoc test methods, manual database checks) into maintained tests (e.g. an
+RULE-K0-0243 OR DEP-009,ARC-023,DEP-001 [MUST] Register EF Core and persistence implementations in Infrastructure with the provider the project actually uses, not one that merely appears in an exam
+RULE-K0-0244 OR ARC-006,ARC-003 [MUST NOT] EF Core interceptors fit infrastructure-level cross-cutting behavior with a clear benefit (e.g. auditing); business behavior does not belong in them.
+EXTRA-K0-0029 EX RUN-002,ARC-022 [AVOID (listed common mistake)] Fire-and-forget EF Core asynchronous operations are listed as a mistake to avoid.
+RULE-K0-0245 OR GOV-015,GOV-016 [MUST NOT] Repository-changing Git operations happen only when explicitly requested and parallel work uses separate branches or worktrees; completing an implemen
+RULE-K0-0246 OR GOV-019 [MUST NOT] Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier.
+RULE-K0-0247 OR GOV-020 [MUST] Before any repository-changing operation inspect the relevant state (git status, git diff, git diff --cached) and use the minimum operation required; 
+RULE-K0-0248 OR WF-022 [MUST] Before committing inspect the staged diff and include only the requested logical change; do not stage unrelated modified files or clean them up; prefe
+RULE-K0-0249 OR GOV-014,GOV-019 [MUST] Follow the repository's branch-naming convention (defaults feature/, fix/, refactor/, test/, docs/, chore/ with meaningful names) and do not rename an
+RULE-K0-0250 OR GOV-016,GOV-019 [MUST] Keep each worktree focused on its branch; one branch is not checked out in several normal worktrees; before removing a worktree verify its changes are
+RULE-K0-0251 OR GOV-020,WF-003,WF-022 [MUST] Before pushing confirm the intended branch and understood working/staged state, ensure relevant verification completed and avoid pushing unrelated loc
+RULE-K0-0252 OR GOV-015 [MUST NOT] Never force-push a shared branch unless the user explicitly requests history rewriting and the consequences are understood.
+EXTRA-K0-0030 EX GOV-015 [MUST NOT] Treat main, master and other protected or shared branches as non-rewritable.
+RULE-K0-0253 OR GOV-019,GOV-020,WF-003 [MUST] For merge/rebase follow the repository/team convention or the user's explicit request; inspect local uncommitted work first and never automatically st
+RULE-K0-0254 OR WF-003,WF-009,GOV-014 [MUST] Run verify before preparing a PR; one focused purpose without accidental unrelated changes; never claim checks that were not run.
+EXTRA-K0-0031 EX WF-009 [MUST] A PR describes what changed, why, how it was verified and any compatibility or migration notes.
+RULE-K0-0255 OR GOV-015,GOV-020 [MUST] git reset --hard, git clean, git push --force/--force-with-lease, branch deletion and rebasing shared history are high-risk: run them only when explic
+UNCERTAIN-K0-0002 LI GOV-015 [MAY (exception)] High-risk Git operations may run when 'required by an approved workflow', not only when explicitly requested.
+RULE-K0-0256 OR DEP-011,DEP-020,RUN-015 [DEFAULT] Resilience policies match failure and operation semantics: add a mechanism only for an identified failure scenario, configure it through the Microsoft
+EXTRA-K0-0032 EX RUN-016,DEP-020 [MUST NOT] Do not wrap normal EF Core operations in a generic application-level retry pipeline; prefer the provider's EF Core execution strategy for transient re
+RULE-K0-0257 OR ARC-006,ARC-003 [MUST NOT] DelegatingHandlers are for genuine HTTP pipeline concerns (authorization header acquisition, correlation/context propagation, request signing), not bu
+EXTRA-K0-0033 EX RUN-005 [MUST] Per-request values such as dynamic access tokens go on the request or through a handler; mutating a shared client's DefaultRequestHeaders concurrently
+RULE-K0-0258 OR DEP-008,GOV-017 [REQUIRES_APPROVAL] Confirm the configured language version supports a feature; changing LangVersion or the target framework to use newer syntax is a decision, not a sile
+RULE-K0-0259 OR GOV-014,RUN-011 [MUST] When explicitly asked to modernize: preserve behavior, keep the change focused, favor readability, build and test afterwards, keep architecture refact
+RULE-K0-0260 OR DEP-008,DEP-002,ARC-010 [MUST] Controllers are thin ASP.NET Core Controllers; no Minimal API endpoint groups unless explicitly requested.
+RULE-K0-0261 OR DEP-024,DEP-013 [MUST NOT] Backend tests never go into a separate top-level tests/ directory; integration tests exercise the other layers transitively through the API host.
+RULE-K0-0262 OR DEP-009,DEP-010,DEP-012,DEP-013 [DEFAULT] For a new application install the packages each baseline decision names plus the scaffold packages (Microsoft.EntityFrameworkCore.Design where migrati
+RULE-K0-0263 OR DEP-014,DEP-003 [DEFAULT] Create the Angular workspace with the latest stable release supported by the selected Node.js via the current CLI (CLI-selected compatible Angular/Typ
+RULE-K0-0264 OR DEP-024,ARC-027 [DEFAULT] The solution layout is a target shape: create optional directories, projects and docs/ subdirectories only when needed (only when the corresponding do
+RULE-K0-0265 OR DEP-024 [MUST] The Angular workspace lives outside the .NET tree in frontend/ProjectName.Web/ and owns its package.json, package-lock.json, angular.json, tsconfig fi
+RULE-K0-0266 OR DEP-016,DEP-024 [MUST] Angular unit/component tests stay in the workspace (usually colocated); E2E tests, when adopted, also stay in the workspace (e.g. frontend/ProjectName
+RULE-K0-0267 OR DEP-023 [DEFAULT] Directory.Build.props holds the shared settings of the shared-build decision (typically TargetFramework, Nullable, ImplicitUsings, analysis and compil
+EXTRA-K0-0034 EX DEP-008,DEP-022,DEP-023 [MUST (scaffolding)] Scaffolding creates the repository-wide files global.json (pinning the intended supported .NET SDK line: current stable SDK of the target release with
+RULE-K0-0268 OR DEP-008 [MUST NOT] No RC/preview SDK unless explicitly requested.
+RULE-K0-0269 OR GOV-013,DEP-018,ARC-020 [MUST NOT] Docker files, deployment manifests, Kubernetes, cloud infrastructure, messaging infrastructure and additional services are introduced only for a concr
+RULE-K0-0270 OR ARC-001,DEP-024,DEP-008 [MUST] A new solution creates the Domain, Application, Infrastructure and Api projects under backend/ targeting the decided platform.
+RULE-K0-0271 OR DEP-013,ARC-027 [MUST] Create only useful test projects beside production projects under backend/ (typically Application.Tests and IntegrationTests; Domain.Tests only for no
+RULE-K0-0272 OR WF-005,WF-006,WF-009,WF-003 [MUST] Verify scaffolding and structural changes: restore, build the .NET solution and the Angular app when present, run relevant tests, run check-dependenci
+RULE-K0-0273 OR ARC-020 [REQUIRES_APPROVAL] Confirm a new assembly is justified (a new production project is Reserved), identify its responsibility, add only minimum references preserving depend
+RULE-K0-0274 OR GOV-014,ARC-027,RUN-009 [MUST] Reorganize only for a concrete structural problem: inspect tree and references, preserve behavior, move in small reviewable steps, update namespaces/r
+RULE-K0-0275 OR ARC-009,ARC-005,ARC-020,GOV-013,DEP-018 [REQUIRES_APPROVAL] Not scaffolded by default: MediatR, CQRS handler trees, Vertical Slice Architecture, Domain Events, Specifications, SharedKernel, BuildingBlocks, Even
+RULE-K0-0276 OR WF-020 [MUST] Security severity comes from exploitability, reachability, exposure, impact and context (confirmed findings separated from NEEDS VERIFICATION items), 
+RULE-K0-0277 OR WF-020,WF-012 [MUST] Report concrete security risks evaluated against actual exposure, not generic advice or mechanical pattern matches (e.g. normal EF Core LINQ is not SQ
+RULE-K0-0278 OR WF-009,WF-020 [MUST] A security scan is an evidence-based static review, not a penetration test; state its limitations in the report and name security-sensitive workflows 
+RULE-K0-0279 OR WF-021 [MUST NOT] The review does not depend on a specific MCP server, agent, analyzer, commercial scanner or other external tool; tooling is evidence, not the sole aut
+RULE-K0-0280 OR WF-007,WF-020 [MUST] Inspect which surfaces exist and skip irrelevant checks instead of reporting them as failures; a full pre-release or requested audit reviews every app
+RULE-K0-0281 OR WF-009 [MUST] Layer status is PASS, FINDINGS, NOT APPLICABLE or NOT CHECKED — never PASS for an uninspected layer; the scan completes only when applicable layers we
+RULE-K0-0282 OR GOV-013,SEC-008,SEC-016,SEC-006 [MUST NOT] Recommend the smallest secure change consistent with the architecture; do not require mechanisms the project does not need, a new authentication syste
+RULE-K0-0283 OR DEP-012 [DECIDED] Swashbuckle Swagger UI is the developer-facing documentation/testing surface (configured in the API/composition layer); built-in AddOpenApi()/MapOpenA
+RULE-K0-0284 OR WF-006,TST-010,API-016 [MUST] After API changes verify Controller behavior, relevant integration tests and response metadata, start the API when startup/composition changed, confir
+EXTRA-K0-0035 EX - [SHOULD] Keep the always-loaded surface (CLAUDE.md, the register, skill descriptions) compact and move detail to the owner it belongs to.
+EXTRA-K0-0036 EX - [MUST] When hooks or scripts change, exercise them with a sample payload (e.g. a pre-tool-use JSON for 'npm install lodash').
+EXTRA-K0-0037 EX WF-009 [MUST] Template maintenance summarizes what moved, the new owners and the checker result.
+RULE-K0-0285 OR WF-003,WF-007 [MUST] Verification produces evidence that the requested change is complete without obvious regressions, matched to scope and risk, without requiring tooling
+RULE-K0-0286 OR WF-004 [MUST] Before choosing checks review the final changed-file set and diff: confirm scope (no accidental unrelated refactoring), remove accidental generated/bu
+RULE-K0-0287 OR TST-010 [MUST] If an ad-hoc or manual probe uniquely demonstrated the behavior, that behavior is represented by maintained automated coverage before completion unles
+RULE-K0-0288 OR WF-005 [MUST] Build the affected projects (targeted project or .slnx when appropriate; no --no-restore unless restore is complete; Angular build script defined in p
+RULE-K0-0289 OR WF-005 [MUST] Run relevant tests (Angular: the configured test script, no assumed runner; full suite for small solutions, affected projects then broader suite for l
+RULE-K0-0290 OR WF-006 [DEFAULT] For a new runnable application or substantial startup/configuration/persistence/full-stack change verify local Development startup (API host, Developm
+RULE-K0-0291 OR WF-007,PST-008 [MUST] Run architecture (check-dependencies plus review against the architecture standard; seeder obligation when the model changed), formatting/analyzer (wh
+RULE-K0-0292 OR RUN-010 [MUST] For every C# file created or modified by the task remove unused or redundant usings (including implicit/global duplicates unless needed for clarity) w
+RULE-K0-0293 OR WF-004,GOV-003,GOV-021,TST-010 [MUST] Final diff review checks accidental unrelated edits, commented-out code, temporary logging, unintended TODO/FIXME, stale temporary tests/scripts, arch
+RULE-K0-0294 OR WF-008 [MUST] When verification fails identify the concrete failure, make the smallest fix, rerun affected verification (and build/tests when code changed) and repe
+RULE-K0-0295 OR WF-009 [MUST] Report what was actually run using PASS, FAIL, NOT RUN or NOT APPLICABLE per area (backend build, frontend build, tests, runtime smoke, formatting/ana
+RULE-K0-0296 OR RUN-009,RUN-024,RUN-010 [DEFAULT (editor/dotnet format/analyzer configuration)] Repository formatting and C# style configuration: UTF-8, final newline, trimmed trailing whitespace (not Markdown), 4-space indentation (2 for JSON/YA
+EXTRA-K0-0038 EX - [MUST] Instruction precedence: CLAUDE.md and the decision register govern every task; standards govern the files they cover; workflows own procedures; knowle
+RULE-K0-0297 OR GOV-017,GOV-001,GOV-003 [MUST NOT (silently)] Product inputs (SPECIFICATION.md, CUSTOM_SETTINGS.md, feature specifications, task prompts) define product behavior and may request a decision change 
+EXTRA-K0-0039 EX - [MUST (vocabulary semantics, always loaded)] Vocabulary: must / must not — a violation is a defect; default — deviation needs a concrete reason and must be reported; prefer / avoid — guidance; re
+RULE-K0-0298 OR GOV-001 [MUST] When SPECIFICATION.md is non-empty it is authoritative for project-specific functional requirements and observable product behavior (empty in the temp
+RULE-K0-0299 OR GOV-003 [MUST NOT] Do not silently weaken, contradict or materially extend approved behavior and do not invent user-visible rules, limits, defaults, restrictions or work
+RULE-K0-0300 OR GOV-004 [REQUIRES_APPROVAL] If an omitted detail must be decided and materially affects observable behavior, propose the smallest reasonable option and ask for approval.
+RULE-K0-0301 OR GOV-005 [DEFAULT] Routine internal implementation choices that do not change observable behavior are Delegated.
+RULE-K0-0302 OR GOV-006 [REQUIRES_APPROVAL] Observable string semantics (case sensitivity, collation, culture vs ordinal, normalization, trimming, uniqueness, lookup) are product behavior; when 
+RULE-K0-0303 OR GOV-008 [MUST] CUSTOM_SETTINGS.md owns approved project-level tunable limits and defaults (maximum lengths, page sizes, retention periods, numeric thresholds); SPECI
+RULE-K0-0304 OR GOV-009 [REQUIRES_APPROVAL] SPECIFICATION.md and CUSTOM_SETTINGS.md must not contradict each other; on conflict stop and ask which source must be corrected.
+RULE-K0-0305 OR GOV-010 [REQUIRES_APPROVAL] Do not silently invent a tunable value that materially changes accepted input or observable behavior: propose it with its reason, get approval, record
+RULE-K0-0306 OR GOV-011 [MUST NOT] CUSTOM_SETTINGS.md must not contain secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifier
+RULE-K0-0307 OR GOV-012 [DEFAULT] The simplest maintainable solution with complexity proportional to current requirements and no speculative abstractions.
+RULE-K0-0308 OR GOV-013 [MUST NOT] Do not introduce frameworks, libraries, infrastructure or architectural patterns without a concrete current need.
+RULE-K0-0309 OR GOV-014 [MUST] Keep changes focused on the requested scope and preserve existing behavior unless the task or approved specification requires a change.
+RULE-K0-0310 OR GOV-018 [MUST] Challenge before implementing: when a request raises a material concern (duplication, poor cohesion, trigger/loading problems, context cost, conflict 
+RULE-K0-0311 OR GOV-017,DEP-002 [MUST] Decided: what is recorded in the register, the approved product sources or the established project structure is followed and not reopened without appr
+RULE-K0-0312 OR GOV-017,GOV-005 [DEFAULT] Delegated: local, reversible choices with no material change to a boundary, dependency, accepted convention, public contract or observable behavior ar
+RULE-K0-0313 OR GOV-017,ARC-020 [REQUIRES_APPROVAL] Reserved decisions require explicit approval unless the approved specification or established project structure already requires them.
+RULE-K0-0314 OR ARC-020,DEP-002 [REQUIRES_APPROVAL] Changing an accepted project or architecture decision, or replacing an approved baseline technology, is Reserved.
+RULE-K0-0315 OR ARC-020,ARC-009,ARC-004 [REQUIRES_APPROVAL] A new architectural style or pattern (Rich Domain Model or DDD tactical patterns, CQRS, mediators, VSA, event sourcing, microservices) is Reserved.
+RULE-K0-0316 OR ARC-020 [REQUIRES_APPROVAL] A new production project, layer or assembly is Reserved.
+RULE-K0-0317 OR ARC-020 [REQUIRES_APPROVAL] Persistence boundaries or persistence technology, including multiple DbContexts, are Reserved.
+RULE-K0-0318 OR ARC-020 [REQUIRES_APPROVAL] A new infrastructure category (messaging, background processing, distributed cache, search, external storage, external identity) is Reserved.
+RULE-K0-0319 OR ARC-020,GOV-013 [REQUIRES_APPROVAL] A new major library or framework is Reserved.
+RULE-K0-0320 OR ARC-020 [REQUIRES_APPROVAL] A project-wide convention or abstraction other code must follow (e.g. a project-wide Result model) is Reserved.
+RULE-K0-0321 OR API-014 [REQUIRES_APPROVAL] A breaking public API change is Reserved.
+RULE-K0-0322 OR GOV-004,GOV-010 [REQUIRES_APPROVAL] Product behavior or tunable values the product sources do not define are Reserved.
+EXTRA-K0-0040 EX GOV-017,ARC-020 [MUST (classification test)] Unclear decisions are Reserved if any answer is yes: adds, removes or replaces a dependency, framework or infrastructure capability; changes a project
+RULE-K0-0323 OR GOV-017,ARC-020,GOV-018 [MUST] For a Reserved decision raise a Decision Request (Context, Options, Recommendation, Blocked, Proceeding with) and wait; an explicit user instruction c
+RULE-K0-0324 OR GOV-017 [MUST] In an autonomous or headless run take only a policy-compliant non-Reserved path, never make a Reserved decision silently, and list unresolved Decision
+RULE-K0-0325 OR GOV-015 [MUST NOT] Do not commit, push, merge, rebase, reset, force-push, delete branches or run any other repository-changing Git operation unless explicitly requested.
+RULE-K0-0326 OR GOV-016 [MUST] Parallel implementation work uses separate branches or worktrees; unrelated changes stay out of the current branch.
+RULE-K0-0327 OR WF-001,WF-003,WF-002 [MUST] Run the matching workflow, which owns procedure, stop conditions and output (development-workflow for non-trivial changes, verify before completion, c
+RULE-K0-0328 OR DEP-008 [DECIDED] Shared build configuration targets net10.0 for every .NET project below the root.
+EXTRA-K0-0041 EX DEP-023,RUN-009 [DEFAULT (effective MSBuild default)] Shared build configuration enables Nullable reference types, ImplicitUsings and AnalysisLevel latest for every .NET project below the root.
+RULE-K0-0329 OR GOV-017,DEP-002 [MUST] Every register entry is Decided; changing an entry is Reserved and runs architecture-decision; policy detail stays with the Details-in owner.
+RULE-K0-0330 OR ARC-001,ARC-010,ARC-006,ARC-013,ARC-016,ARC-003 [DECIDED] D-01 Clean Architecture: Domain, Application, Infrastructure, Api production projects with inward dependencies; Controllers are the HTTP entry point; 
+RULE-K0-0331 OR ARC-009 [REQUIRES_APPROVAL] D-02 not adopted: CQRS handlers, MediatR, Kommand, VSA or similar mediator-based organization; introducing any of them requires explicit approval.
+RULE-K0-0332 OR DEP-008 [DECIDED] D-03 backend platform: .NET 10 LTS on its latest stable servicing release, C# 14, ASP.NET Core, Controllers; moving to a preview/RC .NET or C# release
+RULE-K0-0333 OR DEP-009 [DECIDED] D-04 persistence: EF Core with Microsoft SQL Server (Microsoft.EntityFrameworkCore.SqlServer); provider concerns stay out of Application and Domain.
+RULE-K0-0334 OR DEP-010 [DECIDED] D-05 validation: FluentValidation for explicit request and use-case validation.
+RULE-K0-0335 OR DEP-010,DEP-021 [DECIDED] D-06 logging: ILogger<T> in application code with Serilog as provider (Serilog.AspNetCore; sinks only as required).
+RULE-K0-0336 OR DEP-012,API-017 [DECIDED] D-07 Swashbuckle Swagger UI (Swashbuckle.AspNetCore) is the Development interactive documentation and manual-testing surface at /swagger, exposed outs
+RULE-K0-0337 OR DEP-013 [DECIDED] D-08 backend tests: NUnit; test projects under backend/ beside production projects; WebApplicationFactory<Program> (Microsoft.AspNetCore.Mvc.Testing) 
+RULE-K0-0338 OR DEP-014,DEP-007 [DECIDED] D-09 frontend: current stable Angular via the CLI (CLI-selected TypeScript/RxJS), standalone APIs, strict mode, routing, zoneless when supported, SCSS
+RULE-K0-0339 OR DEP-015 [MUST NOT by default] D-10 not added by default: NgRx, Axios, Lodash, Bootstrap, Tailwind or additional form/component/state libraries; built-in Angular capabilities first,
+RULE-K0-0340 OR DEP-011 [DEFAULT] D-11 mapping: manual mapping for simple cases; Mapster (Mapster, Mapster.DependencyInjection) when mapping volume warrants it.
+RULE-K0-0341 OR DEP-011,DEP-020 [DEFAULT] D-12 resilience: Microsoft.Extensions.Http.Resilience for HttpClient and Microsoft.Extensions.Resilience for other pipelines, approved only when a rea
+RULE-K0-0342 OR DEP-016 [DEFAULT] D-13 frontend E2E: Playwright is the approved default when E2E coverage is required, not part of the minimal scaffold.
+RULE-K0-0343 OR API-013,DEP-017 [DEFAULT] D-15 API versioning is not adopted until a published-compatibility need exists; when adopted, Asp.Versioning with its Controller integration.
+RULE-K0-0344 OR DEP-022 [DEFAULT] D-16 solution format .slnx; legacy .sln only when an external tool or requirement needs it.
+RULE-K0-0345 OR DEP-023,DEP-006 [DEFAULT] D-17 repository-level Directory.Build.props for genuinely shared settings and Directory.Packages.props for Central Package Management; project-specifi
+RULE-K0-0346 OR DEP-024 [DEFAULT] D-18 layout: backend/<Name>.<Layer>/ for production and backend test projects, frontend/<Name>.Web/ for the Angular workspace, docs/ for documentation

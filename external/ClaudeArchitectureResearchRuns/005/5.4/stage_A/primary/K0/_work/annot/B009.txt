@@ -1,0 +1,220 @@
+# K0 — skills batch B009: docker, dotnet-testing, ef-core
+
+@@ output/template/.claude/skills/docker/SKILL.md ;; Knowledge skill (on demand; delivery).
+@scope on-demand knowledge docker (delivery)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Pointers (hosting and security rules, D-14, delivery-pipeline).
+12 MX [dep019.dk-no-build-tooling,x.dk-principles] ;; Keeping build tooling out of runtime images restates DEP-019; external configuration, reproducible images, Docker concerns out of the architecture and platform health probes are added.
+14 NN ;; Heading.
+16 NN ;; Lead-in.
+18-49 NN ;; Multi-stage Dockerfile example.
+51 MX [x.dk-copy-explicit,dep019.dk-worker-runtime] ;; The .NET runtime image for workers restates DEP-019; copying only existing build files and project files explicitly is added.
+53 NN ;; Heading.
+55 EX [x.dk-restore-caching]
+57 NN ;; Heading.
+59 OL [dep019.dk-non-root]
+61 NN ;; Heading.
+63 EX [x.dk-principles]
+65-69 NN ;; Example environment variable names.
+71 OL [sec001.dk-no-baked-secrets]
+73 NN ;; Heading.
+75 NN ;; Permissive note (Compose helps run local infrastructure when beneficial).
+77-88 NN ;; Compose example.
+90 MX [x.dk-compose-actual-infra,sec001.dk-local-passwords] ;; Local passwords in ignored developer configuration restate SEC-001/SEC-002; adding only infrastructure the project actually uses is added.
+92 NN ;; Heading.
+94 EX [x.dk-probes]
+96 NN ;; Heading.
+98 EX [x.dk-angular-static]
+100 NN ;; Heading.
+102-110 NN ;; .dockerignore example.
+112 EX [x.dk-dockerignore]
+114 NN ;; Heading.
+116 EX [x.dk-image-variants]
+118 NN ;; Heading.
+120 EX [x.dk-verify]
+122 NN ;; Heading.
+124 MX [dep019.runtime-image,sec001.no-secrets,x.dk-compose-actual-infra,x.dk-probes,wf019.dp-prod-migrations,x.dk-image-variants,x.dk-principles] ;; Common-mistakes list restating rule-owned items and the container guidance registered above.
+
+C dep019.dk-no-build-tooling OL DEP-019 DEFAULT ;; Keep build tooling out of production runtime images. ;; = ;; none ;;
+C x.dk-principles EX DEP-018,SEC-002 DEFAULT ;; Keep configuration external (environment-specific values passed at runtime), images reproducible and Docker concerns out of the application architecture; prefer the deployment platform's health-probe capabilities. ;; = ;; none ;; Container design principles not in the oracle.
+C x.dk-copy-explicit EX DEP-023 MUST ;; Copy only the repository-level build files that exist and restore needs, and copy project files explicitly (no wildcard tricks that flatten the multi-project structure). ;; = ;; none ;; Dockerfile copy rule not in the oracle.
+C dep019.dk-worker-runtime OL DEP-019 DEFAULT ;; Use the .NET runtime image (not aspnet) for workers that do not need ASP.NET Core. ;; = ;; none ;;
+C x.dk-restore-caching EX - DEFAULT ;; Copy project and build files before the full source to keep the restore layer cached; update the project-copy section when the solution structure changes; a correct restore graph matters more than caching. ;; delivery ;; none ;; Restore-layer technique not in the oracle.
+C dep019.dk-non-root OL DEP-019 MUST ;; Use the built-in non-root user, give written directories proper ownership/permissions and understand a permission problem before reaching for root. ;; = ;; none ;;
+C sec001.dk-no-baked-secrets OL SEC-001,SEC-002 MUST_NOT ;; Real credentials stay out of Dockerfiles, committed Compose files, build arguments visible in image metadata and copied appsettings files; use platform/container secret mechanisms. ;; = ;; none ;;
+C x.dk-compose-actual-infra EX GOV-013,DEP-018 MUST ;; Add only the Compose infrastructure the project actually uses, not PostgreSQL, Redis or RabbitMQ because they appear in examples. ;; = ;; none ;; Compose-scope rule not in the oracle.
+C sec001.dk-local-passwords OL SEC-001,SEC-002 MUST ;; Keep local passwords in an ignored .env or similar developer configuration. ;; = ;; none ;;
+C x.dk-probes EX API-019 DEFAULT ;; Expose liveness/readiness through ASP.NET Core health checks and prefer the orchestrator's native HTTP probes; if Compose runs an in-container health command verify the executable exists or add a deliberate probe mechanism, weighing debugging packages in production images. ;; = ;; none ;; Probe technique not in the oracle.
+C x.dk-angular-static EX DEP-018 DEFAULT ;; Build static Angular in a Node stage and serve assets with the chosen hosting strategy (Nginx not mandatory); keep API base URLs and environment configuration compatible with that strategy. ;; = ;; none ;; Angular container guidance not in the oracle.
+C x.dk-dockerignore EX - MUST ;; Keep files required by restore/build in the build context, and tests when the image build intentionally runs them. ;; delivery ;; none ;; .dockerignore rule not in the oracle.
+C x.dk-image-variants EX RUN-008,GOV-013 DEFAULT ;; Start from standard supported .NET images; Alpine, chiseled, trimming or Native AOT only when compatibility and deployment requirements justify them, verifying globalization, native dependencies, reflection and diagnostics. ;; = ;; none ;; Image-variant guidance not in the oracle.
+C x.dk-verify EX WF-006,SEC-001 MUST ;; Build the image; verify startup, port and configuration, non-root behaviour and health-probe integration; review the image for accidental secrets or files; run meaningful tests outside the image or in the pipeline. ;; = ;; none ;; Container verification checklist not in the oracle.
+
+@@ output/template/.claude/skills/dotnet-testing/SKILL.md ;; Knowledge skill (on demand; backend-tests).
+@scope on-demand knowledge dotnet-testing (backend tests)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule, decision and see-also pointers.
+12 EX [x.dt-proportional-infra]
+14 NN ;; Heading.
+16-37 NN ;; NUnit example.
+39 NN ;; Arrange/Act/Assert described as useful; comments optional.
+41 NN ;; Heading.
+43 OL [tst005.dt-readable-cases]
+45-58 NN ;; TestCase table example.
+60 MX [tst005.dt-explicit-table,x.dt-one-scenario] ;; Explicit tables over algorithmic tests restate TST-005; one observable scenario per test is added.
+62 NN ;; Heading.
+64 EX [x.dt-unit-candidates]
+66 NN ;; Heading.
+68 OL [tst003.dt-app-service-tests]
+70 NN ;; Heading.
+72 NN ;; Descriptive statement of what WebApplicationFactory exercises.
+74-115 NN ;; Integration test example.
+117 OL [tst004.dt-testing-env]
+119 NN ;; Heading.
+121 MX [tst007.dt-provider-fidelity,x.dt-state-tradeoff] ;; Actual provider when fidelity matters and InMemory not a relational substitute restate TST-007; stating the trade-off of a lighter test database is added.
+123 NN ;; Heading.
+125 OL [tst008.dt-known-state]
+127 NN ;; Heading.
+129 MX [x.dt-persistence-tests,tst011.dt-no-trivial] ;; One test per trivial Add/Get restates TST-011; targeting persistence tests at meaningful persistence behaviour is added.
+131 NN ;; Heading.
+133-141 NN ;; FakeTimeProvider example.
+143 NN ;; Heading.
+145 MX [tst004.dt-external-fakes,x.dt-slow-separate] ;; Fakes/stubs instead of uncontrolled external systems restate TST-004; separating slow or unreliable external tests from fast runs is added.
+147 NN ;; Heading.
+149 EX [x.dt-test-data]
+151 NN ;; Heading.
+153-157 NN ;; Test naming examples.
+159 NN ;; Heading.
+161 OL [tst009.dt-regression]
+163 NN ;; Heading.
+165 OL [tst010.dt-probes]
+167 NN ;; Heading.
+169 EX [x.dt-smoke-definition]
+171 NN ;; Heading.
+173 MX [tst011.dt-coverage,x.dt-snapshots] ;; Coverage as diagnostic, not target, restates TST-011; snapshot-testing guidance and no snapshot library by default are added.
+175 NN ;; Heading.
+177 MX [tst003.behavior,x.dt-unit-candidates,tst004.isolation,tst005.explicit-cases,tst007.provider-fidelity,x.dt-no-assertion-free] ;; Common-mistakes list restating rule-owned items; assertion-free tests (unless 'does not throw') have no owner clause and are registered.
+179 NN ;; Heading.
+181-182 NN ;; Table header.
+183-192 DU [tst002.narrowest-level,tst006.waf,tst007.provider-fidelity,run004.timeprovider,tst009.dt-regression,tst010.dt-probes,x.dt-smoke-definition,tst004.dt-external-fakes] ;; Decision guide mapping scenarios to the rules and guidance captured above.
+
+C x.dt-proportional-infra EX GOV-012,TST-011 DEFAULT ;; Test the risks that matter and build test infrastructure only for a concrete testing need; a small project does not need an enterprise harness. ;; = ;; none ;; Test-infrastructure proportionality not in the oracle.
+C tst005.dt-readable-cases OL TST-005,TST-003 DEFAULT ;; Optimize tests for clarity; enumerate small finite cases with [TestCase] rather than loops, LINQ, TestCaseSource or derived expectations; state expected results instead of computing them. ;; = ;; none ;;
+C tst005.dt-explicit-table OL TST-005 DEFAULT ;; A longer explicit table beats a shorter algorithmic test when it makes business rules visible. ;; = ;; none ;;
+C x.dt-one-scenario EX TST-003 PREFER ;; Prefer one observable scenario per test; multi-step tests when the sequence itself is the scenario. ;; = ;; none ;; Scenario-granularity guidance not in the oracle.
+C x.dt-unit-candidates EX TST-002,TST-003 DEFAULT ;; Unit-test candidates: domain behaviour owned by Domain, calculations, state transitions, validation, Application orchestration with simple fakes; mock architectural boundaries when it clarifies, never every collaborator mechanically, and do not forbid mocking project-owned abstractions. ;; = ;; none ;; Mocking guidance not in the oracle.
+C tst003.dt-app-service-tests OL TST-003,TST-002,TST-006 DEFAULT ;; Application service tests use controlled doubles and assert results and meaningful side effects; call-count assertions only when the interaction is the contract; integration tests when EF, transactions, DI, serialization or HTTP matter. ;; = ;; none ;;
+C tst004.dt-testing-env OL TST-004 MUST ;; Configure the Testing environment with isolated test resources so integration tests cannot reach a development or production database by accident. ;; = ;; none ;;
+C tst007.dt-provider-fidelity OL TST-007 DEFAULT ;; Use the actual provider when provider fidelity matters (Testcontainers a good option); EF Core InMemory is not a relational substitute. ;; = ;; none ;;
+C x.dt-state-tradeoff EX TST-007 MUST ;; When provider fidelity does not matter a lighter isolated relational database may be used, stating the trade-off. ;; = ;; none ;; Trade-off statement not in the oracle.
+C tst008.dt-known-state OL TST-008,TST-004 MUST ;; Start from a known state (recreate/reset the isolated database, transactions when they fit, only needed data, unique identifiers). ;; = ;; none ;;
+C x.dt-persistence-tests EX TST-002 DEFAULT ;; Test repository implementations or EF mappings when there is meaningful persistence behaviour (custom mappings, filters, projections, non-trivial queries, relationships, concurrency, provider behaviour). ;; = ;; none ;; Persistence-test targeting not in the oracle.
+C tst011.dt-no-trivial OL TST-011 MUST_NOT ;; One test per trivial Add/Get method adds coverage numbers, not value. ;; = ;; none ;;
+C tst004.dt-external-fakes OL TST-004 MUST ;; At external boundaries use fakes/mocks, stub HttpMessageHandler or local fake servers; a dedicated sandbox only when the test explicitly targets that integration. ;; = ;; none ;;
+C x.dt-slow-separate EX TST-004 DEFAULT ;; Keep slow or unreliable external-system tests separate from ordinary fast runs. ;; = ;; none ;; Test-separation guidance not in the oracle.
+C x.dt-test-data EX TST-008,GOV-012 DEFAULT ;; Keep test data explicit and minimal; builders/fixtures only when repeated setup becomes hard to read; no generic test-data framework for a few objects. ;; = ;; none ;; Test-data guidance not in the oracle.
+C tst009.dt-regression OL TST-009 DEFINITION ;; A regression test reproduces the failure before the fix and passes after it; it adds nothing for problems that cannot realistically recur or are covered. ;; = ;; none ;;
+C tst010.dt-probes OL TST-010 MUST ;; Temporary probes (HTTP requests, scripts, ad-hoc tests, manual DB checks) become maintained tests (e.g. NUnit WebApplicationFactory tests) or confirmed existing coverage that really exercises the behaviour; review probes before keeping them. ;; = ;; none ;;
+C x.dt-smoke-definition EX WF-006 DEFINITION ;; A smoke test is a small set of fast checks that a built or deployed application is basically operational, not every integration test. ;; = ;; none ;; Definition not in the oracle.
+C tst011.dt-coverage OL TST-011 MUST_NOT ;; Coverage is diagnostic information, not a target; prioritize meaningful behaviour, edge cases and risky integrations. ;; = ;; none ;;
+C x.dt-snapshots EX TST-003,DEP-001 DEFAULT ;; Snapshot testing only for large stable outputs; small or important contracts use explicit assertions; a snapshot library is not added by default. ;; = ;; none ;; Snapshot guidance not in the oracle.
+C x.dt-no-assertion-free EX TST-003 AVOID ;; Avoid assertion-free tests unless the behaviour is 'does not throw'. ;; = ;; none ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/ef-core/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge ef-core (backend)
+1-4 IM ;; Frontmatter (name, routing description).
+6 NN ;; Banner (kind, scope, owner, loading metadata).
+8 NN ;; Heading.
+10 IM ;; Rule, decision and workflow pointers.
+12 NN ;; Heading.
+14 OL [arc016.ef-uow-delegates]
+16 NN ;; Heading.
+18 MX [x.ef-entity-config,arc002.ef-config-out-of-domain] ;; Keeping persistence configuration out of Domain entities restates ARC-002; IEntityTypeConfiguration classes are added.
+20-47 NN ;; DbContext and configuration example.
+49 NN ;; Heading.
+51 OL [arc023.ef-registration]
+53-70 NN ;; Registration example (SQL Server provider).
+72 NN ;; Heading.
+74 NN ;; Lead-in.
+76-93 NN ;; Application contracts example.
+95 NN ;; Lead-in.
+97-128 NN ;; Infrastructure implementations example.
+130 OL [arc015.ef-base-class]
+132-138 NN ;; Base class example.
+140 NN ;; Heading.
+142 OL [run006.ef-project]
+144-157 NN ;; Projection example.
+159 OL [run006.ef-project]
+161 NN ;; Heading.
+163 EX [x.ef-tracking]
+165 NN ;; Heading.
+167-175 NN ;; Technique choice between FindAsync and LINQ with example; no outcome restriction.
+177 NN ;; Heading.
+179 MX [x.ef-query-shape,run006.ef-no-lazy] ;; Avoiding lazy loading (N+1) restates RUN-006; explicit query shape and checking split queries are added.
+181 NN ;; Heading.
+183 MX [run006.ef-paginate,x.ef-deterministic-order] ;; Filtering, ordering and paginating in the database restate RUN-006; deterministic ordering is added.
+185-200 NN ;; Pagination example.
+202 NN ;; Hedged suggestion (consider keyset pagination for very large datasets).
+204 NN ;; Heading.
+206-210 NN ;; Bulk delete example.
+212 EX [x.ef-bulk-ops]
+214 NN ;; Heading.
+216 OL [arc018.ef-transactions]
+218 NN ;; Heading.
+220 OL [run008.ef-compiled-queries]
+222 NN ;; Heading.
+224 EX [x.ef-interceptors]
+226-254 NN ;; Audit interceptor example.
+256 NN ;; Heading.
+258 IM ;; Pointer to seeding rules.
+260 NN ;; Lead-in.
+262-267 NN ;; Seeding layout example.
+269 OL [pst006.ef-anchor-detect]
+271-315 NN ;; Seeder and initialization extension example.
+317 OL [pst003.ef-startup]
+319-324 NN ;; Development-only startup example.
+326 MX [pst001.ef-states,x.ef-ask-dataset,pst006.ef-recreate] ;; Representative states without every combination restate PST-001/PST-007 and explicit recreation restates PST-006; asking for the desired dataset instead of inventing a large graph is added.
+328 NN ;; Heading.
+330 EX [x.ef-migration-projects]
+332-334 NN ;; Migration command example.
+336 OL [wf019.ef-scripts]
+338 NN ;; Heading.
+340 OL [run001.ef-query-perf]
+342 NN ;; Heading.
+344 OL [run008.ef-raw-sql,sec004.ef-parameterized]
+346 NN ;; Heading.
+348 MX [run006.db-efficiency,run006.ef-no-lazy,run008.ef-compiled-queries,x.cache-no-tracked-entities,x.ef-fire-and-forget] ;; Common-mistakes list restating rule-owned items; fire-and-forget EF asynchronous operations have no owner clause and are registered.
+350 NN ;; Heading.
+352-353 NN ;; Table header.
+354-365 DU [x.ef-tracking,run006.ef-project,run006.ef-no-lazy,x.ef-bulk-ops,run008.ef-compiled-queries,arc018.ef-transactions,pst010.dw-migration-review,wf019.dp-prod-migrations,pst001.seed-default,pst006.leave-existing,tst008.known-state] ;; Decision guide mapping scenarios to the rules and guidance captured above.
+
+C arc016.ef-uow-delegates OL ARC-016,ARC-017 DEFINITION ;; IUnitOfWork is the Application-facing commit-boundary abstraction; its Infrastructure implementation delegates to the same scoped DbContext the repositories use. ;; = ;; none ;;
+C x.ef-entity-config EX ARC-019 DEFAULT ;; Keep entity configuration in IEntityTypeConfiguration<T> classes. ;; = ;; none ;; Configuration-class convention not in the oracle.
+C arc002.ef-config-out-of-domain OL ARC-002 DEFAULT ;; Keep persistence-specific configuration out of Domain entities where practical. ;; = ;; none ;;
+C arc023.ef-registration OL ARC-023,DEP-009 MUST ;; Register EF Core and persistence implementations in Infrastructure with the provider the project actually uses, not one from an example. ;; = ;; none ;;
+C arc015.ef-base-class OL ARC-015,ARC-019 ALLOWED ;; An Infrastructure-only base class may remove genuine duplication while concrete repositories keep the full EF Core API. ;; = ;; none ;;
+C run006.ef-project OL RUN-006 DEFAULT ;; Project in the database for read-only queries needing selected data; projection is not mandatory when the use case needs the entity, but avoid loading a whole aggregate for a few fields. ;; = ;; none ;;
+C x.ef-tracking EX RUN-006 DEFAULT ;; Use tracking queries when loaded entities will be modified and committed through the current Unit of Work and AsNoTracking() for read-only entity queries where tracking adds nothing; projections need no AsNoTracking(). ;; = ;; none ;; Tracking technique not in the oracle.
+C x.ef-query-shape EX RUN-006 DEFAULT ;; Make the query shape explicit (projection for selected related data, Include/ThenInclude when the graph is required); for large collection includes consider split queries and check SQL and performance. ;; = ;; none ;; Query-shape guidance not in the oracle.
+C run006.ef-no-lazy OL RUN-006 AVOID ;; Avoid lazy loading by default; it hides database access and invites N+1 queries. ;; = ;; none ;;
+C run006.ef-paginate OL RUN-006 DEFAULT ;; Filter, order and paginate in the database. ;; = ;; none ;;
+C x.ef-deterministic-order EX RUN-006 MUST ;; Pagination uses deterministic ordering. ;; = ;; none ;; Ordering requirement not in the oracle.
+C x.ef-bulk-ops EX ARC-016,ARC-019 MUST_NOT ;; ExecuteUpdateAsync/ExecuteDeleteAsync bypass change tracking: do not mix them casually with tracked entities for the same rows and understand their transaction and consistency implications. ;; = ;; none ;; Bulk-operation rule not in the oracle.
+C arc018.ef-transactions OL ARC-018,ARC-016 DEFAULT ;; One SaveChangesAsync is the transaction boundary of an operation; an explicit transaction fits a concrete case where several operations or SaveChangesAsync calls succeed or fail together; EF transactions do not solve distributed transactions. ;; = ;; none ;;
+C run008.ef-compiled-queries OL RUN-008 DEFAULT ;; Normal LINQ is the default; compiled queries belong to measured hot paths where profiling shows compilation/cache-lookup overhead matters, not queries that merely run often. ;; = ;; none ;;
+C x.ef-interceptors EX ARC-019,FE-008 MUST_NOT ;; EF Core interceptors fit infrastructure-level cross-cutting behaviour with a clear benefit (e.g. auditing); business behaviour does not belong in them. ;; = ;; none ;; EF interceptor rule not in the oracle.
+C pst006.ef-anchor-detect OL PST-006,PST-005 MUST ;; Detect existing data with representative root/anchor entities; the seeder assumes the schema is already migrated; developers apply migrations first, then startup seeds the empty schema. ;; = ;; none ;;
+C pst003.ef-startup OL PST-003,PST-005,PST-004 MUST ;; At startup the internal seeder stays behind the narrow Infrastructure extension, runs in Development only, and migrations are not run there. ;; = ;; none ;;
+C pst001.ef-states OL PST-001,PST-007 DEFAULT ;; Cover representative states where applicable (new, active, completed, archived, optional values/relationships, status values, boundary states) without attempting every combination; entities follow the current model. ;; = ;; none ;;
+C x.ef-ask-dataset EX GOV-003,PST-001 MUST ;; When the required entity graph or scenarios are complex, ask for the desired dataset in the task requirements instead of inventing a large generic object graph. ;; = ;; none ;; Dataset-request rule not in the oracle.
+C pst006.ef-recreate OL PST-006 MUST ;; A developer who needs the latest seed dataset drops and recreates the local database explicitly. ;; = ;; none ;;
+C x.ef-migration-projects EX ARC-019 DEFAULT ;; Create migrations from the Infrastructure project with the API project as startup project. ;; = ;; none ;; Migration-project convention not in the oracle.
+C wf019.ef-scripts OL WF-019 PREFER ;; For controlled production deployment generated migration scripts are often preferable. ;; = ;; none ;;
+C run001.ef-query-perf OL RUN-001,RUN-012,RUN-006 DEFAULT ;; Start with clear LINQ and optimize after identifying a real problem, inspecting round trips, columns, N+1, indexes, SQL, plans, materialized data and tracking overhead. ;; = ;; none ;;
+C run008.ef-raw-sql OL RUN-008 DEFAULT ;; Raw SQL fits queries EF Core cannot express effectively or a measured performance need. ;; = ;; none ;;
+C sec004.ef-parameterized OL SEC-004 PREFER ;; Prefer APIs that keep parameterization (FromSql, FromSqlInterpolated, ExecuteSql) over building SQL strings. ;; = ;; none ;;
+C x.ef-fire-and-forget EX RUN-002 AVOID ;; Avoid fire-and-forget EF Core asynchronous operations. ;; = ;; none ;; No owner clause for this item.

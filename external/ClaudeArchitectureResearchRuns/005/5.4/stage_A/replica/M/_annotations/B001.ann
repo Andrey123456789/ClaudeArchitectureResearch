@@ -1,0 +1,65 @@
+# M / B001 — code-reviewer agent, dependency-guard hook, file-change hook (static analysis; not executed).
+
+C R1 OL WF-010 | MUST | The code-reviewer agent performs an independent read-only review: Write, Edit and NotebookEdit are disallowed and it does not edit files. | delegated code review | none stated
+C R2 OL WF-010 | MUST | The code-reviewer runs the code-review skill (preloaded) as the complete review procedure; scope, rule reads, checks, priorities, severity and output shape come from that skill. | delegated code review | none stated
+C R3 OL WF-012 | MUST | The code-reviewer returns the findings exactly in the output format the code-review skill defines. | delegated code review | none stated
+C R4 OL DEP-025 | MUST NOT (PreToolUse deny) | npm install, ci, install-test and update commands must not bypass peer-dependency resolution with --force, -f, --legacy-peer-deps, the equivalent npm config settings or npm_config_force / npm_config_legacy_peer_deps; resolve the actual compatibility problem instead. | Bash and PowerShell npm commands | none stated
+C R5 OL DEP-001,DEP-003,DEP-004,DEP-005 | MUST (PostToolUse feedback) | NuGet and npm dependency changes follow the add-dependency workflow (latest stable compatible version from the registry, deprecation, vulnerability and license checks, approval gates); after a dependency-changing command or a manifest edit that touches dependencies the manifests are checked and the workflow is named. | dependency-changing commands and manifest edits | none stated
+C R6 OL ARC-001 | MUST (PostToolUse feedback) | Project references follow .claude/rules/architecture.md (Project References); after a reference-changing command the manifests are checked and the rule is named. | .NET project reference commands | none stated
+C R7 OL GOV-021,GOV-009 | SHOULD (PostToolUse reminder) | When CUSTOM_SETTINGS.md changes, run the custom-settings workflow to synchronize every affected surface and confirm it stays consistent with SPECIFICATION.md. | edits of CUSTOM_SETTINGS.md | none stated
+C R8 OL GOV-009,GOV-007 | SHOULD (PostToolUse reminder) | When SPECIFICATION.md changes, confirm it stays consistent with CUSTOM_SETTINGS.md and carry approved behavior changes through the development-workflow. | edits of SPECIFICATION.md | none stated
+C X1 EX ARC-020,ARC-001,GOV-017 | REQUIRES_APPROVAL (Reserved; PostToolUse routing) | A changed production project reference graph, including a removed project file, is a Reserved decision that goes through Decision Control. | .NET project references and project files | Already required by the specification or established project structure. | ARC-020 requires approval for new layers/projects and ARC-001 constrains direction; no oracle policy makes individual reference edges or project removal Reserved. | Adding a reference between two existing projects needs a Decision Request.
+C X2 EX GOV-017,ARC-020 | REQUIRES_APPROVAL | For an unclear decision, any 'yes' to five questions makes it Reserved: does it add, remove or replace a dependency, framework or infrastructure capability; change a project, layer or reference boundary; establish a convention other code is expected to follow; change observable behavior or a public contract; or would it be expensive to reverse once other code depends on it. | decision classification | none stated | GOV-017 defines Decided/Delegated/Reserved classes; the oracle does not provide a test that turns any of these properties into a Reserved decision. | Removing an unused package or a package-version file becomes Reserved under the test.
+C X3 EX DEP-001 | MUST | Dependency removals follow the add-dependency workflow like additions and updates. | NuGet and npm dependency removals | none stated | DEP-001..DEP-005 govern additions and updates; no oracle policy routes removals through the dependency workflow. | Uninstalling a package without the add-dependency steps does not follow the instruction.
+
+FILE .claude/agents/code-reviewer.md | Subagent definition.
+1-6 NN | front matter (name, description)
+7 OL R1 |
+8-9 OL R2 |
+10 NN | front matter delimiter
+12 NN | header metadata (owns no policy)
+14 NN | document heading
+16-17 OL R2 | Run the `code-review` skill as the complete review procedure: scope, rule
+18-19 OL R1,R3 | edit files. Return the findings exactly in the output format that skill
+
+FILE .claude/hooks/dependency-guard.mjs | PreToolUse/PostToolUse/PostToolUseFailure hook for shell commands.
+1 IM | shebang
+2-5 OL R4 | blocks npm installs that bypass peer-dependency resolution
+6-9 OL R5,R6 | add-dependency for packages, architecture.md for project
+10-19 IM | header comment (validation of changed manifests after other and failed commands)
+20-34 IM | registration, manual test and parsing notes
+36-38 IM | imports
+40-82 IM | npm command, option, wrapper and bypass constants
+84-95 IM | input parsing and command segmentation
+97-98 IM | PreToolUse branch setup
+99-105 OL R4 | bypasses npm peer-dependency resolution. Resolve the actual compatibility problem instead; see
+106-116 OL R4 | Resolve the actual compatibility problem instead; see .claude/skills/add-dependency/SKILL.md (Apply, npm).
+117-118 IM | allow and branch end
+120-125 IM | PostToolUse change classification
+126-129 OL R5 | complete the add-dependency workflow (latest stable compatible version from the registry,
+130-133 MX R6,X1 | changed production reference graph went through CLAUDE.md § Decision Control ⟫ Following the architecture rule's project references is oracle-linked (R6); routing every changed reference graph through Decision Control is X1.
+135-158 IM | changed-manifest detection, repository resolution and check scope
+159-165 IM | message assembly
+166-168 OL R5,R6 | 'dependency changes follow the add-dependency workflow and project references follow ' +
+169-170 EX X1,X2 | which goes through CLAUDE.md § Decision Control
+171-177 IM | blocking feedback for manifest-check violations (rules owned by check-manifests.mjs)
+178-186 IM | snapshot handling and non-blocking context output
+188-206 IM | known-command branch: full manifest check, blocking feedback and owner reminder
+208 IM | unexpected-event failure
+210-288 IM | token helpers, npm parsing, bypass detection and change classification (dotnet, npm, pnpm, yarn, ng, npx)
+
+FILE .claude/hooks/file-change.mjs | PostToolUse hook for file edits.
+1 IM | shebang
+2-3 OL R7,R8 | CUSTOM_SETTINGS.md / SPECIFICATION.md -> synchronization reminder.
+4-6 OL R5 | and a pointer to the add-dependency workflow.
+7-13 IM | header comment (active root, registration, manual test)
+15-30 IM | imports, input and repository resolution
+32-37 OL R7 | CUSTOM_SETTINGS.md changed: run the custom-settings workflow to synchronize every affected surface,
+39-44 OL R8 | and carry approved behavior changes through the development-workflow.
+46-47 IM | manifest detection
+49-57 IM | manifest check with blocking feedback on violations
+59-64 IM | dependency-touching edit detection
+65-68 MX R5,X3 | dependency additions, updates, and removals follow the add-dependency workflow. ⟫ Additions and updates through add-dependency are oracle-linked (R5); routing removals through it is X3.
+69-71 IM | context output
+73-81 IM | repository helper
+DONE

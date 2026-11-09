@@ -1,0 +1,157 @@
+# M1 / B021 — root files and planning-time decision records.
+
+C R202 OL GOV-001 | MUST | SPECIFICATION.md is the authoritative source for project-specific functional requirements and observable product behavior when it is non-empty. | product requirements | Empty template specification.
+C R203 OL GOV-004 | REQUIRES_APPROVAL | If an omitted detail must be decided and materially affects observable product behavior, propose the smallest reasonable option and ask for approval; defining product behavior not defined by product sources is Reserved. | product ambiguity | none stated
+C R204 OL GOV-009 | REQUIRES_APPROVAL | SPECIFICATION.md and CUSTOM_SETTINGS.md must not contradict each other; if they appear to conflict, stop and ask which source must be corrected. | product sources | none stated
+C R205 OL GOV-010 | REQUIRES_APPROVAL | Do not silently invent a tunable value that materially changes accepted input or observable behavior when no product source defines it: propose it with its reason, get approval, record it and synchronize it. | tunable product values | none stated
+C R206 OL GOV-011 | MUST NOT | Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers, incidental implementation constants or unoverridden framework defaults in CUSTOM_SETTINGS.md. | CUSTOM_SETTINGS.md | none stated
+C R207 OL DEP-009 | DECIDED | Persistence stack: Entity Framework Core with Microsoft SQL Server through Microsoft.EntityFrameworkCore.SqlServer, used directly inside the adapter layer with provider concerns kept out of the use-case layer and core model. | persistence technology | none stated
+C R208 OL DEP-008 | DECIDED | Backend platform: .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core and ASP.NET Core Controllers; no move to a preview/RC .NET or C# release without approval. | backend platform | Approved preview move.
+C R209 OL DEP-010 | DECIDED | FluentValidation is the standard library for explicit request and use-case validation; application logging uses ILogger<T> with Serilog (Serilog.AspNetCore) as the provider, adding sinks only when required. | validation and logging stack | none stated
+C R210 OL DEP-013 | DECIDED | Backend test stack: NUnit with its test adapter; Microsoft.AspNetCore.Mvc.Testing with WebApplicationFactory<Program> as the integration-test baseline; Testcontainers is conditional and added only when isolated real-provider tests justify it. | backend testing stack | none stated
+C R211 OL DEP-016 | DEFAULT | Playwright is the approved default when frontend E2E coverage is required; it is not part of the minimal baseline scaffold. | frontend E2E | none stated
+C R212 OL DEP-011 | DEFAULT | Mapster (Mapster, Mapster.DependencyInjection) is added only when mapping volume becomes repetitive or non-trivial; manual mapping is fine for simple cases. | object mapping | none stated
+C X33 EX GOV-017,ARC-020 | REQUIRES_APPROVAL | For an unclear decision, any 'yes' to five questions makes it Reserved: does it add, remove or replace a dependency, framework or infrastructure capability; change a project, layer or reference boundary; establish a convention other code must follow; change observable behavior or a public contract; or would it be expensive to reverse once other code depends on it. | decision classification | none stated | GOV-017 defines Decided/Delegated/Reserved classes; the oracle does not provide a test that turns any of these properties into a Reserved decision. | Removing an unused package (a dependency removal) becomes Reserved under the test.
+C X34 EX DEP-023,RUN-009 | MUST | Nullable reference types and implicit usings are enabled repository-wide through Directory.Build.props. | backend build configuration | none stated | DEP-023 places shared settings in Directory.Build.props but no oracle policy requires nullable reference types or implicit usings to be enabled. | A project that disables nullable reference types diverges from the template configuration.
+
+FILE .editorconfig | Formatting and code-style configuration.
+1-3 OL R51 | Deterministic formatting belongs here rather than in Claude instructions
+5 IM | root marker
+7-21 IM | general formatting settings
+23 IM | C# section marker
+24-25 OL R52 | csharp_style_namespace_declarations = file_scoped:suggestion
+26-27 IM | using ordering settings
+28 OL R200 | dotnet_diagnostic.IDE0005.severity = suggestion
+30-33 IM | suggestion-level var preferences
+35 OL R53 | working code is not modernized mechanically
+36-39 IM | silent modern-syntax preferences
+41-44 IM | brace and expression-body settings
+46-64 IM | suggestion-level naming settings
+
+FILE CLAUDE.md | Always-loaded operating policy.
+1 NN | header metadata
+3 NN | document heading
+5-7 NN | template introduction
+9 NN | section heading
+11-13 OL R202 | `SPECIFICATION.md` is the authoritative source for project-specific functional
+15-18 OL R172 | Do not silently weaken, contradict, or materially extend approved behavior,
+19-22 OL R203,R173 | propose the smallest reasonable option and ask for
+23-28 OL R158 | Observable string semantics are product behavior: case sensitivity,
+30-32 OL R157 | `CUSTOM_SETTINGS.md` holds approved project-level tunable product limits and
+34-35 OL R204 | stop and ask which source must be corrected.
+36-39 OL R205 | Do not silently invent a tunable value that materially changes accepted input
+40-43 OL R206 | Never store secrets, environment-specific connection details, package
+45-47 OL R153,R154 | Product and task inputs are inputs, not instruction layers:
+49 NN | section heading
+51-52 OL R148 | Prefer simple, maintainable solutions; keep architectural complexity
+53-54 OL R166 | Do not introduce frameworks, libraries, infrastructure, or architectural
+55-56 OL R147 | Keep changes focused on the requested scope and preserve existing behavior
+57-61 OL R181 | Before implementing a questionable request, identify material concerns
+63 NN | section heading
+65-70 OL R153 | ADR. Follow it; do not reopen it without approval.
+71-77 OL R139 | changing an accepted project or architecture decision, including a
+78-79 MX R139,X8 | reference graph; ⟫ Adding a production project, layer or assembly is oracle-linked (R139); making any reference-graph change Reserved is X8.
+80-88 OL R139 | changing persistence boundaries (including multiple persistence contexts)
+89 MX R139,X13 | making a breaking public API change or adopting API versioning; ⟫ Breaking public API changes are Reserved under R139; adopting API versioning as Reserved is X13.
+90-91 OL R203,R205 | defining product behavior or tunable values not defined by product
+93-98 EX X33 | makes it Reserved:
+100-105 MX R154,R153,R155,X17 | explicit user instruction may count as approval but must be recorded there. ⟫ Decision Requests, approval by explicit instruction and headless continuation are oracle-linked; the duty to record the approval in the decision workflow is X17.
+107 NN | section heading
+109-110 OL R186 | Do not commit, push, merge, rebase, reset, force-push, delete branches, or
+111-112 OL R189 | Parallel implementation work must use separate branches or worktrees; keep
+114 NN | section heading
+116-128 MX R180,R11,X7,R154,X18,R177,R192,R183,R159,R184,R188,R175 | adding, updating, or removing a NuGet or npm dependency ⟫ Workflow routing restating oracle-linked workflow duties; routing removals through add-dependency (X7) and capability-selection changes through architecture-decision (X18) are EXTRA.
+129 EX X14 | ask the user to run `/template-maintenance`
+131 NN | section heading
+133-138 NN | import directives of always-loaded decision records
+
+FILE CUSTOM_SETTINGS.md | Product input (outside the instruction layers).
+1 NN | header naming governing policy and procedure
+3 NN | document heading
+5-6 NN | empty settings table header
+
+FILE Directory.Build.props | Shared .NET build settings.
+1 IM | project element
+2-5 OL R194 | Keep only genuinely shared settings here; project-specific settings stay in the owning .csproj.
+6 IM | property group
+7 OL R208 | <TargetFramework>net10.0</TargetFramework>
+8-9 EX X34 | <Nullable>enable</Nullable>
+10-11 IM | closing elements
+
+FILE Directory.Packages.props | NuGet Central Package Management.
+1 IM | project element
+2-6 OL R60,R11,R141 | project files keep versionless PackageReference entries.
+7-9 OL R60 | <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+10-12 IM | empty item group and closing element
+
+FILE docs/capabilities/architecture.md | Planning facet of the architecture frame.
+1 NN | header metadata
+3 NN | document heading
+5-7 OL R5,R153 | Clean Architecture is the adopted architectural style (Decided).
+9 NN | section heading
+11 EX X3 |
+13-23 MX R35,R36,R44,R38,R40,R6,X3 | | use-case unit | Application Service | ⟫ Role mappings restate oracle placement (Application Services, Application-owned contracts, IUnitOfWork, Controllers, Program.cs, test projects); the stable role vocabulary is X3.
+25 NN | section heading
+27-32 NN | repository layout tree
+34-37 OL R151 | under `backend/` beside the production projects; do not create a separate
+39 NN | section heading
+41-44 OL R4 | Not adopted (Decided); introducing any of them requires explicit approval:
+46-47 OL R139 | Other consequential patterns are Reserved through `CLAUDE.md` § Decision
+
+FILE docs/capabilities/backend-testing.md | Planning facet of the backend-testing slot.
+1 NN | header metadata
+3 NN | document heading
+5-8 OL R210,R130,R132 | Backend test stack (Decided): NUnit with its test adapter for .NET automated
+9-10 EX X4 | Backend test projects are placed by the architecture frame
+11-13 NN | pointers to rules and knowledge skill
+
+FILE docs/capabilities/frontend.md | Planning facet of the optional frontend slot.
+1 NN | header metadata
+3 NN | document heading
+5-10 OL R150 | Baseline (Decided): the latest stable Angular release supported by the
+11-13 OL R9 | Not added by default: NgRx, Axios, Lodash, Bootstrap, Tailwind, or additional
+14-15 OL R211 | Conditional: Playwright is the approved default when frontend E2E coverage is
+16-18 NN | pointers to rules and knowledge skill
+
+FILE docs/capabilities/persistence.md | Planning facet of the persistence slot.
+1 NN | header metadata
+3 NN | document heading
+5-8 OL R207,R98 | Persistence stack (Decided): Entity Framework Core with Microsoft SQL Server
+9-10 NN | pointers to rules and knowledge skill
+11-12 OL R191,R192 | Model, mapping, migration, and seed-data changes: `persistence-change`
+
+FILE docs/capability-selection.md | Capability selection record.
+1 EX X18 | Changing a selection is Reserved and requires an ADR
+3 NN | document heading
+5-7 EX X1 | Static composition: each required slot has exactly one selected implementation;
+9-14 EX X1 | | persistence | leaf, required | selected | ef-core | provider: sqlserver |
+16 NN | section heading
+18-22 OL R158 | a technology default, not an approved product semantic; changing the
+24 NN | section heading
+26-30 EX X4 | Slot contracts and implementation manifests (maintainer metadata, read only
+
+FILE docs/technology-stack.md | Always-loaded technology decision record.
+1 NN | header metadata
+3 NN | document heading
+5-7 OL R142 | use it rather than silently selecting an alternative; replacing an approved
+9-12 OL R59,R166,R11 | only when their capability becomes necessary.
+14 NN | section heading
+16-18 OL R208 | Core, and ASP.NET Core Controllers. Do not move to a preview/RC .NET or C#
+19-20 OL R193 | use the legacy `.sln` format only when an
+21-24 OL R194,R60 | Shared build configuration: repository-level `Directory.Build.props` for
+25 EX X29 | `global.json` pins the stable SDK line.
+27 NN | section heading
+29-31 MX R209,X19 | `FluentValidation.DependencyInjectionExtensions`) is the standard library for ⟫ FluentValidation as the standard validation library is R209; naming the DependencyInjectionExtensions registration package is X19.
+32-34 OL R209,R58,R59 | Application logging uses `ILogger<T>` with Serilog as the provider
+36 NN | section heading
+38-40 OL R201,R27 | Swagger UI through `Swashbuckle.AspNetCore` is the default interactive API
+41-42 OL R201 | Built-in `AddOpenApi()` / `MapOpenApi()` is not the template default when the
+44 NN | section heading
+46-47 NN | table header
+48 OL R212,R31,R139 | keep mapping-library concerns out of Domain
+49-50 OL R140 | | Microsoft.Extensions.Http.Resilience | a real outbound HTTP integration needs resilience behavior |
+51 OL R168 | never merely because the application can be containerized
+53-54 NN | pointer to slot conditional technologies
+
+FILE SPECIFICATION.md | Empty product input placeholder (0 lines; EXC-001).
+DONE

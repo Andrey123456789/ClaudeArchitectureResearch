@@ -1,0 +1,126 @@
+# M batch 7: regions r311-r370 (protocol v1.2)
+# r311-r318 development-workflow SKILL.md
+RD OVERLAP R:RULE-M-0152 P:RULE-M-0389 | R: deprecation is a migration process incl. the development-workflow obligations; P lists those obligations (metadata, replacement, timeline, support period, no removal without considering the contract).
+RD COMPOUND_PART P:RULE-M-0390 R:RULE-M-0165#a | P bundles 'CI definitions stay in source control' and 'never hide failures' with reproducing the supported build/test commands.
+RD COMPOUND_PART P:RULE-M-0390 R:RULE-M-0165#g | P's CI duty includes keeping failures visible.
+RD OVERLAP R:RULE-M-0164#b P:RULE-M-0391 | R: CI installs with npm ci and adds test/lint only when defined; P: frontend CI uses existing scripts and npm ci with a maintained lockfile, no reflexive lockfile replacement.
+RD COMPOUND_PART P:RULE-M-0392 R:RULE-M-0167 | P bundles 'no automatic production migrations from startup by default' and 'never run Development seeding in Production' with the explicit migration step.
+RD COMPOUND_PART P:RULE-M-0392 R:RULE-M-0099#a | P includes 'never run Development seeding in Production'.
+SD P:RULE-M-0393 R:RULE-M-0189 | S: substantial features or new applications M: MUST both E: none in either T: before final verification
+SD P:RULE-M-0394 R:RULE-M-0168 | S: implementation work M: MUST both E: P's 'at a depth appropriate to scope and risk' is in lines 112-113, also cited by R (F6) T: before declaring completion
+RD OVERLAP R:RULE-M-0161#a P:RULE-M-0395 | R: when verification fails fix and rerun until green; P: failures needing diagnosis go through build-fix, then back to verify.
+SD P:EXTRA-M-0104 R:EXTRA-M-0017 | S: development-workflow final report M: MUST both E: none in either T: at completion
+CX X:BF-M-0065 | The final development report must include noteworthy Delegated choices and, for each change-specific obligation that did not apply, the reason.
+RD COMPOUND_PART P:EXTRA-M-0104 X:BF-M-0065 | P/R: the full report content (changes, Delegated choices, unresolved Decision Requests, verify report, inapplicable obligations with reasons); X asserts only two of these items.
+# r319-r329 docker SKILL.md
+RD OVERLAP R:RULE-M-0124 P:RULE-M-0396 | R: runtime image rather than SDK image; P: keep build tooling out of production runtime images.
+CX X:BF-M-0066 | ASP.NET Core Dockerfiles use a multi-stage build.
+SD P:EXTRA-M-0106 X:BF-M-0066 | S: ASP.NET Core Dockerfiles M: P DEFAULT, X no modality E: none in either T: none
+SPLIT X:BF-M-0067 | a@61-63: Copy only existing repository-level build files required by restore and copy project files explicitly; avoid wildcard tricks that flatten a multi-project structure. | b@67-70: Copy project and build dependency files before the full source tree for restore caching, update that section when the structure changes, and never trade restore correctness for caching.
+SD P:EXTRA-M-0107 X:BF-M-0067#a | S: Dockerfiles M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-M-0108 X:BF-M-0067#b | S: Dockerfiles M: P DEFAULT, X no modality E: none in either T: when the solution structure changes (both)
+RD OVERLAP R:RULE-M-0124 P:RULE-M-0397 | R: appropriate runtime image (ASP.NET runtime) not the SDK image; P: ASP.NET runtime image for ASP.NET Core and a .NET runtime image for workers.
+RD OVERLAP R:RULE-M-0124 P:EXTRA-M-0109 | R: do not switch to root to bypass permissions; P: use the built-in non-root user when it fits.
+RD OVERLAP R:RULE-M-0124 P:RULE-M-0398 | R: do not switch to root merely to bypass filesystem permission problems; P: fix ownership/permissions and find the cause instead of switching users.
+RD EXAMPLE_GENERAL R:RULE-M-0105 P:RULE-M-0399 | R: never commit secrets; P: never put credentials in Dockerfiles, committed Compose files, visible build args or copied appsettings.
+RD EXAMPLE_GENERAL R:RULE-M-0106 P:RULE-M-0400 | R: secret mechanisms per environment; P: platform/container secret mechanisms.
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0401 | R: no infrastructure without need; P: only infrastructure the project uses goes into Compose.
+RD EXAMPLE_GENERAL R:RULE-M-0106 P:RULE-M-0402 | R: local secret mechanism for development; P: local Compose passwords in an ignored .env or similar.
+SPLIT X:BF-M-0068 | a@121-126: Do not assume curl, wget or shell utilities in the runtime image; verify an in-container health command's executable exists or add a probe mechanism. | b@138-151: Exclude non-build files from the Docker build context, but never exclude tests the image build runs or files required by restore/build. | c@155-158: Use Alpine, chiseled, trimmed or Native AOT images only when justified and verify compatibility (globalization, native dependencies, reflection, diagnostics).
+RD COMPOUND_PART P:EXTRA-M-0111 X:BF-M-0068#a | P adds 'expose liveness/readiness through ASP.NET Core health checks and prefer orchestrator HTTP probes'.
+SD P:EXTRA-M-0113 X:BF-M-0068#b | S: Docker build context M: P DEFAULT, X no modality E: tests the image build runs; files needed by restore/build (both) T: none
+SD P:EXTRA-M-0114 X:BF-M-0068#c | S: .NET container images M: P DEFAULT, X no modality E: compatibility and deployment requirements justify (both) T: none
+CX X:BF-M-0069 | Docker changes are verified by building the image and checking startup, ports and configuration, non-root behavior when relevant, health-probe integration, accidental secrets/files, and meaningful application tests.
+SD P:EXTRA-M-0115 R:RULE-M-0190 X:BF-M-0069 | S: Docker changes M: MUST in P and R, X no modality E: non-root check when relevant (all) T: when changing Docker assets | labels: P EXTRA, R ORACLE_LINKED WF-005/WF-006, X AMBIGUOUS
+# r330-r343 dotnet-testing SKILL.md
+RD EXAMPLE_GENERAL R:RULE-M-0148 P:RULE-M-0403 | R: simple maintainable solutions; P: proportional test infrastructure.
+RD OVERLAP R:RULE-M-0129 P:RULE-M-0404 | R: explicit declarative cases for small finite spaces; P: test code simpler than production, clarity over line count.
+RD OVERLAP R:RULE-M-0129 P:RULE-M-0405 | R: declarative cases over computed expectations; P: a longer explicit case table beats a shorter algorithmic test.
+RD EXAMPLE_GENERAL R:RULE-M-0128 P:RULE-M-0406 | R: tests verify observable behavior; P: Application Service unit-test guidance with integration tests for EF/transactions/DI/serialization/HTTP.
+RD EXAMPLE_GENERAL R:RULE-M-0130 P:RULE-M-0407 | R: tests isolated from Production/Development data; P: Testing environment with isolated resources so integration tests never reach those databases.
+RD DETAIL_DIFFERENCE R:RULE-M-0132 P:RULE-M-0408 | P adds the lighter-isolated-database option with a stated trade-off and narrow InMemory use to the actual-provider rule.
+RD EXAMPLE_GENERAL R:RULE-M-0131 P:RULE-M-0409 | R: tests start from a known state and own setup; P: how (recreate/reset DB, transactions, minimal seeding, unique identifiers).
+RD EXAMPLE_GENERAL R:RULE-M-0133 P:RULE-M-0410 | R: no low-value coverage tests; P: no one-test-per-trivial-repository-method.
+RD OVERLAP R:RULE-M-0088 P:RULE-M-0411 | R: TimeProvider for clock-dependent logic; P: inject TimeProvider and control it with FakeTimeProvider in tests.
+CX X:BF-M-0071@197-198 | Keep slow or unreliable external-system tests separate from ordinary fast test runs.
+SD P:EXTRA-M-0117 X:BF-M-0071 | S: backend tests touching external systems M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M-0130 P:RULE-M-0412 | R: tests isolated from uncontrolled external systems; P: fakes/mocks/stub handlers/local fake servers at external boundaries, sandbox only when explicitly targeted.
+RD OVERLAP R:RULE-M-0176 P:RULE-M-0413 | R: regression test for plausible-recurrence bugs unless covered; P: a regression test reproduces the failure before the fix; none when the problem cannot recur or is covered.
+RD OVERLAP R:RULE-M-0163 P:RULE-M-0414 | R: probes kept covered by maintained tests before removal; P: convert probes into maintained coverage (concrete conversions).
+RD OVERLAP R:RULE-M-0133 P:RULE-M-0415 | R: no low-value tests for coverage percentage; P: coverage is diagnostic, not a target.
+RD EXAMPLE_GENERAL R:RULE-M-0130 P:RULE-M-0418 | R: tests isolated from wall-clock timing; P (AVOID): arbitrary delays such as Task.Delay.
+RD OVERLAP R:RULE-M-0132 P:RULE-M-0419 | R: actual provider when provider behavior matters (Testcontainers optional); P (AVOID): Testcontainers when no provider fidelity is required.
+# r344-r363 ef-core SKILL.md
+RD OVERLAP R:RULE-M-0044 P:RULE-M-0420 | R: abstractions defined in Application; P: Application defines specific repositories and IUnitOfWork, Infrastructure implements with EF Core on the same DbContext.
+CX X:BF-M-0072@32 | Keep entity configuration separate with IEntityTypeConfiguration<T>.
+SD P:EXTRA-M-0121 X:BF-M-0072 | S: EF Core DbContext configuration M: P DEFAULT, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M-0039 P:RULE-M-0421 | R: keep Domain free of persistence concerns (MUST); P: keep persistence configuration out of Domain entities where practical.
+RD EXAMPLE_GENERAL R:RULE-M-0058 P:RULE-M-0422 | R: registration near the owning layer; P: register EF Core and persistence implementations in Infrastructure.
+RD EXAMPLE_GENERAL R:RULE-M-0141 P:RULE-M-0423 | R: use the stack-defined technology; P: use the project's selected database provider, not one from an example.
+RD BROADER_NARROWER R:RULE-M-0052 P:RULE-M-0424 | R/P rule: IUnitOfWork default commit boundary with Infrastructure implementation; P (skill): repositories stage and the Application Service commits.
+RD BROADER_NARROWER R:RULE-M-0053 P:RULE-M-0425 | R/P rule adds 'IUnitOfWork is not a repository container or service locator'.
+RD BROADER_NARROWER R:RULE-M-0055 P:RULE-M-0426 | R/P rule adds 'do not leak EF Core concepts into Application'; P (skill): concrete repositories use full EF Core, no forcing through generic CRUD.
+RD EXAMPLE_GENERAL R:RULE-M-0090 P:RULE-M-0427 | R: efficient database work incl. projection; P (PREFER): projection for read-only queries.
+RD EXAMPLE_GENERAL R:RULE-M-0090 P:RULE-M-0428 | P (AVOID): loading a full aggregate to return a few scalars.
+SPLIT X:BF-M-0073 | a@178-182: Use tracking intentionally (tracking for entities modified in the current Unit of Work, AsNoTracking for read-only entity queries, not mechanically on DTO projections). | b@201-202: Avoid lazy loading by default because it hides database access and causes N+1 queries.
+SD P:EXTRA-M-0122 X:BF-M-0073#a | S: EF Core queries M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-M-0429 X:BF-M-0073#b | S: EF Core related data M: P AVOID, X no modality E: none in either T: none
+CX X:BF-M-0074@208-209 | Paged queries always use deterministic ordering.
+SD P:EXTRA-M-0124 X:BF-M-0074 | S: paged EF Core queries M: P MUST ('always'), X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0090 P:RULE-M-0430 | P: filtering, ordering and pagination in the database.
+SPLIT X:BF-M-0075 | a@242-244: Do not casually mix bulk ExecuteUpdate/ExecuteDelete operations with tracked entities for the same rows; understand their transaction implications. | b@251: Do not attempt distributed transactions with EF transaction APIs. | c@255-258: Compiled queries pay off only on a measured hot path where profiling shows material compilation overhead.
+SD P:EXTRA-M-0125 X:BF-M-0075#a | S: EF Core bulk operations M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-M-0126 X:BF-M-0075#b | S: EF Core transactions M: P MUST_NOT, X no modality E: none in either T: none
+SD P:RULE-M-0432 X:BF-M-0075#c | S: EF Core compiled queries M: P DEFAULT, X no modality E: measured hot path (both) T: none
+RD OVERLAP R:RULE-M-0054 P:RULE-M-0431 | R: no explicit transaction APIs until a concrete need; P: one SaveChangesAsync is normally the transaction boundary, explicit transaction only for multi-operation atomicity.
+RD EXAMPLE_GENERAL R:RULE-M-0095#a P:RULE-M-0432 | R: compiled queries and similar optimizations only for measured need; P: compiled-query specifics.
+SPLIT X:BF-M-0076 | a@295: Do not hide business behavior in persistence interceptors. | b@315: Use representative root/anchor entities to detect existing seed data. | c@309-311: Complex seed datasets should be described explicitly by the task requirements rather than invented.
+RD COMPOUND_PART P:EXTRA-M-0127 X:BF-M-0076#a | P adds 'use EF Core interceptors for infrastructure-level cross-cutting behavior' (lines 262-263).
+SD P:RULE-M-0435 X:BF-M-0076#b | S: Development seeder M: P MUST, X no modality E: none in either T: none
+RD COMPOUND_PART P:RULE-M-0434 X:BF-M-0076#c | P bundles the dataset-coverage guidance with 'complex datasets should be described by the task'.
+RD OVERLAP R:RULE-M-0100 P:RULE-M-0433 | R: seeder must not migrate; migrations are applied separately before seeding; P: the seeder assumes a migrated schema and developers apply migrations first.
+RD EXAMPLE_GENERAL R:RULE-M-0096 P:RULE-M-0434 | R: small deterministic representative seed dataset; P: which states/relationships to cover.
+RD OVERLAP R:RULE-M-0101 P:RULE-M-0435 | R: leave existing representative data unchanged; P: detect existing data via anchor entities.
+RD OVERLAP R:RULE-M-0102 P:RULE-M-0436 | R: seed entities preserve current Domain invariants; P: seed entities match the current Domain and persistence model.
+RD OVERLAP R:RULE-M-0098 P:RULE-M-0437 | R: internal DbSeeder exposed through a narrow initialization extension; P: the extension creates the scope and delegates; migration separate.
+RD OVERLAP R:RULE-M-0186#a P:RULE-M-0438 | R: update DbSeeder in the same change; P: recreating the empty Development database after a model change must produce valid seed data.
+RD EXAMPLE_GENERAL R:RULE-M-0085 P:RULE-M-0439 | R: clear correct code first; P: clear LINQ first, then the listed inspections before optimizing.
+RD OVERLAP R:RULE-M-0109 P:RULE-M-0440 | R: parameterized database access; P: raw SQL only when needed and via parameterization-preserving APIs.
+RD EXAMPLE_GENERAL R:RULE-M-0090 P:RULE-M-0441 | P (AVOID): loading all rows and filtering in memory; lazy loading by default.
+# r364-r369 git-workflow SKILL.md
+# [revised before M checkpoint: superseded by a SPLIT + SD in 11_r562-r602.dec] RD COMPOUND_PART R:RULE-M-0191 P:RULE-M-0442 | R: no repository-changing Git operations unless explicitly requested, and completing an implementation is not such a request; P states the second clause.
+SPLIT R:RULE-M-0192 | a: Never discard, overwrite, reset, clean or otherwise destroy user work to make a Git operation easier. | b: Do not automatically stash, reset or discard work to make a merge or rebase proceed. | c: Never remove a worktree containing uncommitted user work.
+SD P:RULE-M-0443 R:RULE-M-0192#a | S: Git operations M: MUST_NOT both E: none in either T: none
+RD COMPOUND_PART P:RULE-M-0451 R:RULE-M-0192#b | P adds 'inspect local uncommitted work before merge or rebase'.
+RD COMPOUND_PART P:RULE-M-0447 R:RULE-M-0192#c | P adds 'verify changes are committed or preserved before removing a worktree'.
+SPLIT R:RULE-M-0193 | a: Before a repository-changing Git operation inspect the repository state (git status, git diff, git diff --cached), use the minimum operation required and do not silently clean up unrelated working-tree changes. | b: Do not rename existing user branches to satisfy a naming convention. | c: Do not push unrelated local commits accidentally.
+SD P:RULE-M-0444 R:RULE-M-0193#a | S: repository-changing Git operations M: MUST both E: none in either T: before the operation
+RD COMPOUND_PART P:EXTRA-M-0131 R:RULE-M-0193#b | P bundles 'do not rename existing user branches' with the branch-naming convention defaults.
+RD COMPOUND_PART P:RULE-M-0449 R:RULE-M-0193#c | P bundles 'avoid pushing unrelated local commits' with confirming the branch and the working/staged state before pushing.
+SPLIT R:RULE-M-0195 | a: Before committing inspect the staged diff and include only the intended logical change; do not stage unrelated files merely because they are modified. | b: Implementation and its tests belong in the same logical commit; no artificial tiny commits. | c: Do not combine unrelated fixes into one commit.
+SD P:RULE-M-0445 R:RULE-M-0195#a | S: commits M: MUST both E: none in either T: before committing
+RD DIFFERENT_STRENGTH R:RULE-M-0195#b P:EXTRA-M-0133 | same commit-grouping guidance; R reports MUST (record), P reports PREFER.
+SD P:RULE-M-0448 R:RULE-M-0195#c | S: commits M: MUST_NOT both E: none in either T: none
+SPLIT X:BF-M-0077 | a@33-36: Follow the repository's branch-naming convention, otherwise use prefixes such as feature/, fix/, refactor/, test/, docs/, chore/ with meaningful names. | b@49-52: Prefer one logical change per commit, with implementation and its tests together and no artificial tiny commits. | c@53-54: Follow the repository commit-message convention, otherwise Conventional Commits. | d@43-45: Before removing a worktree verify required changes are committed or preserved; never remove a worktree containing uncommitted user work.
+RD COMPOUND_PART P:EXTRA-M-0131 X:BF-M-0077#a | P adds 'do not rename an existing user branch to satisfy the convention'.
+SD P:EXTRA-M-0133 X:BF-M-0077#b | S: commits M: P PREFER, X no modality E: none in either T: none
+RD COMPOUND_PART P:EXTRA-M-0134 X:BF-M-0077#c | P adds the commit-body guidance from lines 65-66, outside X's quote.
+SD P:RULE-M-0447 X:BF-M-0077#d | S: worktree removal M: P MUST_NOT, X no modality E: none in either T: before removing a worktree
+SPLIT R:RULE-M-0194 | a: Parallel implementation work uses separate branches or worktrees and keeps unrelated changes out of the current branch. | b: One branch is not checked out in multiple normal worktrees. | c: Each worktree stays focused on its branch's concern.
+SD P:EXTRA-M-0132 R:RULE-M-0194#b | S: Git worktrees M: MUST_NOT (P) = is not checked out (R record MUST) E: none in either T: none | labels: P EXTRA GOV-016, R ORACLE_LINKED GOV-016
+SD P:RULE-M-0446 R:RULE-M-0194#c | S: Git worktrees M: MUST both E: none in either T: none
+SPLIT X:BF-M-0078 | a@74: Ensure relevant verification has completed before pushing. | b@84-85: Do not automatically stash, reset or discard work to make a merge or rebase proceed. | c@91: Run verify before preparing a pull request. | d@78-79: Treat main, master and other protected or shared branches as non-rewritable. | e@98-102: Destructive Git operations may be performed when explicitly requested or clearly required by an approved workflow.
+SD P:EXTRA-M-0135 X:BF-M-0078#a | S: pushes M: P MUST, X no modality E: none in either T: before pushing
+SD R:RULE-M-0192#b X:BF-M-0078#b | S: merge/rebase M: MUST NOT (R), X no modality E: none in either T: before merge or rebase
+RD COMPOUND_PART P:EXTRA-M-0138 X:BF-M-0078#c | P/R: run verify before a PR plus a focused PR and a complete description.
+SPLIT R:EXTRA-M-0018 | a: main, master and other protected or shared branches are treated as non-rewritable. | b: A shared branch is never force-pushed unless the user explicitly requests history rewriting and the consequences are understood.
+SD P:EXTRA-M-0136 R:EXTRA-M-0018#a X:BF-M-0078#d | S: protected/shared branches M: MUST_NOT in P and R, X no modality E: none in any for this clause T: none
+SD P:RULE-M-0450 R:EXTRA-M-0018#b | S: force-push of shared branches M: MUST_NOT both E: explicit user request with understood consequences (both) T: none | labels: P ORACLE_LINKED GOV-015, R EXTRA
+SD P:UNCERTAIN-M-0002 X:BF-M-0078#e | S: destructive Git operations M: permission (P ALLOWED; X reports an approved-workflow exception) E: explicitly requested or clearly required by an approved workflow (both) T: none
+RD DIFFERENT_STRENGTH R:UNCERTAIN-M-0002 P:UNCERTAIN-M-0002 | same sentence; R reports a restriction (MUST NOT except when requested/required, after inspection), P reports a permission (ALLOWED).
+RD OVERLAP R:UNCERTAIN-M-0002 P:RULE-M-0453 | both require inspecting what will be lost before high-risk operations; R ties it to the request/approved-workflow condition.
+SD P:EXTRA-M-0138 R:EXTRA-M-0019 | S: pull requests M: MUST both E: none in either T: before preparing the PR
+RD OVERLAP R:RULE-M-0162 P:RULE-M-0452 | R: never imply an unchecked area passed; P: do not claim checks were run if they were not.
+# r370 health-check SKILL.md
+RD DIFFERENT_STRENGTH R:RULE-M-0035 P:RULE-M-0454 | R/rule: liveness and readiness stay distinct (MUST); P (skill): distinguish them when the deployment infrastructure benefits (DEFAULT, conditional).
+REVIEWED r311-r370

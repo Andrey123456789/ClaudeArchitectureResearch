@@ -1,0 +1,57 @@
+# M B001 — MAP.md, code-reviewer agent, hooks (dependency-guard, file-change, hook-io, stop-co-change)
+1 IA m=M | MAP.md:22-26 responsibility split (rules/CLAUDE.md policy, workflow skills procedures, knowledge skills technique, hooks/scripts checks; pointers are never second owners): instruction ownership topology.
+2 IA m=M | MAP.md placement table and 'extend here when' guidance: where new instruction content goes by kind (instruction maintenance).
+3 IA m=M c=M | Exec-form hook registration (node + script anchored at CLAUDE_PROJECT_DIR, no shell) is a structural requirement on the enforcement layer, verified by check-instructions.mjs; it governs how the instruction/enforcement system is wired, not product code or work output.
+4 IA m=M c=M | Registration of the dependency guard for PostToolUseFailure is a wiring requirement of the enforcement layer (checked by check-instructions.mjs); the behavior it enables is classified at FG-M-89479fb15b.
+5 IA m=M | Replica wording of the MAP.md placement-by-kind procedure (instruction maintenance).
+6 IA m=M | After placing new instruction content, update MAP.md and run check-instructions.mjs from the repository root: instruction-system maintenance protocol.
+7 CO WF-010 m=MN d=WF | WF-010 "independent read-only review"; disallowedTools Write/Edit/NotebookEdit is the mechanism of the same duty (C3); Bash is not disallowed, so the tool restriction is narrower than the duty.
+  e: Bash is not in disallowedTools (read-only for Bash rests on code-reviewer.md:18)
+8 CO WF-010 m=M d=WF | WF-010 "uses code-review as the canonical procedure rather than redefining policy"; the agent preloads that skill as its complete procedure.
+9 CO WF-010~ m=M d=WF c=M | Returning findings in the code-review skill's output format is part of using code-review as the canonical procedure (WF-010); the format content itself is owned by the skill.
+10 CO DEP-025 m=MN d=WF | Restates DEP-025 (do not bypass incompatible peer dependencies with --force/--legacy-peer-deps; resolve the actual problem); config and npm_config_* forms are equivalent bypass routes, not new behavior.
+11 CO ARC-001~ ARC-028~ m=M d=MX c=M | Pointer: project references follow architecture.md (Project References), plus the hook mechanism that re-checks manifests and names that rule after reference commands (C3). The referenced section is classified at its own records.
+12 CO DEP-001~ DEP-003 DEP-004 DEP-005 m=M d=MX c=M | Dependency changes follow the add-dependency workflow whose listed content (latest stable compatible version from the registry, deprecation, vulnerability and license checks, approval gates) restates DEP-003/004/005; post-command and post-edit manifest checks with workflow naming are the mechanism (C3).
+13 NN rel=DEP-025 | Factual note that the guard's parser is minimal (npx npm, -EncodedCommand not covered): enforcement is narrower than the rule; no behavior imposed.
+14 CD DEP-025 m=MN k=W st=S c=M | PreToolUse deny of npm install/ci/install-test/update carrying --force, -f, --legacy-peer-deps, npm_config_* env or npm config of those keys. DEP-025 forbids the flags "merely to bypass incompatible peer dependencies"; the hook denies them regardless of purpose.
+  x: the flags/env/config are denied on every install-like npm command regardless of purpose
+  s: `npm ci --force` used to force re-fetching packages after cache corruption with compatible peers: not a peer-dependency bypass under DEP-025; M's hook denies it.
+15 CD DEP-025 m=MN k=W st=S c=M | The bypass block has no exception path and also applies to setting the npm config key without any install (dependency-guard.mjs:80-82, 106-116).
+  x: unconditional deny including `npm config set` of force/legacy-peer-deps without an install
+  s: `npm config set legacy-peer-deps false` to restore the safe default: no bypass under DEP-025; denied by the hook (static reading of the config-key match).
+16 CD DEP-025 m=MN k=W st=S c=M | Config-key/env match blocks commands touching force/legacy-peer-deps regardless of intent, including read-only `npm config get` and `npm config set force false` (BYPASS_CONFIG_KEY match on positionals, dependency-guard.mjs:81,108-109).
+  x: read-only or bypass-disabling npm config commands on those keys are denied
+  s: `npm config get legacy-peer-deps` to inspect configuration: nothing bypassed under DEP-025; M's hook denies it (static reading; not executed).
+17 CO ARC-001~ ARC-028~ m=S st=W d=WF c=M | Advisory PostToolUse context after project-reference commands telling Claude to confirm references follow architecture.md (Project References): reminder mechanism for the dependency-direction rules (C3).
+18 XP m=RA rel=ARC-020,ARC-001,GOV-017 c=M | Any change of the production project reference graph, including removing a project file, is Reserved (approval through Decision Control), except when already required by the specification or established structure. ARC-020 reserves new layers/projects, not reference changes or removals.
+  e: already required by the specification or the established project structure
+  s: Adding a legal Infrastructure->Application reference for a new adapter (allowed by ARC-001) without approval: no policy requires approval; M reserves it.
+19 CO DEP-006~ DEP-003~ DEP-007~ m=M d=WF c=M | Hook mechanics: after any successful or failed shell command, new/changed/removed manifests relative to a snapshot are checked and owner routing is added. Mechanism for the manifest rules (C3); candidate-specific findings are classified at the check-manifests records.
+20 CO DEP-006~ DEP-003~ DEP-007~ DEP-015~ ARC-001~ ARC-028~ m=M d=WF c=M | Post-command manifest check returning violations as a blocking reason and notes/routing as context: enforcement mechanism for the manifest rules (C3). Stricter findings of the checker itself (e.g. no explicit-request exception) are classified at check-manifests records; facets AUG1-FX-CIS-M-0002-a/0003-a qualify the output channel.
+21 NN fa=FC c=M rel=DEP-003,DEP-025 | Facet: for PostToolUseFailure, postToolBlock emits the reason as additionalContext, not decision:block; narrows the target group's 'blocking' wording for failed commands; adds no obligation; static reading (C10).
+22 NN fa=FC c=M | Facet: an initial or re-taken snapshot with no removals, no recognised command and no violations is saved silently (no notes/routing); output-boundary clarification of FG-M-89479fb15b, no obligation.
+23 XW m=S rel=ARC-020,GOV-017 c=M | Advisory routing after removal of a project or package-version manifest to Decision Control: mechanism of the candidate-specific Reserved rule FG-M-55abdc03ca.
+  s: Deleting an obsolete test project: no policy requires approval for removing a project; M's hook routes the change to Decision Control.
+24 NN | Applicability detail of the edit hook (needs a string file_path inside a resolvable checkout); it narrows enforcement and imposes nothing.
+25 CO GOV-021 GOV-009~ m=S st=W d=WF | Advisory PostToolUse reminder after editing CUSTOM_SETTINGS.md to run the custom-settings synchronization and keep consistency with SPECIFICATION.md: reminder of GOV-021/GOV-009 (C3).
+26 CO GOV-009~ GOV-007~ m=S st=W d=WF | Advisory reminder after editing SPECIFICATION.md to confirm consistency with CUSTOM_SETTINGS.md and carry approved behavior changes through development-workflow (GOV-009, GOV-007).
+27 CO DEP-006~ DEP-003~ DEP-007~ m=M d=WF c=M | After editing a .csproj, Directory.Packages.props or package.json the manifest check runs and violations are returned as a blocking reason: mechanism (C3); checker-specific findings classified at check-manifests records.
+28 XW m=M rel=DEP-001,DEP-006,DEP-007 c=M | Removing a NuGet/npm dependency also follows the add-dependency workflow; DEP-001..005 govern additions/updates/installation, not removals.
+  s: Agent removes a PackageReference by editing the csproj directly, leaving the central PackageVersion: no policy prescribes a removal procedure; M requires the add-dependency workflow (CPM and lockfile cleanup steps).
+29 NN | Implementation detail of change detection (SHA-256 content identity, size/mtime above 1 MiB).
+30 NN | Implementation detail: hook state location and swallowed persistence failure.
+31 CO TST-009~ TST-010~ m=S st=W d=WF | Stop reminder when production code changed without test changes: confirm regression coverage for bug fixes and that behavioral probes are preserved as maintained tests (TST-009/TST-010 content; heuristic trigger is the mechanism; blocking behaviour classified at FG-M-b01f9ab122).
+32 CO PST-010~ m=S st=W d=WF | Stop reminder: migration files changed, review them before committing (PST-010 content).
+33 CO PST-008 m=S st=W d=WF | Stop reminder: model changed without seeder change, confirm seeded entities unaffected or update DbSeeder (PST-008 content).
+34 NN | Applicability detail: Stop hook skipped for recursive stops and non-Git/unresolvable environments.
+35 CO PST-008~ PST-010~ TST-009~ TST-010~ m=S st=W d=WF c=M | Description of the Stop hook's path heuristics; the reminders' content is canonical (seeder co-change, migration review, regression/probe coverage).
+36 CO PST-008 m=S st=W d=WF | Same Stop reminder as [33] (primary wording).
+37 CO PST-010~ m=S st=W d=WF | Same Stop reminder as [32] (primary wording).
+38 CO TST-009~ TST-010~ m=S st=W d=WF | Backend half of the test-coverage Stop reminder (TST-009/TST-010 content).
+39 CO TST-009~ TST-010~ m=S st=W d=WF | Frontend half (.ts without .spec.ts/e2e change) of the same reminder.
+40 NN | Implementation detail: reminder fingerprint bounded to 200 files.
+41 XW m=M c=M rel=PST-008,PST-010,TST-009,TST-010 | The Stop reminder blocks finishing until Claude addresses each item or states why it does not apply.
+  s: A pure refactor with no test edits and no behavior change: canonical policies allow finishing; the hook blocks once until the agent states why the regression reminder does not apply.
+42 XW m=M c=M rel=PST-008,PST-010,TST-009,TST-010 | Stop hook returns decision:block once per change-set state; Claude must address each reminder or briefly state why it does not apply before finishing (stop_hook_active suppresses repeats).
+  e: shown once per distinct change state; suppressed while stop_hook_active
+  s: Same as FG-M-8505249f6f: finishing a refactor without tests requires an explicit statement, which no policy requires.

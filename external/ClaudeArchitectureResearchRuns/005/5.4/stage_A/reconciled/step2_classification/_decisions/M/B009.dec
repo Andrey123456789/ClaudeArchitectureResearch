@@ -1,0 +1,94 @@
+# M B009 — skills caching, ci-cd, code-review (part)
+1 CD RUN-007 m=M k=P st=S c=M | caching SKILL.md:18-19: consistency semantics first (RUN-007 staleness/consistency choice); 'measure before adding caching solely for performance' requires measurement where RUN-007 accepts a measured or reasoned need.
+  x: caching added solely for performance requires a prior measurement
+  s: Caching an obviously expensive remote lookup justified by reasoning alone: allowed by RUN-007 ('reasoned need'); M's skill asks for a measurement first.
+2 CD RUN-007 m=M k=P st=S c=M | Same sentence read as a measurement requirement (Codex wording).
+  x: caching added solely for performance requires a prior measurement
+  s: As for FG-M-241734a973.
+3 CO ARC-024 ARC-007~ GOV-012~ | Cache-aware behavior via an Application abstraction implemented in Infrastructure, none when caching can stay internal (ARC-024/ARC-007, GOV-012).
+4 CO RUN-007~ ARC-020~ m=M | Distributed cache backend such as Redis only when deployment requirements justify it (RUN-007; distributed caching is an ARC-020 approval item).
+5 CO ARC-024 m=MN | HybridCache may implement an Infrastructure contract but does not appear in Application contracts (ARC-024).
+6 XP m=D c=M rel=RUN-020 | Centralize cache-key construction when duplicated key formats become hard to maintain (code organization, not in RUN-020).
+  t: duplicated key formats become hard to maintain
+  s: Several services each format the same composite key inline: allowed by RUN-020 if keys are correct; M's guidance centralizes construction.
+7 CO RUN-023~ RUN-007~ c=M | Expiration chosen from data semantics rather than a universal default: lifetime per entry (RUN-023) chosen from staleness/consistency requirements (RUN-007).
+8 UN m=Y rel=RUN-021 | caching SKILL.md:92-94 permits invalidating before the underlying mutation is known to have succeeded when the workflow deliberately accepts it; RUN-021 says invalidate/update only in a way consistent with successful mutations.
+  r: whether deliberate pre-mutation invalidation (cache cleared, source unchanged on failure) is 'consistent with successful underlying mutations' cannot be decided from RUN-021's text; Step-1 APPARENT_CONFLICT with FG-M-5ed6df9e6f
+  fhd: Whether pre-mutation cache invalidation accepted by a workflow is compatible with RUN-021.
+9 CO RUN-020 m=MN c=M | Do not cache authenticated or user-specific responses unless key and policy isolate users and authorization context (RUN-020 user/tenant dimensions).
+10 CO ARC-016 ARC-024~ m=MN | Invalidation coordinated through an abstraction within the normal repository/UoW workflow; no bypassing repositories or IUnitOfWork (ARC-016).
+11 XP m=M c=M rel=RUN-018,RUN-007 | Decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data: RUN-018 constrains fallbacks when used, but does not require an explicit cache-failure policy.
+  s: A cache client whose outage simply throws, with no decided policy: not addressed by RUN-018; M requires the decision.
+12 XP m=D c=M rel=TST-003,RUN-021,RUN-020 | Cache test checklist when caching affects correctness (invalidation after mutation, tenant/user isolation, miss fallback, outage policy); no framework-internal tests.
+  e: only when caching affects observable correctness
+  s: A correctness-relevant cache with no invalidation test: no policy requires that test; M's guidance does.
+13 XP m=SN c=M rel=RUN-021,ARC-016 | Avoid caching EF tracked entities across Unit of Work boundaries (EF technique not in the oracle).
+  s: A singleton memory cache storing tracked entity instances reused across requests: not addressed by RUN-021/ARC-016; M advises against it.
+14 CO RUN-007~ GOV-013~ m=SN st=W | Avoid adding Redis merely because the application has caching.
+15 CO RUN-021~ m=SN st=W | Avoid using a cache as authoritative persistence (RUN-021 no second source of truth).
+16 XP d=PE m=MN c=M rel=WF-017,GOV-013 | Do not hardcode one database provider into a generic pipeline: pipeline-content constraint not stated by WF-017.
+  s: A reusable pipeline template with a hardcoded SQL Server service container for every repository: no policy forbids it; M does.
+17 CO WF-017 d=PE | CI pipelines reproduce the repository's supported build and test commands (WF-017).
+18 XP d=PE m=MN c=M rel=WF-017 | CI must not depend on developer-machine state (clean environment): WF-017 requires reproducing the supported commands, not independence from runner state.
+  s: A pipeline on a self-hosted runner relying on a pre-populated package cache and a locally installed tool: satisfies WF-017's command reproduction; M forbids the dependency.
+19 CO WF-017 d=PE | Keep pipeline failures visible (WF-017).
+20 XP d=PE m=D c=M rel=WF-017,SEC-002 | Build deployable artifacts reproducibly and keep deployment/environment configuration outside compiled artifacts where practical (EXC-014 lineage, delivery technique).
+  e: where practical
+  s: Building separate artifacts with environment-specific settings baked in: allowed by the oracle; M's default keeps configuration outside artifacts.
+21 CO GOV-013~ WF-017~ d=PE c=M | Pipeline stages for the actual project rather than generic boilerplate (no speculative infrastructure).
+22 CO WF-001~ GOV-013~ DEP-018~ c=M | Inspect the repository before writing a pipeline; do not assume PostgreSQL, Redis, Docker or frontend tooling (inspection before change; no speculative infrastructure).
+23 CO WF-017~ WF-007~ d=PE m=D c=M | Run formatting/analyzers in CI when the repository adopted them as enforced checks (adopted checks are part of the supported commands).
+24 XP d=PE m=MN c=M rel=WF-017,GOV-014 | Do not turn an optional local formatter into a mandatory CI gate unless the project adopts that policy.
+  e: the project adopts that policy
+  s: Creating a requested CI pipeline that adds `dotnet format --verify-no-changes` as a required gate: within the requested scope, allowed canonically; M forbids it without adoption.
+25 CO WF-018 d=PE | npm ci then the scripts the frontend defines (WF-018).
+26 CO WF-018~ WF-017~ d=PE c=M | Runtime/action versions follow the repository's supported versions; frontend test/lint commands only when defined (WF-018 existing scripts, WF-017 supported commands).
+27 CD GOV-013~ TST-004~ m=M d=PE k=P c=M | External CI services only when tests require them and isolated from Development/Production data (GOV-013, TST-004); remainder: no hardcoded single provider in a generic pipeline.
+  x: do not hardcode one database provider into a generic pipeline
+  s: As for FG-M-2ee7eff596.
+28 CD WF-018~ WF-020~ m=MN d=PE k=P c=M | Findings treated per the project's security policy (WF-020); no automatic package upgrades in CI unless automated updates are adopted — WF-018 covers lockfile-replacing npm steps only.
+  e: automated dependency updates adopted
+  x: CI must not upgrade NuGet (or other non-npm) packages automatically
+  s: A CI step running a NuGet upgrade tool before build: no policy forbids it; M does unless automated updates are adopted.
+29 XP d=PE m=D c=M rel=WF-017 | Store or publish only the artifacts later stages need (EXC-014 artifact-shape technique).
+  s: Publishing the whole build output tree as a pipeline artifact: allowed canonically; M's default publishes only needed artifacts.
+30 CO DEP-018 m=MN d=PE | Container image builds in CI only when the project deploys containers (DEP-018).
+31 XP d=PE m=D c=M rel=WF-017 | Prefer promoting the same tested artifact/image through environments (EXC-014 build-once/promote preference).
+  s: Rebuilding from the same commit per environment: allowed canonically; M prefers promotion.
+32 XP d=PE m=D c=M rel=WF-017,SEC-002 | Conditional promotion preference with runtime configuration for environment behavior.
+  t: the deployment model supports artifact promotion
+  s: As for FG-M-1c4fc44b5e.
+33 XP d=PE m=D c=M rel=SEC-002 | Prefer workload/federated identity over long-lived deployment credentials when the platform supports it (SEC-002 does not choose a credential type).
+  t: the platform supports workload/federated identity
+  s: A long-lived service-principal secret stored in the CI secret store: satisfies SEC-002; M prefers federated identity.
+34 CO SEC-002 SEC-001~ d=PE | CI platform secret/identity mechanism instead of values in pipeline YAML (SEC-002, SEC-001).
+35 CO WF-019 WF-017~ | Deployment migrations explicit, approved credentials, controlled point, fail visibly; not applied automatically from normal startup (WF-019).
+36 CO WF-019 | Same with the permission to generate migration scripts/bundles in CI (consistent with WF-019).
+37 XP d=PE m=D c=M rel=WF-017 | Use environment protection or approval appropriate to the hosting platform for deployments (no policy covers deployment gating).
+  s: Every green main build deploys to production without an environment gate: not addressed by the oracle; M's guidance asks for protection/approval.
+38 XP d=PE m=D c=M rel=WF-017 | Separate CI and CD as appropriate (green CI does not imply deployment) and use environment protection or approval.
+  s: As for FG-M-275ce89ace.
+39 CD WF-017~ WF-003~ m=M d=WF k=W | Before considering a pipeline complete verify clean-environment restore, builds, configured tests, no developer-machine dependence, no secret exposure, expected artifacts; clean-environment, developer-machine and artifact checks are not entailed (same as K1 calibration item).
+  x: pipeline completion check includes clean-environment restore, no developer-machine-state dependency and production of the expected artifacts
+  s: A pipeline reproducing the supported commands on a pre-warmed self-hosted runner passes WF-017; M requires verifying a clean-environment restore before completion.
+40 CO WF-010 | Independent read-only review; code-review is the canonical procedure (WF-010).
+41 CO WF-011 | Finding priority order (WF-011).
+42 CO WF-012~ WF-011~ c=M | Differing from an unadopted pattern is not a violation (no manufactured findings; defects over preferences).
+43 CO WF-011 m=MN | Style preferences not elevated above defects (WF-011).
+44 CO WF-001~ WF-010~ m=M c=M | The review reads the path-matched rules (applies applicable rules during the canonical review).
+45 CO WF-010~ WF-001~ c=M | Establish the review target and read changed plus surrounding code (independent review based on inspected code).
+46 CO WF-011~ c=M | Identify changed behavior, error cases, effects and protecting tests (basis for correctness-first review).
+47 CO WF-001~ c=M | Read path-matched rules and load specialised technique only where relevant (WF-001 apply applicable rules/skills).
+48 CO GOV-001 GOV-008~ | In review, SPECIFICATION.md is authoritative and approved CUSTOM_SETTINGS values are intended behavior.
+49 CO GOV-003 GOV-006 d=WF | Two-way specification conformance review including unapproved limits, required fields, restrictions, validation and string semantics (GOV-003, GOV-006).
+50 CO GOV-003 GOV-006 m=MN | Do not weaken specified behavior or introduce unapproved product behavior, incl. string semantics via database/framework defaults (GOV-003, GOV-006).
+51 CO GOV-005 GOV-004~ GOV-007~ | An explicitly approved, synchronized detail is not a defect; internal details are not product behavior.
+52 CO WF-012 m=MN | No hypothetical findings without a plausible execution path (WF-012).
+53 CO WF-021~ m=MN c=M | Tool output is evidence, not authority (WF-021's principle applied to review).
+54 CO WF-011 WF-012 | Concrete behavioral problems with plausible execution paths; no invented failures.
+55 CO WF-011 ARC-001~ ARC-008~ ARC-010~ ARC-013~ ARC-014~ ARC-016~ ARC-020~ GOV-012~ d=WF | Backend review checklist against the architecture rules.
+56 CO WF-012 WF-011~ ARC-009~ m=MN | No violation merely for differing from unadopted patterns; do not require MediatR/CQRS/VSA/Minimal APIs/Rich Domain/Domain Events/generic repositories.
+57 CO FE-003~ FE-006~ FE-007~ FE-009~ FE-012~ SEC-005~ FE-002~ d=WF c=M | Angular review checklist; backend project-boundary rules not applied mechanically to Angular.
+58 CO WF-011 SEC-004~ SEC-003~ SEC-010~ PST-008~ PST-010~ RUN-021~ d=WF | Data-access and security-sensitive review checklist incl. DbSeeder when seeded entities are affected.
+59 CO WF-007 WF-020~ c=M | Normal security review in every review; full security-scan only when requested, materially sensitive or a finding justifies it (risk-scoped checks).
+60 CO RUN-003~ RUN-015~ RUN-016~ RUN-005~ d=WF | External-call review checklist; no retries demanded for unsafe operations.

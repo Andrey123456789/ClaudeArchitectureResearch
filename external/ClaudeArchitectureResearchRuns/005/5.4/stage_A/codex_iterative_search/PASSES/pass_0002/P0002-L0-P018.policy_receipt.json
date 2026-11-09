@@ -1,0 +1,817 @@
+{
+  "unit": "P0002-L0-P018",
+  "batch_input_sha256": "8d36daf83ea61ed9e3129a399f30f756b43fdfd02899e1b5a564fcdeaa4838ce",
+  "reviews": [
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-009",
+        "name": "Default persistence stack",
+        "related_groups": [
+          "persistence-data",
+          "architecture"
+        ],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Persistence"
+        ],
+        "normalized_policy": "Default persistence is EF Core with Microsoft SQL Server/SqlServer provider; provider-specific concerns stay out of Application and Domain.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0050",
+        "primary/L0/constraints.jsonl/RULE-L0-0410"
+      ],
+      "boundary_analysis": "EF/provider selection and Infrastructure boundary match; no provider adoption from examples.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/2-technology/ef-core.md",
+          "sha256": "2feeab8a8efd2ad0d2ee66c584839a672efda72ece7af21d28cce66be1578fd9",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "\nEF Core is the persistence framework of the approved stack (`3-project/decisions.md`). The boundary itself is owned by `1-architecture/persistence-boundary.md`; technique is in the `ef-core` skill.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              22,
+              24
+            ]
+          ],
+          "context_quotes": [
+            "| Backend platform | .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core, ASP.NET Core Controllers. Moving to a preview/RC .NET or C# release requires approval. |\n| Persistence | EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); used only inside Infrastructure per `1-architecture/persistence-boundary.md`. |\n| Validation | FluentValidation (`FluentValidation`, `FluentValidation.DependencyInjectionExtensions`) is the standard explicit request/use-case validation library. |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "989bd9a518542dcf32d9210eba887fd4edb1c4a2bb4c032dd0d58d62a2769dc8",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nUse the provider the project selected; do not add a provider because it appears in an example.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-010",
+        "name": "Default validation/logging",
+        "related_groups": [
+          "api-errors-validation",
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Validation",
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Logging"
+        ],
+        "normalized_policy": "FluentValidation is the standard explicit request/use-case validation library; application logging uses ILogger<T> with Serilog as provider.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0051",
+        "primary/L0/constraints.jsonl/RULE-L0-0052",
+        "primary/L0/constraints.jsonl/RULE-L0-0189",
+        "primary/L0/constraints.jsonl/RULE-L0-0190",
+        "primary/L0/constraints.jsonl/RULE-L0-0277"
+      ],
+      "boundary_analysis": "Explicit validation/logging stack and named integration registration already covered; BF0028 preserves mechanism-specific strength.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/INSTRUCTION_MAP.md",
+          "sha256": "f9d3c6fce26cba3e21211cba468677347fee34156bba8b6e1a10b50731959a10",
+          "inspected_ranges": [
+            [
+              97,
+              99
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/claude-hook.mjs` | `pre-bash` (fails closed): blocks npm/pnpm/yarn force/legacy-peer flags and `dotnet add/remove … reference` / `dotnet reference add/remove` before they run, also behind global options such as `--prefix`, `--dir`, `--cwd` · `post-bash`, after successful and failed shell calls: compares the active worktree's manifests (tracked and untracked, not ignored) with a per-worktree snapshot kept in the Git directory, validates added and changed manifests, reports removals and moves, routes dependency and project-reference changes; the first observation of a worktree validates every manifest · `post-edit`: manifest checks, dependency and reference-change routing, product-input reminder, structure check after instruction edits · `stop`: co-change reminders (seed, migrations, tests, custom settings) repeated only when the changed files or their content differ, never loops |\n| `.claude/hooks/manifest-checks.mjs` | central versions, `VersionOverride`, floating/prerelease versions, deny/review package lists (approved exceptions are read from the \"Accepted\" sections of the decision summaries), npm tooling category, `.npmrc` bypass, outward project references; reads UTF-8, UTF-8 with BOM, and BOM-tagged UTF-16 files and reports undecodable ones |\n| `.claude/tools/check-instructions.mjs` | structure checker: `node \"$(git rev-parse --show-toplevel)/.claude/tools/check-instructions.mjs\"` (Bash or PowerShell, from any directory of the repository or worktree) — level-first layout, headers, `paths`, Level 0/1 neutrality, dependency direction and cycles, imports, references, private references, hook registrations (exec form, launcher placeholder, required events including PostToolUseFailure, fail-closed PreToolUse only), this map's completeness, always-loaded estimate |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/manifest-checks.mjs",
+          "sha256": "b7a5ee762cd856ac04e3c7fecdf69a7a15e243a3f40e6008c63db491ff960ade",
+          "inspected_ranges": [
+            [
+              17,
+              24
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              263,
+              268
+            ]
+          ],
+          "context_quotes": [
+            "\n// Packages that must not be added (deprecated or replaced by the approved integration).\nconst DENY_NUGET = new Map([\n  ['microsoft.extensions.http.polly', `deprecated resilience integration → ${OWNER.addDependency} (Conditional package bindings)`],\n  ['polly.extensions.http', `deprecated resilience integration → ${OWNER.addDependency} (Conditional package bindings)`],\n  ['serilog.sinks.elasticsearch', `deprecated package → ${OWNER.logging}`],\n]);\n",
+            "  ['automapper', `another mapping framework requires approval → ${OWNER.decisions}`],\n  ['fluentvalidation.aspnetcore', `legacy automatic-validation integration → ${OWNER.fluentValidation}`],\n]);",
+            "  const key = id.toLowerCase();\n  if (DENY_NUGET.has(key)) problems.push(`${location}: package '${id}' — ${DENY_NUGET.get(key)}`);\n  else if (REVIEW_NUGET.has(key) && !accepted.includes(key)) {\n    problems.push(`${location}: package '${id}' needs a recorded decision or reported reason — ${REVIEW_NUGET.get(key)}`);\n  }\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/2-technology/fluentvalidation.md",
+          "sha256": "3d7601af455800da0c866fca82e9b76cb02fdc0f5780d5ff4922cac9b972768c",
+          "inspected_ranges": [
+            [
+              9,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "\n- Use FluentValidation for explicit request and use-case validation where validation is needed — required application input, string and collection constraints, ranges, cross-property and conditional rules — while each rule stays at the owning boundary defined in `1-architecture/outcomes.md`.\n- Application-level validators live in Application and are registered with `FluentValidation.DependencyInjectionExtensions` from Application's own registration.\n- Follow the project's established validation invocation pattern rather than adding a second competing mechanism; do not adopt a deprecated or legacy ASP.NET automatic-validation integration package unless a concrete project requirement justifies it (default).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              21,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|\n| Backend platform | .NET 10 LTS (latest stable servicing release), C# 14, ASP.NET Core, ASP.NET Core Controllers. Moving to a preview/RC .NET or C# release requires approval. |\n| Persistence | EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); used only inside Infrastructure per `1-architecture/persistence-boundary.md`. |\n| Validation | FluentValidation (`FluentValidation`, `FluentValidation.DependencyInjectionExtensions`) is the standard explicit request/use-case validation library. |\n| Logging | Application code logs through `ILogger<T>`; Serilog (`Serilog.AspNetCore`) is the provider; add sinks only when required (Console is enough locally). |\n| API documentation | Swashbuckle (`Swashbuckle.AspNetCore`) Swagger UI is the default Development interactive documentation and manual-testing surface; exposure beyond Development follows `2-technology/aspnet-core.md`. |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "aabd590825a8528eb0b848ea715da112587291c712a1f7278a958cc9742d7ab7",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "- **API versioning:** when Controller API versioning is explicitly adopted, use the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation); do not add it before the project actually adopts versioning (default).\n- **Resilience:** when resilience is required, prefer `Microsoft.Extensions.Http.Resilience` for `HttpClient` and `Microsoft.Extensions.Resilience` for general pipelines; a direct Polly reference or Polly API configuration is an explicit, documented exception rather than the default (default). Do not add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "9f61ad4ea2d495dfb3ff14e87219a503af68b5279ed1d5e07bebe71fe186d968",
+          "inspected_ranges": [
+            [
+              96,
+              98
+            ],
+            [
+              104,
+              106
+            ]
+          ],
+          "context_quotes": [
+            "\nWith `[ApiController]`, model-binding and transport-level failures automatically produce validation problem responses. Explicit rules use FluentValidation validators (`2-technology/fluentvalidation.md`), placed by owner:\n",
+            "\nRegister validators with `services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>()` (FluentValidation.DependencyInjectionExtensions) and invoke them through the project's one established mechanism (for example explicitly in the Application Service, or an action filter in Api).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/logging/references/serilog.md",
+          "sha256": "2e79cb400c4240681f6c880d98549f1545cb6fad144ccb667276c8fc99925639",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ],
+            [
+              140,
+              142
+            ]
+          ],
+          "context_quotes": [
+            "\nAn example `appsettings*.json` section. It deliberately shows several optional sinks; File, Seq, OpenTelemetry, and Elasticsearch are not baseline dependencies, and the numbers are illustrative, not approved defaults:\n",
+            "\nElasticsearch: the `Serilog.Sinks.Elasticsearch` package is deprecated; the official `Elastic.Serilog.Sinks` package uses the same method name and writes ECS-formatted documents to data streams:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-011",
+        "name": "Conditional mapping/resilience",
+        "related_groups": [
+          "architecture",
+          "runtime-code-performance"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Mapping",
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Resilience"
+        ],
+        "normalized_policy": "Manual mapping is fine for simple cases; Mapster is approved when mapping volume warrants it. Microsoft resilience packages are approved only when real integrations need resilience.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0057",
+        "primary/L0/constraints.jsonl/RULE-L0-0058",
+        "primary/L0/constraints.jsonl/RULE-L0-0241",
+        "primary/L0/constraints.jsonl/RULE-L0-0460",
+        "primary/L0/constraints.jsonl/RULE-L0-0495",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0020"
+      ],
+      "boundary_analysis": "Concrete Mapster and resilience triggers and approval for alternative mapper represented; no default-install inference.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/INSTRUCTION_MAP.md",
+          "sha256": "f9d3c6fce26cba3e21211cba468677347fee34156bba8b6e1a10b50731959a10",
+          "inspected_ranges": [
+            [
+              97,
+              99
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/claude-hook.mjs` | `pre-bash` (fails closed): blocks npm/pnpm/yarn force/legacy-peer flags and `dotnet add/remove … reference` / `dotnet reference add/remove` before they run, also behind global options such as `--prefix`, `--dir`, `--cwd` · `post-bash`, after successful and failed shell calls: compares the active worktree's manifests (tracked and untracked, not ignored) with a per-worktree snapshot kept in the Git directory, validates added and changed manifests, reports removals and moves, routes dependency and project-reference changes; the first observation of a worktree validates every manifest · `post-edit`: manifest checks, dependency and reference-change routing, product-input reminder, structure check after instruction edits · `stop`: co-change reminders (seed, migrations, tests, custom settings) repeated only when the changed files or their content differ, never loops |\n| `.claude/hooks/manifest-checks.mjs` | central versions, `VersionOverride`, floating/prerelease versions, deny/review package lists (approved exceptions are read from the \"Accepted\" sections of the decision summaries), npm tooling category, `.npmrc` bypass, outward project references; reads UTF-8, UTF-8 with BOM, and BOM-tagged UTF-16 files and reports undecodable ones |\n| `.claude/tools/check-instructions.mjs` | structure checker: `node \"$(git rev-parse --show-toplevel)/.claude/tools/check-instructions.mjs\"` (Bash or PowerShell, from any directory of the repository or worktree) — level-first layout, headers, `paths`, Level 0/1 neutrality, dependency direction and cycles, imports, references, private references, hook registrations (exec form, launcher placeholder, required events including PostToolUseFailure, fail-closed PreToolUse only), this map's completeness, always-loaded estimate |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/manifest-checks.mjs",
+          "sha256": "b7a5ee762cd856ac04e3c7fecdf69a7a15e243a3f40e6008c63db491ff960ade",
+          "inspected_ranges": [
+            [
+              24,
+              33
+            ],
+            [
+              264,
+              268
+            ]
+          ],
+          "context_quotes": [
+            "\n// Packages that need an approved decision or a reported reason before they are added.\nconst REVIEW_NUGET = new Map([\n  ['polly', `direct Polly is an explicit exception → ${OWNER.addDependency} (Conditional package bindings)`],\n  ['mediatr', `mediator-based organization is not adopted (Reserved) → ${OWNER.overview}`],\n  ['kommand', `mediator-based organization is not adopted (Reserved) → ${OWNER.overview}`],\n  ['automapper', `another mapping framework requires approval → ${OWNER.decisions}`],\n  ['fluentvalidation.aspnetcore', `legacy automatic-validation integration → ${OWNER.fluentValidation}`],\n]);\n",
+            "  if (DENY_NUGET.has(key)) problems.push(`${location}: package '${id}' — ${DENY_NUGET.get(key)}`);\n  else if (REVIEW_NUGET.has(key) && !accepted.includes(key)) {\n    problems.push(`${location}: package '${id}' needs a recorded decision or reported reason — ${REVIEW_NUGET.get(key)}`);\n  }\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              33,
+              36
+            ],
+            [
+              42,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|\n| Mapster, `Mapster.DependencyInjection` | mapping volume is repetitive or non-trivial — manual mapping is fine for simple cases |\n| `Microsoft.Extensions.Http.Resilience`, `Microsoft.Extensions.Resilience` | a real integration needs resilience behavior |\n| Testcontainers | isolated real-provider tests justify it |",
+            "- Frontend: do not add NgRx, Axios, Lodash, Bootstrap, Tailwind, or additional form, component, or state-management libraries by default; use built-in Angular capabilities first and add an extra library only for a concrete need.\n- Backend: mediator libraries such as MediatR or Kommand (mediator-based organization is not adopted — `1-architecture/overview.md`); another mapping framework without approval.\n\n## Repository defaults\n\n- Solution format: `.slnx` by default; use legacy `.sln` only when an external tool or project requirement requires it.\n- Repository-level `Directory.Build.props` holds genuinely shared .NET build settings and `Directory.Packages.props` holds Central Package Management versions; project-specific settings stay in their owning projects.\n- Physical layout: backend production and test projects under `backend/<Name>.<Layer>/`, the Angular workspace under `frontend/<Name>.Web/`, maintained documentation under `docs/`. Keep them clearly separated and do not create a separate top-level `tests/` directory. Project mapping: `layout.md`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "aabd590825a8528eb0b848ea715da112587291c712a1f7278a958cc9742d7ab7",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\nRead `.claude/rules/0-core/dependency-hygiene.md` and `.claude/rules/3-project/package-management.md` (they may not have loaded). Confirm that the change needs the package now, that the approved stack (`3-project/decisions.md`) does not already cover the need, and that it is not a Reserved addition (CLAUDE.md → Decision control). Approved conditional packages are added only when their trigger condition holds.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "39ec7602a1ba48fe96cc82fbe15e82c7ae5e82f7c9c796ad092a84cc6c4e16c7",
+          "inspected_ranges": [
+            [
+              4,
+              6
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: bounded execution time, retry safety, Retry-After, fallback semantics, caller cancellation → `.claude/rules/0-core/runtime-principles.md`; package choice and the direct-Polly exception → `add-dependency`; approved conditional packages → `3-project/decisions.md`. Resilience policies must match failure and operation semantics; do not add mechanisms merely because they are available.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              53,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "\nAdd baseline packages only for capabilities present in the initial project, each through `add-dependency` (versions resolved at install time). Conditional packages wait for their trigger.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-012",
+        "name": "Swagger baseline",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#API Documentation and Interactive Testing"
+        ],
+        "normalized_policy": "Use Swashbuckle Swagger UI as the default Development interactive API documentation/testing surface; expose outside Development only when requirements justify it.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0054",
+        "primary/L0/constraints.jsonl/RULE-L0-0182",
+        "primary/L0/constraints.jsonl/RULE-L0-0563",
+        "primary/L0/constraints.jsonl/RULE-L0-0564",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0182",
+        "primary/L0/constraints.jsonl/RULE-L0-0571"
+      ],
+      "boundary_analysis": "Interactive Swashbuckle baseline, justified non-Development exposure, bearer testing and no competing stack covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/2-technology/aspnet-core.md",
+          "sha256": "9f0131da0b77aaadaf0eaee788ea632e6b3178b6c38e5d9a3b95f3278dea7b1c",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "\n- Enable Swagger UI in Development by default and expose it in other environments only when deployment requirements explicitly justify it (default).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              25,
+              27
+            ]
+          ],
+          "context_quotes": [
+            "| Logging | Application code logs through `ILogger<T>`; Serilog (`Serilog.AspNetCore`) is the provider; add sinks only when required (Console is enough locally). |\n| API documentation | Swashbuckle (`Swashbuckle.AspNetCore`) Swagger UI is the default Development interactive documentation and manual-testing surface; exposure beyond Development follows `2-technology/aspnet-core.md`. |\n| Backend tests | NUnit. Backend test projects live under `backend/` alongside the production projects. `Microsoft.AspNetCore.Mvc.Testing` / `WebApplicationFactory<Program>` is the integration-test baseline. Testcontainers is conditional. |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "300b18c838e0fdb33e138261701a6306297365a4456d92aab3d5c92e1a110858",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ],
+            [
+              30,
+              32
+            ],
+            [
+              59,
+              61
+            ],
+            [
+              93,
+              94
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: documentation must match runtime → `.claude/rules/1-architecture/entry-points.md` → Documentation truth; Swagger UI exposure → `2-technology/aspnet-core.md`; Swashbuckle as baseline → `3-project/decisions.md`; status semantics → `http-api` skill; error contract → `aspnet-error-handling` skill. Swagger tooling uses the OpenAPI specification internally; the developer-facing baseline is interactive Swagger UI, not a standalone raw OpenAPI endpoint. This skill is technique only.\n",
+            "\nKeep Swagger configuration in Api/composition. Built-in `AddOpenApi()` / `MapOpenApi()` is not the template default when the requirement is Swagger UI.\n",
+            "\nWhen the API actually uses Bearer authentication, add a matching security definition and requirements so authenticated endpoints can be exercised from Swagger UI:\n",
+            "\nSwagger as a substitute for integration tests; anonymous objects as long-lived contracts; a second competing documentation stack without a concrete need."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-013",
+        "name": "Backend testing stack/layout",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Testing"
+        ],
+        "normalized_policy": "Use NUnit; backend test projects live under backend alongside production projects; WebApplicationFactory is the baseline for ASP.NET Core integration tests; Testcontainers is conditional.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-013",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0055",
+        "primary/L0/constraints.jsonl/RULE-L0-0059",
+        "primary/L0/constraints.jsonl/RULE-L0-0066",
+        "primary/L0/constraints.jsonl/RULE-L0-0216"
+      ],
+      "boundary_analysis": "NUnit, backend co-location, useful-only projects, WebApplicationFactory and conditional Testcontainers all represented.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ],
+            [
+              35,
+              37
+            ],
+            [
+              48,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "| API documentation | Swashbuckle (`Swashbuckle.AspNetCore`) Swagger UI is the default Development interactive documentation and manual-testing surface; exposure beyond Development follows `2-technology/aspnet-core.md`. |\n| Backend tests | NUnit. Backend test projects live under `backend/` alongside the production projects. `Microsoft.AspNetCore.Mvc.Testing` / `WebApplicationFactory<Program>` is the integration-test baseline. Testcontainers is conditional. |\n| Frontend | Current stable Angular with CLI-selected compatible TypeScript and RxJS; standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material and CDK, Vitest. |",
+            "| `Microsoft.Extensions.Http.Resilience`, `Microsoft.Extensions.Resilience` | a real integration needs resilience behavior |\n| Testcontainers | isolated real-provider tests justify it |\n| Playwright | frontend E2E coverage is required — it is the approved default then, but not part of the minimal scaffold |",
+            "- Repository-level `Directory.Build.props` holds genuinely shared .NET build settings and `Directory.Packages.props` holds Central Package Management versions; project-specific settings stay in their owning projects.\n- Physical layout: backend production and test projects under `backend/<Name>.<Layer>/`, the Angular workspace under `frontend/<Name>.Web/`, maintained documentation under `docs/`. Keep them clearly separated and do not create a separate top-level `tests/` directory. Project mapping: `layout.md`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/layout.md",
+          "sha256": "201d0ad4db67b876c24cd2dcfa491f72a52ba730c32908f3c08d425a751c8745",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "\nCreate only useful test projects, beside the production projects under `backend/`. Typical narrowest references:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-014",
+        "name": "Angular baseline stack",
+        "related_groups": [
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "DECIDED",
+        "trigger_class": "always",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Angular Frontend"
+        ],
+        "normalized_policy": "Use current stable Angular with compatible TypeScript/RxJS, standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material/CDK and Vitest.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-014",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0056",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0025",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0051",
+        "primary/L0/constraints.jsonl/RULE-L0-0497"
+      ],
+      "boundary_analysis": "CLI-selected compatible versions, conditional zoneless, workspace scope and configured test runner represented; Material consistency already BF0059.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/2-technology/angular.md",
+          "sha256": "055686c38dced484e66fcf80f869d91acb54ab62df83c5f082a800b6b73a6794",
+          "inspected_ranges": [
+            [
+              17,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "- Use reactive forms for non-trivial forms when explicit state, validation, and testability are useful (default).\n- Unit and component tests run with the workspace's configured runner; inspect `package.json` instead of assuming a command (the baseline runner for new workspaces is recorded in `3-project/decisions.md`)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "| Backend tests | NUnit. Backend test projects live under `backend/` alongside the production projects. `Microsoft.AspNetCore.Mvc.Testing` / `WebApplicationFactory<Program>` is the integration-test baseline. Testcontainers is conditional. |\n| Frontend | Current stable Angular with CLI-selected compatible TypeScript and RxJS; standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material and CDK, Vitest. |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "0b3c6a0e57672053b2a3fb7959e8600d237b31e4a176a54c41da873260e6ac80",
+          "inspected_ranges": [
+            [
+              121,
+              131
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the project uses Angular Material, use its components consistently for common UI primitives; do not wrap every Material component in a custom abstraction without a concrete reason.\n\n## Generated API clients\n\nWhen OpenAPI client generation is adopted: treat generated code as generated, keep it separate from handwritten feature logic, regenerate it when the contract changes, and do not patch generated files unless the generation workflow requires it (`swagger` skill for contract concerns).\n\n## Testing\n\nUseful targets: meaningful component behavior, validation, data-access request mapping, important route/auth behavior, complex reactive state. Do not test framework internals or duplicate the same behavior at every level. E2E tests (Playwright, when adopted) focus on a small number of important user workflows unless broader coverage is required.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              61,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen frontend scope exists, create it with the current Angular CLI under `frontend/<Name>.Web/` (for example `npx @angular/cli@latest new <Name>.Web --directory frontend/<Name>.Web --routing --style=scss --strict`, plus `--zoneless` when the CLI version offers it), using the baseline in `decisions.md` and letting the CLI select compatible Angular/TypeScript/RxJS versions. Do not impose an obsolete directory structure on what the current CLI generates; feature structure follows `frontend-structure.md`.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-015",
+        "name": "Avoid overlapping Angular libraries by default",
+        "related_groups": [
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "always",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Angular Libraries"
+        ],
+        "normalized_policy": "Do not add NgRx, Axios, Lodash, Bootstrap, Tailwind, extra form/component/state libraries by default; use built-in Angular capabilities first and add extras only for concrete needs.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-015",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0062",
+        "primary/L0/constraints.jsonl/RULE-L0-0232",
+        "primary/L0/constraints.jsonl/RULE-L0-0304"
+      ],
+      "boundary_analysis": "Built-in-first/no-default-libraries and no workaround library during fixes covered. Static name-review acceptance limitations already BF0047/52.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/INSTRUCTION_MAP.md",
+          "sha256": "f9d3c6fce26cba3e21211cba468677347fee34156bba8b6e1a10b50731959a10",
+          "inspected_ranges": [
+            [
+              97,
+              99
+            ]
+          ],
+          "context_quotes": [
+            "| `.claude/hooks/claude-hook.mjs` | `pre-bash` (fails closed): blocks npm/pnpm/yarn force/legacy-peer flags and `dotnet add/remove … reference` / `dotnet reference add/remove` before they run, also behind global options such as `--prefix`, `--dir`, `--cwd` · `post-bash`, after successful and failed shell calls: compares the active worktree's manifests (tracked and untracked, not ignored) with a per-worktree snapshot kept in the Git directory, validates added and changed manifests, reports removals and moves, routes dependency and project-reference changes; the first observation of a worktree validates every manifest · `post-edit`: manifest checks, dependency and reference-change routing, product-input reminder, structure check after instruction edits · `stop`: co-change reminders (seed, migrations, tests, custom settings) repeated only when the changed files or their content differ, never loops |\n| `.claude/hooks/manifest-checks.mjs` | central versions, `VersionOverride`, floating/prerelease versions, deny/review package lists (approved exceptions are read from the \"Accepted\" sections of the decision summaries), npm tooling category, `.npmrc` bypass, outward project references; reads UTF-8, UTF-8 with BOM, and BOM-tagged UTF-16 files and reports undecodable ones |\n| `.claude/tools/check-instructions.mjs` | structure checker: `node \"$(git rev-parse --show-toplevel)/.claude/tools/check-instructions.mjs\"` (Bash or PowerShell, from any directory of the repository or worktree) — level-first layout, headers, `paths`, Level 0/1 neutrality, dependency direction and cycles, imports, references, private references, hook registrations (exec form, launcher placeholder, required events including PostToolUseFailure, fail-closed PreToolUse only), this map's completeness, always-loaded estimate |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/manifest-checks.mjs",
+          "sha256": "b7a5ee762cd856ac04e3c7fecdf69a7a15e243a3f40e6008c63db491ff960ade",
+          "inspected_ranges": [
+            [
+              33,
+              41
+            ],
+            [
+              330,
+              335
+            ]
+          ],
+          "context_quotes": [
+            "\nconst REVIEW_NPM = new Map([\n  ['@ngrx/store', `not added by default → ${OWNER.decisions} (Not added by default)`],\n  ['axios', `not added by default → ${OWNER.decisions} (Not added by default)`],\n  ['lodash', `not added by default → ${OWNER.decisions} (Not added by default)`],\n  ['bootstrap', `not added by default → ${OWNER.decisions} (Not added by default)`],\n  ['tailwindcss', `not added by default → ${OWNER.decisions} (Not added by default)`],\n]);\n",
+            "      }\n      const key = name.toLowerCase();\n      if (REVIEW_NPM.has(key) && !accepted.includes(key)) {\n        problems.push(`${location}: '${name}' needs a recorded decision or concrete need — ${REVIEW_NPM.get(key)}`);\n      }\n      if (section === 'dependencies' && NPM_TOOLING.some(pattern => pattern.test(name))) {"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "\n- Frontend: do not add NgRx, Axios, Lodash, Bootstrap, Tailwind, or additional form, component, or state-management libraries by default; use built-in Angular capabilities first and add an extra library only for a concrete need.\n- Backend: mediator libraries such as MediatR or Kommand (mediator-based organization is not adopted — `1-architecture/overview.md`); another mapping framework without approval."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "0e75858fa6dd43c36e126691682d2db491eb8611ebfc6f612666a95570649e01",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not convert code to `any` to silence TypeScript, disable strict mode, suppress template diagnostics without understanding them, add NgModules to work around standalone configuration, replace framework APIs speculatively, or add another state-management or HTTP library to bypass a local issue (`.claude/rules/2-technology/angular.md`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "94b2a0028f63fa4310d7624ee485ae44cf9d6f2e71a6d4a870b89ffd06d79171",
+          "inspected_ranges": [
+            [
+              87,
+              89
+            ]
+          ],
+          "context_quotes": [
+            "\nMediatR, CQRS handler trees, Vertical Slice Architecture, Domain Events, Specifications, SharedKernel, BuildingBlocks, EventBus, messaging, microservices, Kubernetes, cloud-specific projects, state-management frameworks, Docker, generic `Common`/`Helpers`/`Utils` directories — governed by `1-architecture/overview.md`, `code-organization.md`, and `3-project/decisions.md`.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-016",
+        "name": "Conditional E2E",
+        "related_groups": [
+          "frontend",
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "always",
+        "scope": "frontend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/project-structure/references/technology-stack.md#Angular Libraries"
+        ],
+        "normalized_policy": "Playwright is the approved default when frontend E2E coverage is required, but it is not part of the minimal baseline scaffold.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-016",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0060"
+      ],
+      "boundary_analysis": "E2E coverage trigger and excluded minimal scaffold explicit; no automatic frontend Playwright installation obligation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/3-project/decisions.md",
+          "sha256": "76eca98b122bd7f41a0f3ae295c79c3a93b4c189a629d1b6e7c4ff93466ea59d",
+          "inspected_ranges": [
+            [
+              36,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "| Testcontainers | isolated real-provider tests justify it |\n| Playwright | frontend E2E coverage is required — it is the approved default then, but not part of the minimal scaffold |\n| Docker / container artifacts | the project or its deployment actually needs containers — never merely because the application can be containerized |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L0",
+      "pass_id": 2,
+      "unit": "P0002-L0-P018",
+      "canonical_policy": {
+        "id": "DEP-017",
+        "name": "API versioning package is conditional",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/api-versioning/SKILL.md#Asp.Versioning Setup"
+        ],
+        "normalized_policy": "When Controller API versioning is explicitly adopted, use the Controller integration of Asp.Versioning; do not add the package before the project actually adopts versioning.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "DEP-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/L0/constraints.jsonl/RULE-L0-0247",
+        "primary/L0/constraints.jsonl/EXTRA-L0-0009"
+      ],
+      "boundary_analysis": "Explicit adoption gate and Controller integration/API explorer covered; versioning approval already registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "aabd590825a8528eb0b848ea715da112587291c712a1f7278a958cc9742d7ab7",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "\n- **API versioning:** when Controller API versioning is explicitly adopted, use the Controller integration of `Asp.Versioning` (`Asp.Versioning.Mvc`, plus `Asp.Versioning.Mvc.ApiExplorer` for documentation); do not add it before the project actually adopts versioning (default).\n- **Resilience:** when resilience is required, prefer `Microsoft.Extensions.Http.Resilience` for `HttpClient` and `Microsoft.Extensions.Resilience` for general pipelines; a direct Polly reference or Polly API configuration is an explicit, documented exception rather than the default (default). Do not add the deprecated `Microsoft.Extensions.Http.Polly` or `Polly.Extensions.Http`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "ab1ab8aac96b8583bcf41b011399e96b0e94eb6a884e3c009a4832e959a88b7d",
+          "inspected_ranges": [
+            [
+              12,
+              14
+            ]
+          ],
+          "context_quotes": [
+            "\nPolicy owners: when versioning is justified, breaking-change treatment, one consistent strategy (URL segment by default), no per-version inner models → `.claude/rules/1-architecture/entry-points.md` → Versioning; adopting versioning is Reserved (CLAUDE.md → Decision control); the package binding → `add-dependency`; deprecation procedure → `architecture-decision`. Versioning belongs to the API contract, not to Domain or Application. This skill is technique only.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "8d3e72d521d80cf81713771d162d4319a8d7e34a52320f85e897b5c4b42165e7",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "  8. changing the authentication/authorization architecture;\n  9. making a breaking public API change or adopting API versioning;\n  10. defining product behavior or tunable values that the product sources do not define (Product governance above)."
+          ]
+        }
+      ]
+    }
+  ]
+}

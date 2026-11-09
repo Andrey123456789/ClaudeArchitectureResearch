@@ -1,0 +1,187 @@
+# Batch B001 — agents/code-reviewer.md and .claude/capabilities/** (contracts and module manifests)
+# Capability CONTRACT/MODULE files are declared 'maintainer metadata, not auto-loaded'. Their JSON blocks are
+# nevertheless read by executable checks: MODULE.md manifests by lib/common.js loadSelectedModules() (used by
+# check-manifests.js, check-architecture.js, stop.js, check-instructions.js); CONTRACT.md JSON by check-instructions.js.
+
+@@ output/template/.claude/agents/code-reviewer.md ;; Subagent definition (delegated review); frontmatter is effective configuration.
+@scope subagent code-reviewer
+1-6 IM ;; Frontmatter: name and delegation description (trigger text).
+7 OL [wf010.reviewer-readonly] ;; ;; disallowedTools: Write, Edit, MultiEdit, NotebookEdit
+8-9 OL [wf010.reviewer-skill] ;; ;; - code-review
+10 IM ;; Frontmatter close.
+12 NN ;; Banner (thin read-only wrapper; code-review owns criteria).
+14 NN ;; Heading.
+16 OL [wf010.reviewer-readonly] ;; ;; Perform an independent, read-only review. Do not edit files.
+18-20 OL [wf010.reviewer-skill]
+22 OL [wf010.reviewer-output]
+
+C wf010.reviewer-readonly OL WF-010 MUST_NOT ;; The code-reviewer performs an independent read-only review: Write, Edit, MultiEdit and NotebookEdit are disallowed and it must not edit files. ;; = ;; Shell tools are not disallowed by frontmatter. ;;
+C wf010.reviewer-skill OL WF-010 MUST ;; Use the code-review workflow as the canonical procedure (preloaded; read SKILL.md if not in context); do not redefine review policy. ;; = ;; none ;;
+C wf010.reviewer-output OL WF-010 MUST ;; Return findings in the code-review workflow's output shape. ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/architecture/CONTRACT.md ;; Capability contract (maintainer metadata, not auto-loaded); its JSON block is read by check-instructions.js to validate the selected frame module.
+@scope capability maintenance (contract read during capability maintenance; JSON enforced by check-instructions.js)
+1 NN ;; Banner declaring maintainer metadata, not auto-loaded.
+3 NN ;; Heading.
+5 NN ;; Heading.
+7-9 NN ;; Purpose description of the frame.
+10-11 EX [x.cap-placement-frame] ;; ;; Binding rule: placement belongs to the frame; technique belongs
+13 NN ;; Heading.
+15-16 NN ;; Table header.
+17-25 NN ;; Role vocabulary definitions (terminology used by other instructions).
+27-28 EX [x.cap-binds-required]
+30 NN ;; Heading.
+32-33 NN ;; Table header.
+34-37 NN ;; Facet table describing locations/loading (descriptive; enforced via the JSON block below).
+39 NN ;; Heading.
+41-44 EX [x.cap-frame-replacement]
+46-47 IM ;; JSON block start and slot identity.
+48-58 EX [x.cap-contract-conformance] ;; Contract JSON: required facets, properties, enforcement data and roles that check-instructions.js validates for the selected frame module.
+59-60 IM ;; JSON block end.
+
+C x.cap-placement-frame EX - MUST ;; Placement belongs to the architecture frame; technique belongs to leaf capabilities. ;; = ;; none ;; Capability-system ownership rule (repo/meta), not an oracle policy.
+C x.cap-binds-required EX - MUST ;; A leaf that must name a frame-specific project or directory declares a binds entry in its manifest (enforced by check-instructions.js). ;; = ;; none ;; Capability-system rule (repo/meta).
+C x.cap-frame-replacement EX ARC-020 MUST ;; A replacement frame must supply every role mapping and facet; a frame replacement reviews embedded rules that use layer names. ;; = ;; Only on frame replacement. ;; Capability replacement procedure not in the oracle.
+C x.cap-contract-conformance EX - ENFORCED ;; Selected modules must provide every contract-required facet at the role-named location, every required property and every required enforcement data entry (check-instructions.js errors otherwise). ;; = ;; none ;; Capability conformance invariant (repo/meta).
+
+@@ output/template/.claude/capabilities/architecture/clean-architecture/MODULE.md ;; Selected frame module manifest (not auto-loaded); JSON consumed by check-architecture.js, check-manifests.js, stop.js and check-instructions.js.
+@scope executable data of the selected architecture module (consumed by hooks/checkers)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5-8 NN ;; Description of the module and what it supplies.
+10-11 NN ;; States runtime facets live in flat locations.
+13 NN ;; Heading.
+15-29 IM ;; JSON: slot/implementation identity, facet locations and property pointers (validated by check-instructions.js).
+30 IM ;; binds: none.
+31 EX [x.cap-leak-tokens] ;; ;; "leakTokens": ["Clean Architecture", "clean-architecture"],
+32-33 EX [x.cap-detail-tokens] ;; ;; "detailTokens": ["Infrastructure", ".Domain", ".Application", ".Api"],
+34 OL [arc009.reserved-packages] ;; ;; "reservedPackages": ["MediatR", "Kommand"],
+35-37 IM ;; JSON structure: architecture specification header and project root 'backend'.
+38-42 OL [arc001.layer-matrix] ;; Layer suffixes and allowed references (Domain none; Application→Domain; Infrastructure→Application, Domain; Api→Application, Infrastructure, Domain).
+43-48 OL [arc028.test-matrix] ;; Test-project suffixes and allowed references (IntegrationTests→Api only).
+49-52 OL [arc008.forbidden-namespaces] ;; Core model and use-case layer must not import Microsoft.AspNetCore or persistence technology namespaces.
+53-57 IM ;; Owner pointer and JSON block end.
+
+C x.cap-leak-tokens EX - ENFORCED ;; Instruction and enforcement files outside a capability's own facets must not name a selected implementation's leak tokens (e.g. Clean Architecture, NUnit, Angular, EF Core) unless a binds entry declares it; check-instructions.js reports errors. ;; = ;; Owning facets, MAP.md and capability-selection.md exempt; binds entries. ;; Implementation-name isolation is a capability-system invariant (repo/meta), not an oracle policy.
+C x.cap-detail-tokens EX - ENFORCED ;; Non-frame capability facets must not use frame-specific names (Infrastructure, .Domain, .Application, .Api) without a binds entry to the frame. ;; = ;; binds to the frame. ;; Capability-system invariant (repo/meta).
+C arc009.reserved-packages OL ARC-009,ARC-020 ENFORCED_ADVISORY ;; MediatR and Kommand package references are flagged (WARN) as not-adopted patterns requiring a Reserved decision. ;; = ;; Approved decision. ;;
+C arc001.layer-matrix OL ARC-001 ENFORCED ;; Backend project references are checked against the frame matrix (Domain→none, Application→Domain, Infrastructure→Application/Domain, Api→Application/Infrastructure/Domain); violations are errors. ;; = ;; Projects matched by suffix under backend/. ;;
+C arc028.test-matrix OL ARC-028 ENFORCED_ADVISORY ;; Test-project references are checked against allowed lists (Domain.Tests→Domain; Application.Tests→Application, Domain; Infrastructure.Tests→Infrastructure, Application, Domain; IntegrationTests→Api); broader references are warnings. ;; = ;; none ;;
+C arc008.forbidden-namespaces OL ARC-002,ARC-008,ARC-019 ENFORCED ;; Code in the core model (Domain) and use-case layer (Application) must not import Microsoft.AspNetCore or Microsoft.EntityFrameworkCore namespaces (errors). ;; = ;; none ;;
+
+@@ output/template/.claude/capabilities/backend-testing/CONTRACT.md ;; Capability contract (maintainer metadata); JSON read by check-instructions.js.
+@scope capability maintenance (backend-testing slot)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Heading.
+7-13 EX [x.cap-leaf-boundary] ;; ;; Framework-independent test policy (levels, behavior focus, determinism,
+15 NN ;; Heading.
+17-18 NN ;; Table header.
+19-21 NN ;; Role vocabulary definitions.
+23 NN ;; Heading.
+25-26 NN ;; Table header.
+27-29 NN ;; Facet table (descriptive; enforced via JSON).
+31 NN ;; Heading.
+33-34 NN ;; Required properties description (enforced via JSON).
+36-37 IM ;; JSON start and slot identity.
+38-48 EX [x.cap-contract-conformance] ;; Contract JSON validated by check-instructions.js.
+49-50 IM ;; JSON end.
+
+C x.cap-leaf-boundary EX - MUST ;; Leaf modules hold only implementation-specific facets; framework-independent policy stays in the neutral rule files outside the module, and placement belongs to the frame. ;; = ;; none ;; Capability-system ownership rule (repo/meta).
+
+@@ output/template/.claude/capabilities/backend-testing/nunit/MODULE.md ;; Selected backend-testing module manifest; JSON consumed by check-manifests.js, check-architecture.js and check-instructions.js.
+@scope executable data of the selected backend-testing module
+1 NN ;; Banner.
+3 NN ;; Heading.
+5-8 NN ;; Description of what replacing the module touches.
+10-11 NN ;; binds note.
+13 NN ;; Heading.
+15-31 IM ;; JSON: identity, facets, properties (NUnit packages, [TestCase] mechanism, fixtures, filter command) and binds; metadata validated by check-instructions.js.
+32 EX [x.cap-leak-tokens] ;; ;; "leakTokens": ["NUnit", "nunit", "[TestCase", "[TestFixture", "TestCaseSource", "OneTimeSetUp", "Assert.That"],
+33 IM ;; enforcement key.
+34 IM ;; testFrameworkPackages: used to recognise test projects in manifest/architecture checks.
+35 OL [tst001.competing-frameworks] ;; ;; "competingFrameworkPackages": ["xunit", "xunit.v3", "xunit.runner.visualstudio", "MSTest", "MSTest.TestFramework", "MSTest.TestAdapter", "TUnit"]
+36-38 IM ;; JSON end.
+
+C tst001.competing-frameworks OL TST-001 ENFORCED_ADVISORY ;; A test project referencing another test framework (xUnit, MSTest, TUnit) is flagged (WARN) as needing a concrete reason. ;; = ;; Concrete reason. ;;
+
+@@ output/template/.claude/capabilities/frontend/CONTRACT.md ;; Capability contract (maintainer metadata); JSON read by check-instructions.js.
+@scope capability maintenance (frontend slot)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Heading.
+7-12 EX [x.cap-leaf-boundary]
+14-15 EX [x.cap-optional-clear]
+17 NN ;; Heading.
+19-20 NN ;; Table header.
+21-24 NN ;; Role vocabulary definitions.
+26 NN ;; Heading.
+28-29 NN ;; Table header.
+30-32 NN ;; Facet table (descriptive).
+34 NN ;; Heading.
+36-37 NN ;; Required properties description.
+39-40 IM ;; JSON start and slot identity.
+41-51 EX [x.cap-contract-conformance] ;; Contract JSON validated by check-instructions.js.
+52-53 IM ;; JSON end.
+
+C x.cap-optional-clear EX - MUST ;; Clearing the optional frontend selection removes the module's facets and its planning import; nothing outside the listed facets may need to change (check-instructions.js errors on imported/present planning facets of unselected slots). ;; = ;; none ;; Capability-system invariant (repo/meta).
+
+@@ output/template/.claude/capabilities/frontend/angular/MODULE.md ;; Selected frontend module manifest; JSON consumed by check-manifests.js and check-instructions.js.
+@scope executable data of the selected frontend module
+1 NN ;; Banner.
+3 NN ;; Heading.
+5-9 NN ;; Description of the module.
+11 NN ;; Heading.
+13-28 IM ;; JSON: identity, facets, properties (Vitest, Playwright when E2E required, ng new scaffold, bindings) and binds.
+29 EX [x.cap-leak-tokens] ;; ;; "leakTokens": ["Angular", "angular", "RxJS", "NgRx", "NgModule", "Vitest", "@angular", "ng add", "ng new", "provideHttpClient"],
+30 IM ;; enforcement key.
+31 OL [dep015.not-by-default-pkgs] ;; ;; "notByDefaultPackages": ["@ngrx/store", "@ngrx/effects", "@ngrx/signals", "axios", "lodash", "lodash-es", "bootstrap", "tailwindcss"],
+32 OL [dep007.dev-only-pkgs] ;; ;; "devOnlyPackages": ["@angular/cli", "@angular/build", "@angular-devkit/build-angular", "@angular/compiler-cli", "vitest"]
+33-35 IM ;; JSON end.
+
+C dep015.not-by-default-pkgs OL DEP-015 ENFORCED_ADVISORY ;; NgRx, axios, lodash(-es), bootstrap and tailwindcss dependencies are flagged (WARN) as not part of the frontend baseline. ;; = ;; Concrete requirement. ;;
+C dep007.dev-only-pkgs OL DEP-007 ENFORCED_ADVISORY ;; Angular build tooling and vitest (plus typescript, eslint, prettier, playwright, jest, karma) in runtime dependencies are flagged (WARN). ;; = ;; Reason to keep in dependencies. ;;
+
+@@ output/template/.claude/capabilities/persistence/CONTRACT.md ;; Capability contract (maintainer metadata); JSON read by check-instructions.js.
+@scope capability maintenance (persistence slot)
+1 NN ;; Banner.
+3 NN ;; Heading.
+5 NN ;; Heading.
+7-9 EX [x.cap-placement-frame] ;; ;; It binds to frame roles; it
+11 EX [x.cap-conformance-decision]
+12 EX [x.cap-conformance-decision,x.cap-replacement-semantics] ;; Line ends the conformance sentence and starts the replacement sentence.
+13 EX [x.cap-replacement-semantics,x.cap-provider-variant] ;; Line ends the replacement sentence and starts the provider-variant sentence.
+14-15 EX [x.cap-provider-variant]
+17 NN ;; Heading.
+19-20 NN ;; Table header.
+21-24 NN ;; Role vocabulary definitions.
+26 NN ;; Heading.
+28-29 NN ;; Table header.
+30-33 NN ;; Facet table (descriptive).
+35 NN ;; Heading.
+37-40 NN ;; Required properties description.
+42-43 IM ;; JSON start and slot identity.
+44-55 EX [x.cap-contract-conformance] ;; Contract JSON validated by check-instructions.js.
+56-57 IM ;; JSON end.
+
+C x.cap-conformance-decision EX GOV-017 MUST ;; A missing required facet or property is a conformance failure whose resolution requires a Decision Request. ;; = ;; none ;; Capability-system rule tied to Decision Control; not an oracle policy.
+C x.cap-replacement-semantics EX PST-005,PST-006,PST-010 MUST_NOT ;; Replacing the persistence technology must not silently lose migration or seeding semantics. ;; = ;; Only on technology replacement. ;; Replacement-continuity obligation not in the oracle.
+C x.cap-provider-variant EX DEP-009 DEFINITION ;; A provider change (e.g. SQL Server to PostgreSQL) is a provider-variant change inside the persistence slot, not a new slot. ;; = ;; none ;; Capability-taxonomy rule (repo/meta).
+
+@@ output/template/.claude/capabilities/persistence/ef-core/MODULE.md ;; Selected persistence module manifest; JSON consumed by check-architecture.js (namespaces), stop.js (co-change) and check-instructions.js.
+@scope executable data of the selected persistence module
+1 NN ;; Banner.
+3 NN ;; Heading.
+5-9 NN ;; Description of the module.
+11-14 EX [x.cap-provider-sections]
+16-19 NN ;; Explains which executable guidance names the frame (binds rationale).
+21 NN ;; Heading.
+23-50 IM ;; JSON: identity, facets, properties (commit binding, migration/seeding mechanisms, provider, collation, relational testing), provider-variant section anchors and binds (validated by check-instructions.js).
+51 EX [x.cap-leak-tokens] ;; ;; "leakTokens": ["EF Core", "Entity Framework"
+52 IM ;; enforcement key.
+53 OL [arc008.forbidden-namespaces] ;; ;; "technologyNamespaces": ["Microsoft.EntityFrameworkCore"],
+54-60 OL [pst008.cochange-patterns] ;; Co-change patterns: Domain or Persistence/Configurations changes expect Seeding and Migrations companions (stop hook).
+61-64 IM ;; JSON end.
+
+C x.cap-provider-sections EX DEP-009 MUST ;; Provider-variant content is confined to the listed sections; a provider change edits only those sections, the provider property and the declared string-comparison property. ;; = ;; none ;; Capability maintenance rule (repo/meta).
+C pst008.cochange-patterns OL PST-008,PST-010 ENFORCED_ADVISORY ;; Changes to Domain or Persistence/Configurations files without Seeding or Migrations changes raise a Stop-hook reminder to apply the persistence-change workflow. ;; = ;; none ;;

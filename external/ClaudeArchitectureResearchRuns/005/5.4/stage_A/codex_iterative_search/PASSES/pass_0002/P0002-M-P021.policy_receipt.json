@@ -1,0 +1,1296 @@
+{
+  "unit": "P0002-M-P021",
+  "batch_input_sha256": "428a40a10ab710d7d20487d524df7d6c2e85d8febaf19179417d5e3cc022ddb8",
+  "reviews": [
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-001",
+        "name": "Inspect existing code before non-trivial change",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Development Workflow"
+        ],
+        "normalized_policy": "Inspect relevant existing code before making non-trivial changes and apply applicable rules/skills.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0182",
+        "primary/M/constraints.jsonl/RULE-M-0296",
+        "primary/M/constraints.jsonl/RULE-M-0330",
+        "primary/M/constraints.jsonl/RULE-M-0342",
+        "primary/M/constraints.jsonl/RULE-M-0344",
+        "primary/M/constraints.jsonl/RULE-M-0362",
+        "primary/M/constraints.jsonl/RULE-M-0378",
+        "primary/M/constraints.jsonl/RULE-M-0379",
+        "primary/M/constraints.jsonl/RULE-M-0382",
+        "primary/M/constraints.jsonl/RULE-M-0512",
+        "primary/M/constraints.jsonl/RULE-M-0558",
+        "primary/M/constraints.jsonl/RULE-M-0563"
+      ],
+      "boundary_analysis": "Inspect context and explicitly load new-file/greenfield owners covered. IndependentBF0023..0028 cover checker structural constraints; own lexical/parser/private-reference findings retained. Recovered truncated output before concluding this batch.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-M-0004",
+        "CIS-M-0005",
+        "CIS-M-0006",
+        "CIS-M-0007",
+        "CIS-M-0010",
+        "CIS-M-0011",
+        "CIS-M-0012"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/scripts/check-instructions.mjs",
+          "sha256": "03102c82ade3cf3d24afccf9b832671b158f1837b8794afe8c47677157b83c1d",
+          "inspected_ranges": [
+            [
+              26,
+              44
+            ],
+            [
+              81,
+              101
+            ],
+            [
+              103,
+              155
+            ],
+            [
+              162,
+              188
+            ],
+            [
+              196,
+              219
+            ],
+            [
+              250,
+              327
+            ]
+          ],
+          "context_quotes": [
+            "\nconst REQUIRED_FILES = [\n  'CLAUDE.md', 'docs/technology-stack.md', '.claude/MAP.md', '.claude/settings.json',\n  '.claude/agents/code-reviewer.md', 'SPECIFICATION.md', 'CUSTOM_SETTINGS.md',\n];\nconst WORKFLOW_SKILLS = [\n  'development-workflow', 'project-structure', 'verify', 'code-review', 'build-fix', 'custom-settings',\n  'git-workflow', 'security-scan', 'add-dependency', 'architecture-decision', 'template-maintenance',\n];\nconst KNOWLEDGE_SKILLS = [\n  'ef-core', 'http-api', 'aspnet-error-handling', 'dotnet-testing', 'logging', 'httpclient-factory',\n  'configuration', 'dependency-injection', 'caching', 'swagger', 'api-versioning', 'health-check',\n  'docker', 'ci-cd', 'angular', 'modern-csharp', 'authentication',\n];\nconst FORBIDDEN_SKILLS = ['serilog', 'resilience'];\nconst ALLOWED_IMPORTS = ['docs/technology-stack.md'];\nconst HEADER = /^> Owns: .+ \\| Scope: .+ \\| Loads: .+$/;\nconst BUDGET_WARN_TOKENS = 6000;\n// Hook registrations the enforcement depends on: [event, tools the matcher must",
+            "const privateRefs = new Map(); // \"skill/file.md\" -> owner skill\nfor (const skill of skillNames) {\n  const dir = `.claude/skills/${skill}`;\n  for (const entry of listDir(dir)) {\n    if (entry === 'SKILL.md') {\n      instructionFiles.push(`${dir}/SKILL.md`);\n    } else if (entry === 'references' && statSync(abs(`${dir}/references`)).isDirectory()) {\n      for (const ref of listDir(`${dir}/references`)) {\n        if (!isMarkdownFile(`${dir}/references/${ref}`)) {\n          fail(`${dir}/references/${ref}: only Markdown files are allowed in references/`);\n          continue;\n        }\n        instructionFiles.push(`${dir}/references/${ref}`);\n        privateRefs.set(`${skill}/${ref}`, skill);\n      }\n    } else {\n      fail(`${dir}/${entry}: unexpected entry (a skill folder holds SKILL.md and optional references/)`);\n    }\n  }\n  if (!listDir(dir).includes('SKILL.md')) fail(`${dir}: missing SKILL.md`);\n}",
+            "\n// ---------------------------------------------------------------- imports\nconst claude = existsSync(abs('CLAUDE.md')) ? read('CLAUDE.md') : '';\nconst imports = importsOf(claude);\nfor (const imp of imports) {\n  if (!ALLOWED_IMPORTS.includes(imp)) fail(`CLAUDE.md imports ${imp}; only ${ALLOWED_IMPORTS.join(', ')} may be imported`);\n  if (!existsSync(abs(imp))) fail(`CLAUDE.md import does not resolve: ${imp}`);\n}\nfor (const required of ALLOWED_IMPORTS) if (!imports.includes(required)) fail(`CLAUDE.md must import ${required}`);\nfor (const file of existingInstructionFiles.filter((f) => f !== 'CLAUDE.md')) {\n  if (importsOf(read(file)).length > 0) fail(`${file}: contains an @ import; only CLAUDE.md imports`);\n}\n\n// ---------------------------------------------------------------- headers and leakage\nfor (const file of existingInstructionFiles) {\n  const { body } = splitFrontmatter(read(file));\n  const firstLine = body.split(/\\r?\\n/).find((line) => line.trim() !== '') ?? '';\n  if (!HEADER.test(firstLine.trim())) {\n    fail(`${file}: first line after frontmatter must be \"> Owns: ... | Scope: ... | Loads: ...\"`);\n  } else {\n    const loads = firstLine.split('| Loads:')[1].toLowerCase();\n    if (file.startsWith('.claude/rules/') && !loads.includes('path-scoped')) fail(`${file}: header must say Loads: path-scoped`);\n    if (file.includes('/references/') && !loads.includes('private reference')) fail(`${file}: header must say Loads: private reference`);\n    if (KNOWLEDGE_SKILLS.some((k) => file === `.claude/skills/${k}/SKILL.md`) && !loads.includes('on demand')) {\n      fail(`${file}: knowledge skill header must say Loads: on demand`);\n    }\n    if (WORKFLOW_SKILLS.some((w) => file === `.claude/skills/${w}/SKILL.md`) && !/workflow|user-invoked/.test(loads)) {\n      fail(`${file}: workflow skill header must say Loads: workflow (or user-invoked)`);\n    }\n  }\n  for (const line of read(file).split(/\\r?\\n/)) {\n    if (/^\\s*(\\*\\*)?(Level|Kind)(\\*\\*)?\\s*:/.test(line)) fail(`${file}: classification line \"${line.trim()}\" is not part of this instruction system`);\n  }\n}\n\n// ---------------------------------------------------------------- rules\nfor (const entry of ruleFiles) {\n  const path = `.claude/rules/${entry}`;\n  if (statSync(abs(path)).isDirectory()) {\n    fail(`${path}: .claude/rules/ must stay flat (no subdirectories)`);\n    continue;\n  }\n  if (!entry.endsWith('.md')) {\n    fail(`${path}: rule files must be Markdown`);\n    continue;\n  }\n  const { data } = splitFrontmatter(read(path));\n  const paths = data.paths;\n  if (!Array.isArray(paths) || paths.length === 0 || paths.some((p) => typeof p !== 'string' || p.trim() === '')) {\n    fail(`${path}: frontmatter must declare a non-empty \"paths\" list`);\n  }\n}\n",
+            "}\nconst descriptions = [];\nfor (const skill of skillNames) {\n  const path = `.claude/skills/${skill}/SKILL.md`;\n  if (!existsSync(abs(path))) continue;\n  const { data } = splitFrontmatter(read(path));\n  if (data.name !== skill) fail(`${path}: frontmatter name \"${data.name}\" must equal the folder name`);\n  const description = typeof data.description === 'string' ? data.description.trim() : '';\n  if (!description) fail(`${path}: missing description`);\n  if (description.length > 1024) fail(`${path}: description longer than 1024 characters`);\n  const userOnly = String(data['disable-model-invocation']) === 'true';\n  if (skill === 'template-maintenance' && !userOnly) fail(`${path}: must set disable-model-invocation: true (user-only workflow)`);\n  if (KNOWLEDGE_SKILLS.includes(skill) && !/^Use when\\b/.test(description)) {\n    fail(`${path}: knowledge-skill description must start with a concrete trigger (\"Use when ...\")`);\n  }\n  if (!userOnly) descriptions.push(description);\n}\n\n// ---------------------------------------------------------------- agent\nconst agentPath = '.claude/agents/code-reviewer.md';\nif (existsSync(abs(agentPath))) {\n  const { data, body } = splitFrontmatter(read(agentPath));\n  const disallowed = String(data.disallowedTools ?? '').split(/[,\\s]+/);\n  if (!disallowed.includes('Write') || !disallowed.includes('Edit')) fail(`${agentPath}: must disallow Write and Edit (read-only reviewer)`);\n  if (!body.includes('`code-review`')) fail(`${agentPath}: must delegate to the code-review skill`);\n  if (body.length > 1500) fail(`${agentPath}: agent body should stay a thin wrapper (<= 1500 characters)`);\n  if (data.description) descriptions.push(String(data.description));",
+            "\n  // private references\n  for (const m of text.matchAll(/skills\\/([a-z0-9-]+)\\/references\\/([A-Za-z0-9_.-]+\\.md)/g)) {\n    if (file !== '.claude/MAP.md' && m[1] !== ownerSkill) fail(`${file}: references private reference ${m[0]} owned by ${m[1]}`);\n  }\n  for (const m of text.matchAll(/(?<![\\w/])references\\/([A-Za-z0-9_.-]+\\.md)/g)) {\n    if (file === '.claude/MAP.md') continue;\n    if (!ownerSkill) {\n      fail(`${file}: mentions references/${m[1]} but private references belong to their owning skill`);\n    } else if (!privateRefs.has(`${ownerSkill}/${m[1]}`)) {\n      fail(`${file}: references/${m[1]} does not exist in .claude/skills/${ownerSkill}/references/`);\n    }\n  }\n\n  // backticked file paths\n  for (const m of text.matchAll(/`([^`\\s]+)`/g)) {\n    const token = m[1];\n    if (/[<>*{}$]|NNNN/.test(token) || /^https?:/.test(token)) continue;\n    const isRepoPath = /^(\\.claude|docs)\\//.test(token);\n    const isBareMd = /^[A-Za-z0-9_.-]+\\.md$/.test(token);\n    if (!isRepoPath && !isBareMd) continue;\n    if (token.startsWith('docs/decisions')) continue; // created with the first decision record\n    if (!resolveFileRef(token, file)) fail(`${file}: reference \\`${token}\\` does not resolve`);\n  }",
+            "\n// ---------------------------------------------------------------- map\nif (existsSync(abs('.claude/MAP.md'))) {\n  const map = read('.claude/MAP.md');\n  const listed = [...existingInstructionFiles, '.claude/settings.json', ...listDir('.claude/hooks').map((f) => `.claude/hooks/${f}`),\n    ...listDir('.claude/scripts').map((f) => `.claude/scripts/${f}`)];\n  for (const file of listed) {\n    if (file === '.claude/MAP.md') continue;\n    if (!map.includes(file)) fail(`.claude/MAP.md does not list ${file}`);\n  }\n  if (importsOf(claude).some((imp) => imp.endsWith('MAP.md'))) fail('MAP.md must not be imported (it is human-facing only)');\n}\n\n// ---------------------------------------------------------------- hooks\nif (existsSync(abs('.claude/settings.json'))) {\n  let settings;\n  try {\n    settings = JSON.parse(read('.claude/settings.json'));\n  } catch (error) {\n    fail(`.claude/settings.json is not valid JSON: ${error.message}`);\n  }\n  // Project hooks must use exec form: \"command\": \"node\" plus one argument, the\n  // script path anchored at ${CLAUDE_PROJECT_DIR}. Claude Code substitutes the\n  // placeholder without a shell; for this static check it resolves to the root\n  // being checked. Shell command strings (\"node .claude/hooks/x.mjs\", \"$VAR\",\n  // \"%VAR%\") depend on the current directory or on one shell and are rejected.\n  const hookArg = /^\\$\\{CLAUDE_PROJECT_DIR\\}\\/\\.claude\\/hooks\\/([A-Za-z0-9_.-]+\\.mjs)$/;\n  const execForm = '\"command\": \"node\", \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs\"]';\n  for (const [event, groups] of Object.entries(settings?.hooks ?? {})) {\n    for (const group of Array.isArray(groups) ? groups : []) {\n      for (const hook of group.hooks ?? []) {\n        const where = `settings.json ${event}`;\n        if (hook.type !== 'command') {\n          fail(`${where}: hook type \"${hook.type}\" is not supported; use a command hook in exec form (${execForm})`);\n          continue;\n        }\n        if (hook.command !== 'node' || !Array.isArray(hook.args)) {\n          fail(`${where}: hook ${JSON.stringify(hook.command)} is not in exec form; use ${execForm}`);\n          continue;\n        }\n        if (hook.args.length !== 1 || typeof hook.args[0] !== 'string') {\n          fail(`${where}: exec-form hook must pass exactly one argument, the script path (${execForm})`);\n          continue;\n        }\n        const m = hookArg.exec(hook.args[0]);\n        if (!m) {\n          fail(`${where}: hook argument \"${hook.args[0]}\" must be \"\\${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs\"`);\n        } else if (!existsSync(abs(`.claude/hooks/${m[1]}`))) {\n          fail(`${where}: hook script .claude/hooks/${m[1]} does not exist`);\n        } else {\n          // A script that dispatches on the event name must handle each event it is registered for.\n          const source = read(`.claude/hooks/${m[1]}`);\n          if (/\\.hook_event_name\\b/.test(source) && !new RegExp(`===\\\\s*'${event}'`).test(source)) {\n            fail(`${where}: .claude/hooks/${m[1]} reads hook_event_name but does not handle \"${event}\"`);\n          }\n        }\n        // The PreToolUse policy guard fails closed: a guard that cannot start,\n        // crashes, rejects its input, or times out must block the tool call.\n        // Advisory PostToolUse(Failure)/Stop hooks must not (the event already happened,\n        // and a blocking Stop failure could loop).\n        if (event === 'PreToolUse' && hook.onFailure !== 'block') {\n          fail(`${where}: the policy guard must set \"onFailure\": \"block\" so a failing or timed-out guard blocks the tool call`);\n        } else if (event !== 'PreToolUse' && hook.onFailure === 'block') {\n          fail(`${where}: advisory hook must not set \"onFailure\": \"block\" (the event already happened; a failing Stop hook could loop)`);\n        }\n      }\n    }\n  }\n  for (const [event, tools, script] of REQUIRED_HOOKS) {\n    const registered = (Array.isArray(settings?.hooks?.[event]) ? settings.hooks[event] : []).some((group) => {\n      const matcher = typeof group?.matcher === 'string' && !['', '*'].includes(group.matcher) ? group.matcher.split('|') : null;\n      return tools.every((tool) => !matcher || matcher.includes(tool)) &&\n        (group.hooks ?? []).some((hook) => hook?.args?.[0] === `\\${CLAUDE_PROJECT_DIR}/.claude/hooks/${script}`);\n    });\n    if (!registered) {\n      fail(`settings.json ${event}: required hook .claude/hooks/${script}${tools.length > 0 ? ` for ${tools.join('|')}` : ''} is not registered`);\n    }\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "64d6cc423bc904ce3a817501aeac9888ab31730a8992dd560edca632e50e448f",
+          "inspected_ranges": [
+            [
+              12,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\nRead `.claude/rules/dependencies.md` first — it owns dependency need, Central\nPackage Management, and npm conventions, and it loads only when a manifest is\nopened. Approved technologies: `docs/technology-stack.md`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/architecture-decision/SKILL.md",
+          "sha256": "3730f9f1b797addbfa60756289f5f946cf7185289702583982e542333b65398e",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "   owning `.claude/rules/` file in place — one owner, no copies elsewhere.\n4. Implement the change through `development-workflow`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              40,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore running commands, determine whether the failure concerns the .NET\nbackend, the Angular frontend, both, API contract/client generation,\npackage/dependency changes, or repository/toolchain configuration. Read the\n`.claude/rules/*.md` files whose `paths` match the failing area before editing —\nthey may not have loaded yet. Do not run unrelated build systems merely because\nthey exist.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "f610882412dcdd0a6bbb229c2999cba1b68d3c7ab56e5d16c08775dd908fe297",
+          "inspected_ranges": [
+            [
+              23,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore writing a pipeline, inspect the repository for: .NET backend, Angular\nfrontend, test projects, Dockerfiles, database/provider-specific integration\ntests, generated clients, deployment artifacts. Do not assume PostgreSQL,\nRedis, Docker, or frontend tooling exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              40,
+              45
+            ],
+            [
+              50,
+              53
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine what is being reviewed: files supplied by the user, the working-tree\ndiff, a branch or PR diff, or a named feature or module. Read the changed code\nand enough surrounding code — callers, contracts, dependencies — to understand\nits behavior; do not review isolated lines.\n",
+            "\nRead the `.claude/rules/*.md` files whose `paths` match the changed files, and\nload specialized technique only where relevant:\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "cb637ceaa146dc6d13788a8f97bb8e7485f347ab828af4055af7847f9edb9f78",
+          "inspected_ranges": [
+            [
+              12,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\nWhat belongs in `CUSTOM_SETTINGS.md`, approval of new values, and conflicts with\n`SPECIFICATION.md` are governed by CLAUDE.md § Custom Settings. Resolve any\nconflict before changing implementation. Framework defaults the project has not\nintentionally overridden are not settings. Before editing an affected surface,\nread the `.claude/rules/*.md` files whose `paths` match it (for example\n`persistence.md` and `architecture.md` for persistence metadata, `angular.md` for\nfrontend validation).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              18,
+              27
+            ],
+            [
+              33,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "\n1. For a new application or a substantial feature, read `SPECIFICATION.md`\n   (and `CUSTOM_SETTINGS.md`) before planning or implementing.\n2. Inspect the relevant existing code before making any non-trivial change.\n3. Apply the applicable rules and skills: read every `.claude/rules/*.md` whose\n   `paths` match the areas you will create or change (path rules load only when\n   matching files are opened, so read them explicitly for new files and\n   greenfield work), and load the knowledge skills for the technologies\n   involved.\n4. Classify open decisions with CLAUDE.md § Decision Control. Reserved →",
+            "\n- Route sub-tasks to their workflows: dependency changes → `add-dependency`;\n  `CUSTOM_SETTINGS.md` changes → `custom-settings`; new projects or structural\n  changes → `project-structure`.\n- When a new behavioral rule is approved, update the durable source of truth —"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              14,
+              22
+            ],
+            [
+              137,
+              145
+            ]
+          ],
+          "context_quotes": [
+            "\nGreenfield work happens before any path-scoped rule has loaded, so read these\nowners explicitly:\n\n- CLAUDE.md § Architecture Defaults (layout) and `docs/technology-stack.md`;\n- `.claude/rules/repository-structure.md`, `.claude/rules/architecture.md`,\n  `.claude/rules/dependencies.md`, and `.claude/rules/persistence.md`;\n- `.claude/rules/angular.md` when there is frontend scope.\n",
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior.\n4. Move code in small reviewable steps.\n5. Update namespaces and references consistently.\n6. Avoid unrelated feature work.\n7. Verify after restructuring.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              21,
+              24
+            ],
+            [
+              37,
+              40
+            ]
+          ],
+          "context_quotes": [
+            "\nThe security invariants themselves live in `.claude/rules/security.md`; read it\nbefore scanning.\n",
+            "   policies.\n8. Use the project's security, authentication, configuration, logging,\n   error-handling, HTTP, and resilience guidance.\n9. The scan must work without any specific MCP server, agent, analyzer,"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/template-maintenance/SKILL.md",
+          "sha256": "a996a94711ac2af5bdeb4234bf6deec6dfdd0e4ea0ebd01737f3386c45d0a94c",
+          "inspected_ranges": [
+            [
+              13,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "\nThis workflow runs only when the user invokes it. Claude must not start it\nautomatically.\n\n## Invariants\n\n- One authoritative owner per policy. Elsewhere use a routing pointer (\"run\n  workflow X\", \"see file Y\") or a yes/no check-by-reference — never a reworded\n  copy. Decision summaries appear only in CLAUDE.md § Architecture Defaults and\n  `docs/technology-stack.md`.\n- Keep each policy at its trigger: CLAUDE.md and `docs/technology-stack.md` only\n  for planning-time policy; a flat path-scoped rule for constraints on files of\n  an area; a workflow skill for procedure steps, stop conditions, and output\n  shape. Do not promote content into CLAUDE.md to make loading easier, and do not\n  demote planning-time policy to save tokens.\n- Knowledge skills and private references hold technique only; they never own a\n  must/must-not policy. A private reference is read only by its owning skill.\n- Every instruction file starts with the one-line\n  `> Owns: ... | Scope: ... | Loads: ...` header; every rule declares `paths`;\n  `.claude/rules/` stays flat. CLAUDE.md imports only\n  `docs/technology-stack.md`.\n- Keep CLAUDE.md, `docs/technology-stack.md`, and skill descriptions compact;\n  descriptions start with concrete triggers.\n- Hooks are registered in exec form — `\"command\": \"node\"` with\n  `\"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs\"]`, never a shell\n  command string. The placeholder only locates the script; hooks derive the\n  repository root they inspect from the hook input (`cwd`, or the edited file's\n  location) and checkers from the current directory\n  (`.claude/scripts/repo-root.mjs`). Hooks fail visibly and point messages at\n  the owning file instead of restating policy. The dependency guard runs on\n  PreToolUse, PostToolUse, and PostToolUseFailure for Bash and PowerShell, so a\n  shell call that fails after changing a manifest is still checked. The\n  PreToolUse guard also sets `\"onFailure\": \"block\"`, so a guard that cannot run\n  blocks the tool call; advisory post-tool and Stop hooks do not.\n- Product inputs (`SPECIFICATION.md`, `CUSTOM_SETTINGS.md`) stay inputs; they do\n  not carry instructions.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              103,
+              111
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the change touches architectural boundaries, read\n`.claude/rules/architecture.md` (and `.claude/rules/persistence.md` for\npersistence changes) and check project references, API → Application flow,\nrepository abstractions, the EF Core boundary, Unit of Work behavior, and\ndependency direction. When project files changed, run from the repository root\n— the top level of the current checkout or worktree, printed by\n`git rev-parse --show-toplevel`; change to it first if the shell is elsewhere:\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "e0145262c1d622cec4001bc545552ab5f11f8e99b98355b2358d79df98f2901d",
+          "inspected_ranges": [
+            [
+              151,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\nWorkflow skills own procedures, stop conditions, and output shape. Run the one\nthat matches:\n\n| Situation | Workflow |\n| --- | --- |\n| Any implementation change, from first inspection to completion gates | `development-workflow` |\n| Final verification before declaring work complete | `verify` |\n| Code review or an independent second pass | `code-review` (agent: `code-reviewer`) |\n| Failing build or tests to repair | `build-fix` |\n| Adding, updating, or removing a NuGet/npm dependency | `add-dependency` |\n| `CUSTOM_SETTINGS.md` value added, changed, or removed | `custom-settings` |\n| New solution or project, or a repository-structure change | `project-structure` |\n| Reserved decision or Decision Request | `architecture-decision` |\n| Security audit or scan | `security-scan` |\n| Any Git operation | `git-workflow` |\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-002",
+        "name": "Review substantial work before final verification",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Development Workflow"
+        ],
+        "normalized_policy": "For substantial feature work or a newly implemented application, run the code-review workflow before final verify.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0393"
+      ],
+      "boundary_analysis": "Substantial/new-app review and address-findings-before-final-verify sequencing explicit.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              108,
+              112
+            ]
+          ],
+          "context_quotes": [
+            "\n1. For substantial feature work or a newly implemented application, run\n   `code-review` (or delegate to the `code-reviewer` agent) and address the\n   findings before the final verification.\n2. Before declaring any implementation work complete, run `verify` at the depth"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-003",
+        "name": "Verification required before completion",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/CLAUDE.md#Development Workflow",
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md"
+        ],
+        "normalized_policy": "Before declaring implementation complete, run the verify workflow appropriate to the scope and risk.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0317",
+        "primary/M/constraints.jsonl/RULE-M-0370",
+        "primary/M/constraints.jsonl/RULE-M-0394",
+        "primary/M/constraints.jsonl/RULE-M-0607"
+      ],
+      "boundary_analysis": "Verify appropriate scope/risk and no optional tooling demand covered; PR/push timing separately EXTRA0135/0138.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/stop-co-change.mjs",
+          "sha256": "b13b675caeafff5863bafb23033d07ed4270c0dea3c4f48b92c54180b5bac04c",
+          "inspected_ranges": [
+            [
+              26,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "\nconst input = readInput();\nif (input.stop_hook_active === true) done();\n\nlet root;\ntry {\n  root = resolveActiveRoot(startDirectory(input));\n} catch (error) {\n  respond({ systemMessage: `Co-change check skipped: ${error.message}.` });\n}\n\nlet topLevel;\nlet gitDir;\nlet status;\ntry {\n  topLevel = canonical(git(['rev-parse', '--show-toplevel']).trim());\n  gitDir = git(['rev-parse', '--absolute-git-dir']).trim();\n  status = git(['status', '--porcelain=v1', '--untracked-files=all', '-z']);\n} catch (error) {\n  const reason = error.code === 'ENOENT' ? 'git is not installed or not on PATH' : 'the project is not inside a Git repository';\n  respond({ systemMessage: `Co-change check skipped: ${reason}.` });\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              232,
+              240
+            ]
+          ],
+          "context_quotes": [
+            "\nA build-fix task is complete when the relevant affected scope is green:\nbackend build passes, frontend build passes, affected tests pass, the\ncross-stack contract is consistent, no known new regression remains, and the\nfinal diff contains no accidental workaround — as applicable to the task. Do not\nrequire an unrelated frontend build for a backend-only repair, or vice versa.\nAfter the focused repair succeeds, run `verify` for the final completion pass\nwhen appropriate.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/custom-settings/SKILL.md",
+          "sha256": "cb637ceaa146dc6d13788a8f97bb8e7485f347ab828af4055af7847f9edb9f78",
+          "inspected_ranges": [
+            [
+              72,
+              79
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Search for stale references to the old value.\n2. Build affected backend and frontend projects.\n3. Run relevant tests.\n4. Verify persistence changes when applicable.\n5. Check `SPECIFICATION.md` for conflicts.\n6. Run the normal `verify` workflow.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              111,
+              114
+            ]
+          ],
+          "context_quotes": [
+            "   findings before the final verification.\n2. Before declaring any implementation work complete, run `verify` at the depth\n   appropriate to the change's scope and risk.\n3. Build or test failures that need diagnosis go through `build-fix`, then back"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/git-workflow/SKILL.md",
+          "sha256": "431d3f03476fec3c270db4822cd0a2155fbe8d8a08ad07b3a637b0b32272a6a5",
+          "inspected_ranges": [
+            [
+              69,
+              76
+            ],
+            [
+              90,
+              95
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore pushing:\n\n1. confirm the intended branch;\n2. confirm the working and staged state is understood;\n3. ensure relevant verification has completed;\n4. avoid pushing unrelated local commits accidentally.\n",
+            "\nRun `verify` before preparing a PR. A PR has a focused purpose without\naccidental unrelated changes, and its description explains what changed, why,\nhow it was verified, and important compatibility or migration notes. Do not\nclaim checks were run if they were not.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              115,
+              123
+            ],
+            [
+              137,
+              145
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore declaring scaffolding complete: restore backend dependencies, build the\n.NET solution, build the Angular application when present, run relevant tests\nwhen present, inspect project references\n(`node .claude/scripts/check-manifests.mjs`, run from the repository root —\n`git rev-parse --show-toplevel`), inspect the final repository tree,\nand confirm the Development configuration is valid. Then run `verify`. Never\nreport successful scaffolding for a solution that does not build.\n",
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior.\n4. Move code in small reviewable steps.\n5. Update namespaces and references consistently.\n6. Avoid unrelated feature work.\n7. Verify after restructuring.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              14,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "\nProduce evidence that the requested change is complete and has not introduced\nobvious regressions. Match verification to the scope and risk of the change, and\ndo not require optional tooling the repository has not configured.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "e0145262c1d622cec4001bc545552ab5f11f8e99b98355b2358d79df98f2901d",
+          "inspected_ranges": [
+            [
+              154,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\n| Situation | Workflow |\n| --- | --- |\n| Any implementation change, from first inspection to completion gates | `development-workflow` |\n| Final verification before declaring work complete | `verify` |\n| Code review or an independent second pass | `code-review` (agent: `code-reviewer`) |\n| Failing build or tests to repair | `build-fix` |\n| Adding, updating, or removing a NuGet/npm dependency | `add-dependency` |\n| `CUSTOM_SETTINGS.md` value added, changed, or removed | `custom-settings` |\n| New solution or project, or a repository-structure change | `project-structure` |\n| Reserved decision or Decision Request | `architecture-decision` |\n| Security audit or scan | `security-scan` |\n| Any Git operation | `git-workflow` |\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-004",
+        "name": "Verification starts with final diff/scope",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#1. Inspect the Change"
+        ],
+        "normalized_policy": "Review the final changed-file set/diff, confirm scope, remove accidental artifacts/secrets, and determine affected repository areas before choosing checks.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0608",
+        "primary/M/constraints.jsonl/RULE-M-0609",
+        "primary/M/constraints.jsonl/RULE-M-0621"
+      ],
+      "boundary_analysis": "Initial and final diff reviews, affected-area routing and temporary behavior preservation explicit.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/project-structure/references/solution-layout.md",
+          "sha256": "bc437d8bb719c84614ea8666e9bfe6a989347794e96daf4f7345d4e3308c4887",
+          "inspected_ranges": [
+            [
+              104,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\n## Git Ignore\n\nIgnore generated and local artifacts where applicable:\n\n```text\nbin/\nobj/\n.vs/\nnode_modules/\ndist/\n.angular/\nTestResults/\ncoverage/\nlocal secret/config overrides\n```\n\nDo not ignore files that are intentionally part of the Development\nconfiguration contract, such as a non-secret `appsettings.Development.json`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              23,
+              38
+            ],
+            [
+              142,
+              151
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing any checks. Confirm:\n\n- changes match the requested scope and no unrelated refactoring slipped in;\n- no generated or build artifacts were added accidentally;\n- no secrets or environment-specific credentials were introduced;\n- temporary diagnostics and probes are removed only after step 4 preserved any\n  behavior they uniquely verified.\n\nDetermine the affected repository areas, then choose checks:\n\n- backend-only change → affected .NET projects;\n- frontend-only change → the Angular application;\n- contract or full-stack change → both sides;\n- documentation-only change → no unrelated builds without a reason.\n",
+            "\nReview the final diff after all fixes. Check for:\n\n- accidental unrelated edits, commented-out code, temporary logging,\n  unintentional TODO/FIXME markers, stale temporary tests or scripts;\n- architecture drift;\n- unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`, and stale\n  code, tests, docs, or configuration after a `CUSTOM_SETTINGS.md` change;\n- behavior that was verified manually but never preserved as a test.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-005",
+        "name": "Build/test affected areas externally",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#2. Build"
+        ],
+        "normalized_policy": "Build affected projects and run relevant tests; a build failure means implementation is not complete and new relevant failures must be investigated.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0239",
+        "primary/M/constraints.jsonl/RULE-M-0510",
+        "primary/M/constraints.jsonl/RULE-M-0527",
+        "primary/M/constraints.jsonl/RULE-M-0528",
+        "primary/M/constraints.jsonl/RULE-M-0530",
+        "primary/M/constraints.jsonl/RULE-M-0610",
+        "primary/M/constraints.jsonl/RULE-M-0611",
+        "primary/M/constraints.jsonl/RULE-M-0612"
+      ],
+      "boundary_analysis": "Affected build/test and investigate relevant failures covered; EXTRA0214/0216/0217 and BF0105 preserve sample paths, restore prerequisite and small-suite obligation.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "64d6cc423bc904ce3a817501aeac9888ab31730a8992dd560edca632e50e448f",
+          "inspected_ranges": [
+            [
+              127,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "   version form, deprecated packages, project references).\n2. Restore and build the affected projects.\n3. Inspect vulnerability information for the changed dependency set:"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "30b07da5e929551fbe240b04fcf8be3756dc440ed9662a22cb41673c56c5d49c",
+          "inspected_ranges": [
+            [
+              168,
+              188
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the project uses Angular Material, use its components consistently for\ncommon UI primitives where they satisfy the requirement. Do not add Angular\nMaterial automatically to an existing project that has not chosen it, and do not\nwrap every Material component in a custom abstraction without a concrete reason.\n\n## API Client Generation\n\nWhen OpenAPI client generation is adopted, treat generated code as generated,\nkeep it separate from handwritten feature logic, and regenerate it when the API\ncontract changes. Backend contract documentation: `swagger` skill.\n\n## Testing\n\nTest frontend behavior at the appropriate level: meaningful component behavior,\nvalidation, data-access request mapping, important route/auth behavior, complex\nreactive state. Do not test Angular framework internals. E2E tests focus on a\nsmall number of important user workflows unless the project requires broader\nE2E coverage, and the same behavior is not duplicated at every test level. Use\nthe test runner configured in `package.json`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "bd3fe7bb3a6fdac944e0c893706e4c38346c1c6b23068ded540f777f228412b3",
+          "inspected_ranges": [
+            [
+              127,
+              145
+            ]
+          ],
+          "context_quotes": [
+            "\nGenerate separate or clearly grouped OpenAPI descriptions for supported versions\nwhen clients need them (`swagger` skill); the documented version must match\nruntime routing and Controller metadata. Version changes do not override normal\nHTTP semantics (`http-api` skill).\n\n## Testing\n\nWhen versions coexist, test meaningful differences: version routing,\nversion-specific response shape, a deprecated version still operational during\nits support period, unsupported-version behavior, and shared Application\nbehavior staying consistent where intended. Do not duplicate identical tests\nbecause two versions share Application behavior.\n\n## Anti-Patterns\n\nAvoid Minimal API version-group examples in a Controller-based project, creating\na new API version for every implementation change, and mixing URL, header, and\nquery versioning without a concrete reason."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "562880403dc3ab4b94155f46c588f57a078109e3133609dc75dfb74b8478c3a5",
+          "inspected_ranges": [
+            [
+              153,
+              165
+            ]
+          ],
+          "context_quotes": [
+            "\n## Testing\n\nTest authorization behavior for important protected operations:\n\n- unauthenticated request → `401`;\n- authenticated caller without permission → `403`;\n- permitted caller → expected success;\n- resource-specific ownership rules;\n- anonymous endpoint remains accessible when intended.\n\nVerify observable behavior, not merely the presence of `[Authorize]`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              232,
+              238
+            ]
+          ],
+          "context_quotes": [
+            "\nA build-fix task is complete when the relevant affected scope is green:\nbackend build passes, frontend build passes, affected tests pass, the\ncross-stack contract is consistent, no known new regression remains, and the\nfinal diff contains no accidental workaround — as applicable to the task. Do not\nrequire an unrelated frontend build for a backend-only repair, or vice versa.\nAfter the focused repair succeeds, run `verify` for the final completion pass"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "b89947910b05c790db0b4fbefe6af93cba66714d79864631ee733a430d685b75",
+          "inspected_ranges": [
+            [
+              123,
+              139
+            ]
+          ],
+          "context_quotes": [
+            "\nDecide whether a cache failure falls back to the source, fails the request, or\nreturns stale data.\n\n## Testing\n\nTest cache behavior when it affects observable correctness: stale entries are\ninvalidated after a successful mutation; tenant/user keys are isolated; a miss\nfalls back correctly; an outage follows the intended failure policy. Do not\nunit-test framework cache internals.\n\n## Anti-Patterns\n\nAvoid caching EF tracked entities across Unit of Work boundaries, using a cache\nas authoritative persistence, and adding Redis merely because the application\nhas caching.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "56369fcfc34f4b94ab2c53882767670f3eef293f803843610b01e4da2b0c4479",
+          "inspected_ranges": [
+            [
+              162,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\nFor Docker changes: build the image; verify application startup, required ports\nand configuration, non-root behavior when relevant, and health-probe\nintegration; review the image for accidental secrets or files. Run meaningful\napplication tests outside or as part of the selected build pipeline.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "2fbc4c0a4b7bf5c7e7c8a1942c23434445c5b23e42a7f3730bd84a5cb2e329b4",
+          "inspected_ranges": [
+            [
+              140,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen explicitly asked to modernize code:\n\n1. preserve behavior;\n2. keep the change focused;\n3. prefer readability improvements;\n4. build and test after the change;\n5. do not mix unrelated architecture refactoring into syntax modernization.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              34,
+              42
+            ],
+            [
+              115,
+              123
+            ],
+            [
+              125,
+              132
+            ],
+            [
+              137,
+              145
+            ],
+            [
+              150,
+              156
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Explicit project boundaries, with dependency direction enforced through\n   project references.\n2. Production projects, test projects, frontend, and documentation organized\n   according to the approved layout.\n3. The approved technology stack.\n4. No speculative projects, abstractions, or directories.\n5. A solution that builds immediately and is verified before completion.\n",
+            "\nBefore declaring scaffolding complete: restore backend dependencies, build the\n.NET solution, build the Angular application when present, run relevant tests\nwhen present, inspect project references\n(`node .claude/scripts/check-manifests.mjs`, run from the repository root —\n`git rev-parse --show-toplevel`), inspect the final repository tree,\nand confirm the Development configuration is valid. Then run `verify`. Never\nreport successful scaffolding for a solution that does not build.\n",
+            "\n1. Determine whether a new assembly is actually justified — a new production\n   project is Reserved (CLAUDE.md § Decision Control).\n2. Identify its architectural or technical responsibility.\n3. Add only the minimum required references, preserving dependency direction.\n4. Update shared build/package configuration when necessary.\n5. Build and test the affected solution.\n",
+            "\n1. Inspect the current tree and project references.\n2. Identify a concrete structural problem.\n3. Preserve behavior.\n4. Move code in small reviewable steps.\n5. Update namespaces and references consistently.\n6. Avoid unrelated feature work.\n7. Verify after restructuring.\n",
+            "\nA project-structure task is complete when the physical structure matches the\nrequested scope, project references respect the architectural boundaries, the\napproved baseline technology is used, no unnecessary projects or speculative\ndirectories were introduced, the backend builds, the frontend builds when\npresent, relevant tests pass, the local Development configuration is usable, and\nno unrelated code was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "83da7161fd1f99c2972edae3c23c88d6001075960b5aa1db8ad2346fd2220cef",
+          "inspected_ranges": [
+            [
+              118,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen the contract feeds Angular or other client generation: treat breaking\nschema changes seriously, keep response metadata accurate, avoid unstable\nanonymous response shapes, use explicit request/response contracts, and review\ngenerated-client changes when the contract changes.\n\n## Anti-Patterns\n\nAvoid treating Swagger as a substitute for integration tests, using anonymous\nobjects as important long-lived contracts, and adding a second competing\nAPI-documentation stack without a concrete need.\n\n## Verification\n\nWhen API behavior changes:\n\n1. verify Controller behavior and relevant integration tests;\n2. verify response metadata;\n3. start the API when the change affects startup/composition;\n4. open the Development Swagger UI and confirm it loads;\n5. exercise representative endpoints through Swagger when that is a meaningful\n   behavioral check;\n6. preserve newly verified behavior in maintained tests (`verify` step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/template-maintenance/SKILL.md",
+          "sha256": "a996a94711ac2af5bdeb4234bf6deec6dfdd0e4ea0ebd01737f3386c45d0a94c",
+          "inspected_ranges": [
+            [
+              62,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "\n5. For hook or script changes, run the changed script with sample input (usage\n   is documented in each script's header) and confirm both the pass and the\n   failure paths.\n6. Report the files changed, owners added or moved, and the checker result."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              31,
+              38
+            ],
+            [
+              40,
+              42
+            ],
+            [
+              46,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine the affected repository areas, then choose checks:\n\n- backend-only change → affected .NET projects;\n- frontend-only change → the Angular application;\n- contract or full-stack change → both sides;\n- documentation-only change → no unrelated builds without a reason.\n",
+            "\nBuild the affected solution or projects, typically:\n",
+            "\nFor Angular changes, run the frontend's configured build command, typically\n`npm run build`. Use a more targeted project or solution command when\nappropriate, and do not use `--no-restore` unless restore is known to be\ncomplete. A build failure means the implementation is not complete.\n\n## 3. Run Relevant Tests\n\nRun the tests covering the changed area, typically:\n\n```bash\ndotnet test --no-build\n```\n\nFor Angular changes, run the test command configured in `package.json` —\ninspect it rather than assuming a runner. For small solutions run the complete\nsuite; for large solutions run affected test projects first, then any broader\nsuite the repository or change risk requires.\n\nInvestigate every newly failing relevant test; do not dismiss a failure as\nunrelated without checking it.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-006",
+        "name": "Runtime smoke for substantial composition changes",
+        "related_groups": [
+          "testing-quality"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#Runtime Smoke Verification for New Applications"
+        ],
+        "normalized_policy": "For new runnable applications or substantial startup/configuration/persistence/full-stack changes, verify intended Development startup and key composition surfaces.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0605",
+        "primary/M/constraints.jsonl/RULE-M-0613"
+      ],
+      "boundary_analysis": "Development composition/startup scope and listed surfaces covered; Docker/SWAGGER checks already EXTRA0115/0208 and BF0069/0102.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/docker/SKILL.md",
+          "sha256": "56369fcfc34f4b94ab2c53882767670f3eef293f803843610b01e4da2b0c4479",
+          "inspected_ranges": [
+            [
+              162,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\nFor Docker changes: build the image; verify application startup, required ports\nand configuration, non-root behavior when relevant, and health-probe\nintegration; review the image for accidental secrets or files. Run meaningful\napplication tests outside or as part of the selected build pipeline.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              115,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore declaring scaffolding complete: restore backend dependencies, build the\n.NET solution, build the Angular application when present, run relevant tests\nwhen present, inspect project references\n(`node .claude/scripts/check-manifests.mjs`, run from the repository root —\n`git rev-parse --show-toplevel`), inspect the final repository tree,\nand confirm the Development configuration is valid. Then run `verify`. Never\nreport successful scaffolding for a solution that does not build.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "83da7161fd1f99c2972edae3c23c88d6001075960b5aa1db8ad2346fd2220cef",
+          "inspected_ranges": [
+            [
+              46,
+              59
+            ],
+            [
+              118,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nFor a new local Development API, configure the launch profile so the browser\nopens Swagger directly when that helps:\n\n```json\n{\n  \"launchBrowser\": true,\n  \"launchUrl\": \"swagger\"\n}\n```\n\nThe application's HTTP/HTTPS URLs must agree with the launch profile; do not\npoint the launch URL at HTTPS on an HTTP-only port.\n",
+            "\nWhen the contract feeds Angular or other client generation: treat breaking\nschema changes seriously, keep response metadata accurate, avoid unstable\nanonymous response shapes, use explicit request/response contracts, and review\ngenerated-client changes when the contract changes.\n\n## Anti-Patterns\n\nAvoid treating Swagger as a substitute for integration tests, using anonymous\nobjects as important long-lived contracts, and adding a second competing\nAPI-documentation stack without a concrete need.\n\n## Verification\n\nWhen API behavior changes:\n\n1. verify Controller behavior and relevant integration tests;\n2. verify response metadata;\n3. start the API when the change affects startup/composition;\n4. open the Development Swagger UI and confirm it loads;\n5. exercise representative endpoints through Swagger when that is a meaningful\n   behavioral check;\n6. preserve newly verified behavior in maintained tests (`verify` step 4)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              69,
+              82
+            ]
+          ],
+          "context_quotes": [
+            "\nFor a new runnable application, or a substantial composition, startup,\nconfiguration, persistence, or full-stack change, verify that the application\nstarts with its intended local Development configuration. As applicable:\n\n- the API host starts and the configured Development endpoint is reachable;\n- Swagger UI loads when the API is expected to expose it;\n- required configuration binds;\n- database connectivity and initialization succeed;\n- the frontend development application starts;\n- the frontend API base URL and backend CORS configuration are compatible.\n\nA successful build alone does not prove runtime composition.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-007",
+        "name": "Architecture/security/dependency checks are risk-scoped",
+        "related_groups": [
+          "architecture",
+          "security",
+          "dependencies-stack"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#5. Architecture Check"
+        ],
+        "normalized_policy": "Run architecture, formatting/analyzer, dependency and security checks when relevant to the change rather than indiscriminately.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0238",
+        "primary/M/constraints.jsonl/RULE-M-0240",
+        "primary/M/constraints.jsonl/RULE-M-0297",
+        "primary/M/constraints.jsonl/RULE-M-0331",
+        "primary/M/constraints.jsonl/RULE-M-0353",
+        "primary/M/constraints.jsonl/RULE-M-0547",
+        "primary/M/constraints.jsonl/RULE-M-0565",
+        "primary/M/constraints.jsonl/RULE-M-0566",
+        "primary/M/constraints.jsonl/RULE-M-0615",
+        "primary/M/constraints.jsonl/RULE-M-0616",
+        "primary/M/constraints.jsonl/RULE-M-0618",
+        "primary/M/constraints.jsonl/RULE-M-0620"
+      ],
+      "boundary_analysis": "Risk-relevant checks covered. Hook string-path, >1MiB identities, persistence failure and recursive-stop limits already BF0016..0022; current own U0001/U0002 remain unresolved.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-M-U0001",
+        "CIS-M-U0002"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/dependency-guard.mjs",
+          "sha256": "31cdfb2dc385e664b1305cbe568d7ea12f9f3f210cdcedc365c5d544f73b884a",
+          "inspected_ranges": [
+            [
+              137,
+              186
+            ]
+          ],
+          "context_quotes": [
+            "  // checkout, scripts, a partly completed dependency command...).\n  if (!knownCommand || failed) {\n    let repo;\n    try {\n      repo = resolveActiveRepository(startDirectory(input));\n    } catch {\n      if (knownCommand) activeRepository(input); // a failed dependency command: report that checks were NOT run\n      done(); // outside every checkout; a change made from here is caught by the next check inside one\n    }\n    const { root } = repo;\n    const manifests = manifestChanges(repo);\n    const { changed, removed } = manifests;\n    if (changed.length === 0 && removed.length === 0) {\n      manifests.save();\n      done();\n    }\n    // A removal can break what remains (package versions, project references),\n    // so it is followed by a repository-wide manifest check, as is a failed\n    // dependency or reference command (the check it gets when it succeeds).\n    const result = removed.length > 0 || knownCommand ? checkManifests(root) : checkManifests(root, changed);\n    manifests.save();\n    const lines = formatResult(result);\n    const what = [\n      failed ? 'The shell command failed; the manifests were checked in the state it left behind' : '',\n      manifests.first ? `Initial manifest check of ${root} (first check in this worktree)`\n        : manifests.snapshot ? `Manifest snapshot of ${root} (the recorded HEAD could not be compared)`\n        : changed.length > 0 ? `Manifests changed since the last manifest check: ${changed.map((file) => repoRelative(root, file)).join(', ')}` : '',\n      removed.length > 0 ? `Manifests removed: ${removed.join(', ')}` : '',\n    ].filter(Boolean).join('. ');\n    const owners = (commandOwners.length > 0 ? commandOwners.join('; and ')\n      : 'dependency changes follow the add-dependency workflow and project references follow ' +\n        '.claude/rules/architecture.md (Project References)') +\n      (removed.length > 0 ? '; a removed project or package-version file changes the project graph or dependency set, ' +\n        'which goes through CLAUDE.md § Decision Control' : '');\n    if (result.violations.length > 0) {\n      postToolBlock(\n        `${what}. The manifest check of ${root} found violations:\\n${lines.join('\\n')}\\n` +\n        `Fix them following the owners named above; ${owners}.`,\n        event,\n      );\n    }\n    // Initial or re-taken snapshot in which nothing violates (a failed\n    // dependency or reference command is still routed, as when it succeeds).\n    if (manifests.snapshot && removed.length === 0 && !knownCommand) done();\n    postToolContext(\n      `${what}; the manifest check of ${root} found no violations. If not already done, ${owners}.` +\n      (lines.length > 0 ? `\\nManifest notes:\\n${lines.join('\\n')}` : ''),\n      event,\n    );\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/file-change.mjs",
+          "sha256": "5e81a7858037206c8c1123f045dfe4753bf01040353b1a0e01419d3d58aa495b",
+          "inspected_ranges": [
+            [
+              22,
+              30
+            ],
+            [
+              45,
+              56
+            ]
+          ],
+          "context_quotes": [
+            "const filePath = toolInput.file_path;\nif (typeof filePath !== 'string' || filePath.trim() === '') done();\n\nconst absolute = isAbsolute(filePath) ? filePath : resolve(startDirectory(input), filePath);\nconst repo = repositoryFrom(dirname(absolute));\nconst root = repo?.root;\nconst rel = root && repoRelative(root, absolute);\nif (!rel) done(); // not a file of any checkout of this repository\nconst name = rel.split('/').pop();",
+            "\nconst isManifest = name.toLowerCase().endsWith('.csproj') || name === 'Directory.Packages.props' || name === 'package.json';\nif (!isManifest || rel.split('/').includes('node_modules')) done();\n\nconst result = checkManifests(root, [resolve(root, rel)]);\nrememberManifests(repo, [resolve(root, rel)]); // a later shell command does not re-report this state\nconst lines = formatResult(result);\nif (result.violations.length > 0) {\n  postToolBlock(\n    `Manifest check failed for ${rel}:\\n${lines.join('\\n')}\\n` +\n    'Fix the manifest following the owners named above; dependency changes follow the add-dependency workflow.',\n  );"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook-io.mjs",
+          "sha256": "0c65de4472e21d22786a983c07276040e900418caaa955266bcd99eea56c52f0",
+          "inspected_ranges": [
+            [
+              104,
+              116
+            ],
+            [
+              220,
+              243
+            ]
+          ],
+          "context_quotes": [
+            "\n// Bounded identity of a file's current content: SHA-256 of its bytes, or size\n// and modification time above 1 MB; \"missing\" when the file does not exist.\nexport function contentId(file) {\n  try {\n    const stat = statSync(file);\n    if (!stat.isFile()) return 'not-a-file';\n    if (stat.size > 1024 * 1024) return `size:${stat.size}:mtime:${stat.mtimeMs}`;\n    return createHash('sha256').update(readFileSync(file)).digest('hex');\n  } catch {\n    return 'missing';\n  }\n}",
+            "\nfunction manifestStatePath(repo) {\n  const dir = (process.env.CLAUDE_HOOK_STATE_DIR ?? '').trim() || repo.gitDir || join(tmpdir(), 'claude-hooks');\n  return join(dir, `claude-manifest-state-${createHash('sha256').update(repo.root).digest('hex').slice(0, 12)}.json`);\n}\n\nfunction loadManifestState(repo) {\n  try {\n    const state = JSON.parse(readFileSync(manifestStatePath(repo), 'utf8'));\n    return { head: state.head ?? null, baseline: state.baseline === true, files: state.files && typeof state.files === 'object' ? state.files : {} };\n  } catch {\n    return { head: null, baseline: false, files: {} };\n  }\n}\n\nfunction saveManifestState(repo, previous, next) {\n  if (JSON.stringify(previous) === JSON.stringify(next)) return;\n  const path = manifestStatePath(repo);\n  try {\n    mkdirSync(join(path, '..'), { recursive: true });\n    writeFileSync(path, JSON.stringify(next), 'utf8');\n  } catch {\n    // Without writable state a change may be validated again later; it is still validated now.\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-instructions.mjs",
+          "sha256": "03102c82ade3cf3d24afccf9b832671b158f1837b8794afe8c47677157b83c1d",
+          "inspected_ranges": [
+            [
+              250,
+              327
+            ]
+          ],
+          "context_quotes": [
+            "\n// ---------------------------------------------------------------- map\nif (existsSync(abs('.claude/MAP.md'))) {\n  const map = read('.claude/MAP.md');\n  const listed = [...existingInstructionFiles, '.claude/settings.json', ...listDir('.claude/hooks').map((f) => `.claude/hooks/${f}`),\n    ...listDir('.claude/scripts').map((f) => `.claude/scripts/${f}`)];\n  for (const file of listed) {\n    if (file === '.claude/MAP.md') continue;\n    if (!map.includes(file)) fail(`.claude/MAP.md does not list ${file}`);\n  }\n  if (importsOf(claude).some((imp) => imp.endsWith('MAP.md'))) fail('MAP.md must not be imported (it is human-facing only)');\n}\n\n// ---------------------------------------------------------------- hooks\nif (existsSync(abs('.claude/settings.json'))) {\n  let settings;\n  try {\n    settings = JSON.parse(read('.claude/settings.json'));\n  } catch (error) {\n    fail(`.claude/settings.json is not valid JSON: ${error.message}`);\n  }\n  // Project hooks must use exec form: \"command\": \"node\" plus one argument, the\n  // script path anchored at ${CLAUDE_PROJECT_DIR}. Claude Code substitutes the\n  // placeholder without a shell; for this static check it resolves to the root\n  // being checked. Shell command strings (\"node .claude/hooks/x.mjs\", \"$VAR\",\n  // \"%VAR%\") depend on the current directory or on one shell and are rejected.\n  const hookArg = /^\\$\\{CLAUDE_PROJECT_DIR\\}\\/\\.claude\\/hooks\\/([A-Za-z0-9_.-]+\\.mjs)$/;\n  const execForm = '\"command\": \"node\", \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs\"]';\n  for (const [event, groups] of Object.entries(settings?.hooks ?? {})) {\n    for (const group of Array.isArray(groups) ? groups : []) {\n      for (const hook of group.hooks ?? []) {\n        const where = `settings.json ${event}`;\n        if (hook.type !== 'command') {\n          fail(`${where}: hook type \"${hook.type}\" is not supported; use a command hook in exec form (${execForm})`);\n          continue;\n        }\n        if (hook.command !== 'node' || !Array.isArray(hook.args)) {\n          fail(`${where}: hook ${JSON.stringify(hook.command)} is not in exec form; use ${execForm}`);\n          continue;\n        }\n        if (hook.args.length !== 1 || typeof hook.args[0] !== 'string') {\n          fail(`${where}: exec-form hook must pass exactly one argument, the script path (${execForm})`);\n          continue;\n        }\n        const m = hookArg.exec(hook.args[0]);\n        if (!m) {\n          fail(`${where}: hook argument \"${hook.args[0]}\" must be \"\\${CLAUDE_PROJECT_DIR}/.claude/hooks/<script>.mjs\"`);\n        } else if (!existsSync(abs(`.claude/hooks/${m[1]}`))) {\n          fail(`${where}: hook script .claude/hooks/${m[1]} does not exist`);\n        } else {\n          // A script that dispatches on the event name must handle each event it is registered for.\n          const source = read(`.claude/hooks/${m[1]}`);\n          if (/\\.hook_event_name\\b/.test(source) && !new RegExp(`===\\\\s*'${event}'`).test(source)) {\n            fail(`${where}: .claude/hooks/${m[1]} reads hook_event_name but does not handle \"${event}\"`);\n          }\n        }\n        // The PreToolUse policy guard fails closed: a guard that cannot start,\n        // crashes, rejects its input, or times out must block the tool call.\n        // Advisory PostToolUse(Failure)/Stop hooks must not (the event already happened,\n        // and a blocking Stop failure could loop).\n        if (event === 'PreToolUse' && hook.onFailure !== 'block') {\n          fail(`${where}: the policy guard must set \"onFailure\": \"block\" so a failing or timed-out guard blocks the tool call`);\n        } else if (event !== 'PreToolUse' && hook.onFailure === 'block') {\n          fail(`${where}: advisory hook must not set \"onFailure\": \"block\" (the event already happened; a failing Stop hook could loop)`);\n        }\n      }\n    }\n  }\n  for (const [event, tools, script] of REQUIRED_HOOKS) {\n    const registered = (Array.isArray(settings?.hooks?.[event]) ? settings.hooks[event] : []).some((group) => {\n      const matcher = typeof group?.matcher === 'string' && !['', '*'].includes(group.matcher) ? group.matcher.split('|') : null;\n      return tools.every((tool) => !matcher || matcher.includes(tool)) &&\n        (group.hooks ?? []).some((hook) => hook?.args?.[0] === `\\${CLAUDE_PROJECT_DIR}/.claude/hooks/${script}`);\n    });\n    if (!registered) {\n      fail(`settings.json ${event}: required hook .claude/hooks/${script}${tools.length > 0 ? ` for ${tools.join('|')}` : ''} is not registered`);\n    }\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/repo-root.mjs",
+          "sha256": "769e380d8d92425ddfc5ecb9dd65d214ceb0b323056d82e7b9c13e74c6357a41",
+          "inspected_ranges": [
+            [
+              38,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "// of the working tree that contains it (both null without Git).\nexport function resolveActiveRepository(startDir) {\n  const start = canonical(startDir);\n  if (!isDirectory(start)) throw new Error(`start directory \"${start}\" does not exist or is not a directory`);\n\n  const startTree = gitWorkTree(start);\n  if (startTree && startTree.top === templateRoot) return { root: templateRoot, ...startTree }; // same tree: no offset\n  const templateTree = startTree ? gitWorkTree(templateRoot) : null;\n  if (startTree && templateTree && sameRepository(startTree, templateTree)) {\n    const offset = relative(templateTree.top, templateRoot);\n    const root = canonical(resolve(startTree.top, offset));\n    if (!isDirectory(root)) {\n      throw new Error(`the working tree \"${startTree.top}\" has no \"${offset}\" directory for this project`);\n    }\n    return { root, ...startTree };\n  }\n  if (isInside(start, templateRoot)) {\n    const tree = startTree ? templateTree : gitWorkTree(templateRoot);\n    return { root: templateRoot, top: tree?.top ?? null, gitDir: tree?.gitDir ?? null };\n  }\n\n  const reason = startTree\n    ? `it belongs to a different Git repository (\"${startTree.top}\")`\n    : 'it is not inside a Git working tree of this repository';\n  throw new Error(`cannot establish the active repository root from \"${start}\": ${reason}, ` +\n    `and it is outside the project at \"${templateRoot}\"`);\n}"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "66cfa8a58a81345ddffc982e4099be557837745f7ccfbb32c7886e68a97886d0",
+          "inspected_ranges": [
+            [
+              2,
+              8
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \"node\", \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dependency-guard.mjs\"], \"timeout\": 30, \"onFailure\": \"block\" }\n        ]"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/add-dependency/SKILL.md",
+          "sha256": "64d6cc423bc904ce3a817501aeac9888ab31730a8992dd560edca632e50e448f",
+          "inspected_ranges": [
+            [
+              121,
+              148
+            ]
+          ],
+          "context_quotes": [
+            "\n## 6. Verify\n\n1. From the repository root (the current checkout or worktree top level,\n   `git rev-parse --show-toplevel`), run\n   `node .claude/scripts/check-manifests.mjs` (Central Package Management,\n   version form, deprecated packages, project references).\n2. Restore and build the affected projects.\n3. Inspect vulnerability information for the changed dependency set:\n\n```bash\ndotnet package list --vulnerable --include-transitive\nnpm audit\n```\n\nScanner output requires context. Do not automatically replace or upgrade\nunrelated packages because a scanner reports a finding.\n\n## Removal\n\nRemove dependencies that are no longer used when doing so is part of the current\nchange and safe to verify; do not leave dead package references behind. Do not\nperform unrelated dependency cleanup during a narrowly scoped task.\n\n## Report\n\nReport the package, selected version, license, checks performed, and approval\nstatus (approved / awaiting approval / not needed)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              40,
+              47
+            ],
+            [
+              232,
+              238
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore running commands, determine whether the failure concerns the .NET\nbackend, the Angular frontend, both, API contract/client generation,\npackage/dependency changes, or repository/toolchain configuration. Read the\n`.claude/rules/*.md` files whose `paths` match the failing area before editing —\nthey may not have loaded yet. Do not run unrelated build systems merely because\nthey exist.\n",
+            "\nA build-fix task is complete when the relevant affected scope is green:\nbackend build passes, frontend build passes, affected tests pass, the\ncross-stack contract is consistent, no known new regression remains, and the\nfinal diff contains no accidental workaround — as applicable to the task. Do not\nrequire an unrelated frontend build for a backend-only repair, or vice versa.\nAfter the focused repair succeeds, run `verify` for the final completion pass"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "f610882412dcdd0a6bbb229c2999cba1b68d3c7ab56e5d16c08775dd908fe297",
+          "inspected_ranges": [
+            [
+              36,
+              39
+            ],
+            [
+              43,
+              46
+            ]
+          ],
+          "context_quotes": [
+            "\nRun formatting/analyzers when the repository has adopted them as enforced\nchecks, for example:\n",
+            "\nDo not turn an optional local formatter into a mandatory CI gate unless the\nproject adopts that policy.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "f4316fb509134bc0ccb9c08c37be0453fc6faabc5cbe5b478af032ddf6e0efa6",
+          "inspected_ranges": [
+            [
+              137,
+              142
+            ]
+          ],
+          "context_quotes": [
+            "\nNormal security review of changed code is part of every review. Run the full\n`security-scan` procedure only when the user requested a security audit, the\nchange is materially security-sensitive, or a concrete finding justifies a\nbroader investigation; do not turn every review into a full OWASP audit.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "ece97dca16f49d116d9bf9002f3472ff68610a8512cdcb507047c85711989229",
+          "inspected_ranges": [
+            [
+              170,
+              175
+            ]
+          ],
+          "context_quotes": [
+            "\nThe production and test reference graph is owned by\n`.claude/rules/architecture.md` § Project References. Add references with the\nCLI and check the result, running both commands from the repository root\n(`git rev-parse --show-toplevel`):\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/SKILL.md",
+          "sha256": "8e9bba8217bb44a63af5774d2e4dd3ed79ed1bec424d2f01cf1a43b09cf0e4f4",
+          "inspected_ranges": [
+            [
+              64,
+              70
+            ],
+            [
+              87,
+              91
+            ],
+            [
+              226,
+              229
+            ]
+          ],
+          "context_quotes": [
+            "\nInspect the repository first and determine which surfaces exist: .NET backend,\nAngular frontend, authentication/authorization, database access, external HTTP\nintegrations, file upload/download, Docker/container configuration, CI/CD,\nproduction configuration, logging, caching, background processing. Skip\nirrelevant checks rather than reporting them as failures.\n",
+            "\nFor a full pre-release or explicitly requested audit, review all applicable\nlayers. For targeted changes, start with the affected layers and expand when the\nchange crosses security boundaries:\n",
+            "\nA security scan is complete when all applicable layers were inspected, findings\nhave evidence, uncertain findings are labeled, severity reflects actual risk,\nlimitations are stated, and no layer is marked PASS without being checked."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/template-maintenance/SKILL.md",
+          "sha256": "a996a94711ac2af5bdeb4234bf6deec6dfdd0e4ea0ebd01737f3386c45d0a94c",
+          "inspected_ranges": [
+            [
+              49,
+              66
+            ]
+          ],
+          "context_quotes": [
+            "\n## Procedure\n\n1. Find the current owner and the right location with `.claude/MAP.md`\n   (\"Where is the rule for…\" and \"Where new content goes\").\n2. Edit the owner in place; replace any other copy with a pointer.\n3. Update `.claude/MAP.md` (file table and topic index).\n4. From the repository root (`git rev-parse --show-toplevel`), run the\n   structure checker and fix every failure:\n\n   ```bash\n   node .claude/scripts/check-instructions.mjs\n   ```\n\n5. For hook or script changes, run the changed script with sample input (usage\n   is documented in each script's header) and confirm both the pass and the\n   failure paths.\n6. Report the files changed, owners added or moved, and the checker result."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              14,
+              18
+            ],
+            [
+              31,
+              38
+            ],
+            [
+              59,
+              64
+            ],
+            [
+              98,
+              101
+            ],
+            [
+              103,
+              111
+            ],
+            [
+              115,
+              120
+            ],
+            [
+              122,
+              124
+            ],
+            [
+              128,
+              131
+            ],
+            [
+              133,
+              140
+            ]
+          ],
+          "context_quotes": [
+            "\nProduce evidence that the requested change is complete and has not introduced\nobvious regressions. Match verification to the scope and risk of the change, and\ndo not require optional tooling the repository has not configured.\n",
+            "\nDetermine the affected repository areas, then choose checks:\n\n- backend-only change → affected .NET projects;\n- frontend-only change → the Angular application;\n- contract or full-stack change → both sides;\n- documentation-only change → no unrelated builds without a reason.\n",
+            "\nFor Angular changes, run the test command configured in `package.json` —\ninspect it rather than assuming a runner. For small solutions run the complete\nsuite; for large solutions run affected test projects first, then any broader\nsuite the repository or change risk requires.\n",
+            "\nRun architecture, formatting/analyzer, dependency, and security checks when they\nare relevant to the change, not indiscriminately.\n",
+            "\nWhen the change touches architectural boundaries, read\n`.claude/rules/architecture.md` (and `.claude/rules/persistence.md` for\npersistence changes) and check project references, API → Application flow,\nrepository abstractions, the EF Core boundary, Unit of Work behavior, and\ndependency direction. When project files changed, run from the repository root\n— the top level of the current checkout or worktree, printed by\n`git rev-parse --show-toplevel`; change to it first if the shell is elsewhere:\n",
+            "\nWhen a Domain or persistence change affects the development seed graph, confirm\nthat `DbSeeder` remains valid and representative for a freshly recreated\nDevelopment database. Skip this step for documentation-only or unrelated\nchanges.\n",
+            "\nIf the repository configures formatting or analyzers, run them, for example:\n",
+            "\nDo not add a formatter or analyzer dependency solely to complete ordinary\nverification. Treat analyzer output as evidence that still needs context.\n",
+            "\nFor dependency changes or security-sensitive work, inspect package\nvulnerabilities, for example `dotnet package list --vulnerable\n--include-transitive` and `npm audit`, and inspect changed secrets,\nauthorization, SQL/raw query safety, CORS/TLS settings, sensitive logging, and\ncertificate validation. A full `security-scan` is not necessary for every small\nbusiness-logic change.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "e0145262c1d622cec4001bc545552ab5f11f8e99b98355b2358d79df98f2901d",
+          "inspected_ranges": [
+            [
+              154,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\n| Situation | Workflow |\n| --- | --- |\n| Any implementation change, from first inspection to completion gates | `development-workflow` |\n| Final verification before declaring work complete | `verify` |\n| Code review or an independent second pass | `code-review` (agent: `code-reviewer`) |\n| Failing build or tests to repair | `build-fix` |\n| Adding, updating, or removing a NuGet/npm dependency | `add-dependency` |\n| `CUSTOM_SETTINGS.md` value added, changed, or removed | `custom-settings` |\n| New solution or project, or a repository-structure change | `project-structure` |\n| Reserved decision or Decision Request | `architecture-decision` |\n| Security audit or scan | `security-scan` |\n| Any Git operation | `git-workflow` |\n"
+          ]
+        },
+        {
+          "path": "output/template/Directory.Build.props",
+          "sha256": "ea04f6e318b3bcb767cd265cbca5970e1580bd543c22fffab222f999830880be",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "    <ImplicitUsings>enable</ImplicitUsings>\n    <AnalysisLevel>latest</AnalysisLevel>\n    <!-- Surfaces .editorconfig code-style diagnostics (warning severity) during build. -->"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M",
+      "pass_id": 2,
+      "unit": "P0002-M-P021",
+      "canonical_policy": {
+        "id": "WF-008",
+        "name": "Fix and retry until green or blocked",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "common",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#Fix-and-Retry"
+        ],
+        "normalized_policy": "When verification fails, make the smallest appropriate fix and rerun affected checks until green or genuine user input is required; do not hide known failures.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "WF-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M/constraints.jsonl/RULE-M-0288",
+        "primary/M/constraints.jsonl/RULE-M-0294",
+        "primary/M/constraints.jsonl/RULE-M-0312",
+        "primary/M/constraints.jsonl/RULE-M-0313",
+        "primary/M/constraints.jsonl/RULE-M-0316",
+        "primary/M/constraints.jsonl/RULE-M-0319",
+        "primary/M/constraints.jsonl/RULE-M-0612",
+        "primary/M/constraints.jsonl/RULE-M-0623",
+        "primary/M/constraints.jsonl/RULE-M-0624"
+      ],
+      "boundary_analysis": "Smallest fix, rerun code checks, bounded stall reassessment and no knowingly-worse/hidden relevant failure covered with preexisting-failure exception.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "5e61240c683109862dad08cb6edc133b41f142d3908d2ab02eb0534e98647d30",
+          "inspected_ranges": [
+            [
+              14,
+              17
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              183,
+              192
+            ],
+            [
+              194,
+              206
+            ],
+            [
+              208,
+              214
+            ],
+            [
+              232,
+              240
+            ],
+            [
+              252,
+              253
+            ]
+          ],
+          "context_quotes": [
+            "\nRestore the affected repository scope to a green build/test state without\nhiding failures, weakening behavior, or introducing unrelated changes.\n",
+            "- Preserve architecture and project conventions while fixing the failure.\n- Stop when progress has clearly stalled rather than making speculative edits.\n",
+            "\nDetermine whether the failure comes from source code or the local toolchain\n(`dotnet --info`, `dotnet --version`, `node --version`, `npm --version`;\n`global.json`, target framework, Angular package versions,\n`package-lock.json`, CI/runtime version configuration). Do not change the\nrepository's declared SDK, Node, framework, or language version because the\nlocal machine has a different version installed. If the required toolchain is\nunavailable and cannot be resolved safely within the task, report that\nlimitation instead of editing source code to compensate.\n",
+            "\nUse bounded iteration — several focused attempts, not an unlimited edit/build\nloop. Stop and reassess when:\n\n- the same root failure survives repeated, materially different fixes;\n- fixes create increasing unrelated failures;\n- the installed toolchain is incompatible;\n- required external infrastructure is unavailable;\n- package compatibility cannot be resolved safely;\n- the correct behavior cannot be determined from the project or request.\n\nDo not repeatedly apply variants of the same failed guess.\n",
+            "\nIf a fix introduces new failures, determine whether they reveal a legitimate\ndependency of the change; otherwise revert or correct that fix before\ncontinuing. Do not leave the repository knowingly worse than when the repair\nstarted, and do not clean up unrelated pre-existing failures unless they block\nverification of the requested repair or the user asks.\n",
+            "\nA build-fix task is complete when the relevant affected scope is green:\nbackend build passes, frontend build passes, affected tests pass, the\ncross-stack contract is consistent, no known new regression remains, and the\nfinal diff contains no accidental workaround — as applicable to the task. Do not\nrequire an unrelated frontend build for a backend-only repair, or vice versa.\nAfter the focused repair succeeds, run `verify` for the final completion pass\nwhen appropriate.\n",
+            "\nDo not claim the problem is fixed while a known relevant failure remains."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "613bf6825218bc4589e0c9b419246d96b48c7dbaef66142b66abcf9f49a9c781",
+          "inspected_ranges": [
+            [
+              113,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "   appropriate to the change's scope and risk.\n3. Build or test failures that need diagnosis go through `build-fix`, then back\n   to `verify`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "3d090c4e7dcb978fcdc4802a9ed575a79f05ddee1c16398953db56241eef0756",
+          "inspected_ranges": [
+            [
+              115,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nBefore declaring scaffolding complete: restore backend dependencies, build the\n.NET solution, build the Angular application when present, run relevant tests\nwhen present, inspect project references\n(`node .claude/scripts/check-manifests.mjs`, run from the repository root —\n`git rev-parse --show-toplevel`), inspect the final repository tree,\nand confirm the Development configuration is valid. Then run `verify`. Never\nreport successful scaffolding for a solution that does not build.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "bf874c03329661cf9387eddc4b8492dc02c4722e59f0e45b1ace6c700306dd7f",
+          "inspected_ranges": [
+            [
+              64,
+              67
+            ],
+            [
+              160,
+              171
+            ]
+          ],
+          "context_quotes": [
+            "\nInvestigate every newly failing relevant test; do not dismiss a failure as\nunrelated without checking it.\n",
+            "\nWhen verification fails:\n\n1. Identify the concrete failure.\n2. Make the smallest appropriate fix.\n3. Rerun the affected verification.\n4. Rerun build and tests when the fix changed code.\n5. Repeat until the change is green or genuine user input is required.\n\nNever hide a known failure and declare completion. Failures that need\ndiagnosis go through `build-fix`.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "e0145262c1d622cec4001bc545552ab5f11f8e99b98355b2358d79df98f2901d",
+          "inspected_ranges": [
+            [
+              154,
+              167
+            ]
+          ],
+          "context_quotes": [
+            "\n| Situation | Workflow |\n| --- | --- |\n| Any implementation change, from first inspection to completion gates | `development-workflow` |\n| Final verification before declaring work complete | `verify` |\n| Code review or an independent second pass | `code-review` (agent: `code-reviewer`) |\n| Failing build or tests to repair | `build-fix` |\n| Adding, updating, or removing a NuGet/npm dependency | `add-dependency` |\n| `CUSTOM_SETTINGS.md` value added, changed, or removed | `custom-settings` |\n| New solution or project, or a repository-structure change | `project-structure` |\n| Reserved decision or Decision Request | `architecture-decision` |\n| Security audit or scan | `security-scan` |\n| Any Git operation | `git-workflow` |\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

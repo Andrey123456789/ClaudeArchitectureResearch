@@ -1,0 +1,788 @@
+{
+  "unit": "P0002-M1-P009",
+  "batch_input_sha256": "0f09e384c5f74cb92408d71da27d48928a8bf68cb73ad35d789d19a48f4bdb58",
+  "reviews": [
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "TST-010",
+        "name": "Behavioral probes become maintained tests",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Behavioral Verification",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Verification Performed During Implementation",
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#4. Preserve Behavioral Verification"
+        ],
+        "normalized_policy": "If an ad-hoc/manual behavioral probe uniquely demonstrates behavior, preserve that behavior in maintained automated coverage before completion unless equivalent coverage already exists.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0664"
+      ],
+      "boundary_analysis": "Uniquely verified behavior preservation, verify existing equivalent coverage, temporary mechanism removable, and compiler/static/existing-suite exclusion explicitly0664/0352. Probe review before permanent useEXTRA0141 covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "78e82cfc82f7911efd159e35a53322e2597485b7fabf03157b6fe4a719fb2d1e",
+          "inspected_ranges": [
+            [
+              125,
+              127
+            ]
+          ],
+          "context_quotes": [
+            "| `hooks/post-tool-use.js` | after edits and successful or failed commands: manifest and architecture checks, layer-namespace check, product-source reminders, instruction check; a shell command is judged by its effect on manifests and project files (content state per worktree in its Git directory), so unrecognized commands, branch switches, removals, and moves are checked | common | hook | post-change checks |\n| `hooks/stop.js` | co-change reminders (persistence model vs. seed/migrations, code vs. tests, product sources, manifests); loop-safe; re-arms when the content of the involved files changes; state per worktree | common | hook | co-change reminders |\n| `scripts/check-instructions.js` | structural checker for this instruction system (headers, flat rules, skills, references, capability slots, leaks, binds, map, budget) | repo/meta | run by hooks, `verify`, maintainers | new structural predicates |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/stop.js",
+          "sha256": "0709d980e8c9bbf6b1fda9143b6c5bea47eb658b06dd3185c5e816eed3f342a4",
+          "inspected_ranges": [
+            [
+              56,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "  }\n  const frame = common.moduleFor(modules, 'architecture');\n  const testSuffixes = ((frame && frame.manifest.enforcement.architecture.testProjects) || []).map((t) => t.suffix);\n  const isTest = (f) => testSuffixes.some((s) => f.split('/').some((seg) => seg.endsWith(s))) || /Tests\\//.test(f);\n  const backendCode = files.filter((f) => f.startsWith('backend/') && f.endsWith('.cs'));\n  if (backendCode.some((f) => !isTest(f)) && !backendCode.some(isTest)) {\n    messages.push('Backend production code changed without test changes: check regression coverage and behavioral-probe preservation (development-workflow, verify).');\n    backendCode.forEach((f) => inputs.add(f));\n  }\n  for (const source of ['CUSTOM_SETTINGS.md', 'SPECIFICATION.md']) {"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "786ae2de6a8e194d8656b122305a00393739cc4ebbd9512a6991962814162773",
+          "inspected_ranges": [
+            [
+              222,
+              227
+            ]
+          ],
+          "context_quotes": [
+            "\nIf a new behavioral test or temporary probe establishes correct behavior,\n`verify` § Preserve Behavioral Verification applies before the probe is\nremoved. Build, compiler, and static-analysis commands do not require new\ntests.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "99d4a418e4be517c87940745cc3287bad6bd3f2634c23fd4570886f4c6a78dcd",
+          "inspected_ranges": [
+            [
+              124,
+              130
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine whether the changed behavior has useful maintained automated\ncoverage, focusing on behavior rather than line count. For a bug fix, look for\na regression test when recurrence is plausible. Check that behavioral probes\nwere preserved (`verify` § Preserve Behavioral Verification). Do not request\nduplicate tests when equivalent coverage exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "74f7730c96ff76a24df774a5ef49c00edef0d88db2c8b609e1e6d1cd4688d73c",
+          "inspected_ranges": [
+            [
+              202,
+              209
+            ],
+            [
+              243,
+              255
+            ]
+          ],
+          "context_quotes": [
+            "\nTypical temporary probes to convert (`verify` § Preserve Behavioral\nVerification): HTTP requests used to check an endpoint, PowerShell or shell\nscripts that exercise behavior, ad-hoc test methods, manual database checks,\ntemporary regression probes. For example, replace an ad-hoc `curl` or REST\nrequest with an NUnit integration test using `WebApplicationFactory`. Review a\ntemporary probe before keeping it as a permanent test.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test using the actual provider |\n| Simple API integration where provider specifics are irrelevant | Lightweight isolated relational test database may be sufficient |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent existing coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "ceabb98792f653174dc8009590caed3eb72e626744a681961a98cda7927d2f7a",
+          "inspected_ranges": [
+            [
+              116,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen API behavior changes: verify Controller behavior and relevant integration\ntests, verify response metadata, start the API when startup/composition changed,\nopen the Development Swagger UI and confirm it loads, exercise representative\nendpoints through Swagger when that is a meaningful behavioral check, and\npreserve newly verified behavior as maintained tests (`verify` § Preserve\nBehavioral Verification).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "b362c4d7ceb2abd772e2c779ec0c37a015c1a5b45fdcfb37e04adcd5535197bb",
+          "inspected_ranges": [
+            [
+              20,
+              30
+            ],
+            [
+              63,
+              72
+            ],
+            [
+              126,
+              133
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing checks. Confirm\nthat:\n\n- the changes match the requested scope and no unrelated refactoring slipped in;\n- temporary diagnostics and probes are removed only after any behavior they\n  uniquely verified is preserved as maintained automated test coverage\n  (step 4);\n- no generated or build artifacts were added accidentally;\n- no secrets or environment-specific credentials were introduced.\n",
+            "\nIf an ad-hoc or manual behavioral probe — a temporary HTTP request, curl or\nPowerShell script, ad-hoc test, or manual database check — uniquely\ndemonstrated that the implementation works, preserve that behavior in\nmaintained automated test coverage before completion unless equivalent coverage\nalready exists (verify that the existing test really exercises it). The\ntemporary mechanism itself does not need to remain. Builds, compiler checks,\nstatic analysis, formatting, and running existing suites do not by themselves\nrequire new tests.\n",
+            "\nReview the final diff after all fixes for: accidental unrelated edits;\ncommented-out code; temporary logging; unintended TODO/FIXME markers; stale\ntemporary tests or scripts; architecture drift; unapproved drift from\n`SPECIFICATION.md` or `CUSTOM_SETTINGS.md`; stale code, tests, docs, or\nconfiguration after a `CUSTOM_SETTINGS.md` change; behavior verified manually\nbut never preserved as a test.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "TST-011",
+        "name": "Do not chase coverage percentage",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Coverage"
+        ],
+        "normalized_policy": "Do not generate low-value tests merely to increase coverage percentage.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0257"
+      ],
+      "boundary_analysis": "No coverage-percentage busywork matches; trivial Add/Get test avoidance0434 and frontend repeated-level avoidanceEXTRA0094 separately prior.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/testing.md",
+          "sha256": "f652f51184ef08eb65696802eca20b95cad243d3a16c4997a69e0fb56e3c9752",
+          "inspected_ranges": [
+            [
+              70,
+              73
+            ]
+          ],
+          "context_quotes": [
+            "\nCoverage is diagnostic information. Do not generate low-value tests merely to\nincrease a coverage percentage.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "c23ef863d7c54a3a96a2313c39818dd8a15a55807d342550827bd4faa611f332",
+          "inspected_ranges": [
+            [
+              179,
+              185
+            ]
+          ],
+          "context_quotes": [
+            "\nUseful frontend test targets: meaningful component behavior, validation,\ndata-access request mapping, important route/auth behavior, and complex\nreactive state. Do not test Angular framework internals. End-to-end tests focus\non a small number of important user workflows unless the project requires\nbroader E2E coverage; do not duplicate the same behavior at every test level.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "99d4a418e4be517c87940745cc3287bad6bd3f2634c23fd4570886f4c6a78dcd",
+          "inspected_ranges": [
+            [
+              124,
+              130
+            ]
+          ],
+          "context_quotes": [
+            "\nDetermine whether the changed behavior has useful maintained automated\ncoverage, focusing on behavior rather than line count. For a bug fix, look for\na regression test when recurrence is plausible. Check that behavioral probes\nwere preserved (`verify` § Preserve Behavioral Verification). Do not request\nduplicate tests when equivalent coverage exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "74f7730c96ff76a24df774a5ef49c00edef0d88db2c8b609e1e6d1cd4688d73c",
+          "inspected_ranges": [
+            [
+              159,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nTest repository implementations or mappings when there is meaningful\npersistence behavior: custom mappings, query filters, projections, non-trivial\nqueries, relationships, concurrency, provider-specific behavior. Do not write a\ntest for every trivial `Add`/`Get` method.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "TST-012",
+        "name": "Descriptive test naming",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Naming",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Naming"
+        ],
+        "normalized_policy": "Use descriptive test names that communicate scenario/condition and expected behavior.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0258"
+      ],
+      "boundary_analysis": "Scenario/expected outcome default and established-convention exception preserved; concrete underscore example alreadyEXTRA0082, not compulsory everywhere.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/testing.md",
+          "sha256": "f652f51184ef08eb65696802eca20b95cad243d3a16c4997a69e0fb56e3c9752",
+          "inspected_ranges": [
+            [
+              75,
+              79
+            ]
+          ],
+          "context_quotes": [
+            "\nBy default use descriptive test names that communicate the scenario or\ncondition and the expected behavior, for example\n`MethodOrScenario_Condition_ExpectedBehavior`; follow an established project\nconvention when one exists."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "API-001",
+        "name": "HTTP semantics belong to API",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "HTTP status codes and transport response semantics belong to the API layer; Application/Domain must not return IActionResult or ASP.NET Core status codes.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0104"
+      ],
+      "boundary_analysis": "API owns statuses/outcomes; typed Application categories mapped0303, output cacheAPI location0358 prior. No duplicate discovery from decision guide.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/api.md",
+          "sha256": "17e82d4a80dfe314d7124e21c113187acc8022205be7ee54bdf4b5972415d9b0",
+          "inspected_ranges": [
+            [
+              15,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "\n- HTTP status codes and transport response semantics belong to the API layer.\n  Application and Domain must not return `IActionResult` or ASP.NET Core status\n  codes.\n- Choose `200`, `201`, `202`, or `204` according to the actual HTTP semantics of"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              80,
+              83
+            ],
+            [
+              199,
+              207
+            ]
+          ],
+          "context_quotes": [
+            "\nFor a command with several meaningful outcomes, an explicit typed outcome may\nbe clearer. Map Application categories to HTTP in the API layer.\n",
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "63667f662d9a587af2f52880f3288e7b333453ea161e2fc1998f6877448635d3",
+          "inspected_ranges": [
+            [
+              17,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n- **HTTP response caching** — ASP.NET Core output caching when the entire HTTP\n  response can safely be reused; it belongs in the API layer.\n- **Application/data caching** — when a use case genuinely needs cache-aware"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              239,
+              241
+            ]
+          ],
+          "context_quotes": [
+            "\nControllers translate Application outcomes into HTTP outcomes:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "API-002",
+        "name": "Use structured error contracts",
+        "related_groups": [
+          "frontend",
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Core Principles",
+          "templates/v2-baseline/.claude/skills/error-handling/SKILL.md#ProblemDetails"
+        ],
+        "normalized_policy": "Use ProblemDetails for non-validation HTTP failures and ValidationProblemDetails for request validation; keep machine-readable contracts stable and safe.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0173"
+      ],
+      "boundary_analysis": "Default stable/safe ProblemDetails contract explicitly0173; not machine-readable human messages0514. Reference table shorthand does not prove a stronger unconditional rule.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/error-handling.md",
+          "sha256": "b08d04da47943695c8f31545330b28f99a2a5dde324b145b93fa4430d54bd505",
+          "inspected_ranges": [
+            [
+              51,
+              56
+            ]
+          ],
+          "context_quotes": [
+            "\n- By default use `ProblemDetails` for non-validation HTTP failures and\n  `ValidationProblemDetails` for request-validation failures; keep the\n  machine-readable error contract stable and safe, and do not make\n  human-readable exception messages the machine-readable contract.\n- Do not expose stack traces, SQL details, connection strings, internal paths,"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "390ed03c66e07c941c553a41a219a1c80f0c97c46e11879abaf11557cb3e3e6d",
+          "inspected_ranges": [
+            [
+              199,
+              207
+            ],
+            [
+              209,
+              222
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck-by-reference against `error-handling.md`: raw exception messages returned\nto clients; inconsistent anonymous error objects; Application depending on HTTP\nstatus codes; every method forced to return `Result<T>`; exceptions for every\nnegative branch; swallowed exceptions; catch/log/rethrow at every layer;\nrepeated logging; sensitive details in `ProblemDetails`; business rules only in\nrequest validators; Minimal API endpoint filters used for validation in a\nController-based project.\n",
+            "\n| Scenario | Default |\n|---|---|\n| Invalid HTTP input | Validation problem response |\n| Simple query not found | Explicit Application outcome, often `null`; API maps to `404` |\n| Multiple expected business outcomes | Consider typed outcome / Result |\n| Unexpected exception | Global `IExceptionHandler` |\n| API failure contract | `ProblemDetails` |\n| Straightforward use-case/workflow rule | Application validation / Application Service |\n| Non-trivial invariant genuinely owned by Domain | Domain enforcement |\n| Transport validation | API/request validation |\n| Recoverable external failure | Handle or translate at the appropriate boundary |\n| Unrecoverable external failure | Propagate to centralized handling |\n| Client/request cancellation | Propagate cancellation; not a generic 500 |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              189,
+              193
+            ],
+            [
+              258,
+              261
+            ],
+            [
+              263,
+              286
+            ]
+          ],
+          "context_quotes": [
+            "\nAn unexpected failure inside the application when no more specific controlled\noutcome exists; handled centrally with `ProblemDetails` and no internal details\n(`error-handling.md` § HTTP Error Contracts).\n",
+            "\nMachine-readable clients rely on stable error codes or contract fields in\n`ProblemDetails`, not on human-readable exception messages.\n",
+            "\n| Situation | Default response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable response representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid request structure but invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid/failed upstream response while acting as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout while acting as intermediary | `504` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "ceabb98792f653174dc8009590caed3eb72e626744a681961a98cda7927d2f7a",
+          "inspected_ranges": [
+            [
+              79,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen failures use `ProblemDetails` or `ValidationProblemDetails`, describe those\ncontracts where useful. Swagger examples and descriptions never show internal\nexception types, stack traces, SQL, connection strings, or filesystem paths.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "API-003",
+        "name": "Use semantic success statuses",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#Successful Responses"
+        ],
+        "normalized_policy": "Choose 200/201/202/204 according to actual HTTP semantics; do not return 200 for every outcome, 201 merely for an internal row insert, or 202 for already-completed work.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0105"
+      ],
+      "boundary_analysis": "Detailed status guidance, Location/progress, repeated DELETE consistency, 204-no-body, media/concurrency/upstream codes and idempotency already priorEXTRA0071/0178..0186 and BF0105/0106. 304-no-normal-representation remains own00012 (CIS-M1-0012), not counted again.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-M1-0012"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/api.md",
+          "sha256": "17e82d4a80dfe314d7124e21c113187acc8022205be7ee54bdf4b5972415d9b0",
+          "inspected_ranges": [
+            [
+              18,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "  codes.\n- Choose `200`, `201`, `202`, or `204` according to the actual HTTP semantics of\n  the outcome. Do not return `200` for every outcome, `201` merely because a row\n  was inserted internally (`201` means a new API resource, with `Location` when\n  a stable resource URI exists), or `202` for work that already completed.\n- By default, a successful collection query with zero matches returns `200`"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "42e0ab731763150615bb8dcec009cf9f329bed32ad83463ebfa058631b835d5b",
+          "inspected_ranges": [
+            [
+              121,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nVersion changes do not override normal HTTP semantics (`http-api` skill).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              12,
+              15
+            ],
+            [
+              19,
+              23
+            ],
+            [
+              40,
+              43
+            ],
+            [
+              50,
+              54
+            ],
+            [
+              56,
+              61
+            ],
+            [
+              70,
+              74
+            ],
+            [
+              78,
+              82
+            ],
+            [
+              86,
+              90
+            ],
+            [
+              119,
+              185
+            ],
+            [
+              193,
+              237
+            ],
+            [
+              263,
+              286
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep status-code behavior consistent across similar endpoints. The decision\nguide at the end summarizes the defaults.\n",
+            "\nThe operation completed and a representation is returned: a successful `GET`,\na `PUT`/`PATCH` returning the updated representation, a `POST` that performs an\noperation without creating a resource, a successful query.\n",
+            "\nThe request created a new API resource. Include a `Location` header when a\nstable resource URI exists:\n",
+            "\n`PUT` may also return `201` when it creates a resource at a previously\nnon-existing target URI. The question is whether the HTTP operation created a\nnew API resource, not whether a row was inserted.\n",
+            "\nProcessing was accepted but is not complete when the response is sent — a\nlong-running operation, background job, asynchronous import, or queued\nprocessing. When practical, return an operation identifier or a `Location`\nwhere the client can observe progress:\n",
+            "\nThe operation completed and no body is needed — a successful `DELETE`, or an\nupdate where returning the representation adds no value. A `204` response must\nnot contain a body.\n",
+            "\nChoose consistently whether a repeated `DELETE` of an absent resource returns\n`204` (the desired final state holds) or `404` (the addressed resource does not\nexist); do not mix conventions between equivalent resources.\n",
+            "\nOnly for a conditional request (`If-None-Match`/ETag, `If-Modified-Since`)\nwhen the client's cached representation is still valid. It carries no normal\nrepresentation and is not a generic \"nothing changed\" business response.\n",
+            "\n### 406 Not Acceptable\n\nThe server cannot produce a representation acceptable under the client's\ncontent negotiation. It concerns the response representation; do not confuse\nit with `415`.\n\n### 409 Conflict\n\nThe request is valid but conflicts with the current state: a duplicate where\nuniqueness is part of the resource state, an incompatible state transition, a\nconflicting concurrent operation, or an idempotency key reused with a different\npayload.\n\n```text\nOrder already completed\n    + request asks to cancel it\n    → 409 Conflict\n```\n\nNot for malformed syntax.\n\n### 412 Precondition Failed\n\nA supplied conditional precondition is false — for example `If-Match:\n\"version-7\"` while the current version is `\"version-8\"`. That is `412`, not a\ngeneric `409`, because an explicit HTTP precondition failed.\n\n### 415 Unsupported Media Type\n\nThe server does not support the request representation, for example\n`Content-Type: application/xml` on a JSON-only endpoint. `415` concerns the\nrequest body format; `406` concerns acceptable response formats.\n\n### 422 Unprocessable Content\n\nThe request is syntactically and structurally valid but its semantic or\nbusiness content is invalid — impossible business values, a business-rule\nrejection that is not a state conflict, or a semantically invalid combination\nsuch as `startDate > endDate`. Some APIs deliberately use `400` for both\ntransport and semantic validation; follow an established project convention.\nFor new APIs that distinguish them:\n\n```text\n400 → invalid HTTP/request contract\n422 → structurally valid request, invalid semantics/business input\n```\n\n### 428 Precondition Required\n\nThe API contract requires a precondition the client did not provide, for\nexample a `PUT /api/orders/123` that requires `If-Match`:\n\n```text\nmissing required If-Match → 428\nprovided but stale If-Match → 412\n```\n\nUse `428` for other mandatory preconditions only when the contract explicitly\ndefines them.\n\n### 429 Too Many Requests\n\nRate limiting rejected the request. Include `Retry-After` when the server knows\nwhen another attempt is appropriate. Do not represent validation failure as\nrate limiting.\n",
+            "\n### 502 Bad Gateway\n\nThis API acts as an intermediary and receives an invalid or unusable upstream\nresponse. Do not convert every dependency failure into `502`.\n\n### 503 Service Unavailable\n\nThe service is temporarily unable to handle the request — maintenance, a\ncritical dependency unavailable for this operation, or overload when the service\nchooses `503` semantics. Include `Retry-After` when a meaningful retry time is\nknown.\n\n### 504 Gateway Timeout\n\nThis API acts as an intermediary and an upstream service did not respond in\ntime. Not for every internal `TaskCanceledException`: distinguish a client that\ncancelled the incoming request, an operation of our own that timed out, and an\nupstream timeout; the external response depends on which occurred and the role\nthis API plays.\n\n## Idempotency\n\n`GET` is safe and idempotent, `PUT` is idempotent, `DELETE` is idempotent in\nintended state semantics, `POST` is generally not idempotent. When a repeated\n`POST` must not create duplicate effects, consider an `Idempotency-Key` header\nwhose key the server associates with the request and result; reusing a key with\na materially different payload is reasonably a `409`. Do not claim idempotency\nmerely because duplicate requests are unlikely.\n\n## Optimistic Concurrency\n\nWhen HTTP-level optimistic concurrency is part of the contract, prefer standard\nconditional semantics:\n\n```text\nGET            → ETag: \"v7\"\nPUT/PATCH      → If-Match: \"v7\"\ncurrent is v7  → update succeeds\ncurrent is v8  → 412 Precondition Failed\nIf-Match absent but required → 428 Precondition Required\n```\n\nDo not replace well-defined precondition semantics with custom status codes.\n",
+            "\n| Situation | Default response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable response representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid request structure but invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid/failed upstream response while acting as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout while acting as intermediary | `504` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "c5c47fad8ebaed5cb81360ace0af3528db27f000de59a0125d4b284ab5a72021",
+          "inspected_ranges": [
+            [
+              116,
+              120
+            ],
+            [
+              129,
+              133
+            ],
+            [
+              180,
+              187
+            ]
+          ],
+          "context_quotes": [
+            "\nTranslate remote responses into the abstraction Application consumes. Do not\nblindly call `EnsureSuccessStatusCode()` when specific remote statuses carry\ncontract meaning:\n",
+            "\nFor richer failure semantics, translate responses into explicit Infrastructure\nor Application outcomes, and do not expose every upstream status code through\nyour own API.\n",
+            "\nCheck-by-reference against `performance.md` § Outbound Calls and\n`architecture.md` § Layer Placement: a new `HttpClient` per request; typed,\nkeyed, or named clients made mandatory universally; retries on unsafe\noperations without idempotency analysis; infinite or poorly bounded retries;\n`HttpResponseMessage` leaking across boundaries; ignored cancellation; dynamic\ntokens in shared `DefaultRequestHeaders`; every upstream failure mapped to the\nsame status; resilience pipelines added without understanding their behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "64c7146593bb7a10bd22274e8f81aaa4045d4ed24b708519aa35e596c27dd164",
+          "inspected_ranges": [
+            [
+              102,
+              107
+            ]
+          ],
+          "context_quotes": [
+            "\nASP.NET Core rate limiting protects this API from excessive incoming traffic\nand is different from outbound resilience. A rejected request receives\n`429 Too Many Requests`, with `Retry-After` when a useful delay is known\n(`http-api` skill).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "ceabb98792f653174dc8009590caed3eb72e626744a681961a98cda7927d2f7a",
+          "inspected_ranges": [
+            [
+              74,
+              77
+            ]
+          ],
+          "context_quotes": [
+            "\nDocument `201 Created` when that is the runtime contract, and prefer\n`CreatedAtAction` / `CreatedAtRoute` when a canonical resource URL exists.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "API-004",
+        "name": "Empty collections return success",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#200 OK"
+        ],
+        "normalized_policy": "A successful collection query with zero matches normally returns 200 with an empty collection, not 404.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0106"
+      ],
+      "boundary_analysis": "200-empty default matches; stronger no204/reference categorical wording already0499/BF0104. Not a new strengthening.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/api.md",
+          "sha256": "17e82d4a80dfe314d7124e21c113187acc8022205be7ee54bdf4b5972415d9b0",
+          "inspected_ranges": [
+            [
+              22,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "  a stable resource URI exists), or `202` for work that already completed.\n- By default, a successful collection query with zero matches returns `200`\n  with an empty collection, not `404`.\n- Use `401` when authentication is missing or failed and `403` when an"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              27,
+              38
+            ],
+            [
+              115,
+              119
+            ],
+            [
+              263,
+              286
+            ]
+          ],
+          "context_quotes": [
+            "\nAn empty collection is still a successful collection result:\n\n```http\n200 OK\n\n[]\n```\n\n`200` with `[]` preserves the resource representation and is clearer for\nclients than `204` for an empty collection.\n",
+            "\nThe addressed resource does not exist, or the API deliberately hides its\nexistence. A collection query such as `GET /api/orders?customerId=...` with\nzero matches returns `200 []`.\n",
+            "\n| Situation | Default response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable response representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid request structure but invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid/failed upstream response while acting as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout while acting as intermediary | `504` |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "M1",
+      "pass_id": 2,
+      "unit": "P0002-M1-P009",
+      "canonical_policy": {
+        "id": "API-005",
+        "name": "401/403 semantics",
+        "related_groups": [
+          "security",
+          "frontend"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/http-api/SKILL.md#401 Unauthorized",
+          "templates/v2-baseline/.claude/skills/authentication/SKILL.md#401 vs 403"
+        ],
+        "normalized_policy": "Use 401 when authentication is missing/failed and 403 when an authenticated principal is not permitted; deliberate 404 hiding requires a consistent security policy.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "API-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/M1/constraints.jsonl/RULE-M1-0107"
+      ],
+      "boundary_analysis": "401/403/consistent deliberate hiding match; default middleware source actor remains ownU0006, since closest prior statuses/hiding do not specify generator. Uncertainty preserved.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-M1-U0006"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/api.md",
+          "sha256": "17e82d4a80dfe314d7124e21c113187acc8022205be7ee54bdf4b5972415d9b0",
+          "inspected_ranges": [
+            [
+              24,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "  with an empty collection, not `404`.\n- Use `401` when authentication is missing or failed and `403` when an\n  authenticated principal is not permitted. Returning `404` to hide protected\n  resources requires a deliberate, consistent security policy.\n- Use `409` for a valid request that conflicts with the current state; use"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "ae0328872b410c53e89fb88f7fe9c23f7553c346c3da47fcf282a251b06110f8",
+          "inspected_ranges": [
+            [
+              107,
+              112
+            ],
+            [
+              158,
+              164
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthentication/authorization middleware generates these responses by default\nrather than controllers manufacturing them. A deliberate, consistent `404` for\nsome forbidden lookups can avoid disclosing existence. Detailed status\nsemantics: `http-api` skill.\n",
+            "\nCheck-by-reference against `security.md` § Authentication and Authorization:\ncustom password hashing; disabled token validation; hardcoded signing keys;\nauthorization only in the frontend; Application depending on `HttpContext`;\n`401` for an authenticated-but-forbidden user or `403` for missing\nauthentication; logged tokens; scattered role/permission magic strings;\nIdentity, JWT issuance, or OIDC infrastructure added without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "9f1aa1b96b64eca35392efa2879046b2d65674b1b3c614a666634e23c1a10d42",
+          "inspected_ranges": [
+            [
+              94,
+              100
+            ],
+            [
+              102,
+              105
+            ],
+            [
+              107,
+              113
+            ],
+            [
+              115,
+              119
+            ],
+            [
+              263,
+              286
+            ]
+          ],
+          "context_quotes": [
+            "\nThe HTTP request itself is invalid: malformed JSON, invalid request shape,\nmodel-binding failure, invalid formatting, missing required transport-level\ninput, or a request that cannot be interpreted under the API contract. With\n`[ApiController]`, many binding and validation failures are handled\nautomatically. Not for authentication failure.\n",
+            "\nAuthentication is missing or failed — no credentials, invalid or expired token,\nchallenge required. Authentication middleware produces it by default.\n",
+            "\nAuthentication succeeded but the principal is not allowed — missing\npermission, insufficient role, or an operation prohibited by policy. The client\ngenerally cannot fix it by resending the same credentials. An API that hides\nthe existence of protected resources may return `404` instead, as a deliberate\nand consistent security policy.\n",
+            "\nThe addressed resource does not exist, or the API deliberately hides its\nexistence. A collection query such as `GET /api/orders?customerId=...` with\nzero matches returns `200 []`.\n",
+            "\n| Situation | Default response |\n|---|---|\n| Successful query with representation | `200` |\n| Empty collection | `200` + `[]` |\n| Resource created | `201` + `Location` when available |\n| Processing accepted but incomplete | `202` |\n| Successful operation with no body | `204` |\n| Conditional cache hit | `304` |\n| Malformed/contract-invalid request | `400` |\n| Missing/invalid authentication | `401` |\n| Authenticated but forbidden | `403` |\n| Resource absent | `404` |\n| Cannot produce acceptable response representation | `406` |\n| Current-state conflict | `409` |\n| Supplied precondition failed | `412` |\n| Unsupported request content type | `415` |\n| Valid request structure but invalid semantics | `422` |\n| Required precondition absent | `428` |\n| Rate limited | `429` + `Retry-After` when known |\n| Unexpected internal failure | `500` |\n| Invalid/failed upstream response while acting as intermediary | `502` |\n| Temporarily unavailable | `503` |\n| Upstream timeout while acting as intermediary | `504` |"
+          ]
+        }
+      ]
+    }
+  ]
+}

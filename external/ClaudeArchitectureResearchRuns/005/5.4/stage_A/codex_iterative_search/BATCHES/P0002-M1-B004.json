@@ -1,0 +1,64 @@
+{
+  "unit": "P0002-M1-B004",
+  "candidate": "M1",
+  "files": [],
+  "claims": [
+    {
+      "id": "CIS-M1-U0021",
+      "path": "output/template/.claude/scripts/check-instructions.js",
+      "start_line": 209,
+      "end_line": 218,
+      "claim": "The section-reference check accepts a nonempty leading word prefix matching an existing normalized heading, even when the complete captured section text does not match.",
+      "actor": "Instruction-structure checker",
+      "trigger": "Checking a recognized backticked target followed by a section-sign reference in an instruction artifact; target resolves.",
+      "modality": "CONDITIONAL",
+      "domain": "INSTRUCTION_ARCHITECTURE",
+      "exceptions": "Other checker errors still apply. Trailing words may intentionally be prose after the heading; does not establish that every longer string is an invalid reference or that the complete checker passes.",
+      "enforcement_effect": "This branch emits no section-not-found ERROR when any progressively shortened prefix matches; isolated copied-function probe confirms only this predicate.",
+      "closest_policy_ids": [
+        "WF-001"
+      ],
+      "baseline_comparisons": [
+        {
+          "baseline_keys": [
+            "primary/M1/constraints.jsonl/EXTRA-M1-0062",
+            "primary/M1/coverage_ranges.jsonl/M1-S000426",
+            "primary/M1/ORPHAN_CANDIDATES.jsonl/ORPHAN-M1-0064"
+          ],
+          "assessment": "POSSIBLE_MISSING_EFFECTIVE_EXCEPTION",
+          "reason": "General requirement that section references resolve omits leading-prefix acceptance; same code range does not describe the matching boundary."
+        },
+        {
+          "baseline_keys": [
+            "replica/M1/constraints.jsonl/EXTRA-M1-0014",
+            "replica/M1/coverage_ranges.jsonl/M1-S000501"
+          ],
+          "assessment": "IMPLEMENTATION_NOT_REGISTERED_SEPARATELY",
+          "reason": "Heading-match branch labeled IMPLEMENTATION and aggregate action says references resolve, without prefix semantics. All-three action review of headings/sections/inactive/routing found no equivalent exact acceptance condition."
+        }
+      ],
+      "comparison_reason": "Source-grounded effective acceptance boundary plausibly differs from complete section resolution. Independent existing slot/import exactness BF0055 concerns different targets, not this predicate. Normative significance remains uncertain because shortening may simply parse prose after a valid heading.",
+      "distinguishing_behavioral_scenario": "Existing heading Dependency Injection; recognized reference target followed by section text Dependency Injection Nonexistent Subsection. Full normalized lookup fails but prefix loop succeeds without a section error. This is a probe of the predicate, not full-runtime enforcement or proven invalid prose.",
+      "comparison_status": "UNCERTAIN_NOVELTY",
+      "confidence": "HIGH_SOURCE_AND_ISOLATED_PREDICATE_UNCERTAIN_NORMATIVE_SCOPE",
+      "status": "OPEN",
+      "open_question": "Is accepting trailing unmatched words a separately relevant enforcement exception, or intended delimitation of a valid heading followed by prose already consistent with the baseline resolution claim?",
+      "next_evidence_strategy": "Family4 follow parser-to-checker-to-hook trigger path and use references with explicit intended full headings versus trailing prose; family5 compare baseline resolution semantics without treating lexical mismatch alone as a defect."
+    }
+  ],
+  "isolated_probe": {
+    "description": "Copied heading normalization, hasHeading and prefix loop only; mocked in-memory headings/readText; no candidate module or hook executed.",
+    "source_lines": [
+      "scripts/lib/common.js:363-365",
+      "scripts/check-instructions.js:164-167",
+      "scripts/check-instructions.js:215-218"
+    ],
+    "javascript": "function normalizeHeading(h) {\n  return h.replace(/`/g, '').replace(/^\\d+\\.\\s*/, '').replace(/^Step \\d+:\\s*/i, '').trim().toLowerCase();\n}\nconst common={normalizeHeading,headings:()=>[\"Dependency Injection\"],readText:()=>\"fixture\"};\nfunction hasHeading(file, wanted) {\n  const target = common.normalizeHeading(wanted);\n  return common.headings(common.readText(file)).some((h) => common.normalizeHeading(h) === target);\n}\nconst m={2:\"Dependency Injection Nonexistent Subsection\"}; const target=\"fixture\"; const f=\"fixture\"; const errors=[]; const add=(...v)=>errors.push(v);\n      const words = m[2].trim().split(/\\s+/);\n      let ok = false;\n      for (let n = words.length; n > 0 && !ok; n--) ok = hasHeading(target, words.slice(0, n).join(' '));\n      if (!ok) add('ERROR', f, `section reference does not resolve: ${m[1]} \u00a7 ${m[2].trim()}`);\nconsole.log(JSON.stringify({exactHeading:hasHeading(target,m[2]),acceptedByPrefixLoop:ok,errors}));",
+    "observed": {
+      "exactHeading": false,
+      "acceptedByPrefixLoop": true,
+      "errors": []
+    }
+  },
+  "next_action": "Commit all nine M1 executable file accounts, close candidate checkpoint and validate before advancing K0."
+}

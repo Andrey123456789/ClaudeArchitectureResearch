@@ -1,0 +1,73 @@
+# M B013 — skills git-workflow (rest), health-check (EXC-010 lineage), http-api (EXC-009 lineage)
+1 CD WF-003~ WF-022~ m=M k=W c=M | Verify before preparing a PR (WF-003) and a focused PR (WF-022); remainder: the PR description must explain what changed, why, how it was verified and compatibility/migration notes.
+  x: PR description content (what, why, how verified, compatibility/migration notes)
+  s: A verified, focused PR with a one-line description: satisfies WF-003/WF-022; M's PR description requirements are unmet.
+2 UN m=Y rel=GOV-015 | git-workflow SKILL.md:98-102 permits destructive Git operations when explicitly requested 'or clearly required by an approved workflow'; GOV-015 allows repository-changing Git operations only when explicitly requested.
+  r: whether 'clearly required by an approved workflow' counts as an explicit request under GOV-015 (permission widening vs equivalent) cannot be decided from the texts
+  fhd: Whether an approved workflow may authorize destructive Git operations without a per-operation explicit request (GOV-015).
+3 CO GOV-020 GOV-019~ | High-risk Git operations are treated as high-risk and what will be lost or rewritten is inspected first (GOV-020 state-aware minimal operation; GOV-019).
+4 MX | git-workflow SKILL.md:98-102: inspection duty plus a permission scope.
+  - CO GOV-020~ GOV-019~ m=M | Inspect what will be lost or rewritten before a high-risk operation.
+  - UN m=Y rel=GOV-015 | High-risk operations allowed when explicitly requested or clearly required by an approved workflow.
+    r: approved-workflow permission vs GOV-015's explicit-request requirement (same blocker as FG-M-58264ccd7d)
+5 XW m=S c=M rel=WF-009 | After Git operations report the resulting state when useful (branch, commit, push target, PR status, remaining uncommitted changes): discretionary report content beyond WF-009's verification reporting.
+  t: when useful (agent judgment)
+  s: Agent creates a commit and says only 'done': allowed by the oracle; M's guidance suggests reporting branch, commit and remaining changes.
+6 CO API-019~ m=D st=W c=M | Distinguish liveness from readiness 'when the deployment infrastructure benefits from it': conditional and weaker than API-019's distinct semantics.
+7 XP m=D c=M rel=API-019 | Register readiness checks with tags and map readiness endpoints by tag (EXC-010 implementation technique).
+  s: Separate health-check registrations without tags mapped through predicates on names: allowed by API-019; M's technique uses tags.
+8 CO API-019 c=M | Only dependencies required for meaningful readiness; an optional service does not make the app unready (API-019 readiness depends on capabilities required to serve traffic).
+9 CO API-018 | Database health is a lightweight connectivity check without expensive queries, scans or data modification (API-018).
+10 XP m=D c=M rel=API-018 | Use provider/framework health-check integration where suitable (technique).
+  e: where suitable
+  s: A hand-written DbContext connectivity check instead of the EF Core health-check integration: allowed by API-018; M's default uses the integration.
+11 CO API-019~ API-018~ m=SN c=M | External dependencies only when they matter to readiness; avoid readiness cascades without operational justification (API-019 semantics, API-018 cheap checks).
+12 XP m=MN c=M rel=API-019 | Health endpoints map healthy/unhealthy to success/non-success per the probe policy and do not reuse business API status semantics mechanically (EXC-010 technique).
+  s: A readiness endpoint returning 404 for a missing dependency following business API conventions: not addressed by the oracle; M forbids mechanically reusing business status semantics.
+13 CO API-020 | Small probe responses; detailed diagnostics endpoints protected (API-020).
+14 XP m=D c=M rel=API-020,SEC-006 | Choose health endpoint exposure from the deployment topology (internal network, management port, host restrictions, authorization) (EXC-010 topology technique).
+  s: Health endpoints on the public port without host restrictions but with safe output: allowed by API-020; M's default chooses a restricted exposure.
+15 CO API-019 | Readiness stays unhealthy until required asynchronous/slow startup work completes (API-019).
+16 XP m=SN c=M rel=RUN-013,API-018 | Avoid Error-level logs for every normal failed probe (logging-level guidance not in the oracle).
+  s: Logging each failed readiness probe at Error: allowed by the oracle; M advises against it.
+17 CO API-018 m=SN st=W | Avoid expensive queries, long timeouts, large allocations and full workflows in health checks (API-018 MUST).
+18 XP m=D c=M rel=TST-003,API-019,API-020 | Health-configuration test checklist when deployment relies on it; no elaborate tests of uncustomized framework behavior.
+  t: when deployment relies on the health configuration
+  s: Readiness configuration relied on by an orchestrator without any test: no policy requires one; M's guidance does.
+19 CO API-018~ m=SN c=M | Avoid using health checks as a code-quality grading system (health checks must not become business workflows; cheap and deterministic).
+20 CO API-003~ m=D c=M | Location header for a created resource when a stable URI exists: part of 201 semantics that API-003 requires.
+21 CO API-003 | PUT may return 201 when it creates a resource at a new URI (API-003 '201 when the operation created an API resource').
+22 CO API-003 | 202 for accepted but incomplete processing (API-003).
+23 CO API-003~ m=D c=M | An operation identifier or Location for observing progress of a 202 when practical (HTTP 202 semantics).
+24 CO API-003 | 204 for successful operations without body (API-003).
+25 XP m=M c=M rel=API-003 | Choose consistently whether a repeated DELETE of an absent resource returns 204 or 404 and do not mix them between equivalent resources (consistency requirement; both choices are valid HTTP semantics).
+  s: One controller returns 204 and another 404 for repeated DELETE of equivalent resources: each acceptable under the oracle; M requires consistency.
+26 XP m=MN c=M rel=API-003 | 304 only for conditional requests with a still-valid cached representation, never a generic 'nothing changed' response: API-003 covers success statuses, not 3xx (EXC-009 reference lineage).
+  s: Returning 304 for an update that changed nothing: not addressed by the oracle; M forbids it.
+27 CO API-005~ m=MN | 400 for invalid HTTP requests, not for authentication failure (401 for missing/failed authentication, API-005).
+28 CO API-005 | 401 semantics (API-005).
+29 CO API-005 | 403 semantics (API-005).
+30 CO API-004 API-005~ | 404 for missing or deliberately hidden resources; zero-match collections return 200 [] (API-004).
+31 XP m=M c=M rel=API-003 | 406 for unacceptable response representations, 415 for unsupported request media types, not confused (status semantics outside the oracle's listed codes; EXC-009 lineage).
+  s: Returning 406 for an unsupported request Content-Type: not addressed by the oracle; M forbids the confusion.
+32 CO API-006 | 409 cases (uniqueness, incompatible transitions, concurrent conflicts, reused idempotency keys) (API-006).
+33 CO API-006 | A false If-Match precondition is normally 412, not 409 (API-006).
+34 XP m=D c=M rel=API-003,API-002 | 422 for structurally valid requests with invalid semantic/business content in new APIs that distinguish it; an established convention of 400 for both is followed.
+  e: an established project convention using 400 for both
+  s: A new API rejecting startDate > endDate with 400 ValidationProblemDetails: allowed by API-002; M's default is 422.
+35 XP m=M c=M rel=API-006 | 428 when a contract-required precondition such as If-Match is absent (API-006 covers 409/412 only).
+  s: Returning 400 for a missing required If-Match header: not addressed by the oracle; M uses 428.
+36 XP m=M c=M rel=API-003 | 429 with Retry-After when the retry time is known for rate-limited requests; validation failures are not represented as rate limiting (status outside the oracle's list).
+  s: Rate-limited requests answered with 503 and no Retry-After: not addressed by the oracle; M uses 429 with Retry-After.
+37 XP m=D c=M rel=RUN-017 | Inbound ASP.NET Core rate limiting is distinct from outbound resilience; rejected requests normally return 429 with Retry-After when a useful delay is known.
+  s: As for FG-M-8a403154cf.
+38 CO API-007 API-002~ API-008~ | 500 for unexpected failures via centralized handling and safe ProblemDetails (API-007, API-002, API-008).
+39 XP m=MN c=M rel=API-021,API-007 | 502/504 only when this API is an intermediary receiving an invalid upstream response or upstream timeout; no mechanical mapping of every dependency failure or TaskCanceledException; distinguish own and upstream timeouts.
+  s: Mapping every downstream HttpRequestException to 502 in a non-gateway API: not addressed by the oracle; M forbids the mechanical mapping.
+40 XP m=D c=M rel=API-003 | 503 for temporary inability (maintenance, unavailable critical dependency, chosen overload semantics) with Retry-After when known (EXC-009 lineage).
+  s: Returning 500 during planned maintenance: not addressed by the oracle; M's guidance uses 503.
+41 CO API-021~ RUN-019~ c=M | Distinguish a client-cancelled request from timeouts when choosing the response (API-021 client cancellation is not a server failure).
+42 CO API-006~ RUN-016~ m=M c=M | Reusing an idempotency key with a different payload is a reasonable 409 (conflict with current state, API-006); idempotency is not claimed merely because duplicates are unlikely (RUN-016 concrete safety mechanism).
+43 CO RUN-016~ m=MN c=M | Do not claim idempotency merely because duplicate requests are unlikely (RUN-016 requires a concrete safety mechanism).
+44 CO API-006~ m=D c=M | Standard conditional request semantics (ETag/If-Match/412) preferred over custom status codes for HTTP optimistic concurrency (API-006).
+45 CO ARC-010 | Controllers translate Application outcomes into HTTP outcomes (ARC-010).

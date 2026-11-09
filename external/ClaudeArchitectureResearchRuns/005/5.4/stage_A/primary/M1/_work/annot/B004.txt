@@ -1,0 +1,309 @@
+# Batch B004 — rules: error-handling, frontend-framework, frontend, performance, persistence-technology, physical-structure, security, test-framework, testing
+
+@@ output/template/.claude/rules/error-handling.md ;; Path rule; loads with backend/**/*.cs.
+@scope path rule: backend/**/*.cs
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10-11 NN ;; Pointers.
+13 NN ;; Heading.
+15-20 OL [api011.no-casual-exceptions,api009.explicit-outcomes]
+21-22 OL [api009.no-forced-result]
+23-26 OL [api009.business-categories]
+27-30 OL [api011.no-business-exception-default]
+32 NN ;; Heading.
+34-36 OL [api007.central-handler]
+38-41 MX [x.catch-whitelist,api007.no-swallow] ;; Closed list of permitted catch purposes (added) and never swallowing exceptions (API-007/RUN-018).
+43 NN ;; Heading.
+45-48 OL [api012.log-once,api009.not-logged-as-errors]
+50 NN ;; Heading.
+52-55 OL [api002.problemdetails]
+56-58 OL [api008.no-leak]
+60 NN ;; Heading.
+62-63 OL [api021.cancellation]
+64 NN ;; Pointer to performance.md.
+66 NN ;; Heading.
+68-69 OL [api010.fluentvalidation]
+71-76 OL [api010.owning-layers]
+78 OL [api010.no-mechanical-dup]
+
+C api011.no-casual-exceptions OL API-011 MUST_NOT ;; Do not use exceptions casually for normal expected control flow. ;; = ;; none ;;
+C api009.explicit-outcomes OL API-009 DEFAULT ;; Represent common expected outcomes (not found, transition not allowed, duplicate, concurrency conflict, rejected operation) explicitly when clearer, with the simplest contract (null, bool, typed outcome, deliberately adopted Result<T>). ;; = ;; none ;;
+C api009.no-forced-result OL API-009 MUST_NOT ;; Do not force a generic Result<T> pattern; it is not mandatory nor introduced project-wide because an operation can fail. ;; = ;; none ;;
+C api009.business-categories OL API-009 MUST ;; Application outcome categories use business semantics (Validation, NotFound, Conflict, BusinessRuleViolation), never HTTP-named categories. ;; = ;; none ;;
+C api011.no-business-exception-default OL API-011 MUST_NOT ;; Do not establish custom business exceptions as default architecture or throw/catch to jump between normal branches; typed exceptions for selected cases are a consistent project-level decision. ;; = ;; none ;;
+C api007.central-handler OL API-007 DEFAULT ;; By default unexpected failures propagate to centralized handling (IExceptionHandler); avoid repetitive catch/log/rethrow blocks. ;; = ;; none ;;
+C x.catch-whitelist EX API-007,API-011 MUST ;; Catch an exception only to recover, translate into the layer's own outcome, perform a defined fallback, add context preserving the original, or perform required cleanup. ;; = ;; The listed purposes. ;; Closed whitelist of catch purposes is stricter than API-007.
+C api007.no-swallow OL API-007,RUN-018 MUST_NOT ;; Never swallow exceptions to continue execution. ;; = ;; none ;;
+C api012.log-once OL API-012 MUST ;; Log an unexpected exception once at the handling boundary, not repeatedly across layers and the global handler. ;; = ;; none ;;
+C api009.not-logged-as-errors OL API-009 DEFAULT ;; Expected outcomes such as not found or validation rejection are not logged as application errors. ;; = ;; none ;;
+C api002.problemdetails OL API-002 DEFAULT ;; By default ProblemDetails for non-validation failures and ValidationProblemDetails for request validation; keep the machine-readable contract stable and safe and never make human-readable messages the contract. ;; = ;; none ;;
+C api008.no-leak OL API-008 MUST_NOT ;; No stack traces, SQL details, connection strings, internal paths, secrets, raw exception messages or sensitive details in public API errors. ;; = ;; none ;;
+C api021.cancellation OL API-021 MUST_NOT ;; Normal client cancellation is not mapped to a generic 500 nor logged as an unhandled error. ;; = ;; none ;;
+C api010.fluentvalidation OL API-010,DEP-010 MUST ;; Validate each concern at its owning layer; use FluentValidation for explicit request/use-case validation where appropriate. ;; = ;; none ;;
+C api010.owning-layers OL API-010,SEC-003 MUST ;; API validates transport concerns; Application use-case/workflow rules; Domain genuine non-trivial invariants (not moved into FluentValidation for convenience); Infrastructure external-system assumptions. ;; = ;; none ;;
+C api010.no-mechanical-dup OL API-010 MUST_NOT ;; Do not duplicate the same validation mechanically at every layer. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/frontend-framework.md ;; Capability-owned path rule (frontend/angular); loads with frontend/**/*.
+@scope path rule: frontend/**/*
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner with capability ownership.
+8 NN ;; Heading.
+10 NN ;; Pointer to frontend.md.
+12-14 OL [fe001.standalone]
+15-17 OL [fe004.signals-rxjs]
+18-20 OL [fe008.interceptors]
+21-22 OL [fe011.nested-subs]
+23-25 OL [fe012.lifecycle]
+27 NN ;; Heading.
+29-30 NN ;; Table header.
+31-32 OL [fe003.binding,fe010.binding] ;; Role bindings: feature data-access service = @Injectable service using HttpClient; explicit form model = Reactive Forms.
+
+C fe001.standalone OL FE-001 DEFAULT ;; Modern standalone Angular APIs for new code organized by feature; no NgModules for ordinary new features. ;; = ;; Integration or legacy dependency genuinely requires NgModules. ;;
+C fe004.signals-rxjs OL FE-004 DEFAULT ;; Signals for synchronous local UI state, RxJS for async streams/HTTP composition/cancellation/event pipelines; avoid mechanical conversions. ;; = ;; none ;;
+C fe008.interceptors OL FE-008 PREFER ;; Prefer functional interceptors for new code; keep them cross-cutting; no feature business logic in interceptors. ;; = ;; none ;;
+C fe011.nested-subs OL FE-011 AVOID ;; Avoid manual nested RxJS subscriptions; prefer composition operators. ;; = ;; none ;;
+C fe012.lifecycle OL FE-012 MUST ;; Tie manual subscriptions from framework-managed code to the component/service lifecycle with current Angular facilities. ;; = ;; none ;;
+C fe003.binding OL FE-003 MUST ;; The frontend HTTP boundary is an @Injectable feature service using HttpClient. ;; = ;; none ;;
+C fe010.binding OL FE-010 DEFAULT ;; The explicit form model for non-trivial forms is Angular Reactive Forms. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/frontend.md ;; Framework-independent frontend path rule; loads with frontend/**/*.
+@scope path rule: frontend/**/*
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10-11 NN ;; Pointers.
+13 NN ;; Heading.
+15-19 OL [fe007.feature-oriented]
+20-22 OL [fe007.shared-limited]
+24 NN ;; Heading.
+26-28 OL [fe002.presentation]
+30 NN ;; Heading.
+32-35 OL [fe003.http-boundary]
+37 NN ;; Heading.
+39-41 OL [fe009.api-errors]
+43 NN ;; Heading.
+45-46 OL [fe006.simple-state]
+47-48 OL [fe005.lazy]
+50 NN ;; Heading.
+52-55 OL [fe010.forms]
+
+C fe007.feature-oriented OL FE-007 MUST ;; Feature-oriented structure: features own their UI and data access; no application-wide technical buckets or empty architecture folders; core/shared small. ;; = ;; none ;;
+C fe007.shared-limited OL FE-007 MUST_NOT ;; Use shared only for genuinely cross-feature primitives; do not move feature code into shared merely because two components of one feature use it. ;; = ;; none ;;
+C fe002.presentation OL FE-002 MUST ;; Pages/components focus on presentation and UI orchestration; do not move trivial presentation logic into services merely to shrink components. ;; = ;; none ;;
+C fe003.http-boundary OL FE-003 MUST ;; Backend communication in explicit feature data-access services; no HTTP calls scattered through components; frontend API models match the published contract; no backend Domain entities in the frontend. ;; = ;; none ;;
+C fe009.api-errors OL FE-009 MUST ;; Follow the documented API error contract; centralize reusable ProblemDetails parsing when practical; do not infer business behaviour from human-readable messages. ;; = ;; none ;;
+C fe006.simple-state OL FE-006 PREFER ;; Prefer simple component/service state before a state-management library. ;; = ;; none ;;
+C fe005.lazy OL FE-005 DEFAULT ;; By default route-level lazy loading for meaningful features; not every tiny component. ;; = ;; none ;;
+C fe010.forms OL FE-010 MUST ;; Use the explicit form model for non-trivial forms when useful; frontend validation is UX and never replaces backend validation or integrity/security enforcement. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/performance.md ;; Path rule; loads with backend/**/*.cs.
+@scope path rule: backend/**/*.cs
+1-4 IM ;; Frontmatter paths.
+6 NN ;; Banner.
+8 NN ;; Heading.
+10-11 NN ;; Pointers.
+13 NN ;; Heading.
+15-17 OL [run001.clarity]
+19 NN ;; Heading.
+21-22 OL [run002.async]
+23-25 OL [run003.cancellation]
+27 NN ;; Heading.
+29-32 OL [run004.timeprovider]
+34 NN ;; Heading.
+36-37 OL [run005.httpclient]
+38-40 OL [run015.timeouts]
+41-43 OL [run016.retry-safety]
+44-45 OL [run017.retry-after]
+46-47 OL [run018.fallback]
+48-49 OL [run019.cancel-not-transient]
+51 NN ;; Heading.
+53-56 OL [run006.db-efficiency]
+58 NN ;; Heading.
+60-65 OL [run007.caching-need]
+66-67 OL [run023.expiry]
+68-71 OL [run020.keys]
+72-73 OL [run021.invalidation]
+75 NN ;; Heading.
+77-81 OL [run008.measured,run001.no-micro]
+83 NN ;; Heading.
+85-87 OL [run012.verify-hot-path]
+
+C run001.clarity OL RUN-001 DEFAULT ;; Prefer clear correct code first; no specialized optimizations without a concrete reason; measurement/profiling for non-trivial optimizations. ;; = ;; none ;;
+C run002.async OL RUN-002 MUST ;; Use async APIs for async I/O; never block with .Result/.Wait()/sync-over-async. ;; = ;; none ;;
+C run003.cancellation OL RUN-003 MUST ;; Propagate CancellationToken when meaningful; none on purely synchronous code without a use case. ;; = ;; none ;;
+C run004.timeprovider OL RUN-004 DEFAULT ;; By default TimeProvider for current-time-dependent logic needing deterministic tests; do not mechanically replace stored/explicit dates. ;; = ;; none ;;
+C run005.httpclient OL RUN-005 MUST ;; No HttpClient create/dispose per request; IHttpClientFactory or another long-lived strategy. ;; = ;; none ;;
+C run015.timeouts OL RUN-015 MUST ;; External I/O has bounded execution time; avoid overlapping unclear timeout mechanisms. ;; = ;; none ;;
+C run016.retry-safety OL RUN-016 MUST ;; Retry only when safe; no automatic retries of state-changing operations without idempotency or duplicate prevention. ;; = ;; none ;;
+C run017.retry-after OL RUN-017 DEFAULT ;; Respect Retry-After/rate-limit guidance where appropriate; no indefinite/aggressive retries. ;; = ;; none ;;
+C run018.fallback OL RUN-018 MUST ;; Fallback only when semantically acceptable; never hide correctness failures behind defaults. ;; = ;; none ;;
+C run019.cancel-not-transient OL RUN-019 MUST_NOT ;; Caller cancellation is not a transient failure; not retried or converted into repeated attempts. ;; = ;; none ;;
+C run006.db-efficiency OL RUN-006 DEFAULT ;; Filter/project in the database, avoid unnecessary round trips/over-loading, watch N+1, paginate potentially large results. ;; = ;; none ;;
+C run007.caching-need OL RUN-007 DEFAULT ;; Caching only for clear measured/reasoned need with acceptable staleness; implementation per deployment/consistency/staleness; not merely because read frequently. ;; = ;; none ;;
+C run023.expiry OL RUN-023 MUST ;; Every cache entry has a lifetime or explicit invalidation strategy. ;; = ;; none ;;
+C run020.keys OL RUN-020 MUST ;; Cache keys uniquely represent the value incl. identifier, tenant, user when user-specific, locale, query/filter parameters; no global keys for user/tenant data. ;; = ;; none ;;
+C run021.invalidation OL RUN-021 MUST ;; Invalidate/update cache only consistently with successful mutations; cache never a second source of truth. ;; = ;; none ;;
+C run008.measured OL RUN-008 DEFAULT ;; Compiled queries, ValueTask<T>, pools, manual pooling, custom serialization, aggressive caching and raw SQL for performance only for measured/demonstrated need. ;; = ;; none ;;
+C run001.no-micro OL RUN-001 MUST_NOT ;; Do not sacrifice maintainability for speculative micro-optimization. ;; = ;; none ;;
+C run012.verify-hot-path OL RUN-012,RUN-001 MUST ;; Prefer ordinary clear code; for demonstrated allocation-heavy hot paths consider spans/pooling/source-generated serialization/preallocated buffers and verify material improvement. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/persistence-technology.md ;; Capability-owned path rule (persistence/ef-core); loads with backend/**/*.cs, *.csproj, appsettings*.json.
+@scope path rule: backend/**/*.cs, backend/**/*.csproj, backend/**/appsettings*.json
+1-6 IM ;; Frontmatter paths.
+8 NN ;; Banner with capability ownership.
+10 NN ;; Heading.
+12-14 NN ;; Pointers to role map and persistence-change workflow.
+16 NN ;; Heading.
+18-20 OL [arc019.ef-in-adapter]
+21-26 OL [arc008.tech-types-defined]
+27-28 OL [arc019.boundary-not-hiding]
+30 NN ;; Heading.
+32-34 OL [arc018.transactions]
+36 NN ;; Heading.
+38-41 OL [pst001.seed-dataset]
+42-44 OL [pst002.seed-adapter]
+45-47 OL [pst003.dbseeder]
+48-50 OL [pst004.dev-only,tst008.no-dev-seeder]
+51-53 OL [pst005.no-migrate]
+54-57 OL [pst006.no-sync]
+58-59 OL [pst007.valid]
+61 NN ;; Heading.
+63-65 OL [tst007.provider-binding]
+67 NN ;; Heading.
+69-73 OL [dep026.local-db]
+
+C arc019.ef-in-adapter OL ARC-019 MUST ;; EF Core is an adapter-layer detail used directly with full capabilities; do not cripple repositories to preserve a generic abstraction. ;; = ;; none ;;
+C arc008.tech-types-defined OL ARC-008,ARC-014,ARC-017 MUST_NOT ;; Do not leak EF Core concepts into the use-case layer; persistence-technology types are DbContext/AppDbContext, DbSet<T>, EF APIs, EF-backed IQueryable<T>, query expressions and provider types; the persistence session is the scoped AppDbContext shared by repositories and UoW of one use case. ;; = ;; none ;;
+C arc019.boundary-not-hiding OL ARC-019 MUST ;; The repository boundary keeps persistence out of the use-case layer but does not hide EF Core from the adapter layer. ;; = ;; none ;;
+C arc018.transactions OL ARC-018 DEFAULT ;; One SaveChangesAsync is the normal transaction boundary; no explicit transaction APIs until a concrete use case needs more. ;; = ;; none ;;
+C pst001.seed-dataset OL PST-001,PST-007 DEFAULT ;; Maintain a small deterministic representative seed dataset for an empty Development database; readable deterministic examples over exhaustive/random combinations. ;; = ;; none ;;
+C pst002.seed-adapter OL PST-002 MUST ;; Seeding is an adapter-layer bootstrap concern and may use AppDbContext directly without repositories/UoW. ;; = ;; none ;;
+C pst003.dbseeder OL PST-003 MUST ;; Substantial seed construction lives in a dedicated internal DbSeeder exposed via a narrow adapter-layer initialization extension, not Program.cs, AppDbContext configuration, entity configurations or migrations. ;; = ;; none ;;
+C pst004.dev-only OL PST-004 MUST_NOT ;; Automatic seeding only in Development; never seed Production automatically. ;; = ;; none ;;
+C tst008.no-dev-seeder OL TST-008 MUST ;; Tests own their setup and do not use the development seeder. ;; = ;; none ;;
+C pst005.no-migrate OL PST-005 MUST_NOT ;; The seeder must not call Database.Migrate(), EnsureCreated() or create/upgrade schema; migrations applied separately before seeding. ;; = ;; none ;;
+C pst006.no-sync OL PST-006 MUST_NOT ;; Leave existing representative data unchanged; no seeder-based synchronization/repair/upgrade/overwrite/recreation; developers recreate explicitly. ;; = ;; none ;;
+C pst007.valid OL PST-007 MUST ;; Seed entities preserve current Domain invariants and valid relationships. ;; = ;; none ;;
+C tst007.provider-binding OL TST-007 MUST ;; For provider fidelity the actual provider is SQL Server; EF Core InMemory is a different non-relational provider. ;; = ;; none ;;
+C dep026.local-db OL DEP-026,SEC-002 DEFAULT ;; appsettings.Development.json provides a usable local connection string without secret credentials (e.g. LocalDB integrated security); credential-bearing values via user-secrets or another approved local mechanism. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/physical-structure.md ;; Path rule; loads with backend/**/*, frontend/**/*, docs/**/*, *.slnx, *.sln.
+@scope path rule: backend/**/*, frontend/**/*, docs/**/*, *.slnx, *.sln
+1-8 IM ;; Frontmatter paths.
+10 NN ;; Banner.
+12 NN ;; Heading.
+14-18 OL [arc027.proportional-structure]
+20-21 NN ;; Pointers to layout and project-structure workflow.
+
+C arc027.proportional-structure OL ARC-027 MUST_NOT ;; Physical structure follows responsibilities: no speculative projects, infrastructure, empty trees or generic Common/Helpers/Utils buckets; create directories/projects only with meaningful cohesive content. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/security.md ;; Path rule; loads with backend/**/*, frontend/**/*, **/*.json, **/*.yml(yaml), **/*.csproj, **/*.props, **/*.targets, **/*.config, **/.env*, Dockerfile*.
+@scope path rule: backend/**/*, frontend/**/*, **/*.json, **/*.yml, **/*.yaml, **/*.csproj, **/*.props, **/*.targets, **/*.config, **/.env*, Dockerfile*
+1-15 IM ;; Frontmatter paths.
+17 NN ;; Banner.
+19 NN ;; Heading.
+21-22 NN ;; Pointers.
+24 NN ;; Heading.
+26-28 OL [sec001.no-secrets]
+29-32 OL [sec002.mechanisms]
+34 NN ;; Heading.
+36-40 OL [sec003.untrusted]
+42 NN ;; Heading.
+44-46 OL [sec004.parameterized]
+48 NN ;; Heading.
+50-51 OL [sec005.server-authz]
+52-55 OL [sec006.anonymous]
+56-58 OL [sec016.platform-auth]
+59-62 OL [sec017.token-validation]
+63-65 OL [sec018.enumeration]
+66-68 OL [sec011.csrf]
+69-70 OL [sec012.token-storage]
+72 NN ;; Heading.
+74-79 OL [sec007.tls]
+81 NN ;; Heading.
+83-87 OL [sec008.crypto]
+89 NN ;; Heading.
+91-94 OL [sec009.cors]
+96 NN ;; Heading.
+98-102 OL [sec010.no-sensitive-logs]
+103-105 OL [run014.no-payloads]
+107 NN ;; Heading.
+109-111 OL [sec013.fail-safe]
+112-113 OL [sec014.visible-failure]
+114-115 OL [sec015.upload-metadata]
+117 NN ;; Heading.
+119-121 OL [dep019.runtime-image]
+
+C sec001.no-secrets OL SEC-001 MUST_NOT ;; Never hardcode/commit real secrets, credentials, private keys, tokens or production connection strings, including example configuration. ;; = ;; none ;;
+C sec002.mechanisms OL SEC-002 DEFAULT ;; By default local secret mechanism (dotnet user-secrets) in development; environment injection/managed store when deployed; no cloud-provider assumption. ;; = ;; none ;;
+C sec003.untrusted OL SEC-003 MUST ;; Treat data from outside the trusted boundary as untrusted and validate it at the owning layer when assumptions matter. ;; = ;; none ;;
+C sec004.parameterized OL SEC-004 MUST ;; Parameterized database access; never concatenate untrusted input into SQL. ;; = ;; none ;;
+C sec005.server-authz OL SEC-005 MUST ;; Authorization enforced on the server; client guards/hidden buttons are UX only. ;; = ;; none ;;
+C sec006.anonymous OL SEC-006 MUST ;; Anonymous access deliberate and visible; global/fallback policies, attributes or endpoint configuration; no redundant [Authorize] under a secure global policy. ;; = ;; none ;;
+C sec016.platform-auth OL SEC-016 MUST_NOT ;; No custom token/password security, hashing or reset-token crypto when ASP.NET Core/Identity covers it. ;; = ;; none ;;
+C sec017.token-validation OL SEC-017 MUST ;; Validate issuer, audience where applicable, signing authority and lifetime for Bearer/OIDC; never disable validation to make a token work. ;; = ;; none ;;
+C sec018.enumeration OL SEC-018 MUST_NOT ;; No authentication-failure detail revealing secrets/account state; avoid account-enumeration leaks. ;; = ;; none ;;
+C sec011.csrf OL SEC-011 MUST ;; With automatic browser cookie credentials include CSRF protection; the frontend framework does not remove the risk. ;; = ;; none ;;
+C sec012.token-storage OL SEC-012 MUST_NOT ;; Do not claim one token-storage mechanism is universally secure; choose by threat model. ;; = ;; none ;;
+C sec007.tls OL SEC-007 MUST ;; Production sensitive traffic uses TLS respecting hosting topology (no HTTPS-redirection requirement when the deployment provides secure transport); never disable certificate validation. ;; = ;; none ;;
+C sec008.crypto OL SEC-008 MUST_NOT ;; No custom cryptography when a reviewed platform mechanism fits; Data Protection is not universal database encryption. ;; = ;; none ;;
+C sec009.cors OL SEC-009 DEFAULT ;; By default the narrowest CORS policy for actual browser clients; never credentialed requests with unrestricted origins. ;; = ;; none ;;
+C sec010.no-sensitive-logs OL SEC-010,SEC-012 MUST_NOT ;; Never log passwords, tokens, private keys, auth secrets or full payment credentials; avoid PII without permitted need; log level does not make data safe. ;; = ;; none ;;
+C run014.no-payloads OL RUN-014 MUST_NOT ;; No arbitrary request bodies, domain objects or sensitive payloads in logs by default; minimum useful non-sensitive context. ;; = ;; none ;;
+C sec013.fail-safe OL SEC-013 DEFAULT ;; By default security-sensitive checks fail safely, not converting lookup/configuration failures into success. ;; = ;; none ;;
+C sec014.visible-failure OL SEC-014 MUST ;; Prefer visible startup/configuration failure over insecure fallback for required security controls. ;; = ;; none ;;
+C sec015.upload-metadata OL SEC-015 MUST_NOT ;; Do not trust client file metadata such as MIME type as authoritative. ;; = ;; none ;;
+C dep019.runtime-image OL DEP-019 DEFAULT ;; By default production containers use an appropriate runtime image, not SDK; do not switch to root to bypass permission problems. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/test-framework.md ;; Capability-owned path rule (backend-testing/nunit); loads with backend/**/*Tests/**/*.cs and *Tests/*.csproj.
+@scope path rule: backend/**/*Tests/**/*.cs, backend/**/*Tests/*.csproj
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner with capability ownership.
+9 NN ;; Heading.
+11 NN ;; Pointer to testing.md.
+13-15 OL [tst001.nunit-default]
+16-20 MX [x.nunit-conventions,tst005.testcase-rows] ;; NUnit fixture/attribute/assertion conventions are added; explicit case tables as [TestCase] rows rather than TestCaseSource generators follows TST-005.
+
+C tst001.nunit-default OL TST-001 DEFAULT ;; NUnit is the default framework; follow an established other framework; no second framework without a concrete reason. ;; = ;; Established project deliberately using another framework. ;;
+C x.nunit-conventions EX TST-001 DEFAULT ;; Use normal NUnit conventions: [TestFixture] classes, [Test] for single scenarios, [SetUp]/[OneTimeSetUp] with matching teardown, Assert.That constraint assertions. ;; = ;; none ;; Framework-convention rules not in the oracle.
+C tst005.testcase-rows OL TST-005 DEFAULT ;; Explicit case tables are written as [TestCase] rows rather than TestCaseSource generators. ;; = ;; none ;;
+
+@@ output/template/.claude/rules/testing.md ;; Framework-independent test path rule; loads with backend/**/*Tests/**/*.cs and *Tests/*.csproj.
+@scope path rule: backend/**/*Tests/**/*.cs, backend/**/*Tests/*.csproj
+1-5 IM ;; Frontmatter paths.
+7 NN ;; Banner.
+9 NN ;; Heading.
+11-13 NN ;; Pointers.
+15 NN ;; Heading.
+17-22 OL [tst002.narrowest]
+24-26 OL [tst006.waf]
+28 NN ;; Heading.
+30-34 OL [tst003.behavior]
+36 NN ;; Heading.
+38-41 MX [tst005.explicit,x.one-scenario] ;; Explicit declarative cases and stated expectations are TST-005; one observable scenario per test is added.
+43 NN ;; Heading.
+45-49 MX [x.test-doubles,tst006.prefer-integration] ;; Mock-usage guidance is added technique; preferring integration tests when real persistence/provider/HTTP semantics matter is TST-002/TST-006.
+51 NN ;; Heading.
+53-57 OL [tst007.provider-fidelity]
+59 NN ;; Heading.
+61-65 OL [tst004.isolation]
+66-67 OL [tst008.known-state]
+69 NN ;; Heading.
+71-72 OL [tst011.coverage]
+74 NN ;; Heading.
+76-79 MX [tst012.descriptive,x.naming-pattern] ;; Descriptive names are TST-012; the MethodOrScenario_Condition_ExpectedBehavior example pattern as default is additional.
+
+C tst002.narrowest OL TST-002 DEFAULT ;; Narrowest meaningful test level; unit for isolated logic, integration when wiring/HTTP/persistence/serialization/auth/interaction matter; no fixed ratio. ;; = ;; none ;;
+C tst006.waf OL TST-006 DEFAULT ;; WebApplicationFactory<Program> integration tests when routing, binding, middleware, auth, DI, repositories or persistence must be proven. ;; = ;; none ;;
+C tst003.behavior OL TST-003 MUST ;; Tests verify observable behaviour and survive refactoring; no dependence on private methods, call sequences, implementation classes; no reproduced algorithms. ;; = ;; Interaction verification when the interaction is specified behaviour. ;;
+C tst005.explicit OL TST-005 PREFER ;; For small finite spaces prefer explicit declarative cases over loops/branches/LINQ/generated machinery; state expected results instead of computing them. ;; = ;; none ;;
+C x.one-scenario EX TST-005 PREFER ;; Prefer one observable scenario per test; multi-step tests only when the sequence is the behaviour. ;; = ;; Sequence is the behaviour. ;; Test-shape preference not in TST-005.
+C x.test-doubles EX TST-003 DEFAULT ;; Use fakes/stubs/mocks when they make an isolated test clearer; do not mock everything mechanically; do not forbid mocking project-owned abstractions. ;; = ;; none ;; Mock/fake choice is technique outside the oracle (EXC-012).
+C tst006.prefer-integration OL TST-002,TST-006 DEFAULT ;; When important behaviour depends on real persistence, provider or HTTP semantics prefer an integration test over mocking. ;; = ;; none ;;
+C tst007.provider-fidelity OL TST-007 DEFAULT ;; Use the actual provider when relational/provider behaviour matters; Testcontainers optional; no fidelity claims from a different or non-relational provider. ;; = ;; none ;;
+C tst004.isolation OL TST-004,RUN-004 MUST ;; Deterministic, order-independent tests isolated from Production/Development data, uncontrolled external systems and shared mutable state; no wall-clock reliance when TimeProvider can help; never connect to Production data. ;; = ;; none ;;
+C tst008.known-state OL TST-008 MUST ;; Tests start from a known state, own setup, and do not depend on development seed data or execution order. ;; = ;; none ;;
+C tst011.coverage OL TST-011 MUST_NOT ;; Coverage is diagnostic; no low-value tests to raise coverage percentage. ;; = ;; none ;;
+C tst012.descriptive OL TST-012 DEFAULT ;; By default descriptive test names communicating scenario/condition and expected behaviour; follow an established convention. ;; = ;; Established project convention. ;;
+C x.naming-pattern EX TST-012 DEFAULT ;; Example default pattern MethodOrScenario_Condition_ExpectedBehavior. ;; = ;; Established project convention. ;; Concrete naming pattern not in the oracle.

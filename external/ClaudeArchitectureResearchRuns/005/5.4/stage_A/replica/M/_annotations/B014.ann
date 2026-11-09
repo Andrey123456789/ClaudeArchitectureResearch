@@ -1,0 +1,162 @@
+# M / B014 — health-check, http-api, httpclient-factory/references/resilience.md.
+
+C X20 EX RUN-016 | DEFAULT | Do not wrap normal EF Core operations in a generic application-level retry pipeline by default; prefer the provider's EF Core execution strategy for transient faults and handle transaction/retry interaction per the provider's guidance. | persistence resilience | Reported deviation with a concrete reason. | RUN-016 limits retries to safe repeats; no oracle policy forbids application-level retry of persistence operations or prescribes the EF Core execution strategy. | Wrapping repository calls in a Polly retry pipeline is a deviation that needs a reason and must be reported.
+
+FILE .claude/skills/health-check/SKILL.md | Knowledge skill.
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-14 NN | pointer to policy owner
+16-18 OL R35 | Distinguish liveness from readiness when the deployment
+20 NN | section heading
+22-28 NN | basic setup code example
+30 NN | endpoint technique (EXC-010)
+32 NN | section heading
+34-35 NN | liveness definition
+37-44 NN | liveness code example
+46 NN | hosting note
+48 NN | section heading
+50-51 NN | readiness tagging technique (EXC-010)
+53-68 NN | readiness code examples
+70-71 OL R35 | Include only dependencies required for meaningful readiness;
+73 NN | section heading
+75-77 OL R34 | A lightweight connectivity/availability check — no expensive business queries,
+79 NN | section heading
+81-84 OL R35 | Check an external dependency only when its availability matters to the meaning
+86 NN | section heading
+88-91 NN | probe status mapping technique (EXC-010)
+93 NN | section heading
+95-97 OL R36 | Keep probe responses small.
+99 NN | section heading
+101-104 NN | exposure topology technique (EXC-010)
+106 NN | section heading
+108-109 OL R35 | If initialization is asynchronous or slow, keep readiness unhealthy until the
+111 NN | section heading
+113-115 OL R34 | Health checks may run frequently.
+117 NN | section heading
+119-123 NN | health test examples (EXC-010)
+125 NN | section heading
+127-128 DU R34,R35 | anti-pattern list ('avoid' guidance) restating health-check rules
+
+FILE .claude/skills/http-api/SKILL.md | Knowledge skill (HTTP reference).
+1-7 NN | front matter (name, trigger description)
+9 NN | header metadata
+11 NN | document heading
+13-15 NN | pointers to policy owners
+17 NN | section heading
+19 NN | subsection heading
+21-23 OL R25 | Typical cases: successful `GET`; `PUT`/`PATCH` returning the updated
+25-27 NN | code example
+29 OL R26 |
+31-35 NN | HTTP example
+37-38 OL R26 | `200` with `[]` preserves the resource representation and is clearer for clients
+40 NN | subsection heading
+42-43 OL R25 | Include a `Location` header identifying the created resource when a stable
+45-50 NN | code example
+52-54 OL R25 | The question is whether the HTTP operation created a new
+56 NN | subsection heading
+58-60 OL R25 | For accepted but incomplete processing
+62-67 NN | code example
+69 NN | subsection heading
+71-72 OL R25 | For a successful operation with no response body, such as `DELETE` or an update
+74-76 NN | code example
+78-81 OL R25 | but do not mix them between equivalent
+83 NN | section heading
+85 NN | subsection heading
+87-89 NN | 304 reference (EXC-009)
+91 NN | section heading
+93 NN | subsection heading
+95-99 NN | 400 reference (EXC-009)
+101 NN | subsection heading
+103-105 OL R27 | Despite the name, authentication is missing or failed:
+107 NN | subsection heading
+109-111 OL R27 | Authentication succeeded but the principal may not perform the operation
+113 NN | subsection heading
+115-117 OL R26,R27 | matches produce `200` with `[]`.
+119 NN | subsection heading
+121-123 NN | 406 reference (EXC-009)
+125 NN | subsection heading
+127-129 OL R28 | Typical cases: a duplicate where uniqueness is part of the resource state;
+131-135 NN | conflict example
+137 OL R28 |
+139 NN | subsection heading
+141-144 OL R28 | normally `412`, not a generic `409`, because an explicit HTTP precondition
+146 NN | subsection heading
+148-150 NN | 415 reference (EXC-009)
+152 NN | subsection heading
+154-157 NN | 422 reference (EXC-009)
+159-160 NN | 400/422 convention note (EXC-009)
+162-165 NN | 400/422 example
+167 NN | subsection heading
+169-170 NN | 428 reference (EXC-009)
+172-175 NN | precondition example
+177-178 NN | 428 reference (EXC-009)
+180 NN | subsection heading
+182-184 NN | 429 reference (EXC-009)
+186 NN | section heading
+188 NN | subsection heading
+190-192 OL R73,R72,R74 | produced through centralized exception handling and
+194 NN | subsection heading
+196-198 NN | 502 reference (EXC-009)
+200 NN | subsection heading
+202-205 NN | 503 reference (EXC-009)
+207 NN | subsection heading
+209-213 OL R79 | Do not return `504` for every internal `TaskCanceledException`;
+215 NN | section heading
+217-219 NN | method idempotency reference (EXC-009)
+221-222 NN | idempotency key lead-in
+224-226 NN | header example
+228-231 NN | idempotency key reference (EXC-009)
+233 NN | section heading
+235-236 OL R28 | When HTTP-level optimistic concurrency is part of the contract, prefer standard
+238-244 NN | concurrency example
+246 NN | section heading
+248 OL R24,R46 |
+250-265 NN | controller code example
+267 NN | section heading
+269-270 NN | pointer to the rule owner
+272-294 DU R25,R26,R27,R28 | decision table restating status-code semantics (less common rows are EXC-009 reference)
+
+FILE .claude/skills/httpclient-factory/references/resilience.md | Private reference of httpclient-factory.
+1 NN | header metadata
+3 NN | document heading
+5-8 NN | pointers to policy owners
+10 NN | section heading
+12-17 OL R149,R81 | Do not add resilience mechanisms merely because they are available.
+19-20 OL R136 | uses the `Microsoft.Extensions` resilience APIs.
+22 NN | section heading
+24-25 NN | standard handler lead-in
+27-33 NN | standard handler code example
+35-37 OL R81 | Review its retry behavior carefully for
+39 NN | section heading
+41-43 OL R80 | Distinguish the attempt timeout from the total operation timeout, especially
+45 NN | section heading
+47-49 NN | transient failure examples
+51-53 OL R81 | without a duplicate-prevention strategy.
+55-56 OL R82 | let the policy follow the server's
+58 NN | section heading
+60 NN | lead-in
+62-65 NN | idempotency question example
+67-70 OL R81 | automatic retry is unsafe.
+72 NN | section heading
+74-76 NN | circuit breaker technique (EXC-007)
+78 NN | section heading
+80-81 OL R83 | Valid examples: stale cached read data where staleness is explicitly
+83-88 NN | bad fallback example
+90 NN | section heading
+92-95 OL R81 | never for state-changing operations by
+97 NN | section heading
+99-104 EX X20 | Do not wrap normal EF Core operations in a generic application-level retry
+106 NN | section heading
+108-111 NN | message publication technique (EXC-007)
+113 NN | section heading
+115-118 NN | inbound rate limiting reference
+120 NN | section heading
+122-123 OL R87,R84 | Propagate cancellation through resilience pipelines so a cancelled caller ends
+125 NN | section heading
+127-129 OL R149 | Do not require OpenTelemetry solely because
+131 NN | section heading
+133-136 DU R81,R83,R80,X20 | anti-pattern list ('avoid' guidance) restating outbound-call rules and the EF Core retry default
+138 NN | section heading
+140-150 DU R80,R81,R82,R83,X20 | decision table restating resilience defaults
+DONE

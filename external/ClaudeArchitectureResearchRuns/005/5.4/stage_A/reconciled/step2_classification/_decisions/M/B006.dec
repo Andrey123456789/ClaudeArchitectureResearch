@@ -1,0 +1,72 @@
+# M B006 — scripts/repo-root.mjs, settings.json, skills/add-dependency, skills/angular
+1 NN rel=GOV-016,WF-007 | Implementation detail of active-repository resolution (common Git dir, template offset) used by the checks.
+2 CO DEP-025 m=MN d=WF c=M | Registration of dependency-guard as PreToolUse hook on Bash/PowerShell (timeout 30 s) to block npm bypass flags: mechanism for DEP-025 (C3); its purpose-insensitive blocking is classified at the hook records.
+3 XW m=M c=L ! rel=DEP-025 | settings.json:7 onFailure block: if the guard cannot run (Node.js missing, invalid input, crash, timeout) the Bash/PowerShell call is blocked; no policy requires fail-closed gating of shell calls.
+  e: other (advisory) hooks fail open
+  r: host support for exec-form args and onFailure:block not verified; fail-closed effect is declared intent (C10)
+  s: Node.js unavailable: canonical policies allow running `dotnet build`; M's configuration declares that every shell call is blocked.
+4 CO WF-001~ m=M d=WF c=M | Reading the owning rules before a non-trivial change, explicitly when they are not yet loaded, is how WF-001's 'apply applicable rules' is satisfied under path-scoped loading.
+5 CO DEP-002 DEP-005~ m=MN | Restates DEP-002 (use the approved technology, no silent alternative) and DEP-005's 'without silently substituting'.
+6 CD DEP-020 m=D k=P st=S c=M | DEP-020 default with direct Polly as explicit exception; add-dependency SKILL.md:27-30 restricts the exception to cases a concrete requirement cannot be expressed through the Microsoft packages.
+  x: direct Polly only when the Microsoft resilience packages cannot express a concrete requirement
+  s: Choosing direct Polly because the team already maintains Polly policies elsewhere (a reason, but the Microsoft packages could express it): admissible DEFAULT deviation under DEP-020; excluded by M.
+7 XW m=M c=M rel=DEP-020 | 'When direct Polly is used, document why' (SKILL.md:30): documentation duty for the deviation, not entailed by DEP-020's DEFAULT (C7).
+  s: Agent adds direct Polly for a valid reason without recording it: consistent with DEP-020; M requires the reason documented.
+8 CD DEP-020 m=D k=W c=M | Same decision as calibration: narrowed admissible reason plus documentation duty.
+  x: Direct Polly only when the Microsoft packages cannot express the concrete requirement, and the reason must be documented
+  s: Agent adds Polly directly because an adjacent service already uses it, without writing the reason down: permissible as a reasoned DEFAULT deviation under DEP-020, not under the M skill.
+9 CO DEP-017 m=D | Restates DEP-017; Asp.Versioning.Mvc.ApiExplorer is part of the Controller integration for versioned OpenAPI.
+10 CO DEP-003 | Restates DEP-003 (registry-verified latest stable compatible version; no prerelease/floating unless explicitly requested).
+11 CO DEP-004 DEP-005~ | Restates DEP-004; 'free download does not make a package acceptable' belongs to the license review of DEP-005.
+12 CO DEP-004 | Restates DEP-004 (replica wording).
+13 CO DEP-005 m=RA | Restates DEP-005.
+14 CO DEP-005 m=RA | Restates DEP-005 incl. saying explicitly when no free alternative exists (explaining reasonable alternatives).
+15 CO DEP-005~ DEP-002~ m=MN | Never silently replace the requested package; state when no free alternative exists (DEP-005, DEP-002).
+16 XW m=MN c=M rel=DEP-005 | 'Do not draw legal conclusions beyond what the published license information supports': the oracle requires license checks and approval for unclear licenses, but does not restrict the agent's legal statements.
+  s: Agent tells the user a strong-copyleft package is fine for their SaaS because it is not distributed: no policy forbids the statement as such (DEP-005 would require approval for the dependency); M forbids the unsupported legal conclusion.
+17 CO DEP-006 | Restates DEP-006 (PackageVersion central, versionless narrow PackageReference; reviewing both files after dotnet add is part of the same step).
+18 CO DEP-007 DEP-003~ c=M | npm install with explicit version, --save-dev for tooling, package.json and package-lock.json committed together: DEP-007 (lockfile consistency, dependency category) and DEP-003 (selected version).
+19 CO DEP-025 m=MN | Restates DEP-025.
+20 CD WF-007~ DEP-006~ m=M k=W c=M | After a dependency change, run node .claude/scripts/check-manifests.mjs from the repository root. WF-007 requires dependency checks when relevant; running this specific script (with its candidate-specific findings) is an added procedural step.
+  x: running check-manifests.mjs after every dependency change
+  s: Agent verifies CPM and versions by inspecting the diff and building: satisfies WF-007/DEP-006; M's workflow also requires the script run.
+21 CO WF-005~ m=M d=WF | Restore and build the affected projects after a dependency change (WF-005).
+22 CO DEP-004~ WF-007~ m=M d=WF | Inspect vulnerability information for the changed dependency set (DEP-004 vulnerability check; WF-007 risk-scoped dependency checks); the commands are examples.
+23 CO GOV-014~ WF-020~ m=MN c=M | Scanner output needs context; do not replace/upgrade unrelated packages because a scanner reports a finding (GOV-014 scope, WF-020 contextual severity).
+24 XP m=M c=M rel=DEP-001,GOV-014 | Remove dependencies that are no longer used when this is part of the current change and safe to verify; do not leave dead package references behind. DEP-001 governs adding, not removing.
+  e: only within the current change and when safe to verify
+  s: A refactor removes the last use of a NuGet package and leaves its PackageReference: no policy requires removal; M does.
+25 CO GOV-014 RUN-011~ m=MN | No unrelated dependency cleanup during a narrowly scoped task (GOV-014; unrelated rewrites, RUN-011).
+26 XW m=M c=M rel=WF-009,DEP-004,DEP-005 | Report the package, selected version, license, checks performed and approval status: dependency-specific reporting duty; WF-009 only requires reporting what verification ran.
+  s: Agent adds a package and reports 'added X, build passes' without license and checks: consistent with WF-009; M's report format requires version, license, checks and approval status.
+27 CO FE-007 m=MN | A feature owns its UI and frontend data access; feature-specific code is not moved into shared merely for intra-feature reuse (FE-007).
+28 XP m=D c=M rel=FE-004 | 'Use computed for derived state and avoid unnecessary effect()': Signals technique beyond FE-004's Signals-vs-RxJS choice.
+  s: Deriving a value with an effect() that writes a second signal: compatible with FE-004; M's guidance prefers computed.
+29 CO FE-004~ FE-012~ m=D c=M | RxJS where it adds value (FE-004); takeUntilDestroyed and the async pipe named as the current lifecycle-aware facilities (FE-012's 'project's current Angular facilities').
+30 CO FE-003 m=MN | Restates part of FE-003 (no raw HTTP details in presentation components).
+31 CO FE-001~ FE-008~ m=D c=M | Provider-based HttpClient configuration (provideHttpClient/withInterceptors) is the standalone-API form of HttpClient setup (FE-001) and functional interceptors (FE-008).
+32 CO FE-008 m=D | Class-based interceptors need a reason: FE-008's preference for functional interceptors.
+33 CO SEC-005 | Restates SEC-005 (frontend token attachment, auth state, hidden actions, route guards are UX).
+34 CO FE-009 c=M | Parsing/mapping ProblemDetails in one reusable place restates FE-009's centralisation; the skill omits 'when practical' but knowledge skills do not override the rule (MAP.md), read as the same guidance.
+35 CO FE-003~ c=M | Explicit transport/request mapping is part of FE-003's explicit HTTP boundary.
+36 XP m=MN c=M rel=FE-010,FE-003 | Do not duplicate complex Domain rules in TypeScript unless the UI genuinely needs an equivalent user-facing rule: FE-010 only says frontend validation does not replace backend validation.
+  e: the UI genuinely needs an equivalent user-facing rule
+  s: Re-implementing a complex backend eligibility rule in the Angular model 'for safety' while the backend stays authoritative: allowed by FE-010; forbidden by M.
+37 CO FE-006 DEP-001~ m=D | Restates FE-006; a state library goes through add-dependency (DEP-001 concrete need).
+38 CO FE-007 | Restates FE-007 (shared holds genuinely cross-feature primitives).
+39 MX | angular SKILL.md:169-172: three subclaims about Angular Material.
+  - XP m=D c=M rel=DEP-014 | When the project uses Angular Material, use its components consistently for common UI primitives where they satisfy the requirement.
+    s: A Material-based project hand-builds its own dialog component for one feature: DEP-014 only fixes Material in the stack; M's guidance asks for consistent Material use.
+  - CO DEP-001~ GOV-014~ m=MN | Do not add Angular Material automatically to an existing project that has not chosen it.
+  - CO GOV-012~ m=MN | Do not wrap every Material component in a custom abstraction without a concrete reason.
+40 CO GOV-012 m=D | Restates GOV-012.
+41 CD WF-016 m=D k=P c=M | WF-016 covers regenerating generated output from its source; the skill adds that generated OpenAPI client code is kept separate from handwritten feature logic.
+  x: generated client code kept separate from handwritten logic
+  s: Generated client files placed inside a feature folder next to handwritten services and regenerated correctly: satisfies WF-016; M's guidance requires separation.
+42 CD WF-016 m=D k=P c=M | Generalised wording (all generated code): kept separate from handwritten logic and regenerated when the source contract changes.
+  x: generated code kept separate from handwritten logic
+  s: As for FG-M-7b29d46b2c.
+43 CO TST-002 TST-003~ TST-011~ m=D c=M | Frontend tests at the appropriate level, not Angular internals, few important E2E workflows, no duplication across levels, configured runner: elaborations of the narrowest-level (TST-002), behavior (TST-003) and low-value-test (TST-011) policies; the runner follows repository configuration.
+44 CO RUN-001 FE-005~ m=D | No premature Angular optimization; lazy loading and sensible rendering first; memoization/virtual scrolling/custom change detection after a real need (RUN-001, FE-005).
+45 CO FE-007 m=MN | Avoid global service folders with unrelated services and giant shared directories (FE-007 uses the same 'avoid' wording at MUST strength).
+46 CO FE-004 m=D | Avoid choosing Signals or RxJS merely because one is newer: FE-004 chooses by semantics.

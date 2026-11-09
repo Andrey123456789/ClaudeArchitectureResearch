@@ -1,0 +1,60 @@
+# M1 B002 — persistence contract and module, post-tool-use, pre-tool-use and stop hooks
+1 IA m=M c=M rel=GOV-017 | Conformance rule of the capability system: a missing facet or property is a conformance failure routed to a Decision Request (checker-enforced). It concerns instruction modules, not product behavior.
+2 IA m=M | Facets the persistence module must declare (capability contract).
+3 IA m=M | Slot topology: a provider change stays inside the persistence slot.
+4 XP m=MN c=M rel=ARC-020,PST-005,PST-010 | CONTRACT.md:12-13 constrains the outcome of a technology replacement. ARC-020 requires approval of the replacement but does not require the migration and seeding semantics to survive it, and PST-010 is written for EF Core migrations.
+  s: An approved move from EF Core to a micro-ORM drops reviewed migrations without saying so: ARC-020 is satisfied by the approval; M1's contract is violated.
+5 IA m=DC c=M rel=DEP-009 | Same slot-topology definition as FG-M1-b8de5b521a; DEP-009 fixes the default provider, not how the instruction system classes a provider change.
+6 IA m=M | Which instruction sections a provider change may edit (capability boundary, repeated by architecture-decision and template-maintenance).
+7 CD ARC-016 m=D k=P st=S c=M rel=ARC-018 | MODULE.md:34 declares 'one SaveChangesAsync per use case'. ARC-016 makes IUnitOfWork the normal commit boundary and ARC-018 leaves room for transaction control where a use case needs it; a count of one is more specific. Declared as a module property, so DEFAULT rather than MUST.
+  t: EF Core module commit binding
+  e: NONE
+  x: exactly one SaveChangesAsync per use case
+  s: A use case commits a checkpoint and then a final state, both through IUnitOfWork: ARC-016 is satisfied by Application deciding when to commit; M1's declared binding is not.
+8 NN c=M rel=PST-008,WF-007 | Fact about enforcement coverage: the co-change globs decide which changes produce the reminder.
+9 CO PST-008~ PST-010~ m=S st=W sr=AM d=WF | Module data feeding the Stop reminder; advisory mechanism for co-change rules owned by the persistence workflow.
+10 NN c=M rel=WF-007,WF-009 | Hook mechanics: output limit of 25 lines.
+11 XW m=M c=M rel=WF-007,WF-008 | WARN findings are returned in a blocking reason, so advisory findings require a response. WF-008 applies to failed verification, and a WARN on a justified choice is not a failure. Static reading (C10).
+  s: A test project has a concrete reason for a second framework: TST-001 allows it; the hook returns the WARN as a blocking reason that Claude must address after the edit.
+12 CO DEP-006~ DEP-003~ DEP-007~ DEP-015~ ARC-001~ ARC-028~ m=M d=WF c=M sr=SL | Manifest and architecture checks are mechanisms of the cited policies (C3). Their stricter details are classified at the checker records.
+13 CO DEP-003~ DEP-004~ DEP-005~ m=S st=W sr=AM d=WF c=M | The claim is the reminder only (the reported MUST belongs to the PreToolUse gate, FG-M1-067405415c).
+14 NN fa=FC c=M rel=DEP-003 | Factual narrowing of when the reminder fires; adds no obligation.
+15 XW m=M rel=DEP-001,DEP-003,DEP-004,DEP-005 | Marker and re-run protocol. The oracle requires due diligence but no denial, marker or second run. Static reading (C10).
+  s: The agent has finished due diligence and runs `dotnet add package X`: the oracle allows it; M1's hook denies until the command is re-run with '# add-dependency: checked'.
+16 CO DEP-001 DEP-003 DEP-004 DEP-005~ m=M d=WF c=M sr=SL | The workflow steps are the canonical need, approval, version, deprecation, vulnerability and license duties; routing through the owner is the mechanism (C3). DEP-005 is linked partially for the approval check.
+17 CO ARC-002~ ARC-008~ ARC-001~ m=M d=WF c=M | Namespace boundary check enforces the cited layer rules (C3).
+18 CO GOV-007~ m=S st=W sr=AM d=WF | Reminder of GOV-007.
+19 CO GOV-009~ m=S st=W sr=AM d=WF c=M | Reminder of the consistency part of GOV-009.
+20 CO GOV-009~ GOV-007~ m=S st=W sr=AM d=WF c=M | Reminder of the same duties in Stop and PostToolUse form.
+21 CO GOV-021~ m=S st=W sr=AM d=WF | Reminder of GOV-021.
+22 CO GOV-021~ m=S st=W sr=AM d=WF | Same reminder in Stop and PostToolUse form.
+23 IA m=M | Instruction checker on instruction edits.
+24 NN c=M rel=DEP-003,WF-007 | Fact about enforcement coverage: no baseline without a Git directory.
+25 CO DEP-003~ DEP-004~ ARC-001~ ARC-020~ m=S st=W sr=AM d=WF c=M | Reminder to confirm the owning workflow. Removals and moves in the same note add no duty beyond confirmation.
+26 NN fa=FC c=M rel=DEP-003 | Factual narrowing of the note on the first snapshot; validation still runs.
+27 NN c=M rel=DEP-003,WF-007 | Skip condition of the reminder; adds no duty.
+28 MX c=M | Bundles a Reserved rule for the reference graph with the marker protocol that gates reference commands; each has a different outcome.
+  - XP m=RA rel=ARC-020,ARC-001 | Changing the project reference graph is Reserved, except references inside the frame's layout. ARC-020 lists new layers and projects, not references.
+    s: An API project gains a direct Domain reference outside the frame's layout: ARC-001 forbids no inward reference and ARC-020 does not list it; M1 requires a Decision Request.
+  - XW m=MN | Project-reference commands are denied until re-run with '# project-reference: checked'; the marker is self-certified.
+    s: `dotnet add reference` for a reference inside the layout: allowed by the oracle; M1's hook denies until the marker re-run.
+29 CO DEP-006~ DEP-003~ DEP-007~ DEP-015~ ARC-001~ ARC-028~ m=M d=WF c=M sr=SL | Checks after shell commands are mechanisms of the cited policies (C3).
+30 XW m=M c=L rel=WF-001 | Fail-closed branch for a malformed payload, the same mechanism as FG-M1-30119e9885.
+  t: PreToolUse payload without a string tool_name
+  e: NONE
+  s: A payload without a tool name reaches the hook: no policy addresses it; M1 denies the call.
+  r: host handling of the deny and exit code not verified (C10)
+31 XW m=M c=L rel=DEP-025,DEP-003 | Fail-closed branch: any hook failure blocks the shell command, including commands unrelated to dependencies.
+  s: The hook crashes on `dotnet build`: no policy blocks that command; M1 blocks it and routes to template-maintenance.
+  r: host handling of onFailure and exit codes not verified (C10)
+32 CO PST-008~ PST-009~ PST-010~ m=S st=W sr=AM d=WF | Stop reminder for the co-change duties.
+33 NN c=M rel=PST-008,TST-009,WF-003 | Fact about the reminder's precision: file-name heuristics.
+34 CO PST-009~ PST-010~ m=S st=W sr=AM d=WF c=M | Reminder. The 'or state why' response duty is classified at FG-M1-3f3a30f447.
+35 CO PST-008~ m=S st=W sr=AM d=WF c=M | Reminder; the same response duty is classified at FG-M1-3f3a30f447.
+36 CO TST-009~ TST-010~ m=S st=W sr=AM d=WF | Stop reminder for regression coverage and probe preservation.
+37 CO TST-009~ TST-010~ m=S st=W sr=AM d=WF | Same reminder.
+38 CO GOV-021~ GOV-009~ m=S st=W sr=AM d=WF | Stop reminders for the same synchronization duties.
+39 CO DEP-006~ DEP-003~ m=S st=W sr=AM d=WF | Stop reporting of manifest errors.
+40 NN c=M rel=WF-003,WF-008 | Hook mechanics: fingerprint and stop_hook_active handling.
+41 XW m=M c=M rel=WF-003 | Stop block requires addressing each reminder or stating why it does not apply. No policy requires that response. Static reading (C10).
+  s: The agent changes production code covered by existing tests and finishes: the oracle is satisfied; M1 blocks once until Claude addresses the reminder or states why it does not apply.

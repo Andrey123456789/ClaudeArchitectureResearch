@@ -1,0 +1,6 @@
+"""Source review for R08. K0 only."""
+F = '.claude/scripts/check-dependencies.cjs'
+REVIEW = [dict(policy='DEP-006', candidate='K0', verdict='HOLDS', quotes=[(F, 'function effectiveCpm(rootDir, startDir, projectRel)'), (F, 'is effectively false'), (F, 'has a version; versions belong in Directory.Packages.props'), ('.claude/rules/common/dependencies.md', 'the effective `ManagePackageVersionsCentrally` is true')],
+               note='Policy: use Central Package Management; versions in Directory.Packages.props; project references versionless. The checker now follows the MSBuild chain and agrees with the real MSBuild on every fixture where the SDK was available. Versionless and floating checks are unchanged.',
+               counterexample='True only in Directory.Build.props: CPM is on and the old checker rejected it; now accepted. True in Directory.Packages.props and false in a project: the old checker accepted it; now rejected. A true inside a comment: the old checker accepted it; now rejected.'),
+          dict(policy='DEP-003', candidate='K0', verdict='HOLDS', quotes=[(F, 'approvedVersionException')], note='R04 exception path untouched by this rule; suite R04 re-ran on these bytes.')]

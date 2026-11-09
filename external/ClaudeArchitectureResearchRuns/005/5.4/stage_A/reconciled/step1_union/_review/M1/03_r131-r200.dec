@@ -1,0 +1,139 @@
+# M1 batch 3: regions r131-r200 (protocol v1.2.1)
+# r131-r137 performance.md
+SD P:RULE-M1-0204 R:RULE-M1-0092 | S: data access M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0205 R:RULE-M1-0093 | S: caching M: DEFAULT both E: none in either T: only for a measured or reasoned need
+SD P:RULE-M1-0206 R:RULE-M1-0094 | S: cache entries M: MUST both E: none in either T: none
+SD P:RULE-M1-0207 R:RULE-M1-0095 | S: cache keys M: MUST both E: none in either T: none
+SD P:RULE-M1-0208 R:RULE-M1-0096 | S: cache invalidation M: MUST both E: none in either T: consistent with successful mutations
+SPLIT R:RULE-M1-0097 | a: Compiled queries, ValueTask<T>, ArrayPool/MemoryPool, object pooling, custom serialization optimizations, aggressive caching and raw SQL for performance are introduced only for a measured or clearly demonstrated need. | b: Verify that allocation-oriented optimizations materially help.
+SD P:RULE-M1-0209 R:RULE-M1-0097#a | S: backend performance techniques M: DEFAULT both E: measured or demonstrated need (both) T: none
+RD COMPOUND_PART P:RULE-M1-0211 R:RULE-M1-0097#b | P (MUST) bundles 'prefer ordinary code; consider spans/pooling for demonstrated hot paths' with the verification duty.
+# r138-r150 persistence-technology.md
+SPLIT R:RULE-M1-0098 | a: EF Core is an adapter-layer implementation detail used directly inside the adapter layer, without crippling repositories to preserve a generic abstraction. | b: Do not leak EF Core concepts (DbContext/AppDbContext, DbSet<T>, EF APIs, EF-backed IQueryable<T>, query expressions, provider types) into the use-case layer.
+SD P:RULE-M1-0212 R:RULE-M1-0098#a | S: persistence implementation M: MUST both E: none in either T: none
+RD COMPOUND_PART P:RULE-M1-0213 R:RULE-M1-0098#b | P adds the definition of the persistence session (scoped AppDbContext shared by repositories and UoW).
+RD OVERLAP P:RULE-M1-0214 R:RULE-M1-0098#a | P: the repository boundary keeps persistence out of the use-case layer but does not hide EF Core from the adapter layer.
+SD P:RULE-M1-0215 R:RULE-M1-0099 | S: transactions M: DEFAULT both E: none in either T: until a concrete use case needs more
+SD P:RULE-M1-0216 R:RULE-M1-0100 | S: Development seeding M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0217 R:RULE-M1-0101 | S: Development seeding M: MUST both E: none in either T: none
+SD P:RULE-M1-0218 R:RULE-M1-0102 | S: Development seeding M: MUST both E: none in either T: none
+SPLIT R:RULE-M1-0103 | a: Automatic development seeding runs only in the Development environment; never seed Production automatically. | b: Tests own their setup and do not use the development seeder.
+SD P:RULE-M1-0219 R:RULE-M1-0103#a | S: automatic seeding M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0220 R:RULE-M1-0103#b | S: tests vs development seeder M: MUST (P), MUST NOT record label (R) for the same duty E: none in either T: none
+SD P:RULE-M1-0221 R:RULE-M1-0104 | S: development seeder M: MUST_NOT both E: none in either T: migrations applied before seeding
+SD P:RULE-M1-0222 R:RULE-M1-0105 | S: existing Development data M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0223 R:RULE-M1-0106 | S: seed entities M: MUST both E: none in either T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0107 P:RULE-M1-0224 | R: use the actual provider (SQL Server) when provider behavior matters, InMemory gives no fidelity (DEFAULT); P (persistence-technology rule): the actual provider is SQL Server, InMemory is different (MUST).
+SD P:RULE-M1-0225 R:RULE-M1-0108 | S: Development configuration M: DEFAULT both E: none in either T: none | claimed policy ids differ (P SEC-002, R SEC-001)
+# r151-r171 physical-structure.md, security.md
+SD P:RULE-M1-0226 R:RULE-M1-0109 | S: repository structure M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0227 R:RULE-M1-0110 | S: source-controlled files M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0228 R:RULE-M1-0111 | S: secrets M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0229 R:RULE-M1-0112 | S: untrusted input M: MUST both E: none in either T: none
+SD P:RULE-M1-0230 R:RULE-M1-0113 | S: database access M: MUST both E: none in either T: none
+SD P:RULE-M1-0231 R:RULE-M1-0114 | S: authorization M: MUST both E: none in either T: none
+SD P:RULE-M1-0232 R:RULE-M1-0115 | S: authorization M: MUST both E: none in either T: none | P's mechanism list (global/fallback policy, attributes, endpoint configuration) is in the shared lines 52-55
+SD P:RULE-M1-0233 R:RULE-M1-0116 | S: authentication facilities M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0234 R:RULE-M1-0117 | S: Bearer/OIDC validation M: MUST both E: none in either T: none
+SD P:RULE-M1-0235 R:RULE-M1-0118 | S: authentication failure responses M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0236 R:RULE-M1-0119 | S: cookie authentication M: MUST both E: none in either T: none
+SD P:RULE-M1-0237 R:RULE-M1-0120 | S: browser token storage M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0238 R:RULE-M1-0121 | S: transport M: MUST both E: no redirection requirement when the boundary secures transport (both) T: none
+SD P:RULE-M1-0239 R:RULE-M1-0122 | S: cryptography M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0240 R:RULE-M1-0123 | S: CORS M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0241 R:RULE-M1-0124 | S: logging M: MUST_NOT both E: none in either T: none
+SD P:RULE-M1-0242 R:RULE-M1-0125 | S: logging payloads M: MUST_NOT both E: none in either T: by default (both)
+CX X:BF-M1-0035 | Security-sensitive checks fail safely by default, without defined criteria for exceptions (reported ambiguity of 'by default').
+SD P:RULE-M1-0243 R:RULE-M1-0126 X:BF-M1-0035 | S: security-sensitive checks M: DEFAULT in P and R; X reports the same default reading E: none stated in any T: none
+SD P:RULE-M1-0244 R:RULE-M1-0127 | S: required security controls M: MUST both E: none in either T: at startup/configuration
+SD P:RULE-M1-0245 R:RULE-M1-0128 | S: uploads M: MUST_NOT both E: R's 'when decisions depend on actual content' is in the shared lines 114-115 (F6) T: none
+SD P:RULE-M1-0246 R:RULE-M1-0129 | S: containers M: DEFAULT both E: none in either T: none
+# r172-r182 test-framework.md, testing.md
+SD P:RULE-M1-0247 R:RULE-M1-0130 | S: backend tests M: DEFAULT both E: established project convention (both) T: none
+SPLIT X:BF-M1-0036 | a@16-18: Use normal NUnit conventions: [TestFixture] classes, [Test] for single scenarios, [SetUp]/[OneTimeSetUp] with matching teardown, Assert.That constraint assertions. | b@18-20: Explicit case tables are written as [TestCase] rows rather than TestCaseSource generators.
+SD P:EXTRA-M1-0079 X:BF-M1-0036#a | S: NUnit tests M: P DEFAULT, X no modality E: none in either T: none
+SPLIT R:RULE-M1-0134 | a: For small finite input or state spaces prefer explicit declarative cases over loops, branches, LINQ or generated case machinery, and state expected results instead of computing them. | b: Explicit cases are written as NUnit [TestCase] rows rather than TestCaseSource generators.
+SD P:RULE-M1-0248 R:RULE-M1-0134#b X:BF-M1-0036#b | S: NUnit case tables M: DEFAULT in P and R, X no modality E: none in any T: none
+RD DIFFERENT_STRENGTH R:RULE-M1-0134#a P:RULE-M1-0252 | same declarative-case guidance; R reports DEFAULT (record), P reports PREFER (F7).
+SPLIT R:RULE-M1-0131 | a: Choose the narrowest test level that meaningfully verifies the behavior; use integration tests when wiring, HTTP, persistence, serialization, authentication or component interaction matters; no fixed ratio. | b: Prefer integration tests over reproducing real persistence or HTTP semantics with mocks.
+SD P:RULE-M1-0249 R:RULE-M1-0131#a | S: backend tests M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0253 R:RULE-M1-0131#b | S: backend tests M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0250 R:RULE-M1-0132 | S: integration tests M: DEFAULT both E: none in either T: none
+SD P:RULE-M1-0251 R:RULE-M1-0133 | S: backend tests M: MUST both E: interaction is specified behavior (both) T: none
+SPLIT X:BF-M1-0037 | a@40-41: Prefer one observable scenario per test; a multi-step test is appropriate when the sequence itself is the behavior. | b@45-47: Use fakes, stubs or mocks when they make an isolated test clearer; do not mock every dependency mechanically and do not forbid mocking project-owned abstractions.
+SD P:EXTRA-M1-0080 X:BF-M1-0037#a | S: backend tests M: P PREFER, X no modality E: sequence-is-behavior (both) T: none
+SD P:EXTRA-M1-0081 X:BF-M1-0037#b | S: backend test doubles M: P DEFAULT, X no modality E: none in either T: none
+SD P:RULE-M1-0254 R:RULE-M1-0107 | S: provider-sensitive tests (P via testing rule, R via persistence and testing rules; F8) M: DEFAULT both E: Testcontainers optional (both) T: none
+SD P:RULE-M1-0255 R:RULE-M1-0135 | S: backend tests M: MUST both E: none in either T: none
+SD P:RULE-M1-0256 R:RULE-M1-0136 | S: backend tests M: MUST both E: none in either T: none
+RD OVERLAP R:RULE-M1-0136 P:RULE-M1-0220 | both: tests own their setup and do not depend on development seed data; R adds known state and order independence.
+SD P:RULE-M1-0258 R:RULE-M1-0138 | S: backend test names M: DEFAULT both E: established convention (both) T: none | R's MethodOrScenario_Condition_ExpectedBehavior is given as an example (e.g.)
+RD EXAMPLE_GENERAL R:RULE-M1-0138 P:EXTRA-M1-0082 | P reports the example naming pattern as its own DEFAULT record (EXTRA).
+# r183-r194 check-architecture.js, check-instructions.js
+CX X:BF-M1-0048 | Any project reference to a test project is an error, including references between test projects.
+RD BROADER_NARROWER X:BF-M1-0048 P:RULE-M1-0091 | X: the check flags any reference to a test project (code lines 87-89 apply to every project); P: a production project referencing a test project is an error. Step 2 should read the code.
+# [revised before M1 checkpoint: R RULE-M1-0139 split in 08; relation retargeted to part d]
+RD OVERLAP R:RULE-M1-0139#d P:RULE-M1-0090 | P: an unmatched backend project raises a warning that adding a project or layer is Reserved; R: the Reserved list (incl. adding a production project or layer).
+CX X:BF-M1-0049 | Forbidden-namespace enforcement only reads textual using directives with prefix matching, so fully qualified uses are missed and broad matches are possible.
+RD OVERLAP X:BF-M1-0049 P:RULE-M1-0074 | X: coverage limits of the namespace check; P/R/X(BF-M1-0013#b): the forbidden-namespace rule.
+SPLIT X:BF-M1-0050 | a@15-16: Exactly four capability slots exist, three of them required. | b@17-24: The named workflow skills and embedded knowledge skills must exist. | c@26: The always-loaded budget is 6500 tokens.
+RD COMPOUND_PART P:EXTRA-M1-0052 X:BF-M1-0050#a | P adds that each slot has a contract and the selection record lists no unknown slot.
+SPLIT R:EXTRA-M1-0014 | a: Every instruction artifact starts with a one-line ownership header. | b: Instruction artifacts use no Level:/Kind: classification. | c: Rules stay flat in .claude/rules/ with non-empty paths. | d: The required workflow and embedded knowledge skills exist. | e: Skill frontmatter name equals the directory and the description is concrete. | f: Skill-private files live only under references/. | g: template-maintenance is user-only. | h: Only CLAUDE.md imports always-loaded files (no nested imports) and imports resolve. | i: File, workflow, skill and section references resolve (facet locations of a disabled optional slot are treated as inactive). | j: CLAUDE.md keeps a Workflow Routing section whose targets exist. | k: The map lists every instruction, enforcement and root configuration file. | l: The always-loaded surface stays within its token target (warning).
+SPLIT X:BF-M1-0051 | a@61-68: Every instruction file needs a one-line '> ' ownership header and no Level:/Kind: classification. | b@73-80: Rules stay flat in .claude/rules/ and declare a non-empty paths list.
+SD P:EXTRA-M1-0056 R:EXTRA-M1-0014#a | S: instruction files (checker) M: checker error (P ENFORCED, R checker-enforced MUST) E: none in either T: when the checker runs
+SD P:EXTRA-M1-0057 R:EXTRA-M1-0014#b | S: instruction files (checker) M: checker error in both E: none in either T: when the checker runs
+RD COMPOUND_PART P:EXTRA-M1-0056 X:BF-M1-0051#a | X part a bundles the header rule with the Level/Kind ban (P EXTRA-M1-0057).
+SD P:EXTRA-M1-0058 R:EXTRA-M1-0014#c X:BF-M1-0051#b | S: .claude/rules (checker) M: checker error in P and R, X no modality E: none in any T: when the checker runs
+SD P:EXTRA-M1-0053 R:EXTRA-M1-0014#d X:BF-M1-0050#b | S: required skills (checker) M: checker error in P and R, X no modality E: none in any T: when the checker runs
+SD P:EXTRA-M1-0055 R:EXTRA-M1-0014#l X:BF-M1-0050#c | S: always-loaded budget (checker) M: warning only in all E: none in any T: when the checker runs
+SD P:EXTRA-M1-0054 R:EXTRA-M1-0014#g | S: template-maintenance skill (checker) M: checker error in both E: none in either T: when the checker runs
+SPLIT X:BF-M1-0052 | a@93-94: Skill frontmatter name must equal the directory and the description must be concrete (at least 20 characters). | b@99-102: Skill-private files must live in the skill's references/ directory. | c@110-119: The code-reviewer agent must exist, disallow Write and Edit and preload the code-review workflow.
+SD P:EXTRA-M1-0059 R:EXTRA-M1-0014#e X:BF-M1-0052#a | S: skill frontmatter (checker) M: checker error in P and R, X no modality E: none in any T: when the checker runs
+SD P:EXTRA-M1-0060 R:EXTRA-M1-0014#f X:BF-M1-0052#b | S: skill folders (checker) M: checker error in P and R, X no modality E: none in any T: when the checker runs
+SD P:RULE-M1-0103 X:BF-M1-0052#c | S: code-reviewer agent (checker) M: P ENFORCED, X no modality E: none in either T: when the checker runs
+RD DIFFERENT_LAYER R:RULE-M1-0001 P:RULE-M1-0103 | R: the agent is read-only (agent rule, also citing the checker); P: the checker fails unless the agent disallows Write/Edit and preloads code-review.
+CX X:BF-M1-0053 | Nested @-imports in instruction files other than CLAUDE.md are forbidden.
+SD P:EXTRA-M1-0061 R:EXTRA-M1-0014#h | S: instruction-file imports (checker) M: checker error in both E: none in either T: when the checker runs
+RD COMPOUND_PART P:EXTRA-M1-0061 X:BF-M1-0053 | P/R add 'CLAUDE.md imports must resolve'; X states the nested-import ban.
+SD P:EXTRA-M1-0062 R:EXTRA-M1-0014#i | S: references in instruction files (checker) M: checker error in both E: inactive facets of a disabled slot exempt (both) T: when the checker runs
+SPLIT R:EXTRA-M1-0001 | a: Exactly the four slots exist: architecture (required frame), persistence and backend-testing (required leaves) and frontend (optional leaf). | b: Each required slot has exactly one selected implementation and the optional slot zero or one; only selected implementations have runtime facets. | c: Contracts and manifests are maintainer metadata, not auto-loaded.
+SD P:EXTRA-M1-0015 R:EXTRA-M1-0001#b | S: capability selection M: MUST both E: none in either T: none
+RD COMPOUND_PART P:EXTRA-M1-0052 R:EXTRA-M1-0001#a | P (checker) adds the contract-per-slot and selection-record checks to the four-slot rule.
+SPLIT X:BF-M1-0054 | a@266-282: Exactly the four slots exist, each required slot has exactly one selected implementation and the optional slot is selected or disabled. | b@307-323: A selected module provides every required facet at its role-named location, every required property and every required enforcement entry.
+RD OVERLAP X:BF-M1-0054#a P:EXTRA-M1-0015 | X part a combines the four-slot rule with the selection cardinality (P EXTRA-M1-0015, R EXTRA-M1-0001#b).
+SD P:EXTRA-M1-0028 X:BF-M1-0054#b | S: selected capability modules (checker) M: checker error (P), X no modality E: none in either T: when the checker runs
+SPLIT X:BF-M1-0055 | a@328-341: A file declaring a Capability header must belong to a selected module and be listed in its manifest; unselected implementations must not enter runtime. | b@343-350: Planning facets are imported from CLAUDE.md exactly for the selected slots; an unselected slot's planning facet must not be imported or present.
+SD P:EXTRA-M1-0064 X:BF-M1-0055#a | S: capability facets (checker) M: P ENFORCED, X no modality E: none in either T: when the checker runs
+SD P:EXTRA-M1-0065 X:BF-M1-0055#b | S: planning facets (checker) M: P ENFORCED, X no modality E: none in either T: when the checker runs
+RD OVERLAP R:EXTRA-M1-0005#b P:EXTRA-M1-0065 | R: clearing the optional frontend removes its facets and planning import (procedure); P: the checker requires exact planning imports.
+CX X:BF-M1-0056 | Implementation leak tokens are matched lexically across prose and examples, so a legitimate explanatory mention of another implementation can be blocked (reported ambiguity).
+RD OVERLAP X:BF-M1-0056 P:EXTRA-M1-0029 | X: lexical matching side effects; P/R: the leak-token rule.
+RD OVERLAP R:EXTRA-M1-0003#c P:EXTRA-M1-0030 | R: a leaf naming frame-specific projects declares binds; P: the checker flags frame-specific names in non-frame facets without binds.
+SPLIT X:BF-M1-0057 | a@400-467: settings.json must register exactly the expected hook events and scripts in exec form with matchers covering the listed tools. | b@432-437: Only the PreToolUse handler may (and must) set onFailure block; post-tool and Stop hooks must not set onFailure.
+SD P:EXTRA-M1-0066 X:BF-M1-0057#a | S: settings.json hooks (checker) M: P ENFORCED, X no modality E: none in either T: when the checker runs
+SPLIT R:EXTRA-M1-0012 | a: Hooks are wired in exec form (command node plus the script path through CLAUDE_PROJECT_DIR, no shell). | b: The critical PreToolUse hook fails closed (onFailure block) while post-tool and Stop hooks report failures visibly without blocking. | c: Failed shell commands are post-checked (PostToolUseFailure registration).
+SD P:EXTRA-M1-0067 R:EXTRA-M1-0012#b X:BF-M1-0057#b | S: hook failure policy (checker) M: checker error in P, checker-enforced MUST in R, X no modality E: none in any T: when the checker runs
+RD COMPOUND_PART P:EXTRA-M1-0066 R:EXTRA-M1-0012#a | P lists the complete required registration set; R part a states the exec form.
+RD COMPOUND_PART P:EXTRA-M1-0066 R:EXTRA-M1-0012#c | P's registration set includes PostToolUseFailure for Bash/PowerShell.
+SPLIT X:BF-M1-0058 | a@470-483: MAP.md must list every instruction, enforcement and root configuration file. | b@511-512: The checker warns when the always-loaded surface exceeds its fixed token budget.
+SD P:EXTRA-M1-0068 R:EXTRA-M1-0014#k X:BF-M1-0058#a | S: MAP.md coverage (checker) M: checker error in P and R, X no modality E: none in any T: when the checker runs
+SD P:EXTRA-M1-0055 X:BF-M1-0058#b | S: always-loaded budget (checker) M: warning in both E: none in either T: when the checker runs
+# r195-r200 check-manifests.js
+SPLIT R:EXTRA-M1-0015 | a: Microsoft.Extensions.Http.Polly and Polly.Extensions.Http are reported as errors whenever they appear in a manifest. | b: Serilog.Sinks.Elasticsearch is reported as an error whenever it appears in a manifest. | c: FluentValidation.AspNetCore is reported as an error whenever it appears in a manifest.
+SPLIT X:BF-M1-0059 | a@20-21: Microsoft.Extensions.Http.Polly and Polly.Extensions.Http produce categorical errors. | b@22: Serilog.Sinks.Elasticsearch produces a categorical error. | c@23: FluentValidation.AspNetCore produces a categorical error.
+SD P:EXTRA-M1-0043 R:EXTRA-M1-0015#a X:BF-M1-0059#a | S: NuGet manifests (checker) M: checker error in all (R MUST NOT, no approval path) E: none in any T: when the checker runs
+SD P:EXTRA-M1-0044 R:EXTRA-M1-0015#b X:BF-M1-0059#b | S: NuGet manifests (checker) M: checker error in all E: none in any T: when the checker runs
+SD P:EXTRA-M1-0045 R:EXTRA-M1-0015#c X:BF-M1-0059#c | S: NuGet manifests (checker) M: checker error in all E: none in any T: when the checker runs
+RD DIFFERENT_LAYER R:RULE-M1-0140 P:RULE-M1-0092 | R: Microsoft resilience packages are the default, direct Polly a documented exception (rule, check-warned); P: the checker flags direct Polly as a WARN.
+SPLIT X:BF-M1-0060 | a@94-96: Any PackageReference declaring a version in a project file is an error. | b@103-106: Test projects are recognized only by suffix, test-framework packages or IsTestProject.
+SD P:RULE-M1-0093 X:BF-M1-0060#a | S: .csproj files (checker) M: checker error (P ENFORCED), X no modality E: none in either T: when the checker runs
+RD DIFFERENT_LAYER R:RULE-M1-0060#a P:RULE-M1-0093 | R: versionless PackageReference entries by default (rule); P/X: the checker errors on any project-declared version (VersionOverride is handled separately).
+RD DIFFERENT_LAYER R:RULE-M1-0060#a P:RULE-M1-0094 | P: the checker errors when Directory.Packages.props lacks ManagePackageVersionsCentrally=true.
+CX X:BF-M1-0061 | The CPM and version checks match literal text and do not evaluate effective MSBuild configuration (imports, conditions).
+RD OVERLAP X:BF-M1-0061 P:RULE-M1-0094 | X: literal matching limits; P: the CPM-enabled check.
+SD P:RULE-M1-0095 R:RULE-M1-0141 | S: Directory.Packages.props and package.json (checker) M: checker error/warning (P ENFORCED, R MUST manifest check) E: prerelease when explicitly requested (both) T: when the checker runs
+RD OVERLAP P:EXTRA-M1-0047 R:RULE-M1-0141 | P adds 'no explicit-request exception for floating versions' and 'range specifiers are not flagged'.
+CX X:BF-M1-0062 | The npm checks cover only dependencies and devDependencies and selected version forms; other sections and tags are not flagged.
+RD OVERLAP X:BF-M1-0062 P:EXTRA-M1-0047 | X: coverage limits of the npm version checks.
+RD DIFFERENT_LAYER R:UNCERTAIN-M1-0001 P:RULE-M1-0096 | R/P group: maintain and commit the lockfile (rule); P RULE-M1-0096: the checker warns when the lockfile is missing.
+REVIEWED r131-r200

@@ -1,0 +1,376 @@
+# K1 — skills: logging (+ references/serilog.md), modern-csharp, persistence-change (persistence facet), project-structure (+ references)
+
+@@ output/template/.claude/skills/logging/references/serilog.md ;; Private knowledge reference (read by logging).
+@scope private reference serilog (read by logging)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3 NN ;; Heading.
+5 OL [dep021.sl-ilogger]
+7 NN ;; Heading.
+9 EX [x.sl-bootstrap]
+10 OL [dep021.sl-addserilog]
+11 OL [run013.sl-templates]
+12 OL [dep021.sl-config]
+13 OL [dep021.sl-edges]
+15 NN ;; Heading.
+17-49 NN ;; Two-stage bootstrap example.
+51 MX [x.sl-sinks-optional,dep001.sl-sinks-when-required] ;; Adding sinks and enrichers only when required via add-dependency restates DEP-001; Console sufficing for a Development baseline and illustrative example values are added.
+53 NN ;; Heading.
+55-81 NN ;; appsettings example.
+83 DU [dep001.sl-sinks-when-required] ;; Descriptive Override note and restatement that File/Seq sinks are added only when needed. ;; only when needed
+85 NN ;; Heading.
+87 NN ;; Descriptive statement of request logging.
+89-98 NN ;; Request logging example.
+100 OL [sec010.sl-enrich-nonsensitive]
+102 NN ;; Heading.
+104-107 NN ;; Destructuring examples.
+109 EX [x.sl-destructure-limits]
+111 NN ;; Heading.
+113-119 NN ;; LogContext example.
+121 NN ;; Technical prerequisite.
+123 NN ;; Heading.
+125-126 NN ;; Optional integrations (OTLP export, expression filtering) described as options.
+127 EX [x.sl-elastic-deprecated]
+128 EX [x.lg-no-audit-db]
+130 NN ;; Heading.
+132 EX [x.sl-flush]
+134 NN ;; Heading.
+136-137 NN ;; Table header.
+138-143 DU [dep021.sl-addserilog,dep021.sl-config] ;; Decision guide; storage rows are descriptive options.
+
+C dep021.sl-ilogger OL DEP-021,DEP-010 DEFAULT ;; Serilog is the provider; application code keeps using ILogger<T>. ;; = ;; none ;;
+C x.sl-bootstrap EX DEP-021 DEFAULT ;; Use two-stage initialization (bootstrap logger) when startup logging before DI/configuration matters; simpler applications may use host-managed setup. ;; = ;; none ;; Not in the oracle.
+C dep021.sl-addserilog OL DEP-021 DEFAULT ;; builder.Services.AddSerilog(), not builder.Host.UseSerilog(), integrating with DI via ReadFrom.Services. ;; = ;; none ;;
+C run013.sl-templates OL RUN-013 DEFAULT ;; Message templates, not interpolation ({PropertyName} creates queryable data; interpolation breaks structure and allocates). ;; = ;; none ;;
+C dep021.sl-config OL DEP-021 DEFAULT ;; Levels, sinks and overrides live in appsettings so they change per environment without redeployment. ;; = ;; none ;;
+C dep021.sl-edges OL DEP-021 MUST ;; Serilog APIs (Log.Logger, LogContext) stay at composition and provider-specific boundaries. ;; = ;; none ;;
+C x.sl-sinks-optional EX DEP-021 DEFAULT ;; Serilog.AspNetCore is the baseline integration package; a Console sink suffices for a simple Development baseline; File, Seq, OpenTelemetry, Elasticsearch and enrichers are optional; example limits and retention values are illustrative. ;; = ;; none ;; Not in the oracle.
+C dep001.sl-sinks-when-required OL DEP-001 MUST ;; Add sinks and enrichers only when the project requires them, through add-dependency. ;; = ;; none ;;
+C sec010.sl-enrich-nonsensitive OL SEC-010,RUN-014 MUST ;; Enrich request logs only with non-sensitive values. ;; = ;; none ;;
+C x.sl-destructure-limits EX RUN-014 MUST_NOT ;; Never destructure large graphs such as HttpRequest without limits; configure depth/string/collection limits or transform to specific properties. ;; = ;; none ;; Not in the oracle.
+C x.sl-elastic-deprecated EX DEP-004 MUST_NOT ;; Serilog.Sinks.Elasticsearch is deprecated; use Elastic.Serilog.Sinks. ;; = ;; none ;; Not in the oracle.
+C x.sl-flush EX DEP-021 MUST ;; When the static/bootstrap Log.Logger is used flush it on shutdown (CloseAndFlushAsync) so asynchronous sinks keep buffered events. ;; = ;; Purely host-managed logging follows the provider lifetime. ;; Not in the oracle.
+
+@@ output/template/.claude/skills/logging/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge logging (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 IM ;; Policy and private-reference pointers.
+15 NN ;; Heading.
+17-20 NN ;; Structured vs interpolated logging example.
+22 OL [run013.lg-stable-names]
+24 NN ;; Heading.
+26-30 EX [x.lg-levels,x.eh-expected-not-errors]
+32 EX [x.lg-levels]
+34 NN ;; Heading.
+36 OL [api012.lg-once]
+38 NN ;; Heading.
+40-45 NN ;; BeginScope example.
+47 MX [x.lg-correlation,sec003.lg-validate-correlation] ;; Validating externally supplied identifiers restates SEC-003; correlation and trace-propagation guidance is added.
+49 NN ;; Heading.
+51 OL [run014.lg-headers-bodies]
+53 NN ;; Heading.
+55 OL [run008.lg-loggermessage]
+57-63 NN ;; LoggerMessage example.
+65 OL [run008.lg-loggermessage]
+67 NN ;; Heading.
+69 MX [run013.structured-logging,api012.log-once,x.eh-expected-not-errors,run014.no-payload-logs,dep021.add-serilog,x.lg-no-audit-db] ;; Anti-pattern list restating rule-owned items; logs as an audit database without an adopted audit design has no owner clause and is registered.
+71 NN ;; Heading.
+73-74 NN ;; Table header.
+75-80 DU [dep010.dr-logging,api012.log-once,x.eh-expected-not-errors,run008.lg-loggermessage] ;; Decision guide restating the rules above.
+
+C run013.lg-stable-names OL RUN-013 DEFAULT ;; Stable property names keep logs queryable; log information that helps diagnose or operate the system. ;; = ;; none ;;
+C x.lg-levels EX RUN-013 DEFINITION ;; Choose levels by operational meaning: Trace/Debug diagnostics (never assume sensitive data is safe there), Information meaningful events, Warning recovered/degraded conditions, Error failed operations needing investigation, Critical when the application or a subsystem cannot continue. ;; = ;; none ;; Not in the oracle.
+C api012.lg-once OL API-012 MUST ;; Log an exception at the boundary that handles or terminates the failure; when rethrowing without meaningful handling add no duplicate log. ;; = ;; none ;;
+C x.lg-correlation EX RUN-013 PREFER ;; Prefer platform trace identifiers; add an explicit correlation identifier only for an integration or operational requirement; propagate tracing context across outbound calls. ;; = ;; none ;; Not in the oracle.
+C sec003.lg-validate-correlation OL SEC-003 MUST ;; Validate or normalize a correlation identifier accepted from an external client. ;; = ;; none ;;
+C run014.lg-headers-bodies OL RUN-014,SEC-010 MUST_NOT ;; Avoid logging authorization headers and full sensitive request/response bodies; log the specific properties needed; log level is not a privacy control; prefer technical identifiers over personal information. ;; = ;; none ;;
+C run008.lg-loggermessage OL RUN-008,RUN-001 DEFAULT ;; Normal structured ILogger calls suffice; source-generated LoggerMessage only for measured high-volume hot paths, not everywhere to avoid theoretical allocations. ;; = ;; none ;;
+C x.lg-no-audit-db EX RUN-014 AVOID ;; Do not use logs as an audit database (or AuditTo) unless a dedicated audit design was adopted. ;; = ;; Adopted audit design. ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/modern-csharp/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge modern-csharp (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 OL [run009.mc-clearer]
+15 NN ;; Heading.
+17 NN ;; Permissive note (good for simple injection).
+19-23 NN ;; Primary constructor example.
+25 MX [x.mc-primary-ctor,run009.mc-no-mechanical] ;; Never converting constructors mechanically restates RUN-009; the regular-constructor criteria are added.
+27 NN ;; Heading.
+29-32 NN ;; Collection expression example.
+34 MX [x.mc-collection-expr,run009.mc-no-mechanical] ;; Not replacing existing initializers solely to modernize restates RUN-009; using them when the target type is clear is added.
+36 NN ;; Heading.
+38 EX [x.mc-records]
+40 NN ;; Heading.
+42-44 NN ;; Required member example.
+46 EX [x.mc-required]
+48 NN ;; Heading.
+50-57 NN ;; Switch expression example.
+59 EX [x.mc-nested-patterns]
+61 NN ;; Heading.
+63-71 NN ;; field keyword example.
+73 OL [run009.mc-no-mechanical]
+75 NN ;; Heading.
+77-85 NN ;; Extension members example.
+87 NN ;; Permissive note (extension members useful; traditional methods need no conversion).
+89 NN ;; Heading.
+91-97 NN ;; Raw string example.
+99 OL [run008.mc-raw-strings]
+101 NN ;; Heading.
+103 EX [x.mc-var]
+104 EX [x.mc-naming]
+105 EX [x.mc-visibility]
+106 OL [run011.mc-member-order]
+107 EX [x.mc-immutability]
+109 NN ;; Heading.
+111 OL [run008.mc-spans]
+113 NN ;; Heading.
+115 EX [x.mc-langversion]
+117 NN ;; Heading.
+119 OL [run011.mc-modernization]
+121 NN ;; Heading.
+123 MX [run009.mc-clearer,x.mc-records,x.mc-record-struct,run008.mc-spans,run009.mc-no-mechanical] ;; Anti-pattern list restating RUN-009/RUN-008 and the record guidance; record struct merely to avoid allocations has no owner clause and is registered.
+
+C run009.mc-clearer OL RUN-009 DEFAULT ;; Use modern features when they make code clearer, safer or simpler; consistency and readability matter more than maximizing language features. ;; = ;; none ;;
+C x.mc-primary-ctor EX RUN-009 PREFER ;; Prefer a regular constructor when validation/initialization is non-trivial, explicit fields read better, the codebase uses that style or parameter capture would obscure the class. ;; = ;; none ;; Not in the oracle.
+C run009.mc-no-mechanical OL RUN-009 MUST_NOT ;; Never modernize working code mechanically (constructors, initializers, backing fields with clear logic). ;; = ;; none ;;
+C x.mc-collection-expr EX RUN-009 DEFAULT ;; Use collection expressions when the target type is clear. ;; = ;; none ;; Not in the oracle.
+C x.mc-records EX RUN-009 DEFAULT ;; Records for intentional value semantics (immutable DTOs, genuine Value Objects, immutable messages); classes for identity, mutable lifecycle, inheritance or framework behaviour; do not turn every DTO or Domain type into a record. ;; = ;; none ;; Not in the oracle.
+C x.mc-required EX ARC-004,API-010 DEFINITION ;; Use required when initialization is part of the valid construction contract, not as a substitute for constructor/domain validation protecting invariants. ;; = ;; none ;; Not in the oracle.
+C x.mc-nested-patterns EX RUN-009 AVOID ;; Avoid deeply nested patterns that are harder to read than plain conditions. ;; = ;; none ;; Not in the oracle.
+C run008.mc-raw-strings OL RUN-008 MUST_NOT ;; Raw string literals are never a reason to introduce raw SQL. ;; = ;; none ;;
+C x.mc-var EX RUN-009 PREFER ;; var when the type is obvious or unimportant; an explicit type when it improves clarity; follow the project convention. ;; = ;; none ;; Not in the oracle.
+C x.mc-naming EX RUN-009,RUN-024 MUST ;; Standard .NET naming (PascalCase types/members, camelCase parameters/locals, meaningful names; private fields per repository convention). ;; = ;; none ;; Not in the oracle.
+C x.mc-visibility EX RUN-009 MUST ;; Keep implementation details non-public unless part of the public API; sealed communicates deliberate design, not a speculative JIT optimization. ;; = ;; none ;; Not in the oracle.
+C run011.mc-member-order OL RUN-011,RUN-024 MUST_NOT ;; Do not reorganize an existing file merely to satisfy a preferred member ordering. ;; = ;; none ;;
+C x.mc-immutability EX RUN-009 DEFAULT ;; Immutability where it represents the model naturally; controlled mutation where framework models or workflows are simpler with it. ;; = ;; none ;; Not in the oracle.
+C run008.mc-spans OL RUN-008,RUN-012 DEFAULT ;; Span<T>, stackalloc, pooling and source-generated serialization for demonstrated hot paths with verified improvement; ordinary arrays, strings and collections are the default. ;; = ;; none ;;
+C x.mc-langversion EX DEP-008,ARC-020 REQUIRES_APPROVAL ;; Confirm the configured language version supports a feature; never silently change LangVersion or the target framework (a platform change is Reserved). ;; = ;; none ;; LangVersion/TFM gate beyond DEP-008's preview/RC rule.
+C run011.mc-modernization OL RUN-011,GOV-014,RUN-009 MUST ;; When explicitly asked to modernize: preserve behaviour, keep the change focused, prefer readability, build and test afterwards, keep architecture refactoring out. ;; = ;; none ;;
+C x.mc-record-struct EX RUN-008 AVOID ;; Avoid record struct merely to avoid allocations. ;; = ;; none ;; No owner clause for this item.
+
+@@ output/template/.claude/skills/persistence-change/SKILL.md ;; Workflow (persistence facet).
+@scope workflow persistence-change (persistence model, migrations, seed data)
+1-9 IM ;; Frontmatter (name, routing description).
+11 NN ;; Banner (kind, scope, capability, loading metadata).
+13 NN ;; Heading.
+15 IM ;; Read-first and technique pointers.
+17 NN ;; Heading.
+19 MX [dep003.pc-packages,x.pc-setup-packages] ;; Installing through add-dependency restates DEP-003/DEP-009; the concrete persistence package/tool set is added.
+20 OL [pst003.pc-layout]
+21 OL [arc023.pc-register]
+22 OL [dep026.pc-dev-connection]
+24-30 NN ;; LocalDB connection string example.
+31 OL [pst005.pc-initial-migration]
+33 NN ;; Heading.
+35 OL [arc019.pc-role-rules]
+36 OL [pst009.pc-new-migration]
+38-40 NN ;; Migration command example.
+42 OL [pst009.pc-no-alter]
+43 OL [pst010.pc-review]
+44 OL [pst008.pc-seed-cochange]
+45 OL [pst006.pc-apply-local]
+46 EX [x.pc-tests]
+48 NN ;; Heading.
+50 EX [x.pc-verify]
+52 NN ;; Heading.
+54 EX [x.pc-report]
+
+C dep003.pc-packages OL DEP-003,DEP-009 MUST ;; Persistence packages are installed through add-dependency. ;; = ;; none ;;
+C x.pc-setup-packages EX DEP-009,DEP-006 DEFAULT ;; Microsoft.EntityFrameworkCore.SqlServer in Infrastructure, Microsoft.EntityFrameworkCore.Design where design-time tooling needs it (startup project), dotnet-ef as a local tool when the CLI is used. ;; new solutions ;; none ;; Concrete package set not in the oracle.
+C pst003.pc-layout OL PST-003,ARC-016 DEFAULT ;; Infrastructure Persistence/: AppDbContext (configurations from the assembly), Configurations/, Repositories/, UnitOfWork implementing IUnitOfWork, Seeding/DbSeeder.cs plus the initialization extension. ;; = ;; none ;;
+C arc023.pc-register OL ARC-023 DEFAULT ;; Register persistence in Infrastructure's AddInfrastructure(configuration) using the DefaultConnection string. ;; = ;; none ;;
+C dep026.pc-dev-connection OL DEP-026 DEFAULT ;; appsettings.Development.json carries the Development connection string per the variant rule (LocalDB default adapted to the project). ;; = ;; none ;;
+C pst005.pc-initial-migration OL PST-005,PST-001 MUST ;; Create the initial migration, apply it locally, then let Development startup seed the empty database. ;; = ;; none ;;
+C arc019.pc-role-rules OL ARC-019,ARC-002 MUST ;; Change entities and their configuration within the role rules of the read-first standards. ;; = ;; none ;;
+C pst009.pc-new-migration OL PST-009,PST-010 MUST ;; If the schema changes create a new migration from the Infrastructure project with the Api startup project. ;; = ;; none ;;
+C pst009.pc-no-alter OL PST-009 MUST_NOT ;; Regenerate or edit an uncommitted migration only when the workflow allows; never casually alter migrations already applied or shared. ;; = ;; none ;;
+C pst010.pc-review OL PST-010 MUST ;; Review the generated migration as source code before committing (destructive changes, column recreation, data migrations, indexes, foreign keys, delete behaviour). ;; = ;; none ;;
+C pst008.pc-seed-cochange OL PST-008,PST-001,PST-006 MUST ;; Whenever Domain/persistence changes affect seeded entities (required/removed/renamed properties, relationships, required related entities, enum/status values, states, invariants) update the seeder in the same change so a recreated empty database yields valid representative data; existing rows are not patched. ;; = ;; none ;;
+C pst006.pc-apply-local OL PST-006 DEFAULT ;; Apply migrations locally or drop and recreate the local database when a fresh dataset is needed. ;; = ;; none ;;
+C x.pc-tests EX TST-007,TST-002 DEFAULT ;; Add or update persistence/integration tests when provider behaviour, mappings, constraints or non-trivial queries changed. ;; = ;; none ;; Not in the oracle.
+C x.pc-verify EX WF-006,WF-005 MUST ;; Build, run affected tests, start the API against a freshly recreated Development database when seeding or schema changed, run check-cochange, then verify. ;; = ;; none ;; Not in the oracle.
+C x.pc-report EX WF-009,PST-010 MUST ;; Report model changes, migration name and review notes (destructive operations called out), seeder updates and verification results. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/project-structure/references/backend-layout.md ;; Private workflow reference (architecture facet).
+@scope private reference backend-layout (read by project-structure)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3 NN ;; Heading.
+5 OL [arc027.bl-real-dirs]
+7 NN ;; Heading.
+9-13 NN ;; Domain tree example.
+15 OL [arc005.bl-ddd-dirs]
+17 NN ;; Heading.
+19-28 OL [arc008.bl-app-tree]
+30 MX [x.bl-type-roles,arc027.bl-no-generic-buckets] ;; Avoiding generic buckets restates ARC-027; role-revealing names and subdirectories only when needed are added.
+32 NN ;; Heading.
+34-39 OL [arc023.bl-infra-tree]
+41 NN ;; Permissive note (capability subdirectories under Services/ when they improve cohesion).
+43 NN ;; Heading.
+45-56 MX [arc012.bl-api-tree,x.bl-extensions] ;; Middleware only when needed and Program.cs as composition root restate ARC-027/ARC-012; not moving code just to shorten Program.cs is added.
+58 OL [arc010.bl-controllers]
+60 NN ;; Heading.
+62-67 DU [arc001.inward] ;; Reference diagram restating the dependency-direction rule.
+69 OL [arc001.bl-never-outward]
+71 NN ;; Heading.
+73 OL [dep024.bl-tests-beside]
+75-81 OL [arc028.bl-test-projects]
+83 OL [tst006.bl-integration-api]
+
+C arc027.bl-real-dirs OL ARC-027 MUST ;; Create only directories that contain real code. ;; = ;; none ;;
+C arc005.bl-ddd-dirs OL ARC-005,ARC-004 MUST_NOT ;; DDD-oriented directories (ValueObjects, DomainServices, Events, Exceptions) only when an approved design needs them; business rules or workflows alone do not justify them. ;; = ;; Approved design. ;;
+C arc008.bl-app-tree OL ARC-007,ARC-008,ARC-023,API-010 DEFAULT ;; Application layout: Abstractions/Persistence without persistence-technology types, Abstractions/ExternalServices only once such dependencies exist, Services (Application Services), DTOs when useful (not a dumping ground), Validation (FluentValidation), AddApplication registering only Application services and validation. ;; = ;; none ;;
+C x.bl-type-roles EX RUN-024 MUST ;; Supporting type roles are clear from name and/or directory (established suffixes; e.g. TaskWorkflowRules over ambiguous TaskWorkflow); responsibility subdirectories only when a flat feature directory becomes hard to navigate. ;; = ;; none ;; Not in the oracle.
+C arc027.bl-no-generic-buckets OL ARC-027 AVOID ;; Avoid generic Models, Helpers, Common or Utils buckets. ;; = ;; none ;;
+C arc023.bl-infra-tree OL ARC-023,ARC-007 DEFAULT ;; Infrastructure layout: Persistence (per persistence-change), Services implementing Application abstractions, AddInfrastructure(configuration) registering persistence, repositories, IUnitOfWork, adapters and HttpClient/resilience integrations when used. ;; = ;; none ;;
+C arc012.bl-api-tree OL ARC-012,ARC-027 DEFAULT ;; Api layout: Controllers, Contracts, Middleware only when custom middleware exists, Extensions, Program.cs as composition root (AddApplication, AddInfrastructure). ;; = ;; none ;;
+C x.bl-extensions EX ARC-012,GOV-012 MUST_NOT ;; Extensions hold cohesive composition extensions; do not move code just to shorten Program.cs. ;; = ;; none ;; Not in the oracle.
+C arc010.bl-controllers OL ARC-010,ARC-011,ARC-029 DEFAULT ;; Controllers are the HTTP endpoint mechanism (Minimal API groups only when explicitly requested); Api references Infrastructure only for composition and controllers never consume Infrastructure types; Contracts only when separation gives value. ;; = ;; Explicit request for Minimal APIs. ;;
+C arc001.bl-never-outward OL ARC-001 MUST_NOT ;; Never add Domain→Application, Domain→Infrastructure or Application→Infrastructure; reconsider the abstraction boundary. ;; = ;; none ;;
+C dep024.bl-tests-beside OL DEP-024,TST-011 MUST ;; Test projects live beside production projects under backend/; create only useful ones. ;; = ;; none ;;
+C arc028.bl-test-projects OL ARC-028 DEFAULT ;; Application.Tests → Application (+ Domain); IntegrationTests → Api; optional Domain.Tests only for non-trivial Domain behaviour; optional Infrastructure.Tests only for non-trivial Infrastructure behaviour. ;; = ;; none ;;
+C tst006.bl-integration-api OL TST-006,TST-011 DEFAULT ;; A simple Domain needs no dedicated test project; integration tests reference Api for WebApplicationFactory<Program> and exercise the other layers transitively. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/references/frontend-setup.md ;; Private workflow reference (frontend facet).
+@scope private reference frontend-setup (read by project-structure)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3 NN ;; Heading.
+5 IM ;; Stack, standards and technique pointers.
+7 OL [dep014.fs-angular-cli]
+8 OL [dep024.fs-location]
+10-12 NN ;; CLI command example.
+14 OL [dep014.fs-zoneless-vitest]
+15 OL [dep014.fs-material]
+16 EX [x.fs-api-base-url]
+17 OL [fe007.fs-no-empty-dirs]
+18 OL [wf018.fs-scripts,dep007.fs-lockfile]
+20 OL [dep016.fs-playwright]
+
+C dep014.fs-angular-cli OL DEP-014 DECIDED ;; Use the latest stable Angular supported by the selected Node.js through the current CLI; let it select compatible Angular/TypeScript/RxJS; no independent TypeScript upgrade beyond the supported range. ;; = ;; none ;;
+C dep024.fs-location OL DEP-024 DEFAULT ;; Create the workspace in frontend/<Name>.Web. ;; = ;; none ;;
+C dep014.fs-zoneless-vitest OL DEP-014 DECIDED ;; Accept zoneless mode when supported; keep the CLI's Vitest runner or configure Vitest as the baseline for new projects. ;; = ;; none ;;
+C dep014.fs-material OL DEP-014,DEP-004 DEFAULT ;; Add Angular Material/CDK matching the workspace with ng add, following add-dependency for version and license checks. ;; = ;; none ;;
+C x.fs-api-base-url EX SEC-009 MUST ;; Configure the API base URL for the Development backend compatible with the backend's CORS configuration. ;; = ;; none ;; Not in the oracle.
+C fe007.fs-no-empty-dirs OL FE-007 MUST_NOT ;; Create feature directories only when they contain code; no empty core/shared/features trees. ;; = ;; none ;;
+C wf018.fs-scripts OL WF-018,WF-005 MUST ;; Verify with the workspace's declared scripts (npm run build, npm test). ;; = ;; none ;;
+C dep007.fs-lockfile OL DEP-007 MUST ;; Commit package-lock.json. ;; = ;; none ;;
+C dep016.fs-playwright OL DEP-016 DEFAULT ;; Playwright E2E only when E2E coverage is required, inside frontend/<Name>.Web/e2e/. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/references/solution-layout.md ;; Private workflow reference.
+@scope private reference solution-layout (read by project-structure)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3 NN ;; Heading.
+5 OL [arc027.sl-optional]
+7-30 NN ;; Repository tree example.
+32 NN ;; Heading.
+34 OL [dep024.sl-backend,dep022.sl-slnx]
+36 NN ;; Heading.
+38 MX [dep024.sl-frontend,x.sl-current-cli-structure] ;; Workspace location and frontend tests never under backend/ restate DEP-024; not imposing obsolete structure is added.
+40 NN ;; Heading.
+42 OL [arc027.sl-docs]
+44 NN ;; Heading.
+46 OL [dep023.sl-build-props]
+47 OL [dep006.sl-cpm]
+48 MX [x.sl-global-json,dep008.sl-no-preview-sdk] ;; No RC/preview SDK unless requested restates DEP-008; global.json pinning with rollForward is added.
+49 EX [x.sl-editorconfig]
+51 NN ;; Heading.
+53 EX [x.sl-gitignore]
+55 NN ;; Heading.
+57 OL [gov013.sl-optional-infra]
+
+C arc027.sl-optional OL ARC-027 MUST ;; The layout is a target structure; create optional directories or projects only when needed. ;; = ;; none ;;
+C dep024.sl-backend OL DEP-024 DEFAULT ;; All backend .NET projects, including backend test projects, live under backend/. ;; = ;; none ;;
+C dep022.sl-slnx OL DEP-022 DEFAULT ;; The solution file uses .slnx. ;; = ;; none ;;
+C dep024.sl-frontend OL DEP-024 DEFAULT ;; The frontend workspace lives in frontend/<Name>.Web/ and owns its manifests and sources; frontend unit and E2E tests stay inside the workspace, never under backend/. ;; = ;; none ;;
+C x.sl-current-cli-structure EX DEP-014 MUST_NOT ;; Do not impose an obsolete directory structure when the current framework CLI generates a different supported one. ;; = ;; none ;; Not in the oracle.
+C arc027.sl-docs OL ARC-027 MUST ;; docs/ subdirectories (architecture, decisions, api) only when the corresponding documentation exists. ;; = ;; none ;;
+C dep023.sl-build-props OL DEP-023 DEFAULT ;; Directory.Build.props holds genuinely shared settings (TargetFramework, Nullable, ImplicitUsings, analysis/compiler), never project-specific settings. ;; = ;; none ;;
+C dep006.sl-cpm OL DEP-006 MUST ;; Directory.Packages.props holds NuGet CPM versions in one place. ;; = ;; none ;;
+C x.sl-global-json EX DEP-008 MUST ;; global.json pins the intended supported SDK line (current stable SDK of the target release) with servicing per the chosen rollForward policy. ;; = ;; none ;; Not in the oracle.
+C dep008.sl-no-preview-sdk OL DEP-008 MUST_NOT ;; No RC/preview SDK unless explicitly requested. ;; = ;; Explicit request. ;;
+C x.sl-editorconfig EX - PREFER ;; .editorconfig holds deterministic repository-wide formatting/style; prefer enforceable tooling configuration over restating mechanical formatting rules in instructions. ;; = ;; none ;; Not in the oracle.
+C x.sl-gitignore EX SEC-001 MUST ;; Ignore generated/local artifacts (bin, obj, .vs, node_modules, dist, TestResults, coverage, local secret/config overrides, .claude/settings.local.json); do not ignore files intentionally part of the Development configuration contract. ;; = ;; none ;; Not in the oracle.
+C gov013.sl-optional-infra OL GOV-013,DEP-018 MUST_NOT ;; Docker files, deployment manifests, Kubernetes, cloud, messaging and additional services only for a concrete requirement. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/references/test-setup.md ;; Private workflow reference (backend-testing facet).
+@scope private reference test-setup (read by project-structure)
+1 NN ;; Banner (kind, scope, capability, loading metadata).
+3 NN ;; Heading.
+5 IM ;; Placement and standards pointers.
+7 OL [dep013.ts-nunit-beside]
+9-13 NN ;; Test project creation commands.
+15 MX [dep006.ts-cpm,x.ts-test-packages] ;; Moving template versions into Directory.Packages.props with versionless references restates DEP-006; the concrete test package set and removing unused template packages are added.
+16 MX [arc028.ts-min-refs,x.ps-ref-record-first] ;; Only the references the test scope requires restates ARC-028; recording them first via architecture-decision is the project-structure extra.
+17 OL [tst004.ts-testing-env]
+18 OL [tst007.ts-testcontainers]
+19 OL [wf005.ts-build-test]
+21 IM ;; Technique pointer.
+
+C dep013.ts-nunit-beside OL DEP-013,DEP-024 DECIDED ;; Create each useful test project from the NUnit template beside the production projects. ;; = ;; none ;;
+C dep006.ts-cpm OL DEP-006,DEP-003 MUST ;; Under CPM move the template's package versions into Directory.Packages.props and keep references versionless (add-dependency resolves current stable versions). ;; = ;; none ;;
+C x.ts-test-packages EX DEP-013 DEFAULT ;; Test packages: NUnit, NUnit3TestAdapter, Microsoft.NET.Test.Sdk and, for integration tests, Microsoft.AspNetCore.Mvc.Testing; remove unused template packages. ;; = ;; none ;; Not in the oracle.
+C arc028.ts-min-refs OL ARC-028 MUST ;; Add only the production project references the test scope requires. ;; = ;; none ;;
+C tst004.ts-testing-env OL TST-004,TST-006 MUST ;; Integration tests expose Program to WebApplicationFactory<Program> when needed and configure an isolated Testing environment. ;; = ;; none ;;
+C tst007.ts-testcontainers OL TST-007 DEFAULT ;; Testcontainers or other real-provider infrastructure only when provider fidelity requires it. ;; = ;; none ;;
+C wf005.ts-build-test OL WF-005 MUST ;; Build and run dotnet test to confirm the projects are discovered. ;; = ;; none ;;
+
+@@ output/template/.claude/skills/project-structure/SKILL.md ;; Workflow (scaffolding and restructuring).
+@scope workflow project-structure (scaffolding, adding/removing projects, restructuring)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 IM ;; Read-first standards and register pointers; ownership statement.
+16 NN ;; Heading.
+18-19 NN ;; Table header.
+20-23 IM ;; Private-reference routing table.
+25 IM ;; Routing to persistence-change.
+27 NN ;; Heading.
+29 OL [wf005.ps-goals]
+31 NN ;; Heading.
+33 OL [gov013.ps-scope]
+34 OL [dep002.ps-stack-packages]
+35 OL [arc027.ps-repo-level]
+36 MX [arc001.ps-refs,x.ps-ref-record-first] ;; Only listed references and no outward references restate ARC-001; recording the scaffold's references as 'From -> To' through architecture-decision before running reference commands is added.
+37 OL [dep024.ps-tests]
+38 OL [dep024.ps-frontend]
+39 OL [arc027.ps-internal-dirs]
+40 OL [wf019.ps-dev-persistence]
+41 OL [wf005.ps-verify]
+43 NN ;; Heading.
+45 OL [arc020.ps-new-assembly]
+46 OL [arc027.ps-responsibility]
+47 MX [arc001.ps-min-refs,x.ps-ref-record-first] ;; Minimum references preserving direction restate ARC-001; recording each new reference first is added.
+48 OL [dep023.ps-shared-config]
+49 OL [wf005.ps-build-test]
+51 OL [arc027.ps-no-split]
+53 NN ;; Heading.
+55-59 OL [gov014.ps-reorganize]
+61 EX [x.ps-no-forced-template]
+63 NN ;; Heading.
+65 OL [gov013.ps-not-default]
+67 NN ;; Heading.
+69 OL [wf005.ps-completion]
+
+C wf005.ps-goals OL ARC-001,ARC-027,DEP-002,DEP-024,WF-005 MUST ;; Goals: explicit boundaries, dependency direction through references, layout per the default, approved technology only, no speculative projects/abstractions/directories, an immediately buildable verified result. ;; = ;; none ;;
+C gov013.ps-scope OL GOV-013,DEP-018 MUST_NOT ;; Determine scope; do not scaffold optional infrastructure because it may be useful later (Docker only when containerization is needed). ;; = ;; none ;;
+C dep002.ps-stack-packages OL DEP-002,DEP-011,DEP-003 MUST ;; Use the approved stack; conditional technologies only when required; resolve versions at install time through add-dependency, never copying versions from examples. ;; = ;; none ;;
+C arc027.ps-repo-level OL ARC-027 MUST ;; Create only required top-level directories and shared configuration files. ;; = ;; none ;;
+C arc001.ps-refs OL ARC-001 MUST_NOT ;; Create the four backend projects and only the listed references; never an outward reference to make compilation easier. ;; = ;; none ;;
+C x.ps-ref-record-first EX ARC-001,ARC-020 MUST ;; Project and reference creation changes the reference graph (Reserved): record the requested scaffold or reference first through architecture-decision, listing each reference as 'From -> To', because the hook blocks unrecorded reference commands and reports unrecorded changes. ;; = ;; none ;; Recording-before-command procedure not in the oracle.
+C dep024.ps-tests OL DEP-024,TST-011 MUST ;; Create only useful test projects with placement and references per the backend layout. ;; = ;; none ;;
+C dep024.ps-frontend OL DEP-024 DEFAULT ;; When frontend scope exists create the workspace under frontend/<Name>.Web/; frontend architecture belongs to the frontend standards and facet. ;; = ;; none ;;
+C arc027.ps-internal-dirs OL ARC-027 MUST_NOT ;; Only directories the initial implementation needs; no empty trees for hypothetical capabilities. ;; = ;; none ;;
+C wf019.ps-dev-persistence OL WF-019,DEP-026 MUST_NOT ;; Development persistence via persistence-change; never add Production credentials or Production migration automation. ;; = ;; none ;;
+C wf005.ps-verify OL WF-005,WF-007,WF-009 MUST ;; Verify: restore, build the solution and frontend, run relevant tests, inspect references with check-manifests, inspect the tree, confirm Development configuration, then verify; never report successful scaffolding that does not build. ;; = ;; none ;;
+C arc020.ps-new-assembly OL ARC-020 REQUIRES_APPROVAL ;; Determine whether a new assembly is justified; a new production project or layer is Reserved. ;; = ;; none ;;
+C arc027.ps-responsibility OL ARC-027 MUST ;; Identify a new project's architectural/technical responsibility. ;; = ;; none ;;
+C arc001.ps-min-refs OL ARC-001 MUST ;; Add only the minimum required references, preserving dependency direction. ;; = ;; none ;;
+C dep023.ps-shared-config OL DEP-023 DEFAULT ;; Update shared build/package configuration when necessary. ;; = ;; none ;;
+C wf005.ps-build-test OL WF-005 MUST ;; Build and test the affected solution after adding a project. ;; = ;; none ;;
+C arc027.ps-no-split OL ARC-027,GOV-012 MUST_NOT ;; Never split code into additional projects merely to make the architecture look more sophisticated. ;; = ;; none ;;
+C gov014.ps-reorganize OL GOV-014,RUN-011,WF-001 MUST ;; Reorganizing: inspect tree and references, identify a concrete structural problem, preserve behaviour, move in small reviewable steps, update namespaces/references consistently, avoid unrelated work, verify afterwards. ;; = ;; none ;;
+C x.ps-no-forced-template EX GOV-014,GOV-012 MUST_NOT ;; Do not force an established project to match this template when doing so provides no concrete value. ;; = ;; none ;; Not in the oracle.
+C gov013.ps-not-default OL GOV-013,ARC-020,ARC-009 MUST_NOT ;; MediatR, CQRS trees, VSA, Domain Events, Specifications, SharedKernel, BuildingBlocks, EventBus, messaging, microservices, Kubernetes, cloud projects and state frameworks are not introduced by default; each requires an approved need. ;; = ;; none ;;
+C wf005.ps-completion OL WF-005,ARC-027,ARC-001,DEP-002,GOV-014 MUST ;; Complete when structure matches scope, references respect the architecture, approved technology is used, no unnecessary projects/directories exist, builds and tests pass, Development configuration is usable and nothing unrelated was reorganized. ;; = ;; none ;;

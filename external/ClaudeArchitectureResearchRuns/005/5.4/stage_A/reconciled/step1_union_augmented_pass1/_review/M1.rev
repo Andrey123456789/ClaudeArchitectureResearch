@@ -1,0 +1,317 @@
+# Reviewer decisions for candidate M1 (Codex pass 0001 claims). Grammar: _tools/build.py docstring.
+# M1 ownership headers (first '> ' line of each file): knowledge skills are "Knowledge skill · <X> technique ·
+# Policy: <rules>" (angular, dotnet-testing, ef-core add "Technique only"); project-structure and security-scan are
+# "Workflow · Owns ... procedure"; logging/references/serilog.md is "Private reference ... Serilog provider technique";
+# security-scan/references/scan-layers.md is "Private reference ... Investigation prompts per layer · Prompts are not
+# automatic vulnerability declarations; the security invariants they check are owned by .claude/rules/security.md".
+# Reviewer convention (same as M): designed trigger predicates of hooks/checkers that an existing group states too
+# broadly -> facet; incidental helper/failure edge effects -> NOT_AN_INDEPENDENT_CONSTRAINT.
+
+@@ CIS-P0001-M1-C0001
+disp: ALREADY_REPRESENTED
+nature: DECLARED_CAPABILITY_PROPERTY (manifest metadata, normativity already disputed)
+appl: actor=persistence capability manifest reader/maintainer; action=commitBinding states one SaveChangesAsync per use case; trigger=persistence capability selected; modality=DECLARED PROPERTY (uncertain); scope=persistence/ef-core MODULE.md; exceptions=runtime rule elsewhere allows justified multi-commit transactions; timing=standing; enforcement=metadata only; loading=capability manifest (not auto-loaded)
+match: FG-M1-b384cda630
+rationale: MODULE.md:34 verified. Codex blind group FG-M1-b384cda630 already records the exact one-commit property together with the possible tension with the commit-boundary rule; the review question is the same and stays a Step 2 matter.
+scenario: Two justified commits in one transaction: the same potential metadata-versus-policy tension already recorded in FG-M1-b384cda630.
+conf: HIGH
+
+@@ CIS-M1-0004
+disp: ALREADY_REPRESENTED
+nature: HOOK_FAILURE_POLICY (visible, non-blocking failure of post-tool and Stop hooks)
+appl: actor=PostToolUse/PostToolUseFailure/Stop hooks; action=on an internal error write to stderr and exit 1 without a block decision; trigger=caught internal exception (post-tool-use.js:224-225, stop.js:109); modality=ENFORCEMENT POLICY (non-blocking); scope=registered post and Stop hooks; exceptions=PreToolUse fails closed via denyOnFailure; timing=hook execution; enforcement=static code read (hook-output.js:5-7, 49-52), host not tested; loading=hook code
+match: FG-M1-90ed13d72d
+compared: FG-M1-30119e9885 FG-M1-0ecfbdc22c
+rationale: Effective status ALREADY_COVERED via revision CIS-M1-0004-R1 (original RECLASSIFICATION_CANDIDATE). Verified independently: hook-output.js header lines 5-7 state the failure policy and fail() at 49-52 writes stderr and exits 1. FG-M1-90ed13d72d contains claim unit REPLICA:M1:CONSTRAINT:EXTRA-M1-0012#b whose stored part text is 'post-tool and Stop hooks report failures visibly without blocking'; that is the same behaviour (the group's neutral text, taken from primary EXTRA-M1-0067, mentions only the onFailure setting). Revision confirmed; not counted as a discovery.
+scenario: Internal exception in the Stop hook: exit 1 with a stderr message and no decision:block, as stated by EXTRA-M1-0012#b in FG-M1-90ed13d72d.
+conf: HIGH
+
+@@ CIS-P0001-M1-C0002
+disp: ALREADY_REPRESENTED
+nature: HOOK_RUNTIME_BEHAVIOR (severity/channel of post-tool diagnostics)
+appl: actor=post-tool-use hook; action=return ERROR and WARN findings as decision:block after a successful tool, as additionalContext after a failed one; trigger=messages exist after a registered tool call; modality=ENFORCED / ENFORCED_ADVISORY; scope=Write/Edit/MultiEdit and Bash/PowerShell; exceptions=internal errors use fail(); timing=after the tool call; enforcement=static code read; addContext exits before block (hook-output.js:13-16, 41-43); loading=hook code
+match: FG-M1-b25edb284d
+compared: FG-M1-cf5ed1aba9
+rationale: post-tool-use.js:221-222 verified. FG-M1-b25edb284d (P EXTRA-M1-0037 + X BF-M1-0041) states WARN and ERROR blocking, and P's exceptions field reads 'After failed shell commands findings are added as context instead'.
+scenario: A WARN after a successful edit blocks; the same WARN after a failed command arrives as context: both in FG-M1-b25edb284d.
+conf: HIGH
+
+@@ CIS-P0001-M1-C0003
+disp: ALREADY_REPRESENTED
+nature: CHECKER_ACCEPTANCE_GATE (no references to test projects)
+appl: actor=check-architecture.js; action=report an ERROR for any project reference whose target is a test project; trigger=architecture check run by hooks/maintainers; modality=CHECKER ERROR; scope=backend .csproj project references; exceptions=unclassified source projects skipped earlier; timing=check run; enforcement=static code read, not executed; loading=script
+match: FG-M1-9bc2cd6189
+compared: FG-M1-c07428619b FG-M1-6028ae839a
+rationale: check-architecture.js:84-89 verified. Codex blind group FG-M1-9bc2cd6189 states the test-to-test case explicitly; the primary group FG-M1-c07428619b is narrower (production -> test) and is kept separate.
+scenario: A test project references another test project: ERROR, as stated in FG-M1-9bc2cd6189.
+conf: HIGH
+
+@@ CIS-M1-0001
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: CONFIGURATION_DIRECTIVE (EditorConfig root marker)
+appl: actor=EditorConfig-aware tooling; action=stop ancestor .editorconfig lookup; trigger=resolving settings for repository files; modality=CONFIGURATION FACT; scope=repository files; exceptions=nested .editorconfig files still apply; timing=settings resolution; enforcement=tool behaviour, not executed; loading=not an instruction file
+compared: FG-M1-cb21439db8 FG-M1-e2212c1f26 FG-M1-c193aa0f8d
+rationale: .editorconfig:5 'root = true' verified. Same assessment as candidate M's identical claim: a format-defined lookup marker that scopes the registered formatting values (FG-M1-cb21439db8, FG-M1-e2212c1f26; 'follow .editorconfig' FG-M1-c193aa0f8d) and imposes no agent obligation; both Claude runs classified it as IMPLEMENTATION; the Codex scenario only differs through a file outside the repository.
+scenario: N/A as a constraint: repository formatting values are unchanged by root=false; only unspecified properties from outside the repository could be inherited.
+conf: MEDIUM
+open_issue: Methodology: revisit with the other five root=true claims if Stage 2 counts configuration-inheritance boundaries as constraints.
+policy_hint: RUN-009 (Codex suggestion; not adjudicated)
+
+@@ CIS-M1-U0001
+disp: ALREADY_REPRESENTED
+nature: TOOL_STYLE_PREFERENCE (EditorConfig, silent severity)
+appl: actor=C# IDE/analyzer tooling; action=prefer block bodies for methods; trigger=style analysis of C# methods; modality=TOOL PREFERENCE at silent severity (no diagnostic); scope=*.cs; exceptions=none; timing=editing/analysis; enforcement=IDE code-fix only; loading=.editorconfig
+match: FG-M1-50ce19e2ed
+compared: FG-M1-c193aa0f8d
+rationale: .editorconfig:43 verified. The union already split Codex BF-M1-0007 and its part FG-M1-50ce19e2ed states 'expression-bodied methods off and properties on (silent)', i.e. exactly this setting with its severity. Whether a silent tool preference is normative is the same open question for that existing group, not a new clause.
+scenario: Method written with an expression body: tooling offers a silent fix only; the same setting and severity are recorded in FG-M1-50ce19e2ed.
+conf: HIGH
+
+@@ CIS-M1-U0002
+disp: ALREADY_REPRESENTED
+nature: TOOL_STYLE_PREFERENCE (EditorConfig, silent severity)
+appl: actor=C# IDE/analyzer tooling; action=prefer expression bodies for properties; trigger=style analysis of C# properties; modality=TOOL PREFERENCE at silent severity; scope=*.cs; exceptions=none; timing=editing/analysis; enforcement=IDE code-fix only; loading=.editorconfig
+match: FG-M1-50ce19e2ed
+rationale: .editorconfig:44 verified; represented by the same split part FG-M1-50ce19e2ed ('properties on (silent)').
+scenario: Property written with a block body: silent fix offer only; recorded in FG-M1-50ce19e2ed.
+conf: HIGH
+
+@@ CIS-M1-0002
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: HOOK_RUNTIME_BEHAVIOR (no change notes on the initial manifest snapshot)
+appl: actor=post-tool-use hook (shell branch); action=omit change/removal/move workflow notes while still validating manifests; trigger=no saved manifest state for the active root (initial snapshot); modality=ENFORCEMENT EXCEPTION; scope=Bash/PowerShell post-tool checks; exceptions=validation findings still reported; later snapshots produce notes; timing=after the tool call; enforcement=static code read (manifestChanges returns initial:true at line 135; line 181 '!delta.initial'), not executed; loading=hook code
+match: FG-M1-3fc57e396d
+compared: FG-M1-cf5ed1aba9 FG-M1-30f2ca6420 FG-M1-48db1d64c6
+rationale: post-tool-use.js:135 and 169-183 verified. FG-M1-3fc57e396d says unexplained manifest/project changes and every removal or move 'are reported'; it does not state the initial-snapshot exception, while FG-M1-cf5ed1aba9 covers the validation part. The suppression is a designed branch of the same reminder, so it is a boundary facet, not a new obligation; Codex's NOVEL label is not confirmed as a distinct clause.
+scenario: First shell command without saved state changes a valid manifest: validation runs, no 'changed without a recognized command' note; the same change after a saved snapshot produces the note.
+conf: HIGH
+facet: FG-M1-3fc57e396d | NEW_BEHAVIOR_BOUNDARY | On the initial manifest snapshot (no saved state for the active root) no change, removal or move notes are emitted; manifest and architecture validation still run and report findings.
+
+@@ CIS-M1-0003
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: HOOK_RUNTIME_BEHAVIOR (token predicate of the dependency-edit reminder)
+appl: actor=post-tool-use hook (Write/Edit/MultiEdit branch); action=emit the add-dependency reminder only when the new text contains PackageReference, PackageVersion or "dependencies"/"devDependencies", or the file is package.json; trigger=direct edit of a manifest; modality=ENFORCED_ADVISORY trigger condition; scope=.csproj, Directory.Packages.props, package.json edits; exceptions=package.json always qualifies; manifest/architecture checks run regardless; timing=after the edit; enforcement=static code read (changedText lines 39-45 ignores old_string), not executed; loading=hook code
+match: FG-M1-a722465e3b
+compared: FG-M1-9ab7bbe4ae FG-M1-e44bc39a96
+rationale: post-tool-use.js:39-45 and 59-66 verified. FG-M1-a722465e3b says editing dependency entries 'returns a reminder'; the designed predicate inspects only the replacement/content text, so an edit that deletes a PackageReference from a .csproj (empty new_string) gets no reminder although the manifest check (FG-M1-9ab7bbe4ae) still runs. Recorded as a trigger-boundary facet; it adds no agent obligation.
+scenario: Edit replaces a PackageReference line in a .csproj with an empty string: manifest check runs, no add-dependency reminder; the same edit adding a PackageReference produces the reminder.
+conf: HIGH
+facet: FG-M1-a722465e3b | NEW_BEHAVIOR_BOUNDARY | For direct edits, the reminder fires only when the edit's new text (content, new_string or edits[].new_string) contains PackageReference, PackageVersion or a "dependencies"/"devDependencies" key, or the file is package.json; removal-only edits of .csproj/Directory.Packages.props entries get no reminder.
+
+@@ CIS-M1-U0003
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: IMPLEMENTATION_DETAIL (porcelain parser drops rename/copy source paths)
+appl: actor=common.changedFiles used by the Stop hook; action=keep only the destination path of a rename/copy; trigger=Stop with renamed/copied files; modality=NONE (heuristic coverage limit); scope=co-change reminders; exceptions=none; timing=Stop; enforcement=static code read; git -z field order from Git documentation, not executed; loading=script code
+compared: FG-M1-369fbba378 FG-M1-509b8e9644 FG-M1-d959f07911
+rationale: common.js:438-451 verified (i++ skips the source field after an R/C entry). The registered Stop reminders (FG-M1-369fbba378) and the heuristic description (FG-M1-509b8e9644) are unchanged; dropping rename sources narrows heuristic coverage without creating an obligation or permission. Same assessment as candidate M's parser claim; enforcement-coverage observation only.
+scenario: N/A as a constraint; effect: moving a Domain model file to a non-model path does not trigger the persistence reminder.
+conf: MEDIUM
+
+@@ CIS-M1-0005
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (frontmatter parser shape for rule paths)
+appl: actor=check-instructions.js with common.parseFrontMatter; action=accept rule paths only as '- ' items under an empty key; trigger=instruction check of .claude/rules/*.md; modality=CHECKER ERROR; scope=rule frontmatter; exceptions=a later dash item turns the key into an array; timing=maintenance/hook/CI; enforcement=static code read, not executed; host parsing not verified; loading=script
+match: FG-M1-229f8b91f5
+rationale: common.js:321-332 verified: a non-empty scalar after 'paths:' stays a string, only '- ' lines build an array; check-instructions.js requires Array.isArray (lines 77-79 per the claim). FG-M1-229f8b91f5 requires a non-empty paths list without the representation boundary. Facet, consistent with candidate M.
+scenario: paths: ["backend/**"] instead of a dash list: intended list, checker ERROR.
+conf: HIGH
+facet: FG-M1-229f8b91f5 | NEW_BEHAVIOR_BOUNDARY | The checker accepts a rule's paths only as indented '- ' items under 'paths:'; an inline flow sequence such as paths: ["x"] is parsed as a scalar string and fails the non-empty paths-list check.
+
+@@ CIS-M1-0006
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: CHECKER_ACCEPTANCE_GATE (skill name compared as the raw scalar)
+appl: actor=check-instructions.js; action=require the frontmatter name to equal the directory name as an unquoted scalar; trigger=instruction check of skills; modality=CHECKER ERROR; scope=.claude/skills/*/SKILL.md; exceptions=list items are unquoted by the parser, scalars are not; timing=maintenance/hook/CI; enforcement=static code read, not executed; host treatment of quoted YAML not verified; loading=script
+match: FG-M1-aaf3401ee3
+compared: FG-M1-3fead00a3e
+rationale: check-instructions.js:91-96 and common.js:326 verified: scalar values keep their quote characters, so name: "verify" compares as '"verify"' and fails. FG-M1-aaf3401ee3 states name equals directory without the quoting boundary.
+scenario: name: "verify" in .claude/skills/verify: same YAML string, checker ERROR.
+conf: HIGH
+facet: FG-M1-aaf3401ee3 | NEW_BEHAVIOR_BOUNDARY | The checker compares the frontmatter name as the raw scalar text: a quoted name (name: "verify") keeps its quotes and fails the name-equals-directory check.
+
+@@ CIS-M1-0007
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: CHECKER_ACCEPTANCE_GATE (mandatory reason on capability binds entries)
+appl: actor=check-instructions.js (capability checks); action=report an ERROR for every binds entry of a selected capability manifest without a truthy reason; trigger=instruction check; modality=CHECKER ERROR; scope=selected capability MODULE.md manifests; exceptions=none (no reason-quality check); timing=maintenance/hook/CI; enforcement=static code read, not executed; loading=script
+compared: FG-M1-7da7f79e7b FG-M1-1cf894c954 FG-M1-fbb2af60e9 FG-M1-c0400fc0f6
+rationale: check-instructions.js:383-387 verified. M1 groups about binds (FG-M1-7da7f79e7b when a binds entry is needed, FG-M1-1cf894c954 and FG-M1-fbb2af60e9 leak tokens without binds, FG-M1-c0400fc0f6 Codex variant) govern when an entry must exist, not what an entry must contain; no group or instruction text in MAP.md/CONTRACT.md requires a reason (grep). The reason requirement has a different trigger (every declared entry) and action, so it is a distinct checker gate rather than a facet. Line 386 (binds target must be selected) is in the same range but not asserted by this claim and is not added here.
+scenario: Keep a selected architecture target and real frame-token usage, delete only 'reason' from the binds entry: no existing group is violated, the checker reports 'binds entry needs a reason'.
+conf: HIGH
+proposal: CHECKER_ERROR | instruction check of selected capability manifests | Every binds entry declared in a selected capability manifest must carry a non-empty reason; an entry without one is an instruction-check ERROR.
+
+@@ CIS-M1-0008
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: CHECKER_WARNING (unused binding to the architecture frame)
+appl: actor=check-instructions.js (capability checks); action=warn when a capability declares binds to the architecture frame but none of its scanned facets uses a frame-specific detail token; trigger=instruction check; modality=CHECKER WARN (advisory; the edit hook reports ERROR only); scope=selected capability manifests and their facets outside .claude/capabilities/; exceptions=lexical detailTokens decide usage; timing=maintenance/CI; enforcement=static code read, not executed; loading=script
+compared: FG-M1-7da7f79e7b FG-M1-fbb2af60e9 FG-M1-5e8c20042b
+rationale: check-instructions.js:353-382 and 388 verified (usedBinds is set when an owned scanned facet contains a detailTokens hit). The registered groups cover the converse error (frame names without binds, FG-M1-fbb2af60e9) and lexical matching (FG-M1-5e8c20042b), not this warning. Checker warnings are registered elsewhere in the M1 union (e.g. the token-budget warning), so this advisory gate is a distinct, unrepresented diagnostic.
+scenario: Remove every frame-specific token from the persistence facets but keep its reasoned frame binding: no error remains, the checker emits 'declares binds to the frame but no facet uses frame-specific names'.
+conf: MEDIUM
+proposal: CHECKER_WARNING | instruction check of selected capability manifests | A selected capability that declares binds to the architecture frame while none of its scanned facets uses a frame-specific detail token receives a checker WARN (unused frame binding).
+
+@@ CIS-M1-0009
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: CONDITIONAL_LOADING_DIRECTIVE with a negative default (do not load every reference)
+appl: actor=agent running the project-structure workflow; action=read only the references the task needs, not every reference by default; trigger=project-structure workflow (scaffolding/restructuring); modality=DEFAULT-NEGATIVE; scope=references/solution-layout.md and references/backend-layout.md; exceptions=all may be read when all are needed; timing=before using the references; enforcement=instruction only; loading=workflow skill ('Workflow · Owns the scaffolding and restructuring procedure'), not global
+compared: FG-M1-915d41802f FG-M1-9b50cc59c3
+rationale: project-structure/SKILL.md:15-20 verified. Primary examined and rejected the line as context-loading guidance (ORPHAN-M1-0279), replica as NON_NORMATIVE; no M1 group restricts which references are loaded (grep for selective/'not all' found none). FG-M1-915d41802f and FG-M1-9b50cc59c3 prescribe what must be read, not what must not be bulk-loaded. Same assessment as candidate M's identical clause.
+scenario: Documentation-directory task needing only solution-layout.md: the agent also loads backend-layout.md by default; no existing group is violated, the source default is.
+conf: MEDIUM
+proposal: DEFAULT (negative) | project-structure workflow is running | Read the project-structure references the task needs; do not load every reference by default.
+
+@@ CIS-M1-U0004
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: DESCRIPTIVE_TECHNIQUE (component roles) in a technique-only knowledge skill
+appl: actor=agent using the angular knowledge skill; action=presentation components receive data through inputs; trigger=designing reusable presentation components; modality=DESCRIPTIVE; scope=angular knowledge skill; exceptions=none; timing=standing; enforcement=none; loading=on-demand knowledge skill ('Knowledge skill · Technique only · Policy: rules/frontend*.md')
+compared: FG-M1-c2d7f402b1 FG-M1-4dcd553801
+rationale: angular/SKILL.md:59-60 verified: declarative role description in a skill that declares itself technique-only with policy owned by the frontend rules; both runs classified it as non-normative. The HTTP-boundary groups (FG-M1-4dcd553801, FG-M1-c2d7f402b1) are the registered rules nearby. Resolved as technique description (same as candidate M).
+scenario: N/A: a display component reading a shared service is not forbidden by explicit text.
+conf: MEDIUM
+
+@@ CIS-M1-U0005
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: DESCRIPTIVE_TECHNIQUE (component roles) in a technique-only knowledge skill
+appl: actor=agent using the angular knowledge skill; action=presentation components emit meaningful UI events; trigger=designing reusable presentation components; modality=DESCRIPTIVE; scope=angular knowledge skill; exceptions=none; timing=standing; enforcement=none; loading=on-demand technique-only knowledge skill
+compared: FG-M1-c2d7f402b1 FG-M1-4dcd553801
+rationale: Second half of the same declarative sentence (angular/SKILL.md:59-60); same reasoning as CIS-M1-U0004. Splitting a descriptive sentence does not create normativity.
+scenario: N/A: a component that calls a shared service on click is not forbidden by explicit text.
+conf: MEDIUM
+
+@@ CIS-M1-U0006
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: DESCRIPTIVE_TECHNIQUE (framework default behaviour)
+appl: actor=agent using the authentication knowledge skill; action=let middleware generate 401/403; trigger=authorization failure responses; modality=DESCRIPTIVE ('generates these responses by default'); scope=authentication knowledge skill; exceptions=deliberate consistent 404 hiding (registered separately); timing=standing; enforcement=none; loading=on-demand knowledge skill ('Authentication and authorization technique · Policy: rules/security.md, rules/api.md')
+compared: FG-M1-09f573096a FG-M1-ddaf398dad FG-M1-bd2787dc0c
+rationale: authentication/SKILL.md:108-109 verified. The subject is the middleware ('generates ... by default'), i.e. a description of framework behaviour, not an agent default; primary examined and rejected it (ORPHAN-M1-0103). Status semantics and 404 hiding are registered in FG-M1-09f573096a/FG-M1-bd2787dc0c.
+scenario: N/A: a controller returning a correct 403 is not prohibited by explicit text.
+conf: MEDIUM
+
+@@ CIS-M1-U0007
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: ADVISORY ('consider')
+appl: actor=agent using the api-versioning knowledge skill; action=consider client-generation behaviour; trigger=assessing compatible API changes when OpenAPI clients are used; modality=ADVISORY; scope=api-versioning knowledge skill; exceptions=none; timing=compatibility assessment; enforcement=none; loading=on-demand knowledge skill ('API versioning technique · Policy: rules/api.md')
+compared: FG-M1-ecb3cc1d1d FG-M1-334ff38981
+rationale: api-versioning/SKILL.md:109-112 verified: the 'Often compatible' list followed by 'Consider ...' is advisory with no required outcome or record; primary rejected it (ORPHAN-M1-0086). The enforceable parts (no compile-only compatibility judgement FG-M1-ecb3cc1d1d; no silent breaking change FG-M1-334ff38981) are registered. Resolved.
+scenario: N/A: omitting an explicit consideration step while reaching a correct compatibility decision is not a stated violation.
+conf: MEDIUM
+
+@@ CIS-M1-0010
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE (attach a chosen output-cache policy to Controllers)
+appl: actor=agent using the caching knowledge skill; action=apply the selected policy through controller/action metadata; trigger=output caching for Controllers; modality=IMPERATIVE TECHNIQUE; scope=caching knowledge skill; exceptions=none; timing=implementation; enforcement=none; loading=on-demand knowledge skill ('Caching technique · Policy: rules/performance.md, rules/architecture.md')
+compared: FG-M1-1629ce14d0 FG-M1-88a7fdc340 FG-M1-f03b5aa49f FG-M1-83187b4219
+rationale: caching/SKILL.md:105-107 verified; Controllers counterpart of the minimal-API example. The outcome restrictions of the passage are registered (FG-M1-1629ce14d0 user isolation, FG-M1-88a7fdc340 keys, FG-M1-f03b5aa49f API-layer placement). Codex's scenario (policy never attached) is a functional defect, not a separate rule. Primary rejected it as technique (ORPHAN-M1-0114). Same assessment as candidate M.
+scenario: N/A: attaching an isolated policy by another mechanism changes no registered outcome.
+conf: MEDIUM
+
+@@ CIS-M1-0011
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: SELECTION GUIDANCE with an exclusion condition (keyed services)
+appl: actor=agent using the dependency-injection knowledge skill; action=do not use keyed services when a single registration or a simple explicit factory is clearer; trigger=choosing DI selection technique; modality=GUIDANCE; scope=dependency-injection knowledge skill; exceptions=known-key selection where alternatives are not clearer; timing=design; enforcement=none; loading=on-demand knowledge skill ('Dependency-injection technique · Policy: rules/composition.md')
+match: FG-M1-78a9554489
+compared: FG-M1-89b535e162 FG-M1-a4ef0faadf
+rationale: dependency-injection/SKILL.md:67-69 verified. FG-M1-78a9554489 cites these lines but keeps only 'keyed services only for key-selected implementations'; the 'not when a single registration or simple explicit factory is clearer' exclusion is dropped, and FG-M1-89b535e162 ('only for actual composition problems') does not express it. Facet of the existing group; Codex NOVEL not confirmed as a distinct clause.
+scenario: Known keys and a real need exist but a small explicit factory is clearer: existing groups allow keyed services, the source excludes them.
+conf: HIGH
+facet: FG-M1-78a9554489 | NEW_BEHAVIOR_BOUNDARY | Even when implementations are selected by a known key, keyed services are not used when a single registration or a simple explicit factory is clearer.
+
+@@ CIS-M1-U0008
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE / COMPILE PREREQUISITE (Program accessibility for WebApplicationFactory)
+appl: actor=test author using dotnet-testing; action=expose Program; trigger=top-level statements make Program inaccessible to WebApplicationFactory; modality=CONDITIONAL TECHNIQUE; scope=dotnet-testing knowledge skill; exceptions=any exposure mechanism; timing=test setup; enforcement=compiler; loading=on-demand technique-only knowledge skill
+compared: FG-M1-2e92b81bfc FG-M1-817d6aa28e
+rationale: dotnet-testing/SKILL.md:135-139 verified. WebApplicationFactory<Program> tests are registered (FG-M1-2e92b81bfc); exposing an inaccessible Program is the compile prerequisite of that technique and allows any mechanism. Primary rejected it as a technique hint (ORPHAN-M1-0135). Same assessment as candidate M.
+scenario: N/A: without exposure the registered WebApplicationFactory test cannot compile; no additional behaviour is selected.
+conf: MEDIUM
+
+@@ CIS-M1-U0009
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNIQUE CONTRAST (FindAsync vs LINQ)
+appl: actor=agent using the ef-core knowledge skill; action=use LINQ when predicates, projection, related data or shaping are needed; trigger=lookup beyond primary-key semantics; modality=TECHNIQUE; scope=ef-core knowledge skill (primary-key lookup section); exceptions=raw-SQL gate unchanged; timing=implementation; enforcement=none; loading=on-demand technique-only knowledge skill
+compared: FG-M1-b46ff1246e FG-M1-c824e41d5d
+rationale: ef-core/SKILL.md:199-200 verified; the sentence closes the FindAsync example. LINQ as default (FG-M1-b46ff1246e) and the raw-SQL gate (FG-M1-c824e41d5d) are registered; the sentence adds no further allowed/forbidden behaviour. Same assessment as candidate M.
+scenario: N/A: FindAsync cannot express shaping; raw SQL remains governed by FG-M1-c824e41d5d.
+conf: HIGH
+
+@@ CIS-M1-U0010
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: ADVISORY ('consider ... when justified')
+appl: actor=agent using the ef-core knowledge skill; action=consider keyset pagination; trigger=very large or frequently traversed datasets; modality=ADVISORY; scope=ef-core knowledge skill; exceptions=only when justified; timing=design; enforcement=none; loading=on-demand technique-only knowledge skill
+compared: FG-M1-d6bbb82626 FG-M1-e5881edfc1 FG-M1-a72ccc616a
+rationale: ef-core/SKILL.md:232-233 verified; double-hedged advice without a required outcome; primary rejected it (ORPHAN-M1-0278). Registered pagination/performance rules unaffected. Same assessment as candidate M.
+scenario: N/A: choosing offsets is not forbidden; no falsifiable deliberation duty.
+conf: MEDIUM
+
+@@ CIS-M1-U0011
+disp: UNRESOLVED
+nature: RECOMMENDED DEFAULT STRUCTURE ('useful default') with a permission (comments optional)
+appl: actor=test author using dotnet-testing; action=use Arrange/Act/Assert; comments optional when phases are obvious; trigger=structuring NUnit tests; modality=UNCERTAIN (recommendation vs description); scope=dotnet-testing knowledge skill; exceptions=comments optional when phases are obvious; timing=standing; enforcement=none; loading=on-demand technique-only knowledge skill
+compared: FG-M1-95e98f0dc1 FG-M1-b0eaad1b08 FG-M1-6ec961b701
+rationale: dotnet-testing/SKILL.md:42-43 verified; no M1 group mentions AAA. Evidence points both ways: primary rejected it as permissive (ORPHAN-M1-0276), yet the M1 union registers comparable recommendation wording from the same skill ('a longer explicit case table is preferable', FG-M1-95e98f0dc1). Whether 'X is a useful default structure' is PREFER-strength guidance or a non-binding description is a normativity-threshold question that this review should not force; a wrong call would create an artificial representation difference.
+scenario: A clear test that interleaves setup, actions and assertions: compliant if the sentence is descriptive, a deviation from a recommended default if it is guidance.
+conf: LOW
+question: Is 'Arrange / Act / Assert is a useful default structure; comments are optional when the phases are obvious' a registrable PREFER-strength recommendation, or permissive technique description?
+next_check: Fix one Stage 2 normativity threshold for 'useful default' wording in technique-only knowledge skills and apply it identically to every candidate containing this sentence; if registrable, add it as a guidance clause anchored at dotnet-testing/SKILL.md:42-43.
+
+@@ CIS-M1-0012
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: RESPONSE CONTRACT (304 carries no normal representation)
+appl: actor=agent implementing conditional HTTP responses; action=return 304 without the normal resource representation; trigger=conditional request whose cached representation is still valid; modality=MUST (contract of the status code, stated descriptively); scope=http-api knowledge skill; exceptions=none; timing=response generation; enforcement=none; loading=on-demand knowledge skill ('HTTP status-code reference and technique · Policy: rules/api.md, rules/error-handling.md')
+match: FG-M1-43f86b8d6e
+compared: FG-M1-8dc7ee59da
+rationale: http-api/SKILL.md:87-89 verified. FG-M1-43f86b8d6e (primary MUST) cites exactly these lines and keeps 'only for conditional requests ... never a generic business response' but drops 'It carries no normal representation'. The 204 counterpart is registered as a body prohibition (FG-M1-8dc7ee59da), so the omitted sentence is a genuine part of the same 304 contract. Facet of the existing group; Codex NOVEL not confirmed as a distinct clause.
+scenario: An endpoint correctly returns 304 for an unchanged ETag but serialises the resource body: FG-M1-43f86b8d6e is satisfied, the source contract is not.
+conf: MEDIUM
+facet: FG-M1-43f86b8d6e | NEW_BEHAVIOR_BOUNDARY | A 304 Not Modified response carries no normal representation (the resource body is not sent).
+policy_hint: API-003 (Codex suggestion; not adjudicated)
+
+@@ CIS-M1-U0012
+disp: EXISTING_GROUP_NEEDS_EXPLICIT_FACET
+nature: EXCEPTION to a DEFAULT (entities may be records when the model genuinely benefits)
+appl: actor=agent using the modern-csharp knowledge skill; action=keep identity/lifecycle entities as classes unless the model genuinely benefits from record semantics; trigger=choosing class vs record for an entity; modality=DEFAULT with explicit exception; scope=modern-csharp knowledge skill ('Optional language technique'); exceptions=genuine benefit from record semantics; timing=design; enforcement=none; loading=on-demand knowledge skill
+match: FG-M1-dd5a2d04c7
+compared: FG-M1-c10790eb52
+rationale: modern-csharp/SKILL.md:45-47 verified. FG-M1-dd5a2d04c7 (primary DEFAULT, exceptions 'none') cites lines 45-47 but omits the 'unless the model genuinely benefits' clause (protocol F6: exception inside the cited text, not stated). Under DEFAULT a justified deviation is already possible, so the explicit exception records granularity of the same rule rather than new allowed behaviour. Resolves the Codex question in favour of an explicit facet.
+scenario: An identity-bearing model that demonstrably benefits from record semantics is written as a record: permitted by the source; the group text alone reads 'remain classes'.
+conf: MEDIUM
+facet: FG-M1-dd5a2d04c7 | NEW_GRANULARITY | Exception: an entity with identity and lifecycle may use record semantics when the model genuinely benefits from them.
+
+@@ CIS-M1-0013
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: CONDITIONAL CONFIGURATION TECHNIQUE (remedy for noisy query logs)
+appl: actor=agent configuring Serilog; action=add a namespace override for the persistence library; trigger=its query logging is too verbose; modality=CONDITIONAL TECHNIQUE; scope=logging private reference serilog.md; exceptions=none; timing=configuration; enforcement=none; loading=private reference of logging ('Serilog provider technique · Policy: rules/composition.md')
+compared: FG-M1-5445dc5fa4 FG-M1-2dc3646f1a
+rationale: serilog.md:123-125 verified: an explanation of Override matching followed by a remedy for verbose provider logs, in a private technique reference. The governing rules (overrides live in appsettings FG-M1-5445dc5fa4; levels by operational meaning FG-M1-2dc3646f1a) are registered; the remedy restricts no outcome. Both runs classified it as technique.
+scenario: N/A: lowering noise by a different, policy-compliant configuration is not forbidden by explicit text.
+conf: MEDIUM
+
+@@ CIS-M1-U0013
+disp: NOT_AN_INDEPENDENT_CONSTRAINT
+nature: TECHNICAL_PREREQUISITE (Serilog LogContext needs the enricher)
+appl: actor=agent configuring Serilog; action=enable Enrich.FromLogContext; trigger=using LogContext.PushProperty; modality=TECHNICAL FACT ('Requires'); scope=serilog.md private reference; exceptions=other scope mechanisms not addressed; timing=configuration; enforcement=library behaviour; loading=private technique reference
+compared: FG-M1-2547e1939f FG-M1-d73120b7f9
+rationale: serilog.md:175-183 verified: 'Requires .Enrich.FromLogContext()' states a library prerequisite for the example; without it the pushed properties are simply absent. No allowed/forbidden behaviour beyond making the chosen technique work; the registered rules (BeginScope FG-M1-2547e1939f; Serilog APIs at boundaries FG-M1-d73120b7f9) are unaffected. Both runs classified it as a technical prerequisite.
+scenario: N/A: omitting the enricher is a functional defect of the technique, not a separate rule.
+conf: HIGH
+
+@@ CIS-M1-0014
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (investigation prompt of the supply-chain layer)
+appl: actor=agent running the security-scan workflow; action=review unexpected or untrusted NuGet sources; trigger=security scan covering the .NET dependency/supply-chain layer; modality=PROCEDURAL (investigation prompt); scope=security-scan workflow via its private reference scan-layers.md; exceptions=irrelevant checks are skipped; prompts are not automatic vulnerability declarations; timing=during the scan; enforcement=instruction only; loading=private reference of a workflow skill, read during security scans
+compared: FG-M1-71aa469282 FG-M1-77a9a56e68 FG-M1-e86e21ebbc FG-M1-be1a8db21a FG-M1-b8421aa55d
+rationale: scan-layers.md:17-19 verified. Primary marked the sentence NON_NORMATIVE (EXC-015, the oracle's investigation-heuristics exclusion) and no M1 group mentions package sources; FG-M1-71aa469282 is the pre-install due-diligence rule, FG-M1-77a9a56e68 layer scope, the replica parts evidence discipline. The M1 union does register other scan-layer prompts as review duties (e.g. sanitizer-bypass review, debug-flag review), so by the union's own granularity this omitted prompt is an unrepresented procedural review step. The oracle exclusion is noted as context only.
+scenario: A scan audits vulnerable packages and licences but never looks at a nuget.config pointing to an unexpected feed: no M1 group is violated, the scan procedure is.
+conf: MEDIUM
+open_issue: The same source sentence (scan-layers.md:17-19) also lists vulnerable direct/transitive dependencies, advisory severity, actual usage and patched compatible versions; apart from the CVSS/no-upgrade groups these do not appear in the M1 union. Outside this claim; not extracted here.
+proposal: PROCEDURAL (review step) | security scan covering the .NET dependency and supply-chain layer | Review unexpected or untrusted NuGet sources as part of the dependency and supply-chain layer of a security scan.
+policy_hint: EXC-015 context / WF-020 (non-binding)
+
+@@ CIS-M1-0015
+disp: DISTINCT_UNREPRESENTED_CLAUSE
+nature: WORKFLOW REVIEW STEP (conditional lockfile review in the npm part of the supply-chain layer)
+appl: actor=agent running the security-scan workflow; action=review lockfiles; trigger=npm frontend exists and package integrity or unexpected dependency changes are relevant; modality=PROCEDURAL, conditional; scope=security-scan workflow via scan-layers.md; exceptions=only when integrity/unexpected changes are relevant; timing=during the scan; enforcement=instruction only; loading=private reference of a workflow skill
+compared: FG-M1-db44665d07 FG-M1-a90b921ef7 FG-M1-40154eacb3 FG-M1-bbd22299d0
+rationale: scan-layers.md:25-29 verified. FG-M1-db44665d07 registers the production/development and direct/transitive distinctions of the same passage; lockfile groups (FG-M1-a90b921ef7 maintain and commit, FG-M1-40154eacb3 preserve during repair, FG-M1-bbd22299d0 missing-lockfile warning) concern maintenance, not inspection during a scan. The conditional review step is unrepresented.
+scenario: An unexpected package change is investigated with npm audit and a manifest diff only; the lockfile's changed resolution/integrity entries are never reviewed.
+conf: MEDIUM
+proposal: PROCEDURAL (conditional review step) | security scan with an npm frontend where package integrity or unexpected dependency changes are relevant | Review the lockfiles when package integrity or unexpected dependency changes are relevant.
+policy_hint: EXC-015 context / WF-020 (non-binding)

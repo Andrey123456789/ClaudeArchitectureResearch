@@ -1,0 +1,161 @@
+# K1 — skills: caching (KNW), ci-cd (KNW), code-review (WF)
+
+@@ output/template/.claude/skills/caching/SKILL.md ;; Knowledge skill (on demand).
+@scope on-demand knowledge caching (backend)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 MX [arc020.reserved-infra,run007.cache-reasons,x.cache-consistency-first] ;; Distributed cache as Reserved restates ARC-020; caching reasons and measuring first restate RUN-007; defining consistency semantics before writing cache code is added.
+15 NN ;; Heading.
+17 EX [x.cache-output-api-layer]
+18 OL [arc024.cache-app-abstraction]
+19 OL [arc024.cache-infra-allowed]
+21 NN ;; Heading.
+23 OL [arc020.cache-redis-justified]
+25-31 NN ;; HybridCache registration example.
+33 NN ;; Heading.
+35 OL [arc024.cache-hybrid-out-of-app]
+37-44 NN ;; Application cache interface example.
+46 NN ;; Heading.
+48 MX [run020.cache-key-dims,x.cache-centralize-keys] ;; Key dimensions restate RUN-020; centralizing key construction is added.
+50 NN ;; Heading.
+52 OL [run023.cache-expiration-semantics]
+54 NN ;; Heading.
+56 MX [run021.cache-strategies,u.cache-preinvalidate] ;; Invalidation strategies restate RUN-021; invalidating before the mutation succeeds when deliberately accepted has an uncertain relation to RUN-021.
+58 NN ;; Heading.
+60-67 NN ;; Output caching example.
+69 MX [x.cache-controller-metadata,run020.cache-user-isolation] ;; User isolation for cached authenticated responses restates RUN-020; applying policies through controller/action metadata is added.
+71 NN ;; Heading.
+73 MX [arc016.cache-uow-flow,x.cache-failure-policy,x.cache-no-tracked-entities] ;; Keeping the repository/Unit of Work workflow restates ARC-016; an explicit cache-failure policy and never caching tracked entities across Unit of Work boundaries are added.
+75 NN ;; Heading.
+77 EX [x.cache-tests]
+79 NN ;; Heading.
+81-82 NN ;; Table header.
+83-88 DU [run007.cache-need,arc024.cache-boundary,arc020.reserved-infra] ;; Decision guide restating the rules.
+
+C run007.cache-reasons OL RUN-007 DEFAULT ;; Clear reasons to cache: measured expensive repeated work, high read volume, expensive remote calls with acceptable staleness; frequent reads alone are not a reason; measure before caching solely for performance. ;; = ;; none ;;
+C x.cache-consistency-first EX RUN-007,RUN-021 MUST ;; Define consistency semantics (acceptable staleness, invalidation) before writing cache code. ;; = ;; none ;; Not in the oracle.
+C x.cache-output-api-layer EX ARC-024 DEFAULT ;; HTTP response caching uses ASP.NET Core output caching when the entire response can safely be reused, in the Api layer. ;; = ;; none ;; Not in the oracle.
+C arc024.cache-app-abstraction OL ARC-024 MUST ;; When a use case genuinely needs cache-aware behaviour define an Application abstraction implemented in Infrastructure; none when caching can stay internal to Infrastructure. ;; = ;; none ;;
+C arc024.cache-infra-allowed OL ARC-024 ALLOWED ;; Infrastructure adapters may cache expensive remote or persistence operations when the contract exposed to Application is preserved. ;; = ;; Contract preserved. ;;
+C arc020.cache-redis-justified OL ARC-020,RUN-007 MUST_NOT ;; HybridCache is a strong but not mandatory option; add a distributed backend such as Redis only when deployment requirements justify it. ;; = ;; none ;;
+C arc024.cache-hybrid-out-of-app OL ARC-024 MUST ;; When Application coordinates invalidation expose a narrow contract and keep HybridCache itself out of Application contracts. ;; = ;; none ;;
+C run020.cache-key-dims OL RUN-020 MUST ;; Keys include every dimension affecting the result (identifier, tenant, user when user-specific, locale, query/filter parameters). ;; = ;; none ;;
+C x.cache-centralize-keys EX RUN-020 DEFAULT ;; Centralize key construction once duplicated key formats become hard to maintain. ;; = ;; none ;; Not in the oracle.
+C run023.cache-expiration-semantics OL RUN-023,RUN-007 DEFAULT ;; Choose expiration from data semantics (change frequency, regeneration cost, staleness, memory, source unavailability), not universal defaults; avoid unbounded entries. ;; = ;; none ;;
+C run021.cache-strategies OL RUN-021 DEFINITION ;; Invalidation strategies: remove the affected key after a successful mutation, short TTL with tolerated staleness, tag/group invalidation, versioned keys. ;; = ;; none ;;
+C u.cache-preinvalidate LU RUN-021 ALLOWED ;; Invalidate before the mutation succeeds only when the workflow deliberately accepts that behaviour. ;; = ;; Deliberate acceptance by the workflow. ;; Open question: RUN-021 requires invalidation only consistent with successful underlying mutations; whether a deliberately accepted pre-mutation invalidation is a permitted exception or a relaxation that contradicts RUN-021 cannot be decided from the text.
+C x.cache-controller-metadata EX ARC-010 DEFAULT ;; Apply output-cache policies through controller/action metadata. ;; = ;; none ;; Not in the oracle.
+C run020.cache-user-isolation OL RUN-020 MUST_NOT ;; Never cache authenticated or user-specific responses unless the key and policy isolate users and authorization context. ;; = ;; none ;;
+C arc016.cache-uow-flow OL ARC-016,ARC-024,RUN-021 MUST ;; Application Services keep their repository/Unit of Work workflow and coordinate required invalidation through an abstraction instead of bypassing repositories or IUnitOfWork. ;; = ;; none ;;
+C x.cache-failure-policy EX RUN-018 MUST ;; Decide whether a cache failure falls back to the source, fails the request or returns stale data. ;; = ;; none ;; Not in the oracle.
+C x.cache-no-tracked-entities EX ARC-019,RUN-021 MUST_NOT ;; Never cache tracked persistence entities across Unit of Work boundaries. ;; = ;; none ;; Not in the oracle.
+C x.cache-tests EX TST-003,TST-011 DEFAULT ;; Test caching when it affects observable correctness (invalidation after mutation, key isolation, miss fallback, outage policy); do not unit-test framework cache internals. ;; = ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/ci-cd/SKILL.md ;; Knowledge skill (on demand; delivery).
+@scope on-demand knowledge ci-cd (delivery)
+1-7 IM ;; Frontmatter (name, routing description).
+9 NN ;; Banner (kind, scope, capability, loading metadata).
+11 NN ;; Heading.
+13 EX [x.cicd-reproducible-artifacts]
+15 NN ;; Heading.
+17-22 NN ;; Example backend CI commands (format gate commented as conditional on adoption).
+24 NN ;; Heading.
+26-29 NN ;; Example frontend CI commands.
+31 OL [wf018.cicd-existing-scripts]
+33 NN ;; Heading.
+35-70 NN ;; Example GitHub Actions workflow.
+72 EX [x.cicd-adapt-versions]
+74 NN ;; Heading.
+76 MX [x.cicd-test-services-needed,tst004.cicd-isolated] ;; Isolation from Development/Production data restates TST-004; services only when tests require them and no hardcoded provider are added.
+78 NN ;; Heading.
+80 EX [x.cicd-audit-policy]
+82 NN ;; Heading.
+84-87 NN ;; Example publish commands.
+89 MX [x.cicd-artifacts-needed,dep018.cicd-images] ;; Container images only when container deployment is part of the project restates DEP-018; publishing only needed artifacts is added.
+91 NN ;; Heading.
+93 EX [x.cicd-build-once-promote]
+95 NN ;; Heading.
+97 MX [sec002.cicd-secret-mechanism,x.cicd-federated-identity] ;; Platform secret mechanism restates SEC-002; preferring federated identity is added.
+99 NN ;; Heading.
+101 MX [wf019.cicd-migrations,x.cicd-migration-fails-visibly] ;; Controlled migration step with approved credentials restates WF-019; failing visibly is added.
+103 NN ;; Heading.
+105 EX [x.cicd-env-protection]
+107 NN ;; Heading.
+109 MX [x.cicd-test-services-needed,x.cicd-build-once-promote,dep018.cicd-images] ;; Anti-pattern list restating the guidance above; obligations are owned by delivery-change.
+
+C x.cicd-reproducible-artifacts EX WF-017 DEFAULT ;; Build deployable artifacts reproducibly and keep deployment/environment configuration outside compiled artifacts where practical. ;; = ;; none ;; Not in the oracle.
+C wf018.cicd-existing-scripts OL WF-018 MUST ;; Frontend CI runs npm ci and npm run build; unit-test and lint steps only when package.json defines those scripts. ;; = ;; none ;;
+C x.cicd-adapt-versions EX WF-017,DEP-008 MUST ;; Adapt CI action and runtime versions to the repository's supported versions. ;; = ;; none ;; Not in the oracle.
+C x.cicd-test-services-needed EX TST-004,GOV-013 MUST ;; Provide CI services (database, cache, broker) only when tests require them, as service containers or Testcontainers; do not hardcode a database provider into a generic pipeline. ;; = ;; none ;; Not in the oracle.
+C tst004.cicd-isolated OL TST-004 MUST ;; CI test services are isolated from Development and Production data. ;; = ;; none ;;
+C x.cicd-audit-policy EX DEP-004 MUST ;; Run dependency audits (dotnet package list --vulnerable, restore auditing, npm audit) and treat findings per the project's security policy. ;; = ;; none ;; Not in the oracle.
+C x.cicd-artifacts-needed EX WF-017 DEFAULT ;; Store or publish only artifacts later stages need. ;; = ;; none ;; Not in the oracle.
+C dep018.cicd-images OL DEP-018 MUST_NOT ;; Build and publish container images only when container deployment is part of the project; do not assume container deployment. ;; = ;; none ;;
+C x.cicd-build-once-promote EX WF-017 DEFAULT ;; Where supported promote the same tested artifact/image through environments instead of recompiling; environment behaviour comes from runtime configuration. ;; = ;; Deployment model does not support promotion. ;; Not in the oracle.
+C sec002.cicd-secret-mechanism OL SEC-002,SEC-001 MUST ;; Use the CI platform's secret/identity mechanism. ;; = ;; none ;;
+C x.cicd-federated-identity EX SEC-002 PREFER ;; Prefer workload or federated identity over long-lived deployment credentials. ;; = ;; none ;; Not in the oracle.
+C wf019.cicd-migrations OL WF-019 MUST ;; Generate migration scripts/artifacts in CI and execute them at a controlled deployment step with approved credentials. ;; = ;; none ;;
+C x.cicd-migration-fails-visibly EX WF-019 MUST ;; The deployment migration step fails visibly on error. ;; = ;; none ;; Not in the oracle.
+C x.cicd-env-protection EX - DEFAULT ;; CI and CD may be separate workflows; use environment protection/approval appropriate to the hosting platform. ;; delivery ;; none ;; Not in the oracle.
+
+@@ output/template/.claude/skills/code-review/SKILL.md ;; Workflow (preloaded by the code-reviewer agent).
+@scope workflow code-review (reviews of completed changes)
+1-8 IM ;; Frontmatter (name, routing description).
+10 NN ;; Banner (kind, scope, capability, loading metadata).
+12 NN ;; Heading.
+14 NN ;; Heading.
+16 OL [wf010.cr-read-only]
+18 NN ;; Heading.
+20 MX [wf011.cr-priorities,x.cr-tooling-formatting] ;; Priority order and not elevating style restate WF-011; not reporting tool-owned formatting is added.
+22 NN ;; Heading.
+24 OL [wf001.cr-context]
+26 NN ;; Heading.
+28 OL [wf001.cr-standards-knowledge]
+30-41 IM ;; Area → knowledge routing table.
+43 OL [wf012.cr-unadopted-patterns]
+45 NN ;; Heading.
+47 OL [gov003.cr-spec-conformance]
+49 NN ;; Heading.
+51 OL [wf012.cr-plausible-path]
+53 NN ;; Heading.
+55 NN ;; Lead-in (check against loaded owners rather than a private checklist).
+57 DU [arc010.thin-controllers,arc006.app-services,arc001.inward,arc016.uow] ;; Check-by-reference item for role and dependency rules.
+58 DU [arc013.specific-repos,arc014.no-iqueryable,arc019.ef-boundary] ;; Check-by-reference item for repository and persistence boundaries.
+59 DU [gov013.no-speculative,gov017.reserved] ;; Check-by-reference item for proportionality.
+60 OL [pst008.cr-seeder]
+62 MX [fe007.feature-structure,fe003.data-access,fe012.subscription-lifetime,fe009.error-contract,sec005.server-authz,fe006.simple-state,x.cr-no-backend-rules-on-frontend] ;; Frontend check-by-reference restating frontend standards; not applying backend boundary rules mechanically is added.
+64 NN ;; Heading.
+66 MX [wf011.cr-data-security,x.cr-scan-when-warranted] ;; Data/security review items restate WF-011; limiting the full security-scan to warranted cases is added.
+68 NN ;; Heading.
+70 OL [run016.cr-integrations]
+72 NN ;; Heading.
+74 OL [tst009.cr-tests]
+76 NN ;; Heading.
+78 OL [run008.cr-performance]
+80 NN ;; Heading.
+82 OL [wf021.cr-tooling]
+84 NN ;; Heading.
+86 EX [x.cr-finding-format]
+88-91 EX [x.cr-finding-format]
+93 MX [wf012.cr-no-manufactured,x.cr-no-filler-praise] ;; No invented findings and naming unverifiable areas restate WF-012; no filler praise is added.
+
+C wf010.cr-read-only OL WF-010,WF-003 MUST ;; The review is independent and read-only (no edits or rewrites unless asked); this workflow is the canonical procedure run by the code-reviewer agent; it is not the completion checklist (verify). ;; = ;; none ;;
+C wf011.cr-priorities OL WF-011 MUST ;; Prioritize correctness, security/authorization, data integrity/persistence, architecture boundaries, concurrency/integration, missing meaningful tests, maintainability, credible performance; never elevate style above behavioural defects. ;; = ;; none ;;
+C x.cr-tooling-formatting EX WF-011 MUST_NOT ;; Do not report formatting already owned by tooling. ;; = ;; none ;; Not in the oracle.
+C wf001.cr-context OL WF-001 MUST ;; Determine the review scope and read enough surrounding code (callers, contracts, dependencies); never review isolated lines. ;; = ;; none ;;
+C wf001.cr-standards-knowledge OL WF-001 MUST ;; Identify intended behaviour, error cases and effects; read the governing standards and load relevant knowledge. ;; = ;; none ;;
+C wf012.cr-unadopted-patterns OL WF-012,ARC-009 MUST_NOT ;; Do not introduce or enforce patterns the repository has not adopted; differing from an unadopted pattern is not a finding. ;; = ;; none ;;
+C gov003.cr-spec-conformance OL GOV-003,GOV-006,GOV-008,GOV-010 MUST ;; Review specification conformance both ways (CUSTOM_SETTINGS values included): no missing/weakened required behaviour and no unapproved behaviour (limits, reserved values, string-comparison semantics incl. DB/framework defaults, required fields, workflow restrictions, validation); approved synchronized details are not drift. ;; = ;; none ;;
+C wf012.cr-plausible-path OL WF-012,WF-011 MUST ;; Check correctness (conditions, edge cases, async/cancellation, error mapping, lifetimes, side effects, races) and report only failures with a plausible execution path. ;; = ;; none ;;
+C pst008.cr-seeder OL PST-008 MUST ;; When the persistence model changed, check that persistence-change steps were followed, including the development seeder. ;; = ;; none ;;
+C x.cr-no-backend-rules-on-frontend EX FE-007 MUST_NOT ;; Do not apply backend project-boundary rules mechanically to frontend code. ;; = ;; none ;; Not in the oracle.
+C wf011.cr-data-security OL WF-011,SEC-004 MUST ;; Review transactions/commits, destructive data changes, raw SQL parameterization, authorization, trust boundaries, secrets, sensitive logging, concurrency, migrations and cache consistency. ;; = ;; none ;;
+C x.cr-scan-when-warranted EX WF-020 MUST_NOT ;; Run the full security-scan only for a requested audit, a materially security-sensitive change or a finding justifying it, not for every ordinary review. ;; = ;; none ;; Not in the oracle.
+C run016.cr-integrations OL RUN-015,RUN-016,RUN-003,ARC-025 MUST ;; For external calls check cancellation, timeouts, idempotency, retry safety, failure translation and lifetimes; never demand retries for operations unsafe to retry. ;; = ;; none ;;
+C tst009.cr-tests OL TST-009,TST-010,TST-011 MUST ;; Check useful maintained coverage of changed behaviour, regression tests for plausible recurrence and preserved probes; no duplicate tests when equivalent coverage exists. ;; = ;; none ;;
+C run008.cr-performance OL RUN-008,WF-011 MUST ;; Report performance only for credible reasons (N+1, unbounded materialization, blocking async, repeated remote calls, demonstrated hot paths); never recommend speculative optimizations. ;; = ;; none ;;
+C wf021.cr-tooling OL WF-021 MUST_NOT ;; Use available tools; no MCP server or specific analyzer is required; tool output is evidence, not authority. ;; = ;; none ;;
+C x.cr-finding-format EX WF-011 MUST ;; Report findings ordered by severity, each with severity, location, what is wrong, why it matters and the smallest fix, using the Critical/High/Medium/Low definitions. ;; = ;; none ;; Finding format not in the oracle.
+C wf012.cr-no-manufactured OL WF-012 MUST_NOT ;; Never invent findings; with no meaningful findings say so and name important unverifiable areas. ;; = ;; none ;;
+C x.cr-no-filler-praise EX WF-012 MUST_NOT ;; No filler praise. ;; = ;; none ;; Not in the oracle.

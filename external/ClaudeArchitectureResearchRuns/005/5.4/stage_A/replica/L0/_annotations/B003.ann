@@ -1,0 +1,54 @@
+# L0 / B003 — manifest-checks.mjs (static analysis; not executed).
+
+C R12 OL DEP-020 | DEFAULT (manifest check: flagged unless an accepted decision names it) | When resilience is required the Microsoft resilience packages are the default; direct Polly is an explicit exception that needs a recorded decision or a reported reason. | NuGet manifests | Package id listed in an '## Accepted' section of decisions.md or overview.md.
+C R13 OL ARC-009 | REQUIRES_APPROVAL (manifest check finding) | MediatR and Kommand packages are flagged because mediator-based organization is not adopted (Reserved). | NuGet manifests | Accepted decision recorded in the decision summaries.
+C R14 OL DEP-011,DEP-002 | REQUIRES_APPROVAL (manifest check finding) | AutoMapper (another mapping framework) requires approval; it is flagged unless an accepted decision names it. | NuGet manifests | Accepted decision.
+C R15 OL DEP-015 | MUST NOT (by default; manifest check finding) | @ngrx/store, axios, lodash, bootstrap and tailwindcss are not added by default; package.json entries are flagged unless a recorded decision or concrete need exists. | frontend package.json | Accepted decision or reported concrete need.
+C R16 OL DEP-007 | MUST (manifest check finding) | Build and test tooling (Angular CLI/build/devkit/compiler-cli, TypeScript, Vitest, Playwright test, ESLint, Prettier, Karma, Jasmine, @types) belongs in devDependencies, not in runtime dependencies. | frontend package.json | none stated
+C R17 OL ARC-001 | MUST (manifest check finding) | Production project references point inward: Domain references no application project; Application references Domain; Infrastructure references Application and Domain; Api references Application, Infrastructure and Domain; no production project references a test project. | backend .csproj files (layer from the project-name suffix) | Test projects (names ending in Test/Tests) are not checked; Api -> Domain is allowed by the check.
+C R18 OL DEP-003 | MUST (manifest check finding) | Package versions are never empty, floating (*, latest, x) or prerelease (alpha, beta, preview, rc, dev, nightly, pre) unless explicitly requested. | Directory.Packages.props and package.json (dependencies, devDependencies) | Prerelease explicitly requested.
+C R19 OL DEP-006 | MUST (manifest check finding) | NuGet Central Package Management: PackageReference entries carry no Version; VersionOverride needs a reported concrete reason; ManagePackageVersionsCentrally stays true in Directory.Packages.props. | .csproj, Directory.Build.props, Directory.Packages.props | VersionOverride with a reported reason.
+C X4 EX DEP-004,DEP-020,DEP-010 | MUST NOT (manifest check finding; no approval path) | Packages Microsoft.Extensions.Http.Polly and Polly.Extensions.Http (deprecated resilience integrations) and Serilog.Sinks.Elasticsearch (deprecated sink) must not be added; they are reported on every manifest validation. | NuGet manifests | none stated (accepted decisions do not exempt deny-listed packages) | DEP-004 requires checking deprecation and DEP-020 treats direct Polly integration as an explicit exception; no oracle policy forbids specific packages outright regardless of approval. | Adding Microsoft.Extensions.Http.Polly is reported as not allowed even when the user requests it.
+C X5 EX DEP-010,DEP-004 | DEFAULT (manifest check: flagged unless an accepted decision names it) | Do not adopt a deprecated or legacy ASP.NET automatic-validation integration package (FluentValidation.AspNetCore) unless a concrete project requirement justifies it; deviation needs a recorded decision or reported reason. | backend validation packages | Concrete project requirement recorded as an accepted decision. | DEP-010 fixes FluentValidation as the library and DEP-004 requires deprecation checks; no oracle policy restricts its ASP.NET integration package. | Adding FluentValidation.AspNetCore for automatic validation is flagged and needs a recorded reason.
+
+FILE .claude/hooks/manifest-checks.mjs | Deterministic manifest checks used by claude-hook.mjs.
+1-4 IM | header comment (scope of checks)
+5-6 IM | imports
+8-16 IM | owner paths for messages
+18-23 EX X4 | deprecated resilience integration
+25-26 IM | review-list comment and map opening
+27 OL R12 | direct Polly is an explicit exception
+28-29 OL R13 | mediator-based organization is not adopted (Reserved)
+30 OL R14 | another mapping framework requires approval
+31 EX X5 | legacy automatic-validation integration
+32 IM | map closing
+34-40 OL R15 | not added by default
+42-46 IM | tooling package patterns (data for R16)
+48-54 OL R17 | Application: ['Domain'],
+56-101 IM | skipped directories, manifest detection, text decoding, relative paths
+103-119 IM | approved exceptions read from the '## Accepted' sections of the decision summaries (exception mechanism of R12-R15, X5)
+121-126 IM | project layer derived from the project-name suffix
+128-260 IM | bounded MSBuild XML reader and central-management switch detection
+262-263 IM | package-id check setup
+264 EX X4 | if (DENY_NUGET.has(key))
+265-267 MX R12,R13,R14,X5 | needs a recorded decision or reported reason ⟫ Review-listed Polly, mediator and mapping packages are oracle-linked (R12-R14); the legacy validation integration on the same list is X5.
+268 IM | function end
+270-276 OL R18 | is allowed only when explicitly requested
+278-282 IM | project-file item reading
+283-285 OL R19 | versions belong in Directory.Packages.props
+286-288 OL R19 | report the concrete reason
+289-295 IM | package-id check call and layer lookup
+296-297 OL R17 | production project references test project
+298-299 OL R17 | violates the dependency direction
+300-305 IM | delimiters and central-package parsing setup
+306-308 OL R19 | ManagePackageVersionsCentrally must be true
+309-327 IM | central version checks dispatch, package.json parsing and invalid-JSON finding
+328-330 OL R18 | floating version
+331 IM | key normalization
+332-334 OL R15 | needs a recorded decision or concrete need
+335-337 OL R16 | is in dependencies
+338-340 IM | delimiters
+342-346 OL R5 | peer-dependency bypass configured
+348-366 IM | manifest dispatch and visible decoding errors
+368-455 IM | manifest discovery outside Git, declared dependency extraction and change delta helpers
+DONE

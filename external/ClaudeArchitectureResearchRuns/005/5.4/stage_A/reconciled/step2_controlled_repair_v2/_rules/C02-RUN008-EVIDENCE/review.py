@@ -1,0 +1,10 @@
+"""Source review for C02, read on current v2 bytes. Entailment against RUN-008 and a falsifying case for each candidate."""
+F = '.claude/skills/ef-core/SKILL.md'
+OWNER = {'M': '.claude/rules/performance.md', 'M1': '.claude/rules/performance.md', 'L0': '.claude/rules/0-core/runtime-principles.md', 'L1': '.claude/rules/0-core/backend-code.md', 'K0': '.claude/rules/backend/csharp.md', 'K1': '.claude/rules/backend/runtime.md'}
+LINE = {'M': 'measured, or clearly demonstrated, to be material', 'M1': 'measured, or clearly demonstrated, to be material', 'L0': 'measured, or clearly demonstrated, to be material', 'L1': 'measured, or clearly demonstrated, to be material', 'K0': 'measured, or clearly demonstrated, to matter', 'K1': 'measured, or clearly demonstrated, to be material'}
+REVIEW = []
+for c in OWNER:
+    REVIEW.append(dict(policy='RUN-008', candidate=c, verdict='HOLDS', quotes=[(OWNER[c], 'measured or clearly demonstrated need'), (F, LINE[c]), (F, 'measured or clearly demonstrated performance need')],
+                       note='RUN-008 (DEFAULT): compiled queries and raw SQL, among others, normally only for a measured or clearly demonstrated need. The owner line says so, and the technique text now agrees in both places it speaks. Profiling is not ruled out and not required as the only proof. Other optimizations in the same policy (ValueTask, pooling, custom serialization, aggressive caching) are stated by the owner line and were not narrowed.',
+                       counterexample='A query known hot from a documented throughput requirement, no profile yet: RUN-008 allows it, and so does this text now; before C02 the technique line refused it. A query that merely runs often, with no evidence: refused by both. A compiled query added on a hunch: refused. Evidence that is a guess, not a demonstration: not "clearly demonstrated", so refused.'))
+    REVIEW.append(dict(policy='SEC-004', candidate=c, verdict='NOT_AFFECTED', quotes=[(F, 'cannot express')], note='Only the performance branch of the raw SQL line changed. Parameterization text is untouched.'))

@@ -1,0 +1,115 @@
+# Batch B018 (part 2) — skills: verify; .editorconfig
+
+@@ output/template/.claude/skills/verify/SKILL.md ;; Workflow skill routed from CLAUDE.md and development-workflow before declaring completion.
+@scope workflow verify (before declaring a change complete or preparing a PR)
+1-7 IM ;; Frontmatter: name and trigger description.
+9 NN ;; Ownership/scope/loading banner.
+11 NN ;; Heading.
+13 NN ;; Heading.
+15-17 OL [wf003.scope-risk-evidence]
+19-20 NN ;; Role distinction between verify and code-review (descriptive).
+22 NN ;; Heading.
+24-30 OL [wf004.inspect-change]
+32-37 OL [wf004.affected-areas]
+39 NN ;; Heading.
+41 OL [wf005.build-affected] ;; ;; Build the affected solution or projects
+43-45 NN ;; dotnet build example.
+47-50 MX [wf005.build-affected,x.vf-no-restore-caution] ;; Frontend build and 'build failure means not complete' are WF-005; the --no-restore caution is additional.
+52 NN ;; Heading.
+54 OL [wf005.run-relevant-tests] ;; ;; Run the tests covering the changed area
+56-58 NN ;; dotnet test example.
+60-63 MX [wf005.run-relevant-tests,x.vf-test-breadth] ;; Running the package.json-configured frontend tests is WF-005; full suite for small solutions and affected-first for large is an added breadth rule.
+65-66 OL [wf005.investigate-failures]
+68 NN ;; Heading.
+70-79 OL [wf006.runtime-smoke]
+81 OL [wf006.runtime-smoke] ;; ;; A successful build alone does not prove runtime composition.
+83 NN ;; Heading.
+85-92 OL [tst010.preserve-probes]
+94-95 OL [tst010.preserve-probes] ;; ;; do not by themselves require new tests
+97 NN ;; Heading.
+99-100 OL [wf007.risk-scoped]
+102 NN ;; Heading.
+104-110 OL [wf007.architecture-check]
+112-114 NN ;; check-manifests command example.
+116-119 OL [pst008.verify-seeder]
+121 NN ;; Heading.
+123 OL [wf007.configured-format] ;; ;; If the repository configures formatting or analyzers, run them
+125-127 NN ;; dotnet format example.
+129-130 OL [gov013.no-new-analyzers]
+132 NN ;; Heading.
+134-139 OL [wf007.dependency-security]
+141 NN ;; Heading.
+143-150 OL [wf004.final-diff]
+152-157 OL [run010.clean-usings]
+159 NN ;; Heading.
+161-167 OL [wf008.fix-retry]
+169-170 OL [wf008.no-hidden-failure]
+172 NN ;; Heading.
+174 OL [wf009.report-actual] ;; ;; Report what was actually run
+176-183 NN ;; Example report lines ('for example').
+185-186 OL [wf009.report-actual]
+
+C wf003.scope-risk-evidence OL WF-003,WF-007,WF-021 MUST ;; Produce evidence the change is complete without obvious regressions; match verification to scope and risk; do not require optional tooling the repository has not configured. ;; = ;; none ;;
+C wf004.inspect-change OL WF-004,TST-010,SEC-001 MUST ;; Review the final changed-file set/diff before choosing checks: scope matches, no unrelated refactoring, no accidental generated/build artifacts, no secrets, probes removed only after step 4 preserved their behaviour. ;; = ;; none ;;
+C wf004.affected-areas OL WF-004,WF-007 MUST ;; Determine affected areas and choose checks (backend-only → .NET projects; frontend-only → Angular; contract/full-stack → both; docs-only → no unrelated builds). ;; = ;; none ;;
+C wf005.build-affected OL WF-005 MUST ;; Build the affected solution/projects and run the frontend's configured build for Angular changes; a build failure means the implementation is not complete. ;; = ;; none ;;
+C x.vf-no-restore-caution EX WF-005 MUST_NOT ;; Do not use --no-restore unless restore is known to be complete. ;; = ;; Restore known complete. ;; Build-flag caution not in the oracle.
+C wf005.run-relevant-tests OL WF-005 MUST ;; Run tests covering the changed area; for Angular use the test command configured in package.json rather than assuming a runner. ;; = ;; none ;;
+C x.vf-test-breadth EX WF-005,WF-007 DEFAULT ;; For small solutions run the complete test suite; for large solutions run affected projects first, then broader suites as risk requires. ;; = ;; none ;; Test-breadth policy not stated in WF-005.
+C wf005.investigate-failures OL WF-005,WF-008 MUST ;; Investigate every newly failing relevant test; do not dismiss failures as unrelated without checking. ;; = ;; none ;;
+C wf006.runtime-smoke OL WF-006 DEFAULT ;; For new runnable apps or substantial composition/startup/configuration/persistence/full-stack changes verify Development startup (API reachable, Swagger UI loads, configuration binds, DB connectivity/initialization, frontend starts, API base URL/CORS compatible); a build alone does not prove runtime composition. ;; = ;; As applicable. ;;
+C tst010.preserve-probes OL TST-010 MUST ;; Represent behaviour uniquely demonstrated by ad-hoc probes in maintained automated tests before completion unless equivalent coverage exists (confirmed); builds, analyzers and existing test runs do not require new tests. ;; = ;; Equivalent coverage exists. ;;
+C wf007.risk-scoped OL WF-007 MUST ;; Run architecture, formatting/analyzer, dependency and security checks when relevant, not indiscriminately. ;; = ;; none ;;
+C wf007.architecture-check OL WF-007,WF-001,ARC-001 MUST ;; When boundaries are touched read architecture.md (and persistence.md) and check references, flow, repositories, EF boundary, UoW and direction; run check-manifests from the repository root when project files changed. ;; = ;; none ;;
+C pst008.verify-seeder OL PST-008 MUST ;; When Domain/persistence changes affect the seed graph confirm DbSeeder remains valid and representative for a fresh Development database. ;; = ;; Skip for docs-only/unrelated changes. ;;
+C wf007.configured-format OL WF-007 MUST ;; Run configured formatting/analyzers when the repository configures them. ;; = ;; none ;;
+C gov013.no-new-analyzers OL GOV-013,DEP-001,WF-021 MUST_NOT ;; Do not add a formatter/analyzer dependency solely to complete verification; treat analyzer output as evidence needing context. ;; = ;; none ;;
+C wf007.dependency-security OL WF-007,DEP-004 MUST ;; For dependency or security-sensitive changes inspect package vulnerabilities and changed secrets/authorization/SQL/CORS/TLS/logging/certificate validation; a full security-scan is not needed for every small change. ;; = ;; none ;;
+C wf004.final-diff OL WF-004,GOV-003,GOV-021,TST-010 MUST ;; Review the final diff after fixes for unrelated edits, commented code, temporary logging, TODO/FIXME, stale temp tests, architecture drift, unapproved spec/settings drift, stale artefacts after settings changes and unpreserved manual verification. ;; = ;; none ;;
+C run010.clean-usings OL RUN-010 MUST ;; Before completion remove unused/redundant usings (incl. those provided by implicit/global usings unless needed for clarity) from every C# file created or modified, without repository-wide cleanup, verifying the changed files. ;; = ;; Explicit import needed for clarity/disambiguation. ;;
+C wf008.fix-retry OL WF-008 MUST ;; On failure identify it, apply the smallest fix, rerun affected verification (and build/tests when code changed), repeat until green or genuine user input is required. ;; = ;; none ;;
+C wf008.no-hidden-failure OL WF-008,WF-009,WF-013 MUST_NOT ;; Never hide a known failure and declare completion; failures needing diagnosis go through build-fix. ;; = ;; none ;;
+C wf009.report-actual OL WF-009 MUST ;; Report what was actually run, using NOT RUN or NOT APPLICABLE instead of implying unchecked areas passed. ;; = ;; none ;;
+
+@@ output/template/.editorconfig ;; EditorConfig read by IDEs, dotnet format and (via EnforceCodeStyleInBuild) the build; executable style configuration.
+@scope repository files (EditorConfig: IDE, dotnet format, build diagnostics)
+1-3 NN ;; Header comments (purpose, consumers, owner).
+4 IM ;; root = true (EditorConfig lookup boundary).
+6 IM ;; Section header [*].
+7-10 EX [x.ec-whitespace]
+12 IM ;; Section header [*.md].
+13 EX [x.ec-whitespace]
+15 IM ;; Section header.
+16 EX [x.ec-indent]
+18 IM ;; Section header.
+19 EX [x.ec-indent]
+21 IM ;; Section header.
+22-23 EX [x.ec-indent]
+25 IM ;; Section header [*.{cs,csx}].
+26 EX [x.ec-indent]
+28 NN ;; Comment.
+29-30 EX [x.ec-usings-order]
+31-33 NN ;; Comment noting verify owns changed-file checking and that IDE0005 in command-line builds additionally needs GenerateDocumentationFile (not set in Directory.Build.props), i.e. a limitation of build-time enforcement.
+34 OL [run010.ide0005] ;; ;; dotnet_diagnostic.IDE0005.severity = warning
+36 NN ;; Comment.
+37 OL [run024.file-scoped-suggestion]
+39 NN ;; Comment.
+40-42 EX [x.cs-var]
+44 NN ;; Comment.
+45-48 EX [x.ec-no-qualification]
+50 NN ;; Comment.
+51-56 EX [x.cs-naming] ;; Interface 'I' prefix naming rule at warning severity.
+58 NN ;; Comment.
+59-65 OL [run024.async-suffix-suggestion]
+67 NN ;; Comment.
+68-72 EX [x.cs-naming] ;; PascalCase rule for types and non-field members (suggestion).
+74-75 NN ;; Comment (private-field naming follows repository convention).
+76-80 EX [x.cs-naming] ;; camelCase rule for parameters and locals (suggestion).
+
+C x.ec-whitespace EX RUN-009 ENFORCED_DEFAULT ;; All files use UTF-8, space indentation, a final newline and trimmed trailing whitespace (Markdown keeps trailing whitespace). ;; = ;; Markdown exempt from trailing-whitespace trimming. ;; RUN-009 requires following .editorconfig but does not fix its content; these concrete formatting settings are candidate-specific.
+C x.ec-indent EX RUN-009 ENFORCED_DEFAULT ;; Indent 2 spaces for JSON/YAML, project/XML files and TS/JS/HTML/SCSS/CSS (TS/JS single quotes); 4 spaces for C#. ;; = ;; none ;; Concrete indentation/quote settings are candidate-specific (RUN-009 only defers to .editorconfig).
+C x.ec-usings-order EX RUN-010 ENFORCED_DEFAULT ;; System usings sorted first; using directives placed outside the namespace (suggestion). ;; = ;; none ;; Using-ordering/placement conventions not in the oracle.
+C run010.ide0005 OL RUN-010 ENFORCED ;; Unused/redundant usings (IDE0005) are reported at warning severity. ;; = ;; Command-line build reporting additionally requires GenerateDocumentationFile. ;;
+C run024.file-scoped-suggestion OL RUN-024 ENFORCED_ADVISORY ;; File-scoped namespace declarations are suggested. ;; = ;; none ;;
+C x.ec-no-qualification EX RUN-009 ENFORCED_ADVISORY ;; Do not qualify fields, properties, methods or events with this. (suggestion). ;; = ;; none ;; Qualification style not in the oracle.
+C run024.async-suffix-suggestion OL RUN-024 ENFORCED_ADVISORY ;; async methods are suggested to end with Async. ;; = ;; Framework/interface contracts may differ. ;;

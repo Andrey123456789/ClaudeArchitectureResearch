@@ -1,0 +1,954 @@
+{
+  "unit": "P0002-K1-P006",
+  "batch_input_sha256": "00d4cfb6f6f73655e0a74f1e89ab6b378bf61a762ae40b061ca780097fed0368",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-011",
+        "name": "Controllers do not own business/persistence",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#API"
+        ],
+        "normalized_policy": "Controllers must not contain business logic, access DbContext or concrete repositories, or manually construct infrastructure services.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0079",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0086"
+      ],
+      "boundary_analysis": "Controller prohibitions match canonical; middleware normally generates auth failures is an additional default already captured. No universal ban on controller HTTP-specific User access.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "59f1f9b7196b2417630f3dd05c27b61ea6acf3d7c85032075acf9cbe35274222",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "- ASP.NET Core Controllers are the default HTTP entry point and must stay thin: bind and validate HTTP input, invoke Application services, and translate Application outcomes into HTTP responses.\n- Controllers must not contain business logic, access the database context or concrete repositories, or construct infrastructure services manually.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "52dad0ef32dc17d1bbbb651ec2966e8c99469ae3c00d285826207a52067d11ea",
+          "inspected_ranges": [
+            [
+              67,
+              69
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthentication/authorization middleware normally produces these responses rather than controllers manufacturing them.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "\nNever solve an architectural dependency problem with an invalid project reference (e.g. Application → Infrastructure to make a type compile). Invalid shortcuts also include leaking persistence-technology types into Application, moving business logic into controllers, replacing server authorization with frontend-only guards, and scattering HTTP calls into components to bypass a data-access service. Read `.claude/rules/backend/architecture-style.md` for backend repairs and `.claude/rules/frontend/` for frontend repairs. Frontend shortcuts to refuse: converting code to `any` to silence the compiler, disabling strict mode, suppressing template diagnostics without understanding them, replacing framework APIs speculatively, adding another state-management or HTTP library to bypass a local issue.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\nControllers are the HTTP endpoint mechanism; create Minimal API endpoint groups only when explicitly requested. Api references Infrastructure only for composition — controllers never consume Infrastructure implementation types directly. Use `Contracts/` for transport-specific contracts only when separation from Application models provides value.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-012",
+        "name": "Program is composition root",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#API"
+        ],
+        "normalized_policy": "Program.cs is the application composition root and may register Infrastructure implementations.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0097",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0220",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0244"
+      ],
+      "boundary_analysis": "Composition root remains default; no code movement merely to shorten Program and Api-owned Swagger config are separately recorded. Layer-owned registration considered with ARC023.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              11,
+              18
+            ],
+            [
+              44,
+              46
+            ]
+          ],
+          "context_quotes": [
+            "\n| Role | Project | Responsibility |\n|---|---|---|\n| Domain | `backend/<Name>.Domain` | Business concepts, independent of infrastructure and transport |\n| Application | `backend/<Name>.Application` | Use-case orchestration; persistence, external-service, and commit-boundary abstractions |\n| Infrastructure | `backend/<Name>.Infrastructure` | Implementations of Application abstractions (persistence, external adapters) |\n| Api | `backend/<Name>.Api` | HTTP entry point and composition root |\n",
+            "\n- Default: `Program.cs` in Api is the application composition root and may register Infrastructure implementations.\n- Default: registration stays near the owning layer: Application registers Application services, Infrastructure registers persistence and adapters, and Api composes them (`AddApplication()`, `AddInfrastructure(configuration)`)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/architecture-style.cjs",
+          "sha256": "e1f88a4d7d52b2ff95e064ca3c002363cd55c7d920c9443d8e4573cfaa6cdbe0",
+          "inspected_ranges": [
+            [
+              38,
+              48
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction checkProject(ctx, project) {\n  if (!project.rel.startsWith('backend/')) return [];\n  const findings = [];\n  const role = roleOf(project.name);\n\n  if (role.kind === 'unknown') {\n    findings.push(lib.finding('warn', project.rel, `project \"${project.name}\" matches no frame role (${LAYERS.join(', ')}, tests); a new production project is a Reserved decision`, OWNER_STYLE));\n    return findings;\n  }\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "3. **Repository level** — read `references/solution-layout.md`; create only required top-level directories and shared configuration files.\n4. **Backend projects and references** — read `references/backend-layout.md`; create the four backend projects and only the references it lists. Never add an outward reference to make compilation easier. Projects and project references change the project reference graph (Reserved): first record the requested scaffold through `architecture-decision` — its accepted decision lists each project reference as `From -> To` — because the dependency and reference hook blocks unrecorded `dotnet add/remove … reference` commands and reports unrecorded reference changes after edits.\n5. **Test projects** — read `references/test-setup.md`; create only useful test projects (placement and references per `references/backend-layout.md`)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              44,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "\n```text\nbackend/ProjectName.Api/\n├── Controllers/\n├── Contracts/\n│   ├── Requests/\n│   └── Responses/\n├── Middleware/               # only when custom middleware exists\n├── Extensions/               # cohesive composition extensions; do not move code just to shorten Program.cs\n├── Program.cs                # composition root: AddApplication(); AddInfrastructure(builder.Configuration)\n├── appsettings.json\n└── appsettings.Development.json\n```\n\nControllers are the HTTP endpoint mechanism; create Minimal API endpoint groups only when explicitly requested. Api references Infrastructure only for composition — controllers never consume Infrastructure implementation types directly. Use `Contracts/` for transport-specific contracts only when separation from Application models provides value.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep Swagger configuration in the Api/composition layer. Package: `Swashbuckle.AspNetCore` (`add-dependency`).\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| architecture (required frame) | clean-architecture | — | Backend roles Domain, Application, Infrastructure, Api as `backend/<Name>.<Layer>/`; role rules in the architecture-style standard (loads with backend files). Not adopted: CQRS handlers, MediatR, Kommand, Vertical Slice Architecture, or similar mediator-based organization; introducing any of them requires explicit approval. |\n| persistence (required leaf) | ef-core, provider variant sqlserver | `ef-core` | Default persistence: EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); provider-specific concerns stay out of Application and Domain. Migration mechanism: EF Core migrations. Seeding mechanism: dedicated Development seeder. String comparison follows database collation (SQL Server default collations are case-insensitive); observable semantics remain a product decision. Binds: architecture. |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-013",
+        "name": "Prefer specific repositories",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Repositories"
+        ],
+        "normalized_policy": "Prefer specific repository interfaces representing actual cohesive Application persistence needs rather than table-mirroring generic CRUD contracts.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-013",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0100",
+        "primary/K1/constraints.jsonl/RULE-K1-0091",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0165"
+      ],
+      "boundary_analysis": "Specific repositories match default; approved aggregate-root boundary preference is additional but already explicit. Does not require one repository per table/aggregate unconditionally.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              26,
+              31
+            ]
+          ],
+          "context_quotes": [
+            "- Domain must stay independent of the persistence technology, ASP.NET Core, HTTP, and external-service implementation concerns.\n- Default: simple domain entities. Straightforward CRUD and workflow rules, including validation rules, immutable fields, status transitions, and allowed or forbidden edits, belong in Application Services and do not by themselves justify a richer model.\n- Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation independent of a particular use case. Otherwise a Rich Domain Model or DDD tactical patterns require approval, unless the approved specification already requires them.\n- Must not add factories, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects, or similar DDD constructs merely to make a simple model look domain-driven.\n- When an approved DDD design contains Aggregate Roots, they are the natural repository-boundary candidates.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: specific repository interfaces that represent actual, cohesive Application persistence needs, not table-mirroring generic CRUD contracts. Repository interfaces are defined in Application and implemented in Infrastructure.\n- Repository interfaces must not expose `IQueryable<T>`, database-context or entity-set types, query expressions, or provider-specific types; query construction stays in Infrastructure. Return materialized entities, collections, projections, or explicit result models."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "- [ ] Role and dependency rules — `.claude/rules/backend/architecture-style.md` and `.claude/rules/backend/architecture.md` (thin controllers, Application Services orchestrate, inward references, commit boundary).\n- [ ] Repository contracts and persistence boundary — `.claude/rules/backend/persistence.md`, `.claude/rules/backend/persistence-technology.md`.\n- [ ] Proportionality — consequential patterns or extra abstractions appear only with an approved need (`CLAUDE.md`, Decision control)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ],
+            [
+              231,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication defines the persistence contracts (specific repository interfaces and `IUnitOfWork`); Infrastructure implements them with EF Core. `DbContext` already provides change tracking and unit-of-work behavior internally; `IUnitOfWork` is the Application-facing abstraction over that commit boundary, and its implementation delegates to the same scoped `DbContext`.\n",
+            "\n| Scenario | Default technique |\n|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-014",
+        "name": "Repository contracts do not leak EF/queryability",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Repositories"
+        ],
+        "normalized_policy": "Repository interfaces must not expose IQueryable, DbSet, DbContext, EF expressions, or provider-specific types; EF query construction stays in Infrastructure.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-014",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0101",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0170"
+      ],
+      "boundary_analysis": "Technology-neutral query-expression ban and materialized/explicit-return restrictions broaden canonical EF focus; independent0170 explicitly registers this nuance.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              13,
+              15
+            ]
+          ],
+          "context_quotes": [
+            "\nBinds to the architecture frame: EF Core lives in the Infrastructure role and implements the Application persistence and commit-boundary contracts.\n",
+            "\n- EF Core is an Infrastructure implementation detail. Use its full capabilities inside Infrastructure, but EF Core concepts — `DbContext`, `DbSet<T>`, EF Core APIs, `IQueryable<T>` backed by EF Core, and provider-specific types — must not leak into Application.\n- Infrastructure implements `IUnitOfWork` by delegating to the shared scoped `AppDbContext`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              14,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "- Default: specific repository interfaces that represent actual, cohesive Application persistence needs, not table-mirroring generic CRUD contracts. Repository interfaces are defined in Application and implemented in Infrastructure.\n- Repository interfaces must not expose `IQueryable<T>`, database-context or entity-set types, query expressions, or provider-specific types; query construction stays in Infrastructure. Return materialized entities, collections, projections, or explicit result models.\n- Application must not depend on `IGenericRepository<T>` or another generic CRUD contract. A generic repository or base class may exist only as an Infrastructure implementation detail that removes real duplication.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "- [ ] Role and dependency rules — `.claude/rules/backend/architecture-style.md` and `.claude/rules/backend/architecture.md` (thin controllers, Application Services orchestrate, inward references, commit boundary).\n- [ ] Repository contracts and persistence boundary — `.claude/rules/backend/persistence.md`, `.claude/rules/backend/persistence-technology.md`.\n- [ ] Proportionality — consequential patterns or extra abstractions appear only with an approved need (`CLAUDE.md`, Decision control)."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-015",
+        "name": "Generic repository is Infrastructure-only",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Generic Repository"
+        ],
+        "normalized_policy": "Application must not depend on IGenericRepository<T>; any generic repository/base class may exist only as an Infrastructure implementation detail that removes real duplication.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-015",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0071",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0170"
+      ],
+      "boundary_analysis": "Any generic CRUD contract prohibition exceeds named IGenericRepository, but explicit baseline preserves it and Infrastructure-only real-duplication exception.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              14,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "- Default: specific repository interfaces that represent actual, cohesive Application persistence needs, not table-mirroring generic CRUD contracts. Repository interfaces are defined in Application and implemented in Infrastructure.\n- Repository interfaces must not expose `IQueryable<T>`, database-context or entity-set types, query expressions, or provider-specific types; query construction stays in Infrastructure. Return materialized entities, collections, projections, or explicit result models.\n- Application must not depend on `IGenericRepository<T>` or another generic CRUD contract. A generic repository or base class may exist only as an Infrastructure implementation detail that removes real duplication.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              86,
+              88
+            ]
+          ],
+          "context_quotes": [
+            "\nRepositories stage changes; the Application Service calls `IUnitOfWork.SaveChangesAsync` once the operation is ready. An Infrastructure-only base class can remove genuine duplication without becoming a generic CRUD contract; concrete repositories keep the full EF Core API for use-case-specific queries:\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-016",
+        "name": "Unit of Work is commit boundary",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Unit of Work"
+        ],
+        "normalized_policy": "Use IUnitOfWork as the normal commit boundary for an Application use case; repositories stage changes and Application Services decide when to commit.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-016",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0387",
+        "primary/K1/constraints.jsonl/RULE-K1-0313",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0152"
+      ],
+      "boundary_analysis": "Readiness/commit workflow, cache invalidation abstraction and bulk-operation consistency conditions already registered. Seeder's direct-context exception is in source and separately under persistence policies.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/persistence/ef-core/MODULE.md",
+          "sha256": "491e121169300dc62d07c95d560358bcd71fe654d1b478a24c82e377cbc1a0cf",
+          "inspected_ranges": [
+            [
+              8,
+              10
+            ]
+          ],
+          "context_quotes": [
+            "- Names: EF Core, ef-core, EFCore, Entity Framework, EntityFrameworkCore, DbContext, AppDbContext, DbSet, DbSeeder, SQL Server, sqlserver, SqlServer, MSSQL, LocalDB\n- Binds: architecture — EF Core types live only in the Infrastructure role; `UnitOfWork` implements the Application `IUnitOfWork` over the shared scoped `AppDbContext`; persistence code sits in `Infrastructure/Persistence/`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              39,
+              41
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: `IUnitOfWork` is the commit boundary of an Application use case; repositories stage changes and Application Services decide when the operation is ready to commit.\n- Repositories participating in one use case must share the same scoped Unit of Work and therefore the same persistence context; repositories are injected explicitly into their consumers, and `IUnitOfWork` must not become a repository container or service locator."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "- EF Core is an Infrastructure implementation detail. Use its full capabilities inside Infrastructure, but EF Core concepts — `DbContext`, `DbSet<T>`, EF Core APIs, `IQueryable<T>` backed by EF Core, and provider-specific types — must not leak into Application.\n- Infrastructure implements `IUnitOfWork` by delegating to the shared scoped `AppDbContext`.\n- Default: no explicit transaction APIs until a concrete use case requires transaction control beyond a single `SaveChangesAsync`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              68,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nApply the policy through controller/action metadata. Never cache authenticated or user-specific responses unless the key and policy isolate users and authorization context.\n\n## Mutations and failures\n\nApplication Services keep their normal repository/Unit of Work workflow; coordinate required invalidation through an abstraction instead of bypassing repositories or `IUnitOfWork`. Decide whether a cache failure falls back to the source, fails the request, or returns stale data. Never cache tracked persistence entities across Unit of Work boundaries.\n\n## Testing\n\nTest caching when it affects observable correctness: stale entries invalidated after successful mutation, tenant/user key isolation, cache-miss fallback, outage behavior per the intended failure policy. Do not unit-test framework cache internals.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              56,
+              58
+            ]
+          ],
+          "context_quotes": [
+            "\n- [ ] Role and dependency rules — `.claude/rules/backend/architecture-style.md` and `.claude/rules/backend/architecture.md` (thin controllers, Application Services orchestrate, inward references, commit boundary).\n- [ ] Repository contracts and persistence boundary — `.claude/rules/backend/persistence.md`, `.claude/rules/backend/persistence-technology.md`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ],
+            [
+              86,
+              88
+            ],
+            [
+              118,
+              120
+            ],
+            [
+              123,
+              125
+            ],
+            [
+              231,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication defines the persistence contracts (specific repository interfaces and `IUnitOfWork`); Infrastructure implements them with EF Core. `DbContext` already provides change tracking and unit-of-work behavior internally; `IUnitOfWork` is the Application-facing abstraction over that commit boundary, and its implementation delegates to the same scoped `DbContext`.\n",
+            "\nRepositories stage changes; the Application Service calls `IUnitOfWork.SaveChangesAsync` once the operation is ready. An Infrastructure-only base class can remove genuine duplication without becoming a generic CRUD contract; concrete repositories keep the full EF Core API for use-case-specific queries:\n",
+            "\n- **Bulk update/delete:** `ExecuteUpdateAsync`/`ExecuteDeleteAsync` run directly against the database and bypass change tracking; do not mix them casually with tracked entities for the same rows, and understand their transaction and consistency implications.\n- **Never fire-and-forget** EF Core asynchronous operations; a `DbContext` is not thread-safe.",
+            "\nOne `SaveChangesAsync` is normally the transaction boundary of an application operation. Use an explicit transaction (`db.Database.BeginTransactionAsync`) only when a concrete use case needs several database operations or `SaveChangesAsync` calls to succeed atomically; EF transaction APIs do not solve distributed transactions.\n",
+            "\n| Scenario | Default technique |\n|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              19,
+              21
+            ]
+          ],
+          "context_quotes": [
+            "1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension.\n3. Register persistence in Infrastructure's `AddInfrastructure(configuration)` using the `DefaultConnection` connection string."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-017",
+        "name": "Shared UoW context and no repository container",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Unit of Work"
+        ],
+        "normalized_policy": "Repositories in one use case share the same scoped Unit of Work/DbContext; IUnitOfWork must not become a repository container or service locator.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0096",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0166",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0189"
+      ],
+      "boundary_analysis": "Explicit repository injection and concrete shared AppDbContext binding extend generic lifetime rule; both registered. No duplication of prior injection hypotheses.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/persistence/ef-core/MODULE.md",
+          "sha256": "491e121169300dc62d07c95d560358bcd71fe654d1b478a24c82e377cbc1a0cf",
+          "inspected_ranges": [
+            [
+              8,
+              10
+            ]
+          ],
+          "context_quotes": [
+            "- Names: EF Core, ef-core, EFCore, Entity Framework, EntityFrameworkCore, DbContext, AppDbContext, DbSet, DbSeeder, SQL Server, sqlserver, SqlServer, MSSQL, LocalDB\n- Binds: architecture — EF Core types live only in the Infrastructure role; `UnitOfWork` implements the Application `IUnitOfWork` over the shared scoped `AppDbContext`; persistence code sits in `Infrastructure/Persistence/`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              40,
+              42
+            ]
+          ],
+          "context_quotes": [
+            "- Default: `IUnitOfWork` is the commit boundary of an Application use case; repositories stage changes and Application Services decide when the operation is ready to commit.\n- Repositories participating in one use case must share the same scoped Unit of Work and therefore the same persistence context; repositories are injected explicitly into their consumers, and `IUnitOfWork` must not become a repository container or service locator.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\nBinds to the architecture frame: EF Core lives in the Infrastructure role and implements the Application persistence and commit-boundary contracts.\n",
+            "- EF Core is an Infrastructure implementation detail. Use its full capabilities inside Infrastructure, but EF Core concepts — `DbContext`, `DbSet<T>`, EF Core APIs, `IQueryable<T>` backed by EF Core, and provider-specific types — must not leak into Application.\n- Infrastructure implements `IUnitOfWork` by delegating to the shared scoped `AppDbContext`.\n- Default: no explicit transaction APIs until a concrete use case requires transaction control beyond a single `SaveChangesAsync`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication Services keep their normal repository/Unit of Work workflow; coordinate required invalidation through an abstraction instead of bypassing repositories or `IUnitOfWork`. Decide whether a cache failure falls back to the source, fails the request, or returns stale data. Never cache tracked persistence entities across Unit of Work boundaries.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ],
+            [
+              65,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication defines the persistence contracts (specific repository interfaces and `IUnitOfWork`); Infrastructure implements them with EF Core. `DbContext` already provides change tracking and unit-of-work behavior internally; `IUnitOfWork` is the Application-facing abstraction over that commit boundary, and its implementation delegates to the same scoped `DbContext`.\n",
+            "\n`AddDbContext` registers the context as scoped, so repositories and the Unit of Work in one request share it. Use the provider the project actually selected; never add a provider because an example shows it.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-018",
+        "name": "Explicit transactions only for real need",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Unit of Work"
+        ],
+        "normalized_policy": "Do not introduce explicit transaction APIs until a concrete use case requires control beyond normal SaveChangesAsync.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-018",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0392",
+        "replica/K1/constraints.jsonl/RULE-K1-0064"
+      ],
+      "boundary_analysis": "Explicit transaction justified by several operations needing atomicity elaborates beyond single-save control; baseline0392 captures it and distributed-transaction limit. Default not universal prohibition.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "- Infrastructure implements `IUnitOfWork` by delegating to the shared scoped `AppDbContext`.\n- Default: no explicit transaction APIs until a concrete use case requires transaction control beyond a single `SaveChangesAsync`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              123,
+              125
+            ],
+            [
+              231,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nOne `SaveChangesAsync` is normally the transaction boundary of an application operation. Use an explicit transaction (`db.Database.BeginTransactionAsync`) only when a concrete use case needs several database operations or `SaveChangesAsync` calls to succeed atomically; EF transaction APIs do not solve distributed transactions.\n",
+            "\n| Scenario | Default technique |\n|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P006",
+      "canonical_policy": {
+        "id": "ARC-019",
+        "name": "EF Core is Infrastructure detail",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#EF Core Boundary"
+        ],
+        "normalized_policy": "Use EF Core normally inside Infrastructure but do not leak EF Core concepts into Application.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0148",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0156",
+        "primary/K1/constraints.jsonl/EXTRA-K1-0188",
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0134"
+      ],
+      "boundary_analysis": "Separate configuration classes, Infrastructure/Api migration command placement, provider retry preference and exact directory-based enforcement all extend general EF boundary but are registered with source-specific detail.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/persistence/CONTRACT.md",
+          "sha256": "17bc8ae5486df1b3b794d5b77f5c4f773772bdd373d583ac418d8cc31dd68b92",
+          "inspected_ranges": [
+            [
+              4,
+              8
+            ],
+            [
+              14,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot type: required leaf\n- Cardinality: exactly one implementation, with one provider variant\n- Binds: architecture (Infrastructure role implements the Application persistence and commit-boundary contracts)\n",
+            "|---|---|\n| `technology-boundary` | Which technology types exist only in Infrastructure and how they stay out of Application |\n| `commit-boundary-binding` | How the Application commit-boundary contract is implemented |\n| `migration-mechanism` | How schema changes are created, reviewed, and applied |\n| `seeding-mechanism` | How Development seed data is constructed and invoked |\n| `provider-variant` | The selected provider and its variant-specific configuration |\n| `declared-properties` | Observable properties such as string comparison and case sensitivity |\n| `testing-implications` | Provider-fidelity guidance for tests |\n| `change-workflow` | The workflow for setup, model, migration, and seed changes |\n| `knowledge` | The knowledge facet for implementation technique |\n| `enforcement` | Deterministic checks for boundary leaks and co-change reminders |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/persistence/ef-core/MODULE.md",
+          "sha256": "491e121169300dc62d07c95d560358bcd71fe654d1b478a24c82e377cbc1a0cf",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              24,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot: persistence\n- Implementation: ef-core\n- Variant: sqlserver\n- Names: EF Core, ef-core, EFCore, Entity Framework, EntityFrameworkCore, DbContext, AppDbContext, DbSet, DbSeeder, SQL Server, sqlserver, SqlServer, MSSQL, LocalDB\n- Binds: architecture — EF Core types live only in the Infrastructure role; `UnitOfWork` implements the Application `IUnitOfWork` over the shared scoped `AppDbContext`; persistence code sits in `Infrastructure/Persistence/`.\n",
+            "|---|---|\n| `technology-boundary` | STD `persistence-technology.md`; ENF `persistence-technology.cjs` |\n| `commit-boundary-binding` | STD `persistence-technology.md`; KNW `ef-core` |\n| `migration-mechanism` | EF Core migrations — WF `persistence-change`; KNW `ef-core` |\n| `seeding-mechanism` | Dedicated `DbSeeder` — STD `persistence-technology.md`; KNW `ef-core` |\n| `provider-variant` | sqlserver — STD `persistence-technology.md` (Variant section); DEC |\n| `declared-properties` | DEC capability selection; KNW `ef-core` (SQL Server provider) |\n| `testing-implications` | KNW `ef-core` (Testing with EF Core) |\n| `change-workflow` | WF `persistence-change` |\n| `knowledge` | KNW `ef-core` |\n| `enforcement` | ENF `persistence-technology.cjs` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/architecture-style.md",
+          "sha256": "1358a000e71b0a2347c6df7383761bfe0f515e8cb196fa6bd9e318ae6d5785bb",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "- Application must define the persistence and external-service abstractions its use cases require and keep infrastructure implementation details out.\n- Application must not depend on persistence-technology types or APIs (database context, entity sets, query or provider types) or on ASP.NET Core transport types.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence-technology.md",
+          "sha256": "3a726fb0503cf2ba8319534c80e28a411118d39f0b65e37f503ee525ffc014a6",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              13,
+              15
+            ],
+            [
+              20,
+              22
+            ]
+          ],
+          "context_quotes": [
+            "\nBinds to the architecture frame: EF Core lives in the Infrastructure role and implements the Application persistence and commit-boundary contracts.\n",
+            "\n- EF Core is an Infrastructure implementation detail. Use its full capabilities inside Infrastructure, but EF Core concepts — `DbContext`, `DbSet<T>`, EF Core APIs, `IQueryable<T>` backed by EF Core, and provider-specific types — must not leak into Application.\n- Infrastructure implements `IUnitOfWork` by delegating to the shared scoped `AppDbContext`.",
+            "- Development seeding is an Infrastructure/bootstrap concern and may use `AppDbContext` directly; it need not go through Application repositories or `IUnitOfWork`.\n- Substantial seed construction lives in a dedicated internal `DbSeeder` (`Persistence/Seeding/` in Infrastructure), exposed through a narrow Infrastructure initialization extension — never in `Program.cs`, `AppDbContext` configuration, entity configurations, or migrations.\n- The development seeder must not call `Database.Migrate()`, `EnsureCreated()`, or otherwise create or upgrade the schema; migrations are applied separately before seeding."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/persistence-technology.cjs",
+          "sha256": "13a101eb46f845d8bbc4716a25b851d48c4c5941c00f856095929384ea7660a5",
+          "inspected_ranges": [
+            [
+              9,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n// Binds the architecture frame: EF Core packages belong to the Infrastructure role only.\nfunction checkProject(ctx, project) {\n  const role = ctx.roleOf(project.name);\n  if (role.kind !== 'production' || (role.layer !== 'Domain' && role.layer !== 'Application')) return [];\n  return project.packages\n    .filter(pkg => /^Microsoft\\.EntityFrameworkCore(\\.|$)/i.test(pkg.id))\n    .map(pkg => lib.finding('error', project.rel, `${role.layer} references EF Core package \"${pkg.id}\"`, OWNER_STD));\n}\n\nconst isMigration = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Migrations\\//.test(p);\nconst isSeeder = p => /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Seeding\\//.test(p);\nconst isModel = p =>\n  /^backend\\/[^/]+\\.Domain\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/Configurations\\/.+\\.cs$/.test(p) ||\n  /^backend\\/[^/]+\\.Infrastructure\\/Persistence\\/[^/]*DbContext\\.cs$/.test(p);\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication Services keep their normal repository/Unit of Work workflow; coordinate required invalidation through an abstraction instead of bypassing repositories or `IUnitOfWork`. Decide whether a cache failure falls back to the source, fails the request, or returns stale data. Never cache tracked persistence entities across Unit of Work boundaries.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "- [ ] Role and dependency rules — `.claude/rules/backend/architecture-style.md` and `.claude/rules/backend/architecture.md` (thin controllers, Application Services orchestrate, inward references, commit boundary).\n- [ ] Repository contracts and persistence boundary — `.claude/rules/backend/persistence.md`, `.claude/rules/backend/persistence-technology.md`.\n- [ ] Proportionality — consequential patterns or extra abstractions appear only with an approved need (`CLAUDE.md`, Decision control)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              20,
+              22
+            ],
+            [
+              86,
+              88
+            ],
+            [
+              118,
+              120
+            ],
+            [
+              131,
+              133
+            ],
+            [
+              204,
+              206
+            ],
+            [
+              233,
+              244
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep entity configuration in separate `IEntityTypeConfiguration<T>` classes and keep persistence-specific configuration out of Domain entities where practical.\n",
+            "\nRepositories stage changes; the Application Service calls `IUnitOfWork.SaveChangesAsync` once the operation is ready. An Infrastructure-only base class can remove genuine duplication without becoming a generic CRUD contract; concrete repositories keep the full EF Core API for use-case-specific queries:\n",
+            "\n- **Bulk update/delete:** `ExecuteUpdateAsync`/`ExecuteDeleteAsync` run directly against the database and bypass change tracking; do not mix them casually with tracked entities for the same rows, and understand their transaction and consistency implications.\n- **Never fire-and-forget** EF Core asynchronous operations; a `DbContext` is not thread-safe.",
+            "\nUse interceptors for infrastructure-level cross-cutting behavior with a clear benefit, such as auditing; never hide business behavior in them.\n",
+            "\nCreate migrations from the Infrastructure project with the Api project as startup project:\n",
+            "|---|---|\n| Application persistence dependency | Specific repository interface |\n| Commit application changes | `IUnitOfWork.SaveChangesAsync` |\n| Read-only entity query | `AsNoTracking()` when useful |\n| Read model | Database-side projection |\n| Primary-key entity lookup | `FindAsync` when its semantics fit |\n| Complex entity graph | Explicit `Include` / projection |\n| Set-based mass update/delete | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` when appropriate |\n| Measured extremely hot query | Consider a compiled query |\n| Multiple commits requiring atomicity | Explicit transaction (inside the execution strategy) |\n| Production schema change | Reviewed migration, scripted deployment |\n| Fresh local seed dataset | Developer drops and recreates the local database |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "ae1838108151e5b64897eaef05d02ef6f8b0d282dd8c324007ea9781d3f3c591",
+          "inspected_ranges": [
+            [
+              41,
+              43
+            ],
+            [
+              59,
+              68
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not wrap normal database operations in a generic application-level retry pipeline or apply an HTTP retry policy to them; use the persistence technology's provider-level transient-fault handling (persistence knowledge facet named in the decision register).\n",
+            "|---|---|\n| External I/O | Bound execution time |\n| Safe transient HTTP failure | Consider retry |\n| Unsafe write | No retry unless duplicate-safe |\n| `429` from dependency | Respect `Retry-After` where appropriate |\n| Repeated dependency outage | Consider circuit breaker |\n| Optional data unavailable | Consider explicit fallback |\n| Latency-sensitive idempotent read | Consider hedging after measurement |\n| Database transient faults | Provider-level strategy (persistence facet) |\n| Incoming request rate limiting | ASP.NET Core rate limiter |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              18,
+              21
+            ],
+            [
+              34,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Packages through `add-dependency`: `Microsoft.EntityFrameworkCore.SqlServer` in Infrastructure; `Microsoft.EntityFrameworkCore.Design` where design-time tooling needs it (startup project); the `dotnet-ef` tool as a local tool when the project uses the CLI.\n2. In Infrastructure `Persistence/`: `AppDbContext` (configurations applied from the assembly), entity configurations in `Configurations/`, repositories in `Repositories/`, `UnitOfWork` implementing the Application `IUnitOfWork`, and `Seeding/DbSeeder.cs` plus the initialization extension.\n3. Register persistence in Infrastructure's `AddInfrastructure(configuration)` using the `DefaultConnection` connection string.",
+            "\n1. Change the entity and its configuration within the role rules of the read-first standards.\n2. If the schema changes, create a **new** migration:"
+          ]
+        }
+      ]
+    }
+  ]
+}

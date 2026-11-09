@@ -1,0 +1,716 @@
+{
+  "unit": "P0002-L1-P016",
+  "batch_input_sha256": "5b0b373a0fe1d93c84809387c2286522da8df9eb033e89c15274f50ea6705a6a",
+  "reviews": [
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-017",
+        "name": "Respect server retry guidance",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/httpclient-factory/SKILL.md#429 and Retry-After",
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Retry-After"
+        ],
+        "normalized_policy": "When a dependency supplies Retry-After or equivalent rate-limit guidance, respect it where appropriate and do not retry indefinitely or aggressively.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-017",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0055",
+        "primary/L1/constraints.jsonl/RULE-L1-0488"
+      ],
+      "boundary_analysis": "Where-appropriate server guidance versus aggressive independent schedule captured; policy-support condition does not imply retry authorization on unsafe operations.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              26,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "- Retry only when repeating the operation is safe; never automatically retry state-changing operations without idempotency or another concrete duplicate-prevention mechanism.\n- Default: respect `Retry-After` or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively.\n- Use fallback only when the fallback result is semantically acceptable; never hide correctness failures behind convenient default values."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "72ea93f5509a0d70b95962fdb2f43cdc34320714634c5f1a288e6c7a42866d07",
+          "inspected_ranges": [
+            [
+              87,
+              88
+            ]
+          ],
+          "context_quotes": [
+            "\nPer-request `HttpClient`; mandating one client model everywhere; retries on unsafe operations without idempotency analysis; unbounded retries; leaking `HttpResponseMessage`; ignored cancellation; dynamic tokens in shared default headers; mapping every upstream failure to one status; resilience pipelines added without understanding their behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "7ea3130b9cc8bdaaffc5b8f3c0b61207461e566c02985d6531cdd6d40a8dd2c6",
+          "inspected_ranges": [
+            [
+              18,
+              29
+            ],
+            [
+              39,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "- **Timeouts** — set attempt and total-operation timeouts from real latency requirements, not example numbers.\n- **Retry** — plausibly transient failures only: selected network failures, temporary unavailability, rate limiting when retry is allowed, transient provider-specific database failures. Never validation errors, authentication/authorization failures, permanent `404`, deterministic business rejection, or non-idempotent operations without duplicate prevention. Ask: if the first attempt succeeded remotely but the response was lost, what does a resend do? Do not invent a client-side `Idempotency-Key` unless the remote service supports it.\n- **Retry-After** — prefer the server's guidance when the policy supports it instead of an independent aggressive schedule.\n- **Circuit breaker** — when repeated calls to a failing dependency add load or latency; give it operational visibility in production; skip it without a repeated-failure scenario.\n- **Fallback** — acceptable examples: stale cached read data where staleness is explicitly fine, optional enrichment omitted when its service is down. Unacceptable: \"payment provider unavailable → pretend payment succeeded\".\n- **Hedging** — parallel or delayed duplicate attempts, only for operations safe to run several times (typically idempotent reads against interchangeable endpoints); never writes by default.\n- **Inbound rate limiting** — ASP.NET Core rate limiting protects this API and is separate from outbound resilience; rejected requests get `429` with `Retry-After` when useful (`http-api`).\n\n## Database operations\n\nDo not wrap normal ORM operations in a generic application-level retry pipeline; prefer the provider's own execution strategy and handle transaction/retry interaction per the persistence knowledge skill. HTTP retry policies are not database policies.\n",
+            "\n| Scenario | Consider |\n| --- | --- |\n| External I/O | bounded execution time |\n| Safe transient HTTP failure | retry |\n| Unsafe write | no retry unless duplicate-safe |\n| `429` from dependency | honor `Retry-After` |\n| Repeated dependency outage | circuit breaker |\n| Optional data unavailable | explicit fallback |\n| Latency-sensitive idempotent read | hedging after measurement |\n| Database transient faults | provider execution strategy |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-018",
+        "name": "Fallback must preserve acceptable semantics",
+        "related_groups": [
+          "governance-product"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Fallback"
+        ],
+        "normalized_policy": "Use fallback only when the fallback result is semantically acceptable; do not hide correctness failures behind convenient default values.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-018",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0056",
+        "primary/L1/constraints.jsonl/EXTRA-L1-0094"
+      ],
+      "boundary_analysis": "Semantically acceptable fallback and explicit cache outage choice (source/request failure/stale) already registered. Payment-success counterexample illustrates correctness rather than a separate finance-domain rule.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Default: respect `Retry-After` or equivalent rate-limit guidance where appropriate; never retry indefinitely or aggressively.\n- Use fallback only when the fallback result is semantically acceptable; never hide correctness failures behind convenient default values.\n- Caller cancellation is not a transient dependency failure: never retry it or convert it into repeated outbound attempts."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/aspnet-error-handling/SKILL.md",
+          "sha256": "9492da6a45b67efe54dcf87c2fa5836ae06d92c99a0646f8a30fafc8e47a2957",
+          "inspected_ranges": [
+            [
+              79,
+              88
+            ],
+            [
+              96,
+              98
+            ]
+          ],
+          "context_quotes": [
+            "\nCatch only to recover, translate into a meaningful abstraction-level outcome, perform a defined fallback, add context while preserving the original exception, or run required cleanup. For external services, translate or retry at the implementation-layer boundary when meaningful; otherwise let the failure propagate. Never swallow:\n\n```csharp\ntry { await service.ProcessAsync(cancellationToken); }\ncatch (Exception) { }                                  // never\n\ncatch (Exception ex) { logger.LogError(ex, \"Failed\"); throw; }   // redundant when the global handler logs\n```\n",
+            "\nRaw exception messages to clients; inconsistent anonymous error objects; use-case code depending on HTTP status codes; `Result<T>` everywhere; exceptions for every negative branch; swallowed exceptions; catch/log/rethrow at every layer; duplicate logging; sensitive data in `ProblemDetails`; business rules only in request validators; Minimal API endpoint filters for validation in a Controller project.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "52bfd0e504b6160736fa461f5bac9977f68cc15fdf15ea3556ee6c66cae7d6c9",
+          "inspected_ranges": [
+            [
+              63,
+              65
+            ]
+          ],
+          "context_quotes": [
+            "\nUse cases keep their normal repository/commit-boundary flow; coordinate invalidation through an abstraction when it is part of the use-case semantics instead of bypassing repositories. Decide whether a cache failure falls back to the source, fails the request, or serves stale data.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/references/resilience.md",
+          "sha256": "7ea3130b9cc8bdaaffc5b8f3c0b61207461e566c02985d6531cdd6d40a8dd2c6",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ],
+            [
+              39,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "- **Circuit breaker** — when repeated calls to a failing dependency add load or latency; give it operational visibility in production; skip it without a repeated-failure scenario.\n- **Fallback** — acceptable examples: stale cached read data where staleness is explicitly fine, optional enrichment omitted when its service is down. Unacceptable: \"payment provider unavailable → pretend payment succeeded\".\n- **Hedging** — parallel or delayed duplicate attempts, only for operations safe to run several times (typically idempotent reads against interchangeable endpoints); never writes by default.",
+            "\n| Scenario | Consider |\n| --- | --- |\n| External I/O | bounded execution time |\n| Safe transient HTTP failure | retry |\n| Unsafe write | no retry unless duplicate-safe |\n| `429` from dependency | honor `Retry-After` |\n| Repeated dependency outage | circuit breaker |\n| Optional data unavailable | explicit fallback |\n| Latency-sensitive idempotent read | hedging after measurement |\n| Database transient faults | provider execution strategy |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "f58ae2aa847859891b80c6fa72f5f5f0a5a62427239f69bb29f4f742feb829f1",
+          "inspected_ranges": [
+            [
+              57,
+              59
+            ]
+          ],
+          "context_quotes": [
+            "- **Fail-open** — catch blocks that let privileged operations continue (authorization service failed → allow; token validation failed → continue anonymous but act privileged; permission lookup failed → permitted).\n- **Swallowed exceptions** — empty `catch (Exception) { }` or broad catches without deliberate fallback; security-relevant failures must not silently become success.\n- **Retry and idempotency** — retried state-changing operations can duplicate effects; caller cancellation is never a transient failure. Technique: `httpclient-factory`."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-019",
+        "name": "Caller cancellation is not a transient failure",
+        "related_groups": [
+          "api-errors-validation"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/resilience/SKILL.md#Cancellation"
+        ],
+        "normalized_policy": "Do not classify caller cancellation as a transient dependency failure or convert it into repeated outbound attempts.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-019",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0057",
+        "primary/L1/constraints.jsonl/RULE-L1-0477",
+        "primary/L1/constraints.jsonl/RULE-L1-0471"
+      ],
+      "boundary_analysis": "No caller-cancellation retry and intentional-outliving exception plus own/upstream timeout distinction explicit; no all-cancellation ban inferred for independent jobs.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "- Use fallback only when the fallback result is semantically acceptable; never hide correctness failures behind convenient default values.\n- Caller cancellation is not a transient dependency failure: never retry it or convert it into repeated outbound attempts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/http-api/SKILL.md",
+          "sha256": "face75a5f005829be7be05ed09dffaad19603efcb6b8e2e2aa43fc403607f032",
+          "inspected_ranges": [
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "- **503 Service Unavailable** — temporarily unable to serve (maintenance, a critical dependency unavailable for this operation, overload); include `Retry-After` when meaningful.\n- **504 Gateway Timeout** — as an intermediary, the upstream did not answer in time. Distinguish client cancellation, our own timeout, and upstream timeout; not every `TaskCanceledException` is a `504`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "72ea93f5509a0d70b95962fdb2f43cdc34320714634c5f1a288e6c7a42866d07",
+          "inspected_ranges": [
+            [
+              56,
+              58
+            ]
+          ],
+          "context_quotes": [
+            "\nPass the caller's token (`await httpClient.SendAsync(request, cancellationToken)`); use `CancellationToken.None` only when the operation intentionally outlives the request. Choose timeouts from the remote operation and the latency budget; with resilience pipelines, distinguish per-attempt from total-operation timeouts.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/security-scan/references/scan-layers.md",
+          "sha256": "f58ae2aa847859891b80c6fa72f5f5f0a5a62427239f69bb29f4f742feb829f1",
+          "inspected_ranges": [
+            [
+              58,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "- **Swallowed exceptions** — empty `catch (Exception) { }` or broad catches without deliberate fallback; security-relevant failures must not silently become success.\n- **Retry and idempotency** — retried state-changing operations can duplicate effects; caller cancellation is never a transient failure. Technique: `httpclient-factory`.\n- **Timeouts and resource exhaustion** — unbounded time, memory, rows, file size, request body, retries, parallel work; judge real exploitability before rating."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-020",
+        "name": "Cache keys identify the cached value safely",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/caching/SKILL.md#Cache Keys"
+        ],
+        "normalized_policy": "Cache keys must uniquely represent the cached value and include relevant user/tenant/context dimensions; avoid global keys for user- or tenant-specific data.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-020",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0059",
+        "primary/L1/constraints.jsonl/EXTRA-L1-0092",
+        "independent/L1/BLIND_FINDINGS.jsonl/BF-L1-0097"
+      ],
+      "boundary_analysis": "Relevant key dimensions and repeated-format centralization are separately registered; user dimension conditional on actual user specificity.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              33,
+              35
+            ]
+          ],
+          "context_quotes": [
+            "- Default: caching is not a default architectural requirement; introduce it only for a clear measured or reasoned need and choose the implementation by deployment, consistency, and staleness requirements.\n- Cache keys must uniquely represent the cached value and include the relevant user, tenant, locale, and query dimensions; never use global keys for user- or tenant-specific data.\n- Every cache entry must have a lifetime or another explicit invalidation strategy."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "52bfd0e504b6160736fa461f5bac9977f68cc15fdf15ea3556ee6c66cae7d6c9",
+          "inspected_ranges": [
+            [
+              46,
+              48
+            ],
+            [
+              59,
+              61
+            ],
+            [
+              71,
+              73
+            ]
+          ],
+          "context_quotes": [
+            "\n- Key dimensions: entity id, tenant, user (when genuinely user-specific), locale, relevant query/filter parameters. Centralize key construction once formats repeat.\n- Expiration from data semantics: change frequency, regeneration cost, acceptable staleness, memory footprint, behavior when the source is unavailable — not a universal default.",
+            "\nApply the policy through controller/action metadata. Cache authenticated or user-specific responses only when the key and policy isolate users and authorization context.\n",
+            "\nCaching by default; global keys for tenant/user data; mutable data cached indefinitely; cache technology in the domain model; use-case code depending on `HybridCache` without a deliberate decision; caching tracked ORM entities across commit boundaries; cache as authoritative persistence; Redis merely because caching exists.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-021",
+        "name": "Cache invalidation follows committed mutation semantics",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/caching/SKILL.md#Invalidation"
+        ],
+        "normalized_policy": "Invalidate/update cache entries only in a way consistent with successful underlying mutations; do not make cache state a second source of truth.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-021",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0061",
+        "primary/L1/constraints.jsonl/UNCERTAIN-L1-0001",
+        "primary/L1/constraints.jsonl/RULE-L1-0346"
+      ],
+      "boundary_analysis": "Successful-mutation consistency and deliberate pre-mutation invalidation permission already prior tension, not new discovery. Keep repository flow and abstraction for semantic invalidation separately covered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              35,
+              37
+            ]
+          ],
+          "context_quotes": [
+            "- Every cache entry must have a lifetime or another explicit invalidation strategy.\n- Invalidate or update cache entries only consistently with successful underlying mutations; the cache is never a second source of truth.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "52bfd0e504b6160736fa461f5bac9977f68cc15fdf15ea3556ee6c66cae7d6c9",
+          "inspected_ranges": [
+            [
+              48,
+              50
+            ],
+            [
+              63,
+              65
+            ],
+            [
+              71,
+              73
+            ]
+          ],
+          "context_quotes": [
+            "- Expiration from data semantics: change frequency, regeneration cost, acceptable staleness, memory footprint, behavior when the source is unavailable — not a universal default.\n- Invalidation strategies: remove affected keys after a successful mutation, short TTL with tolerated staleness, tag/group invalidation, versioned keys. Invalidating before the mutation is known to succeed must be a deliberate choice.\n",
+            "\nUse cases keep their normal repository/commit-boundary flow; coordinate invalidation through an abstraction when it is part of the use-case semantics instead of bypassing repositories. Decide whether a cache failure falls back to the source, fails the request, or serves stale data.\n",
+            "\nCaching by default; global keys for tenant/user data; mutable data cached indefinitely; cache technology in the domain model; use-case code depending on `HybridCache` without a deliberate decision; caching tracked ORM entities across commit boundaries; cache as authoritative persistence; Redis merely because caching exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "5cc45407429c534fe1dc053f7fffa2e1392f5150e10321ec1025838316f44b65",
+          "inspected_ranges": [
+            [
+              43,
+              45
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen relevant check commit behavior, destructive data changes, raw SQL parameterization, authorization, input trust boundaries, secrets, sensitive logging, concurrency, migrations (`persistence.workflow`, including the seed co-change step), and cache consistency.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "938608876a89b85aa74c7530ebdab4fe55d0baec5d987331ad481694e1a1d778",
+          "inspected_ranges": [
+            [
+              89,
+              91
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Bulk operations** — `ExecuteUpdateAsync`/`ExecuteDeleteAsync` run directly against the database and bypass change tracking; do not mix them casually with tracked entities for the same rows; understand their transaction semantics.\n- **Transactions** — when the frame's Unit of Work rule allows an explicit transaction (several operations or commits that must be atomic), use `await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);` … `await tx.CommitAsync(cancellationToken);`. EF transaction APIs do not solve distributed transactions."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-022",
+        "name": "Structured configuration uses typed options",
+        "related_groups": [
+          "security"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/configuration/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Prefer strongly typed options for structured service configuration and validate settings at startup when missing/invalid values prevent correct or secure operation; avoid scattering string-based IConfiguration lookups.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-022",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0062",
+        "primary/L1/constraints.jsonl/RULE-L1-0378",
+        "independent/L1/BLIND_FINDINGS.jsonl/BF-L1-0103"
+      ],
+      "boundary_analysis": "Typed options/essential startup validation and direct-access composition/provider/registration exceptions prior. Explicitly reread configuration lines35..63: table52..54 retains Snapshot/Monitor/named-options hypotheses U0008..10; generic options requirement does not establish those selection constraints. No resolution from canonical wording alone.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-L1-U0008",
+        "CIS-L1-U0009",
+        "CIS-L1-U0010"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              39,
+              41
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: use strongly typed options for structured service configuration, validated at startup when missing or invalid values prevent correct or secure operation; avoid scattering string-based configuration lookups through services.\n- Default: use constructor injection for required dependencies; avoid service-locator and property-injection patterns."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/2-technology/backend-platform.md",
+          "sha256": "36c8feada89cf40ccc17cbcc0438c9c8fdced6006ffa24807378747a36fa1055",
+          "inspected_ranges": [
+            [
+              30,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "- Logging abstraction: `ILogger<T>` with message templates.\n- Strongly typed options: `IOptions<T>` bound with `AddOptions<T>().Bind(...)`, validated with `ValidateDataAnnotations()` or `Validate(...)` and `ValidateOnStart()`; scattered string lookups mean `IConfiguration[\"...\"]`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/configuration/SKILL.md",
+          "sha256": "176901e833f7bd02728290fe5619e47ed73eedcd1e6eab2b985a2efd2e934702",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              75,
+              76
+            ]
+          ],
+          "context_quotes": [
+            "\nRules: typed-options rule (`.claude/rules/0-core/backend-code.md`), secrets and fail-visibly rules (`.claude/rules/0-core/security.md`). Direct `IConfiguration` access is normal in the composition root, configuration-provider setup, and infrastructure registration; the problem is ordinary services parsing keys.\n",
+            "\nServices reading string keys from `IConfiguration`; secrets in committed settings files; `Configure<T>(section)` without validation for settings the app cannot run without; copying example numbers into production configuration."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dependency-injection/SKILL.md",
+          "sha256": "3139f3887abf763d2d2383175101f2b0890e220e6cbf223d3811cd096a74fc19",
+          "inspected_ranges": [
+            [
+              68,
+              70
+            ]
+          ],
+          "context_quotes": [
+            "- **Convention scanning** — only when registration volume creates real boilerplate; scan the assembly that owns the services (`scan.FromAssemblyOf<IOrderService>()`), not just the entry-point assembly.\n- **Factory delegate** — runtime selection: `services.AddScoped<IPaymentProcessor>(sp => ... ActivatorUtilities.CreateInstance<StripeProcessor>(sp) ...)`, throwing for unknown configuration values.\n- **Options** — `AddOptions<T>().BindConfiguration(...).ValidateDataAnnotations().ValidateOnStart()` (see `configuration`)."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-023",
+        "name": "Cache entries have explicit expiration or invalidation semantics",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/caching/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Every cache entry must have a lifetime or another explicit invalidation strategy.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-023",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0060",
+        "primary/L1/constraints.jsonl/RULE-L1-0343",
+        "primary/L1/constraints.jsonl/RULE-L1-0344"
+      ],
+      "boundary_analysis": "Lifetime OR explicit invalidation retained, semantically determined expiration incl source unavailability and conditional tolerated-staleness short TTL already prior; no universal TTL requirement invented.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              34,
+              36
+            ]
+          ],
+          "context_quotes": [
+            "- Cache keys must uniquely represent the cached value and include the relevant user, tenant, locale, and query dimensions; never use global keys for user- or tenant-specific data.\n- Every cache entry must have a lifetime or another explicit invalidation strategy.\n- Invalidate or update cache entries only consistently with successful underlying mutations; the cache is never a second source of truth."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "52bfd0e504b6160736fa461f5bac9977f68cc15fdf15ea3556ee6c66cae7d6c9",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ],
+            [
+              47,
+              50
+            ],
+            [
+              71,
+              73
+            ]
+          ],
+          "context_quotes": [
+            "\nRules: caching need, keys, lifetime, and invalidation (`.claude/rules/0-core/backend-code.md` § Caching); cache technology stays out of the domain model and behind deliberate abstractions (`.claude/rules/1-architecture/roles.md`); a distributed cache is a Reserved infrastructure category. Define consistency first: how stale may data become, and how is it invalidated?\n",
+            "- Key dimensions: entity id, tenant, user (when genuinely user-specific), locale, relevant query/filter parameters. Centralize key construction once formats repeat.\n- Expiration from data semantics: change frequency, regeneration cost, acceptable staleness, memory footprint, behavior when the source is unavailable — not a universal default.\n- Invalidation strategies: remove affected keys after a successful mutation, short TTL with tolerated staleness, tag/group invalidation, versioned keys. Invalidating before the mutation is known to succeed must be a deliberate choice.\n",
+            "\nCaching by default; global keys for tenant/user data; mutable data cached indefinitely; cache technology in the domain model; use-case code depending on `HybridCache` without a deliberate decision; caching tracked ORM entities across commit boundaries; cache as authoritative persistence; Redis merely because caching exists.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "L1",
+      "pass_id": 2,
+      "unit": "P0002-L1-P016",
+      "canonical_policy": {
+        "id": "RUN-024",
+        "name": "C# file and async naming conventions remain conventional",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/coding-style.md#Files and Namespaces",
+          "templates/v2-baseline/.claude/rules/coding-style.md#Async Naming"
+        ],
+        "normalized_policy": "For new C# code, prefer file-scoped namespaces when consistent with the project, normally keep one primary top-level type per matching file, and use the Async suffix for Task/ValueTask-returning methods unless an existing or framework contract makes that inappropriate.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "RUN-024",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/L1/constraints.jsonl/RULE-L1-0067",
+        "primary/L1/constraints.jsonl/EXTRA-L1-0191",
+        "independent/L1/BLIND_FINDINGS.jsonl/BF-L1-0007",
+        "independent/L1/BLIND_FINDINGS.jsonl/BF-L1-0069"
+      ],
+      "boundary_analysis": "Contract naming exceptions and local nested/private supporting-type permission registered; editor async-modifier match differs from awaitable-return prose and checker API-shape heuristic broader than technology semantics already independent hypotheses.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/architecture/clean-architecture/layout.md",
+          "sha256": "24d9b02adfb7890417e1653c6bed7f368102f140f5cb7d5aeb73b4436c30b3dd",
+          "inspected_ranges": [
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "\nSupporting type roles should be clear from the type name, its directory, or both. Useful suffixes: `Service` (use-case orchestration), `Dto`, `Request`/`Response` (Application operation contracts; HTTP contracts belong to Api), `Result`/`Outcome`, `Validator`, `Rules`/`Policy` (decision or workflow rules), `Factory`, `Mapper`, `Adapter`. Prefer `TaskWorkflowRules` or `TaskWorkflowService` over an ambiguous `TaskWorkflow`. Add responsibility subdirectories only when a feature accumulates enough heterogeneous types; avoid generic `Models`/`Helpers`/`Common`/`Utils` buckets.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/0-core/backend-code.md",
+          "sha256": "23794ecc93cad051c586d5477bf9b6a0ede505436fc198ed5bba985af672e8b6",
+          "inspected_ranges": [
+            [
+              47,
+              49
+            ]
+          ],
+          "context_quotes": [
+            "- Default: follow the repository's conventions and `.editorconfig`; use modern C# when it improves clarity, but do not mechanically modernize working code.\n- Default: for new code prefer file-scoped namespaces when consistent with the project, keep one primary top-level type per matching file, and use the `Async` suffix for task-returning (awaitable) methods unless an existing or framework contract makes that inappropriate.\n- Do not perform style-only rewrites outside the requested change unless explicitly asked."
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/2-technology/backend-platform.md",
+          "sha256": "36c8feada89cf40ccc17cbcc0438c9c8fdced6006ffa24807378747a36fa1055",
+          "inspected_ranges": [
+            [
+              25,
+              27
+            ]
+          ],
+          "context_quotes": [
+            "\n- Sync-over-async: `.Result`, `.Wait()`, `.GetAwaiter().GetResult()`. Asynchronous return types for the `Async` suffix: `Task`, `Task<T>`, `ValueTask`, `ValueTask<T>`; `ValueTask` is the allocation-reducing return type.\n- Cancellation tokens: `CancellationToken` parameters; at the entry point, `HttpContext.RequestAborted` (bound automatically for controller actions)."
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-instructions.mjs",
+          "sha256": "8171ce3941aba33d75a0b609d9d0c8a3f8761ad574b8a709209be6c219c55663",
+          "inspected_ranges": [
+            [
+              165,
+              176
+            ]
+          ],
+          "context_quotes": [
+            "\nconst API_SHAPES = [\n  /\\bI[A-Z][a-z0-9]+[A-Za-z0-9]*\\b/g,\n  /\\b[A-Za-z_][A-Za-z0-9_]*<[A-Za-z0-9_, ]+>/g,\n  /\\[[A-Z][a-z]+[A-Za-z0-9]*(?:\\([^)\\]]*\\))?\\](?!\\()/g,\n  /(?<![\\w.])\\.[A-Z][a-z][A-Za-z0-9]*(?:\\(\\))?/g,\n  /\\b[A-Za-z_][A-Za-z0-9_]*\\(\\)/g,\n  /\\b[A-Z][A-Za-z0-9]*\\.[A-Z][a-z][A-Za-z0-9]*\\b/g,\n  /\\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+[A-Za-z0-9]*\\b/g,\n  /\\b[a-z][a-z0-9]*[A-Z][A-Za-z0-9]*\\b/g,\n];\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "9675bfdad6a7b64fe4e8a74eded30e58f8b69d4c22ea773d70d694a3bfcfba3f",
+          "inspected_ranges": [
+            [
+              60,
+              63
+            ]
+          ],
+          "context_quotes": [
+            "- Keep implementation details non-public when they are not part of the project's public API; use `sealed` when it communicates that a type is not designed for inheritance, not as a speculative JIT optimization.\n- Standard .NET naming: PascalCase for types, methods, properties, and public members; camelCase for parameters and locals; meaningful names over abbreviations; private-field naming per repository convention.\n- Small private or nested supporting types may stay with their owning type when that improves locality; do not reorganize a file only to satisfy a preferred member order.\n- Prefer immutability when it models the domain naturally, not where controlled mutation is simpler."
+          ]
+        },
+        {
+          "path": "output/template/.editorconfig",
+          "sha256": "391a133afadc2f8e3763ef367b7da32dfaa61c8bf61567d963744b0d75f1c76a",
+          "inspected_ranges": [
+            [
+              20,
+              26
+            ],
+            [
+              43,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "[*.cs]\n# Namespaces and usings\ncsharp_style_namespace_declarations = file_scoped:suggestion\ndotnet_sort_system_directives_first = true\ndotnet_separate_import_directive_groups = false\ncsharp_using_directive_placement = outside_namespace:suggestion\n# Unused or redundant using directives in changed files must be removed (verify workflow)",
+            "\n# Naming: PascalCase types and members, camelCase parameters and locals, I-prefixed interfaces\ndotnet_naming_symbols.types_and_members.applicable_kinds = class, struct, interface, enum, delegate, method, property, event\ndotnet_naming_style.pascal_case.capitalization = pascal_case\ndotnet_naming_rule.types_and_members_pascal.symbols = types_and_members\ndotnet_naming_rule.types_and_members_pascal.style = pascal_case\ndotnet_naming_rule.types_and_members_pascal.severity = suggestion\n\ndotnet_naming_symbols.interfaces.applicable_kinds = interface\ndotnet_naming_style.i_prefix.required_prefix = I\ndotnet_naming_style.i_prefix.capitalization = pascal_case\ndotnet_naming_rule.interfaces_i_prefix.symbols = interfaces\ndotnet_naming_rule.interfaces_i_prefix.style = i_prefix\ndotnet_naming_rule.interfaces_i_prefix.severity = suggestion\n\ndotnet_naming_symbols.parameters_and_locals.applicable_kinds = parameter, local\ndotnet_naming_style.camel_case.capitalization = camel_case\ndotnet_naming_rule.parameters_and_locals_camel.symbols = parameters_and_locals\ndotnet_naming_rule.parameters_and_locals_camel.style = camel_case\ndotnet_naming_rule.parameters_and_locals_camel.severity = suggestion\n\n# Async methods end with \"Async\" unless a framework or existing contract prevents it\ndotnet_naming_symbols.async_methods.applicable_kinds = method\ndotnet_naming_symbols.async_methods.required_modifiers = async\ndotnet_naming_style.async_suffix.required_suffix = Async\ndotnet_naming_style.async_suffix.capitalization = pascal_case\ndotnet_naming_rule.async_methods_suffix.symbols = async_methods\ndotnet_naming_rule.async_methods_suffix.style = async_suffix\ndotnet_naming_rule.async_methods_suffix.severity = suggestion"
+          ]
+        }
+      ]
+    }
+  ]
+}

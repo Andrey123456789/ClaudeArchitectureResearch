@@ -1,0 +1,68 @@
+# M B011 — skills docker (EXC-006 lineage), dotnet-testing (EXC-012 lineage)
+1 CD ARC-002~ m=D k=P c=M | Docker concerns stay out of Domain/Application (ARC-002); remainder: reproducible images, configuration external to the image, platform health probes when practical (container technique).
+  e: when practical
+  x: reproducible images with external configuration; platform health-probe capabilities preferred
+  s: An image built per environment with that environment's appsettings copied in: allowed by the oracle; M's default keeps configuration external.
+2 CO DEP-019 m=D | Keep build tooling out of production runtime images (DEP-019 runtime image rather than SDK).
+3 XP m=D c=M rel=DEP-019 | Use a multi-stage build for ASP.NET Core Dockerfiles: DEP-019 requires a runtime image, which a single-stage image over prebuilt output also satisfies.
+  s: A Dockerfile copying CI-published output into the aspnet runtime image in one stage satisfies DEP-019; M's default is multi-stage.
+4 XP m=D c=M | Copy only existing restore-relevant build files; copy project files explicitly; avoid wildcard tricks flattening multi-project structure (Dockerfile technique).
+  s: COPY **/*.csproj with a flattening trick that works for the current layout: allowed by the oracle; M's guidance avoids it.
+5 XP m=D c=M | Copy project/build files before the source tree for restore caching; keep the copy section current; correctness of the restored graph over caching.
+  s: A Dockerfile copying the whole tree before restore (no layer caching): allowed by the oracle; M's default orders copies for caching.
+6 CO DEP-019 m=D | ASP.NET runtime image for ASP.NET Core apps, .NET runtime image for workers (DEP-019).
+7 XP m=D c=M rel=DEP-019 | Use the built-in non-root user of modern .NET images when it fits: DEP-019 only forbids switching to root to bypass filesystem problems.
+  e: when it fits
+  s: An image keeping the default root user (no switch to bypass permissions): DEP-019 satisfied; M's default uses the non-root app user.
+8 CO DEP-019 m=M | Fix ownership/permissions of writable directories instead of switching users (DEP-019).
+9 XP m=D c=M rel=SEC-002,RUN-022 | Pass environment-specific configuration at runtime (container technique; secrets handled separately).
+  s: Environment name baked in through a build argument: allowed by the oracle for non-secret values; M passes it at runtime.
+10 CO SEC-001 m=MN | Real credentials never in Dockerfiles, committed Compose files, visible build arguments or copied production appsettings (SEC-001).
+11 CO SEC-002 m=D | Platform/container secret mechanisms where appropriate (SEC-002).
+12 CO SEC-002~ SEC-001~ m=M c=M | Local Compose passwords in an ignored .env or another local developer mechanism (appropriate local secret mechanism; nothing committed).
+13 CO GOV-013 m=MN | Only infrastructure the project uses in Compose (GOV-013).
+14 XP m=D c=M rel=API-019,DEP-019 | Health endpoints via ASP.NET Core health checks with orchestrator HTTP probes; do not assume curl/wget/shell in runtime images; verify or add a probe mechanism (EXC-006/EXC-010 technique).
+  s: A Compose healthcheck calling curl in an image without curl: not addressed by the oracle; M's guidance requires verifying the probe executable.
+15 XP m=D c=M rel=API-019,DEP-019 | Do not assume curl/wget/shell utilities in runtime images; verify an in-container health command's executable or add a probe (Codex wording).
+  s: As for FG-M-2740606537.
+16 XP m=D c=M | Static Angular deployment: Node build stage, serve assets with the selected hosting strategy (Nginx optional), API base URLs compatible with the deployment (container technique).
+  s: Serving the Angular build from the ASP.NET Core app instead of a Node build stage: allowed by the oracle; M's default describes the separate build stage.
+17 XP m=D c=M | .dockerignore exclusions (.git, bin, obj, node_modules ...), not excluding files restore/build or image-run tests need (container technique).
+  s: No .dockerignore at all: allowed by the oracle; M's guidance asks for one.
+18 CD RUN-001~ DEP-019~ m=D k=P c=M | Standard supported runtime images first; Alpine/chiseled/trimming/Native AOT only when justified (RUN-001 no specialized optimization without reason); remainder: verify globalization, native dependencies, reflection and diagnostics for specialized images.
+  x: verification of globalization, native dependencies, reflection and diagnostics when using specialized images
+  s: A justified switch to an Alpine image without checking ICU/globalization behavior: RUN-001 satisfied (reason exists); M requires the runtime checks.
+19 CD WF-006~ WF-004~ m=M k=W c=M | Docker-change verification: build the image, verify startup, ports/configuration, non-root behavior and probe integration, review the image for accidental secrets/files, run meaningful tests (WF-006 runtime smoke, WF-004 accidental artifacts); image build and non-root/probe checks are not entailed.
+  x: build the image and verify non-root behavior and health-probe integration for Docker changes
+  s: A Dockerfile change verified only by building the app (not the image): WF-006 is DEFAULT for substantial composition changes; M requires building and checking the image.
+20 CO GOV-012 m=D | Proportional test infrastructure (GOV-012).
+21 XP m=D c=M rel=TST-003 | Arrange/Act/Assert as the default test structure (EXC-012 test technique).
+  s: Given/When/Then-style tests without AAA phases: allowed by the oracle; M's default is AAA.
+22 CO TST-005~ m=D c=M | Test code simpler than the behavior it verifies; clarity over line count (TST-005 explicit declarative tests).
+23 CO TST-005 m=D | A longer explicit case table beats a shorter algorithmic test (TST-005).
+24 XP m=D c=M rel=TST-003 | Test-double guidance: fakes/stubs/mocks when clearer, not mocking every collaborator mechanically, not forbidding mocks of project-owned abstractions (EXC-012 mock-choice technique).
+  s: A suite mocking every collaborator of every class: not prohibited by TST-003 as such; M's guidance advises against it.
+25 CO TST-003 TST-002~ TST-006~ m=D | Application Service unit tests with boundary doubles asserting results; interaction checks only when contractual; integration tests when EF/DI/serialization/HTTP behavior matters.
+26 CO TST-004 | Testing environment uses isolated resources so integration tests never reach Development/Production databases (TST-004).
+27 CO TST-007 m=D c=M | Actual provider when provider behavior matters (Testcontainers an option); lighter isolated database only when fidelity does not matter, stating the trade-off; InMemory only for narrow non-relational tests (TST-007).
+28 CO TST-008 | Known-state strategies (reset, transactions, minimal seeding, unique identifiers) for TST-008.
+29 CO TST-011 m=MN | No one-test-per-trivial-Add/Get repository tests (TST-011 low-value tests).
+30 CD RUN-004~ TST-004~ m=D k=P c=M | Inject TimeProvider (RUN-004) and control it in tests (TST-004 determinism); remainder: FakeTimeProvider as the named control mechanism.
+  x: FakeTimeProvider used to control time in tests
+  s: A hand-written TimeProvider test subclass satisfies RUN-004/TST-004; M's technique names FakeTimeProvider.
+31 XP m=D c=M rel=TST-004 | Keep slow or unreliable external-system tests separate from ordinary fast runs (test organization not in the oracle).
+  s: Sandbox integration tests in the same default test run as unit tests: allowed by the oracle; M separates them.
+32 CO TST-004 m=M | External boundaries via fakes, stub handlers or local fake servers; a sandbox only when the test explicitly targets that integration (isolation from uncontrolled external systems).
+33 CO GOV-012~ GOV-013~ TST-008~ m=D c=M | Explicit, minimal test data; builders/fixtures only when repeated setup becomes hard to read; no generic test-data framework for a few objects (simplicity, known state).
+34 CO TST-009 m=D | Regression test reproduces the failure before and passes after the fix; none for non-recurring or covered problems (TST-009).
+35 CO TST-010 | Probe-to-maintained-test conversions (TST-010; techniques are examples).
+36 XW m=M c=M rel=TST-010 | Review a temporary probe before keeping it as a permanent test rather than committing it as-is: TST-010 requires maintained coverage, not a review of the converted probe.
+  s: A probe script committed unchanged as a permanent test: satisfies TST-010's maintained coverage; M requires reviewing it first.
+37 CO TST-011 m=MN | Coverage is diagnostic, not a target (TST-011).
+38 CO GOV-013 DEP-001~ m=MN | No snapshot-testing library by default (GOV-013, DEP-001).
+39 CO TST-003~ m=SN st=W | Avoid assertions that merely repeat the implementation (TST-003).
+40 CO TST-007~ GOV-013~ m=SN c=M | Avoid Testcontainers when no provider fidelity is required (optional per TST-007; no speculative infrastructure).
+41 XP m=SN c=M rel=TST-003,TST-011 | Avoid assertion-free tests unless the behavior is explicitly 'does not throw'.
+  e: explicit 'does not throw' behavior
+  s: A smoke test that only calls a method without assertions: not addressed directly by the oracle; M advises against it.
+42 CO TST-004~ m=SN st=W | Avoid arbitrary Task.Delay to make timing-sensitive tests pass (TST-004 determinism).

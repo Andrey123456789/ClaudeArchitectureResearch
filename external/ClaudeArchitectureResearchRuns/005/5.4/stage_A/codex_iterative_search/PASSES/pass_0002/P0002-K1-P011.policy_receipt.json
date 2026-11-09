@@ -1,0 +1,1439 @@
+{
+  "unit": "P0002-K1-P011",
+  "batch_input_sha256": "e8aefbce5f3bfd4ffbf6d249bf7adfec8cf6df84389b0f90504d488615eb623a",
+  "reviews": [
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-001",
+        "name": "NUnit is default backend test framework",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Framework",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Use NUnit as the default .NET automated test framework; do not introduce a second framework without a concrete reason.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0136"
+      ],
+      "boundary_analysis": "Established-alternative exception is explicit (BF0172); detector still warns fixed alternative names even when established. Already registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/capabilities/backend-testing/CONTRACT.md",
+          "sha256": "2bfd693689adb1a0a2c1027fac64d1bf1947de7fdc2bee53692b8515c2623dfb",
+          "inspected_ranges": [
+            [
+              4,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot type: required leaf\n- Cardinality: exactly one implementation\n- Binds: architecture (test-project placement and references belong to the frame)\n\nThe framework-neutral testing standard (`.claude/rules/backend-tests/testing.md`) stays unchanged when the implementation is replaced. The knowledge facet keeps the shared skill name `dotnet-testing`.\n\n## Required items\n\n| Item | An implementation must provide |\n|---|---|\n| `framework-standard` | The default-framework standard for backend tests |\n| `integration-host-binding` | How integration tests host the API (declared property) |\n| `knowledge` | The `dotnet-testing` knowledge facet |\n| `test-scaffold` | A scaffolding facet for creating test projects |\n| `framework-consistency-check` | A deterministic check that flags additional test frameworks |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/capabilities/backend-testing/nunit/MODULE.md",
+          "sha256": "a255335ba10f7fed5c095af87b2c6f6829f5b5c2108cf1de6c6ff5caaf37152e",
+          "inspected_ranges": [
+            [
+              4,
+              10
+            ],
+            [
+              24,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "\n- Slot: backend-testing\n- Implementation: nunit\n- Variant: —\n- Names: NUnit, nunit\n- Binds: architecture — test projects follow the frame's placement and reference rules (`.claude/rules/backend-tests/test-projects.md`).\n",
+            "|---|---|\n| `framework-standard` | STD `test-framework.md` |\n| `integration-host-binding` | DEC capability selection (`WebApplicationFactory<Program>`); KNW `dotnet-testing` |\n| `knowledge` | KNW `dotnet-testing` |\n| `test-scaffold` | WF `test-setup.md` |\n| `framework-consistency-check` | ENF `test-framework.cjs` |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend-tests/test-framework.md",
+          "sha256": "f061f818c113eb4c672dcda24b005f7bdbde8414945267dbb00e3b96dbfb33f2",
+          "inspected_ranges": [
+            [
+              9,
+              11
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: NUnit is the .NET automated test framework. In an established project that deliberately uses another framework, follow that convention; do not introduce a second test framework without a concrete reason.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/facets/test-framework.cjs",
+          "sha256": "2a6c4eb4603af3fc1bb6961675a9ca2dc9ab06a037a05616d7a62aa9d03996eb",
+          "inspected_ranges": [
+            [
+              7,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "const OWNER = '.claude/rules/backend-tests/test-framework.md';\n// Test frameworks other than NUnit; introducing one needs a concrete reason.\nconst OTHER_FRAMEWORKS = /^(xunit(\\.v3)?|xunit\\.core|mstest|mstest\\.testframework|mstest\\.testadapter|tunit)$/i;\n\nfunction checkProject(ctx, project) {\n  if (ctx.roleOf(project.name).kind !== 'test') return [];\n  return project.packages\n    .filter(pkg => OTHER_FRAMEWORKS.test(pkg.id))\n    .map(pkg => lib.finding('warn', project.rel, `test project uses \"${pkg.id}\" in addition to or instead of NUnit`, OWNER));\n}\n\nfunction checkCentralPackages(ctx, rel, packages) {\n  return packages\n    .filter(pkg => OTHER_FRAMEWORKS.test(pkg.id))\n    .map(pkg => lib.finding('warn', rel, `central version for additional test framework \"${pkg.id}\"`, OWNER));\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              6,
+              8
+            ],
+            [
+              14,
+              20
+            ]
+          ],
+          "context_quotes": [
+            "\n1. Create each useful test project from the NUnit template beside the production projects:\n",
+            "\n2. Under Central Package Management, move the template's package versions into `Directory.Packages.props` and keep the project references versionless (`add-dependency` resolves current stable versions): `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, and for integration tests `Microsoft.AspNetCore.Mvc.Testing`. Remove template packages the project does not use.\n3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4).\n4. Integration tests: expose `Program` to `WebApplicationFactory<Program>` when top-level statements hide it (e.g. `public partial class Program;` in Api) and configure an isolated `Testing` environment.\n5. Testcontainers or other real-provider infrastructure only when provider fidelity requires it.\n6. Build and run `dotnet test` to confirm the projects are discovered.\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "| persistence (required leaf) | ef-core, provider variant sqlserver | `ef-core` | Default persistence: EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); provider-specific concerns stay out of Application and Domain. Migration mechanism: EF Core migrations. Seeding mechanism: dedicated Development seeder. String comparison follows database collation (SQL Server default collations are case-insensitive); observable semantics remain a product decision. Binds: architecture. |\n| backend-testing (required leaf) | nunit | `dotnet-testing` | NUnit; backend test projects beside production projects under `backend/` (layout default below); `WebApplicationFactory<Program>` is the ASP.NET Core integration-test baseline; Testcontainers is conditional. Binds: architecture. |\n| frontend (optional leaf) | angular | `angular` | Current stable Angular with compatible TypeScript/RxJS, standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material/CDK, Vitest. Not added by default: NgRx, Axios, Lodash, Bootstrap, Tailwind, or additional form/component/state libraries; use built-in Angular capabilities first and add extras only for a concrete need. |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-002",
+        "name": "Choose narrowest useful test level",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Test Level",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Choose the narrowest test level that meaningfully verifies the behavior; use integration tests when framework/persistence/HTTP wiring is the subject; no fixed unit/integration ratio is required.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0141"
+      ],
+      "boundary_analysis": "Narrow meaningful level, controlled doubles, no mechanical mocking/blanket mocking ban and targeted persistence tests already captured; no fixed ratio introduced.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: the narrowest test level that meaningfully verifies the behavior; integration tests when framework wiring, HTTP, persistence, serialization, or authentication is the subject. No fixed unit/integration ratio is required.\n- Tests must verify observable behavior, not implementation details: they survive internal refactoring, do not test private calls or exact internal call sequences, and do not reproduce the implementation's algorithm. Interaction verification is appropriate only when the interaction itself is the specified behavior."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "db066240e9cc0b10c671d9ff54464f9efccb58ca64ee9ec3c118767d5b7c31ff",
+          "inspected_ranges": [
+            [
+              128,
+              142
+            ]
+          ],
+          "context_quotes": [
+            "\nTemplate binding is escaped/sanitized by Angular. Investigate deliberate bypasses — `DomSanitizer.bypassSecurityTrustHtml`, `bypassSecurityTrustScript`, `bypassSecurityTrustResourceUrl`, `bypassSecurityTrustUrl`, `innerHTML` with untrusted content, direct DOM manipulation through `ElementRef.nativeElement`. Angular's `HttpClient` XSRF support (`withXsrfConfiguration`) only helps when the backend issues and validates the matching token.\n\n## Testing\n\nUse the workspace's configured runner (Vitest for new projects). Test meaningful component behavior, validation, data-access request mapping (`provideHttpClientTesting`, `HttpTestingController`), important route/auth behavior, and complex reactive state; do not test framework internals or duplicate the same behavior at every level. E2E tests (Playwright, when adopted) cover a small number of important user workflows unless broader coverage is required.\n\n## Performance\n\nDo not prematurely optimize: route lazy loading and sensible rendering/data access first; memoization, virtual scrolling (`@angular/cdk/scrolling`), custom change-detection work, and similar optimizations after identifying a real need.\n\n## Build-fix patterns\n\nTypical Angular failures: template compilation errors, invalid standalone `imports`, missing providers, route configuration errors, Signal/RxJS typing issues, Angular/TypeScript peer-version mismatches. Fix the missing standalone import or provider instead of adding an NgModule to work around a standalone configuration problem.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "a627c3b6b349c4996c7b2b0d917e0f8affe6eef35836662b870a409e7b1c1388",
+          "inspected_ranges": [
+            [
+              63,
+              81
+            ]
+          ],
+          "context_quotes": [
+            "\nDifferent versions map the same Application result into different HTTP contracts.\n\n## Breaking vs compatible changes\n\nCommonly breaking: removing a field clients may depend on, changing a field's meaning or type, changing required input, incompatible resource or workflow semantics, removing an endpoint, incompatible changes to documented HTTP behavior. Compilation success does not decide compatibility. Often compatible: an optional response field, a new endpoint, an optional backward-compatible query parameter, internal changes preserving the contract. Consider client-generation behavior when OpenAPI clients are used.\n\n## Deprecation\n\nDeprecation is a migration process, not merely an attribute: `[ApiVersion(\"1.0\", Deprecated = true)]` with `ReportApiVersions` advertises it; document the replacement, the migration period, and the removal timing (procedure: `development-workflow`).\n\n## OpenAPI\n\nGenerate separate or clearly grouped documents per supported version when clients need them (`swagger`); the documented version must match runtime routing and controller metadata. Version changes never override normal HTTP semantics (`http-api`).\n\n## Testing\n\nWhen versions coexist, test meaningful differences: version routing, version-specific response shapes, deprecated versions still operational during the support period, unsupported-version behavior, shared Application behavior consistent where intended. Do not duplicate identical tests per version.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              68,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nApply the policy through controller/action metadata. Never cache authenticated or user-specific responses unless the key and policy isolate users and authorization context.\n\n## Mutations and failures\n\nApplication Services keep their normal repository/Unit of Work workflow; coordinate required invalidation through an abstraction instead of bypassing repositories or `IUnitOfWork`. Decide whether a cache failure falls back to the source, fails the request, or returns stale data. Never cache tracked persistence entities across Unit of Work boundaries.\n\n## Testing\n\nTest caching when it affects observable correctness: stale entries invalidated after successful mutation, tenant/user key isolation, cache-miss fallback, outage behavior per the intended failure policy. Do not unit-test framework cache internals.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              60,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "\nGood unit-test candidates: non-trivial domain behavior that genuinely belongs to Domain, calculations, workflow/state transitions at the owning layer, validation logic, and Application orchestration with simple fakes or mocks when isolation gives useful feedback. Do not mock every collaborator mechanically, and do not forbid mocking project-owned abstractions when isolation helps.\n\nApplication Services can be tested by replacing repository and external-service abstractions with controlled doubles; assert the use-case result and meaningful side effects. \"Repository method X was called once\" is useful only when the interaction is part of the contract. When behavior depends heavily on persistence-technology semantics, transactions, DI wiring, serialization, or HTTP, prefer an integration test over reproducing the stack with mocks.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              227,
+              229
+            ]
+          ],
+          "context_quotes": [
+            "- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "e4706562d402c140de7a7d23fa223bb8cf5a835c80ee5c6753af0f17e08577fc",
+          "inspected_ranges": [
+            [
+              53,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nHealthy → success, unhealthy → non-success per the configured probe policy (`HealthCheckOptions.ResultStatusCodes` maps statuses); do not reuse business API status semantics mechanically for probes. Keep probe responses small; protect operator-facing detailed diagnostics with network or authorization controls instead of exposing connection strings, credentials, raw exceptions, or infrastructure topology.\n\n## Exposure\n\nProbes often must be reachable by infrastructure without user authentication. Choose exposure by topology: private network access, a dedicated management port, host restrictions, or authorization the probe infrastructure supports.\n\n## Performance\n\nProbes run frequently: avoid expensive queries, long external timeouts, large allocations, full workflows, and Error-level logs for every normal failed probe.\n\n## Testing\n\nTest health configuration the deployment relies on: live endpoint responds when healthy, readiness follows a required dependency, responses do not leak sensitive details, optional-dependency behavior matches the intended semantics. Do not test framework behavior the application does not customize.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "62204b98e58bc367d888490692c58445a26d47cfc7274cbc9cb390ec6cba002b",
+          "inspected_ranges": [
+            [
+              84,
+              96
+            ]
+          ],
+          "context_quotes": [
+            "\nConfigure stable headers (media types) on the client; apply per-request values such as dynamic access tokens to the specific request or through a handler, never by mutating shared `DefaultRequestHeaders` concurrently. Prefer `System.Net.Http.Json`/`System.Text.Json`, with explicit serializer options when the external contract differs from application defaults; never reuse Domain entities as remote API contracts to avoid mapping.\n\n## Testing\n\nA controlled `HttpMessageHandler` verifies method/path, headers, serialized payload, response mapping, and cancellation/failure behavior:\n\n```csharp\nvar client = new HttpClient(testHandler) { BaseAddress = new Uri(\"https://example.test/\") };\n```\n\nConstructing `HttpClient` directly in a focused test is fine; the lifetime rule concerns production code.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              45,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed.\n6. Add or update persistence/integration tests when provider behavior, mappings, constraints, or non-trivial queries changed (provider fidelity: `ef-core`, Testing).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              72,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nTest projects live beside production projects under `backend/`; create only useful ones:\n\n```text\nbackend/\n├── ProjectName.Application.Tests/   # application-service/use-case behavior -> Application (+ Domain)\n├── ProjectName.IntegrationTests/    # Api + Application + Infrastructure through the host -> Api\n├── ProjectName.Domain.Tests/        # optional: only for non-trivial Domain behavior -> Domain\n└── ProjectName.Infrastructure.Tests/ # optional: only for non-trivial Infrastructure behavior\n```\n\nA simple Domain of entities and enums needs no dedicated test project. Integration tests reference Api for `WebApplicationFactory<Program>` and exercise the other layers transitively. Test framework setup is the backend-testing facet's scaffolding step in `project-structure`."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-003",
+        "name": "Test behavior, not implementation details",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Behavior Over Implementation",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Tests should verify observable behavior and normally survive internal refactoring; avoid testing private calls or reproducing implementation algorithms.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0174"
+      ],
+      "boundary_analysis": "Absolute refactoring survival strengthens normally, with interaction-is-contract exception already registered. AAA optional comments and no-throw assertion-free exception also explicit in primary0139/0147.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "- Default: the narrowest test level that meaningfully verifies the behavior; integration tests when framework wiring, HTTP, persistence, serialization, or authentication is the subject. No fixed unit/integration ratio is required.\n- Tests must verify observable behavior, not implementation details: they survive internal refactoring, do not test private calls or exact internal call sequences, and do not reproduce the implementation's algorithm. Interaction verification is appropriate only when the interaction itself is the specified behavior.\n- Default: `WebApplicationFactory`-based integration tests when routing, model binding, middleware, authentication/authorization, dependency injection, repositories, the persistence technology, or database persistence is what the test must prove."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "db066240e9cc0b10c671d9ff54464f9efccb58ca64ee9ec3c118767d5b7c31ff",
+          "inspected_ranges": [
+            [
+              132,
+              134
+            ]
+          ],
+          "context_quotes": [
+            "\nUse the workspace's configured runner (Vitest for new projects). Test meaningful component behavior, validation, data-access request mapping (`provideHttpClientTesting`, `HttpTestingController`), important route/auth behavior, and complex reactive state; do not test framework internals or duplicate the same behavior at every level. E2E tests (Playwright, when adopted) cover a small number of important user workflows unless broader coverage is required.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "52dad0ef32dc17d1bbbb651ec2966e8c99469ae3c00d285826207a52067d11ea",
+          "inspected_ranges": [
+            [
+              96,
+              98
+            ]
+          ],
+          "context_quotes": [
+            "\nTest authorization behavior of important protected operations: unauthenticated → 401; authenticated without permission → 403; permitted → expected success; resource ownership rules; intended anonymous endpoints remain accessible. Verify observable behavior, not merely the presence of `[Authorize]`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              76,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nTest caching when it affects observable correctness: stale entries invalidated after successful mutation, tenant/user key isolation, cache-miss fallback, outage behavior per the intended failure policy. Do not unit-test framework cache internals.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              38,
+              58
+            ],
+            [
+              60,
+              64
+            ],
+            [
+              133,
+              135
+            ],
+            [
+              137,
+              139
+            ]
+          ],
+          "context_quotes": [
+            "\nArrange/Act/Assert is a useful default; comments are optional when the phases are obvious. Use the constraint model (`Assert.That(actual, Is...)`).\n\n## Explicit case tables\n\nExplicit cases (rule: `.claude/rules/backend-tests/testing.md`) are written as `[TestCase]` rows with the expected value as an argument, rather than `TestCaseSource` generators or computed expectations. A longer explicit table beats a shorter algorithmic test when it makes the business rules visible:\n\n```csharp\n[TestCase(TaskStatus.Created, TaskStatus.InProgress, true)]\n[TestCase(TaskStatus.Created, TaskStatus.Completed, false)]\n[TestCase(TaskStatus.InProgress, TaskStatus.Completed, true)]\npublic void IsTransitionAllowed_ReturnsExpected(TaskStatus current, TaskStatus target, bool expected)\n{\n    var actual = TaskWorkflowRules.IsTransitionAllowed(current, target);\n\n    Assert.That(actual, Is.EqualTo(expected));\n}\n```\n\nPrefer one observable scenario per test; multi-step tests fit when the sequence itself is the scenario (an entire workflow or a replace-set lifecycle).\n",
+            "\nGood unit-test candidates: non-trivial domain behavior that genuinely belongs to Domain, calculations, workflow/state transitions at the owning layer, validation logic, and Application orchestration with simple fakes or mocks when isolation gives useful feedback. Do not mock every collaborator mechanically, and do not forbid mocking project-owned abstractions when isolation helps.\n\nApplication Services can be tested by replacing repository and external-service abstractions with controlled doubles; assert the use-case result and meaningful side effects. \"Repository method X was called once\" is useful only when the interaction is part of the contract. When behavior depends heavily on persistence-technology semantics, transactions, DI wiring, serialization, or HTTP, prefer an integration test over reproducing the stack with mocks.\n",
+            "\n\"Smoke test\" means a small set of fast checks that a built or deployed application is basically operational — not a synonym for every integration test. Coverage is diagnostic, not a target; prioritize meaningful behavior, edge cases, and risky integrations. Snapshot testing can help for large stable outputs, but do not add a snapshot library by default; explicit assertions are clearer for small or important contracts.\n",
+            "\nAvoid assertions that merely repeat the implementation, assertion-free tests (unless the behavior is \"does not throw\"), arbitrary delays such as `Task.Delay` to make timing-sensitive tests pass, and Testcontainers when no provider fidelity is required.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/health-check/SKILL.md",
+          "sha256": "e4706562d402c140de7a7d23fa223bb8cf5a835c80ee5c6753af0f17e08577fc",
+          "inspected_ranges": [
+            [
+              65,
+              67
+            ]
+          ],
+          "context_quotes": [
+            "\nTest health configuration the deployment relies on: live endpoint responds when healthy, readiness follows a required dependency, responses do not leak sensitive details, optional-dependency behavior matches the intended semantics. Do not test framework behavior the application does not customize.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-004",
+        "name": "Tests are deterministic and isolated",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Isolation",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Core Principles"
+        ],
+        "normalized_policy": "Tests must be deterministic, independent of execution order, and isolated from Production/Development data, uncontrolled external systems and shared mutable state.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0078"
+      ],
+      "boundary_analysis": "Named Testing environment, FakeTimeProvider and separation of slow external integrations supplement isolation but are registered.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              20,
+              22
+            ]
+          ],
+          "context_quotes": [
+            "\n- Tests must be deterministic, independent of execution order, and isolated from Production and Development data, uncontrolled external systems, and shared mutable state.\n- Tests must start from a known state and own their setup; never depend on development seed data or on the order in which other tests run."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ci-cd/SKILL.md",
+          "sha256": "2b7c07ebb283c3ec3d5b0a2fa03533c0e8b676613ac3dea9255626448128e0b7",
+          "inspected_ranges": [
+            [
+              75,
+              77
+            ],
+            [
+              108,
+              109
+            ]
+          ],
+          "context_quotes": [
+            "\nProvide services (the selected database server, cache, broker) only when tests require them, as CI service containers or Testcontainers, isolated from Development and Production data; do not hardcode a database provider into a generic pipeline. Testing technique: the backend-testing knowledge facet named in the decision register.\n",
+            "\nProject-specific database infrastructure in a generic pipeline, rebuilding different source per environment, assuming container deployment. Pipeline obligations (visible failures, declared scripts, lockfile installs, deliberate production migrations): `delivery-change`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              100,
+              119
+            ],
+            [
+              121,
+              139
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nConfigure the `Testing` environment to use isolated test resources so an integration test can never reach a Development or Production database. If top-level statements make `Program` inaccessible, add `public partial class Program;` to the Api project.\n\n## Test database state\n\nChoose the database strategy by what the test must prove (provider fidelity vs. application/API integration) and be explicit about the trade-off. Start from a known state with a simple strategy: recreate or reset the isolated database, use transactions when their semantics fit, seed only the data the test needs, use unique identifiers to avoid collisions. Never modify production data.\n\n## Time-dependent code\n\nInject `TimeProvider` and control it with `FakeTimeProvider` (Microsoft.Extensions.TimeProvider.Testing):\n\n```csharp\nvar time = new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));\ntime.Advance(TimeSpan.FromDays(1));\n```\n\n## External services\n\nNever call uncontrolled external services from normal test runs. At the boundary use a fake or mock abstraction (unit tests), a stub `HttpMessageHandler`, WireMock or another local fake server (HTTP integration), or a dedicated sandbox only when the test explicitly targets that integration. Keep slow or unreliable external-system tests out of ordinary fast runs.\n",
+            "\nKeep test data explicit and minimal. Introduce builders, fixtures, or factories when repeated setup becomes hard to read; do not add a generic test-data framework for a few simple objects.\n\n## Naming\n\n`MethodOrScenario_StateOrCondition_ExpectedBehavior`, for example `CreateOrder_WithValidRequest_ReturnsCreated`, `CreateOrder_WithMissingCustomer_ReturnsValidationError`, `GetOrder_WithUnknownId_ReturnsNotFound`. Follow an established project convention when one exists.\n\n## Regression tests and probe conversion\n\nA regression test reproduces the failure before the fix and passes after it; skip it when the problem cannot realistically recur or is already covered. Convert temporary behavioral checks — ad-hoc HTTP/curl/PowerShell requests, temporary scripts or test methods, manual database checks, regression probes — into maintained tests, e.g. replace an ad-hoc REST request with a `WebApplicationFactory` integration test. When an existing test already covers the behavior, verify that it really exercises it instead of adding a duplicate. Review temporary probes before promoting them to permanent tests.\n\n## Smoke tests, coverage, snapshots\n\n\"Smoke test\" means a small set of fast checks that a built or deployed application is basically operational — not a synonym for every integration test. Coverage is diagnostic, not a target; prioritize meaningful behavior, edge cases, and risky integrations. Snapshot testing can help for large stable outputs, but do not add a snapshot library by default; explicit assertions are clearer for small or important contracts.\n\n## Anti-patterns\n\nAvoid assertions that merely repeat the implementation, assertion-free tests (unless the behavior is \"does not throw\"), arbitrary delays such as `Task.Delay` to make timing-sensitive tests pass, and Testcontainers when no provider fidelity is required.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              226,
+              228
+            ]
+          ],
+          "context_quotes": [
+            "- Provider fidelity: run provider-sensitive tests against SQL Server (for example a Testcontainers `MsSql` container or an isolated LocalDB/SQL Server database); a lighter isolated relational database may suffice when provider specifics are irrelevant — state the trade-off.\n- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4).\n4. Integration tests: expose `Program` to `WebApplicationFactory<Program>` when top-level statements hide it (e.g. `public partial class Program;` in Api) and configure an isolated `Testing` environment.\n5. Testcontainers or other real-provider infrastructure only when provider fidelity requires it."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-005",
+        "name": "Prefer explicit test cases",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Readability"
+        ],
+        "normalized_policy": "For small finite input/state spaces, prefer explicit declarative cases over loops, branching, LINQ or generated case machinery inside tests.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0175"
+      ],
+      "boundary_analysis": "Stated-not-computed expected values is an independently checkable extra, already registered; NUnit TestCase-specific technique in BF0077.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              25,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: for small finite input/state spaces, explicit declarative cases instead of loops, branches, LINQ, or generated case machinery inside tests; expected results are stated by the test, not computed.\n- Default: descriptive test names that communicate scenario/condition and expected behavior, e.g. `MethodOrScenario_Condition_ExpectedBehavior`, unless the project has an established convention.\n- Must not generate low-value tests merely to increase a coverage percentage."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              38,
+              58
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nArrange/Act/Assert is a useful default; comments are optional when the phases are obvious. Use the constraint model (`Assert.That(actual, Is...)`).\n\n## Explicit case tables\n\nExplicit cases (rule: `.claude/rules/backend-tests/testing.md`) are written as `[TestCase]` rows with the expected value as an argument, rather than `TestCaseSource` generators or computed expectations. A longer explicit table beats a shorter algorithmic test when it makes the business rules visible:\n\n```csharp\n[TestCase(TaskStatus.Created, TaskStatus.InProgress, true)]\n[TestCase(TaskStatus.Created, TaskStatus.Completed, false)]\n[TestCase(TaskStatus.InProgress, TaskStatus.Completed, true)]\npublic void IsTransitionAllowed_ReturnsExpected(TaskStatus current, TaskStatus target, bool expected)\n{\n    var actual = TaskWorkflowRules.IsTransitionAllowed(current, target);\n\n    Assert.That(actual, Is.EqualTo(expected));\n}\n```\n\nPrefer one observable scenario per test; multi-step tests fit when the sequence itself is the scenario (an entire workflow or a replace-set lifecycle).\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-006",
+        "name": "Use integration tests for real composition",
+        "related_groups": [
+          "api-errors-validation",
+          "architecture",
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#ASP.NET Core Integration Tests"
+        ],
+        "normalized_policy": "Use WebApplicationFactory-based integration testing when routing, binding, middleware, auth, DI, repositories, EF Core or database persistence is what the test must prove.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0160"
+      ],
+      "boundary_analysis": "Replacing DbContextOptions and disposable-only EnsureCreated are extra setup constraints already captured, preserving optional integration trigger.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/test-projects.md",
+          "sha256": "c394e7828811a5df74fda62dc8c513e584789dade57ccf08310eb5a1d1ffe0f1",
+          "inspected_ranges": [
+            [
+              13,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "  |---|---|\n  | `<Name>.Domain.Tests` (optional) | Domain |\n  | `<Name>.Application.Tests` | Application, Domain as needed |\n  | `<Name>.IntegrationTests` | Api (other layers are exercised through the host) |\n  | `<Name>.Infrastructure.Tests` (optional) | Infrastructure, narrower references as required |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "- Tests must verify observable behavior, not implementation details: they survive internal refactoring, do not test private calls or exact internal call sequences, and do not reproduce the implementation's algorithm. Interaction verification is appropriate only when the interaction itself is the specified behavior.\n- Default: `WebApplicationFactory`-based integration tests when routing, model binding, middleware, authentication/authorization, dependency injection, repositories, the persistence technology, or database persistence is what the test must prove.\n- Default: the actual database provider when relational or provider behavior matters (Testcontainers is optional); never claim provider fidelity from a test that runs against a different provider."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "52dad0ef32dc17d1bbbb651ec2966e8c99469ae3c00d285826207a52067d11ea",
+          "inspected_ranges": [
+            [
+              96,
+              98
+            ]
+          ],
+          "context_quotes": [
+            "\nTest authorization behavior of important protected operations: unauthenticated → 401; authenticated without permission → 403; permitted → expected success; resource ownership rules; intended anonymous endpoints remain accessible. Verify observable behavior, not merely the presence of `[Authorize]`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              62,
+              64
+            ],
+            [
+              66,
+              68
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication Services can be tested by replacing repository and external-service abstractions with controlled doubles; assert the use-case result and meaningful side effects. \"Repository method X was called once\" is useful only when the interaction is part of the contract. When behavior depends heavily on persistence-technology semantics, transactions, DI wiring, serialization, or HTTP, prefer an integration test over reproducing the stack with mocks.\n",
+            "\n`WebApplicationFactory<Program>` exercises routing, model binding, serialization, middleware, authentication/authorization wiring, DI, Application services, repositories, and database persistence.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              226,
+              228
+            ]
+          ],
+          "context_quotes": [
+            "- Provider fidelity: run provider-sensitive tests against SQL Server (for example a Testcontainers `MsSql` container or an isolated LocalDB/SQL Server database); a lighter isolated relational database may suffice when provider specifics are irrelevant — state the trade-off.\n- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              82,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nA simple Domain of entities and enums needs no dedicated test project. Integration tests reference Api for `WebApplicationFactory<Program>` and exercise the other layers transitively. Test framework setup is the backend-testing facet's scaffolding step in `project-structure`."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "3. Add only the production project references the test scope requires (`dotnet add <test project> reference <production project>`), recorded first as `From -> To` through `architecture-decision` (`project-structure`, step 4).\n4. Integration tests: expose `Program` to `WebApplicationFactory<Program>` when top-level statements hide it (e.g. `public partial class Program;` in Api) and configure an isolated `Testing` environment.\n5. Testcontainers or other real-provider infrastructure only when provider fidelity requires it."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              73,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\nMetadata that disagrees with runtime responses, Swagger UI exposed publicly without a reason, Swagger as a substitute for integration tests, anonymous objects as long-lived contracts, and a second competing documentation stack without a concrete need."
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "0d6a0def897b4bd4c45bc54657a3a620a71a6ea7d12f10119d694354c3dc9896",
+          "inspected_ranges": [
+            [
+              15,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "| persistence (required leaf) | ef-core, provider variant sqlserver | `ef-core` | Default persistence: EF Core with Microsoft SQL Server (`Microsoft.EntityFrameworkCore.SqlServer`); provider-specific concerns stay out of Application and Domain. Migration mechanism: EF Core migrations. Seeding mechanism: dedicated Development seeder. String comparison follows database collation (SQL Server default collations are case-insensitive); observable semantics remain a product decision. Binds: architecture. |\n| backend-testing (required leaf) | nunit | `dotnet-testing` | NUnit; backend test projects beside production projects under `backend/` (layout default below); `WebApplicationFactory<Program>` is the ASP.NET Core integration-test baseline; Testcontainers is conditional. Binds: architecture. |\n| frontend (optional leaf) | angular | `angular` | Current stable Angular with compatible TypeScript/RxJS, standalone APIs, strict mode, routing, zoneless mode when supported, SCSS, Angular Material/CDK, Vitest. Not added by default: NgRx, Axios, Lodash, Bootstrap, Tailwind, or additional form/component/state libraries; use built-in Angular capabilities first and add extras only for a concrete need. |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-007",
+        "name": "Use provider fidelity when it matters",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Database Strategy",
+          "templates/v2-baseline/.claude/rules/testing.md#Database Tests"
+        ],
+        "normalized_policy": "Use the actual database provider when relational/provider behavior matters; Testcontainers is optional, and do not claim provider fidelity from a different provider.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/EXTRA-K1-0159"
+      ],
+      "boundary_analysis": "Lighter relational provider permitted when specifics irrelevant with stated tradeoff; no fidelity claim from another provider. Provider choice and Testcontainers gate already captured.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ]
+          ],
+          "context_quotes": [
+            "- Default: `WebApplicationFactory`-based integration tests when routing, model binding, middleware, authentication/authorization, dependency injection, repositories, the persistence technology, or database persistence is what the test must prove.\n- Default: the actual database provider when relational or provider behavior matters (Testcontainers is optional); never claim provider fidelity from a test that runs against a different provider.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              104,
+              106
+            ],
+            [
+              137,
+              139
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nChoose the database strategy by what the test must prove (provider fidelity vs. application/API integration) and be explicit about the trade-off. Start from a known state with a simple strategy: recreate or reset the isolated database, use transactions when their semantics fit, seed only the data the test needs, use unique identifiers to avoid collisions. Never modify production data.\n",
+            "\nAvoid assertions that merely repeat the implementation, assertion-free tests (unless the behavior is \"does not throw\"), arbitrary delays such as `Task.Delay` to make timing-sensitive tests pass, and Testcontainers when no provider fidelity is required.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              224,
+              229
+            ]
+          ],
+          "context_quotes": [
+            "\n- The EF Core InMemory provider is not a relational database: never use it to claim relational behavior (constraints, transactions, collation, SQL translation). A fake repository is often clearer for a true unit test.\n- Provider fidelity: run provider-sensitive tests against SQL Server (for example a Testcontainers `MsSql` container or an isolated LocalDB/SQL Server database); a lighter isolated relational database may suffice when provider specifics are irrelevant — state the trade-off.\n- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/persistence-change/SKILL.md",
+          "sha256": "7ef7ec479115061b959a67ff222b20486f3bd833f514aaf15669d5730284d455",
+          "inspected_ranges": [
+            [
+              45,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "5. Apply locally (`dotnet ef database update --project backend/<Name>.Infrastructure --startup-project backend/<Name>.Api`), or drop and recreate the local database when a fresh dataset is needed.\n6. Add or update persistence/integration tests when provider behavior, mappings, constraints, or non-trivial queries changed (provider fidelity: `ef-core`, Testing).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/test-setup.md",
+          "sha256": "1aa042862acae68b10f1e571e53dfb4374a59381cd9493cd7d94633610f735b7",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "4. Integration tests: expose `Program` to `WebApplicationFactory<Program>` when top-level statements hide it (e.g. `public partial class Program;` in Api) and configure an isolated `Testing` environment.\n5. Testcontainers or other real-provider infrastructure only when provider fidelity requires it.\n6. Build and run `dotnet test` to confirm the projects are discovered."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-008",
+        "name": "Test data is known and owned by tests",
+        "related_groups": [
+          "persistence-data"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Database State"
+        ],
+        "normalized_policy": "Tests start from a known state and own their setup; do not depend on development seeding or execution order.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0085"
+      ],
+      "boundary_analysis": "Known state, minimal data and disposable schema setup recorded. No mandatory Development seed reuse; explicit separation stays.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              21,
+              23
+            ]
+          ],
+          "context_quotes": [
+            "- Tests must be deterministic, independent of execution order, and isolated from Production and Development data, uncontrolled external systems, and shared mutable state.\n- Tests must start from a known state and own their setup; never depend on development seed data or on the order in which other tests run.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/persistence.md",
+          "sha256": "e322f1314d2e6e74645f2cb93b342bc816ce54b53b7f82e65875e95f68e650ea",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Default: an empty Development database receives a small, deterministic, representative seed dataset covering the main meaningful states and relationships.\n- Automatic seeding runs only in Development; never automatically seed Production. The development seeder is not test setup; tests own their own setup.\n- When representative data already exists, leave it unchanged. Never use the seeder for automatic synchronization, repair, upgrade, overwrite, or recreation of an existing Development database; developers recreate local databases explicitly when they need a fresh dataset."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              100,
+              119
+            ],
+            [
+              121,
+              123
+            ]
+          ],
+          "context_quotes": [
+            "\nConfigure the `Testing` environment to use isolated test resources so an integration test can never reach a Development or Production database. If top-level statements make `Program` inaccessible, add `public partial class Program;` to the Api project.\n\n## Test database state\n\nChoose the database strategy by what the test must prove (provider fidelity vs. application/API integration) and be explicit about the trade-off. Start from a known state with a simple strategy: recreate or reset the isolated database, use transactions when their semantics fit, seed only the data the test needs, use unique identifiers to avoid collisions. Never modify production data.\n\n## Time-dependent code\n\nInject `TimeProvider` and control it with `FakeTimeProvider` (Microsoft.Extensions.TimeProvider.Testing):\n\n```csharp\nvar time = new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));\ntime.Advance(TimeSpan.FromDays(1));\n```\n\n## External services\n\nNever call uncontrolled external services from normal test runs. At the boundary use a fake or mock abstraction (unit tests), a stub `HttpMessageHandler`, WireMock or another local fake server (HTTP integration), or a dedicated sandbox only when the test explicitly targets that integration. Keep slow or unreliable external-system tests out of ordinary fast runs.\n",
+            "\nKeep test data explicit and minimal. Introduce builders, fixtures, or factories when repeated setup becomes hard to read; do not add a generic test-data framework for a few simple objects.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              224,
+              229
+            ]
+          ],
+          "context_quotes": [
+            "\n- The EF Core InMemory provider is not a relational database: never use it to claim relational behavior (constraints, transactions, collation, SQL translation). A fake repository is often clearer for a true unit test.\n- Provider fidelity: run provider-sensitive tests against SQL Server (for example a Testcontainers `MsSql` container or an isolated LocalDB/SQL Server database); a lighter isolated relational database may suffice when provider specifics are irrelevant — state the trade-off.\n- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-009",
+        "name": "Meaningful bugs get regression coverage",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "workflow",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Regression Tests"
+        ],
+        "normalized_policy": "For a meaningful bug with plausible recurrence, add a regression test unless equivalent coverage already exists.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-009",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0359"
+      ],
+      "boundary_analysis": "Fail-before/pass-after requirement beyond general regression default is already registered, with equivalent-coverage exception.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "5817b2cb9d1115200a8d5b052a284d644c368ab1f570e6c99f43a8b554dd1482",
+          "inspected_ranges": [
+            [
+              99,
+              115
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|---|---|---|\n| `.claude/settings.json` | Hook registration in exec form (`node`, launcher `${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs`, event): dependency/reference guard (PreToolUse, fails closed), actual-state checks after edits and shell commands (PostToolUse, PostToolUseFailure), co-change reminders (Stop) | repo/meta | — | Claude Code settings | registers the hooks; validated by the structure checker | a new hook intention is added |\n| `.claude/hooks/dispatch.cjs` | Hook entry point: launcher root locates code only, the active root comes from the hook input `cwd` (worktree-aware); BOM/UTF-16-safe input; routes events; messages point to owners | repo/meta | — | hook | PreToolUse, PostToolUse, PostToolUseFailure, Stop | hook routing changes |\n| `.claude/scripts/classify-command.cjs` | Pre-execution, token-aware classification of dependency and project-reference commands (Bash and PowerShell text, shell wrappers, chains) | common | — | required by the dispatcher | PreToolUse (blocks before execution) | a dependency or reference command form is added |\n| `.claude/scripts/actual-state.cjs` | Post-execution inspection of actual files per worktree (snapshot in the worktree's Git directory): manifests, Reserved project-reference changes, instruction structure, product inputs | repo/meta | — | required by the dispatcher | PostToolUse, PostToolUseFailure | a relevant file class is added |\n| `.claude/scripts/lib.cjs` | Shared helpers | repo/meta | — | required by scripts | — | a helper is shared |\n| `.claude/scripts/check-instructions.cjs` | Instruction-structure checker (headers, kinds, scopes, paths, imports, skills, agent, references, dependency direction incl. ENF conformance, slots, binding obligations, manifests, contracts and facet roles, leak rule, map, hook configuration, budget) | repo/meta | — | command, instruction-change hooks | instruction-change hooks (errors fed back), CLI exit code | a structural predicate is added |\n| `.claude/scripts/check-manifests.cjs` | Central package management, version pinning, deprecated packages, npm categories; runs slot facet checks | common | — | command, manifest hook | manifest-edit hook (findings fed back), CLI exit code | a manifest check is added |\n| `.claude/scripts/check-cochange.cjs` | Working-tree co-change reminders (tests; slot facet reminders) | common | — | command, Stop hook | Stop hook (once per content state of the triggering files), CLI report | a co-change reminder is added |\n| `.claude/scripts/facets/architecture-style.cjs` | Frame role classification, project-reference direction, test references, inner-layer ASP.NET Core check | backend | architecture/clean-architecture | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frame enforcement changes |\n| `.claude/scripts/facets/persistence-technology.cjs` | EF Core packages outside Infrastructure; seed/migration co-change reminders | backend | persistence/ef-core | facet of manifest and co-change checks | manifest/Stop hooks via check-manifests or check-cochange | persistence enforcement changes |\n| `.claude/scripts/facets/test-framework.cjs` | Additional test framework detection | backend-tests | backend-testing/nunit | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | test-framework enforcement changes |\n| `.claude/scripts/facets/frontend-framework.cjs` | Non-default frontend libraries and misplaced build tooling | frontend | frontend/angular | facet of `check-manifests.cjs` | manifest/Stop hooks via check-manifests or check-cochange | frontend enforcement changes |\n| `.editorconfig` | Formatting and C# code-style configuration | common | — | editors, `dotnet format` | IDE and dotnet format | a mechanical style preference changes |\n| `Directory.Build.props` | Shared .NET build settings | backend | — | MSBuild | MSBuild | a genuinely shared build setting changes |\n| `Directory.Packages.props` | Central package versions | backend | — | MSBuild | NuGet restore (CPM) | packages are added through `add-dependency` |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              114,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "\nfunction stop(input) {\n  if (input.stop_hook_active) return 0; // never re-block a continuation triggered by this hook\n  const cochange = require('../scripts/check-cochange.cjs');\n  const result = cochange.run(lib.activeRoot(workingDirectory(input)), 'hook');\n  if (!result.applicable) {\n    process.stdout.write(`${JSON.stringify({ systemMessage: 'Co-change reminders inactive: the project is not a Git work tree.' })}\\n`);\n    return 0;\n  }\n  if (!result.reminders.length) return 0;\n  process.stderr.write(\n    `Co-change reminders (reported once per content state):\\n${cochange.format(result.reminders)}\\n` +\n    'Address each item or state why it does not apply, then finish.\\n');\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-cochange.cjs",
+          "sha256": "7e0d664b43bdd71c7eb88dd327a94fa63d8c4f088bd2daefbf84f16c5b46c0d8",
+          "inspected_ranges": [
+            [
+              36,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "\n/** Framework-neutral reminder: backend production code changed without any backend test change. */\nfunction testReminder(changes) {\n  const isBackendCs = p => p.startsWith('backend/') && p.endsWith('.cs');\n  const isTest = p => /^backend\\/[^/]*Tests?\\//.test(p);\n  const production = changes.filter(c => isBackendCs(c.path) && !isTest(c.path) && !c.status.includes('D'));\n  if (!production.length || changes.some(c => isTest(c.path))) return [];\n  return [{\n    id: 'tests',\n    message: `backend production code changed (${production.length} file(s)) with no backend test change; confirm coverage and probe preservation`,\n    owner: 'verify workflow (step 4), development-workflow (bug fixes)',\n    paths: production.map(c => c.path),\n  }];\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              42,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"Stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              73,
+              75
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck that changed behavior has useful maintained automated coverage, focusing on behavior rather than line count. For a bug fix, look for a regression test when recurrence is plausible; behavioral probes used during implementation must be preserved as maintained tests (`verify`, step 4). Do not request duplicate tests when equivalent coverage exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/development-workflow/SKILL.md",
+          "sha256": "b04fd900abd6833439c95735ea0d0df1f2009f4ca4f2b1ca25a0c56c351dd4e2",
+          "inspected_ranges": [
+            [
+              41,
+              53
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Bug fix:** default — for a meaningful bug whose recurrence is plausible, add a regression test that fails before the fix and passes after it, unless equivalent coverage already exists.\n- **Performance-motivated change:** identify the actual bottleneck or cost, preserve observable behavior, use the simplest effective optimization, add or maintain tests for affected behavior, and benchmark or profile when the optimization is non-obvious or complex.\n- **Deprecating an externally consumed API version:** mark the deprecation in versioning metadata, document the replacement version, communicate a realistic migration period and removal timeline, and keep the old version working for the promised support period; never remove it without considering its published support contract. Breaking changes and adopting versioning are Reserved (`architecture-decision`).\n\n## 5. Synchronize durable sources\n\nWhen a new behavioral rule is approved, update the durable source of truth in the same change, including `SPECIFICATION.md` when appropriate. Approved tunable values follow `custom-settings`; accepted engineering decisions follow `architecture-decision`.\n\n## 6. Review\n\nFor substantial feature work or a newly implemented application, run `code-review` (or delegate to the `code-reviewer` agent) before the final verification, and fix confirmed findings.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              129,
+              131
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nA regression test reproduces the failure before the fix and passes after it; skip it when the problem cannot realistically recur or is already covered. Convert temporary behavioral checks — ad-hoc HTTP/curl/PowerShell requests, temporary scripts or test methods, manual database checks, regression probes — into maintained tests, e.g. replace an ad-hoc REST request with a `WebApplicationFactory` integration test. When an existing test already covers the behavior, verify that it really exercises it instead of adding a duplicate. Review temporary probes before promoting them to permanent tests.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              52,
+              54
+            ]
+          ],
+          "context_quotes": [
+            "- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-010",
+        "name": "Behavioral probes become maintained tests",
+        "related_groups": [
+          "workflows-delivery"
+        ],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "workflow",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Behavioral Verification",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Verification Performed During Implementation",
+          "templates/v2-baseline/.claude/skills/verify/SKILL.md#4. Preserve Behavioral Verification"
+        ],
+        "normalized_policy": "If an ad-hoc/manual behavioral probe uniquely demonstrates behavior, preserve that behavior in maintained automated coverage before completion unless equivalent coverage already exists.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-010",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "replica/K1/constraints.jsonl/RULE-K1-0323"
+      ],
+      "boundary_analysis": "Confirm actual equivalent coverage, preserve before deleting probes and exempt build/static checks are all explicit. Reminder overtrigger/any-test suppression already BF0146.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/hooks/dispatch.cjs",
+          "sha256": "ba3a55b650180e6e51d3ce0a2f5bf0ee6b4f76f9f1123a9dc3a1eaba5cd38d22",
+          "inspected_ranges": [
+            [
+              123,
+              129
+            ]
+          ],
+          "context_quotes": [
+            "  if (!result.reminders.length) return 0;\n  process.stderr.write(\n    `Co-change reminders (reported once per content state):\\n${cochange.format(result.reminders)}\\n` +\n    'Address each item or state why it does not apply, then finish.\\n');\n  return 2;\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-cochange.cjs",
+          "sha256": "7e0d664b43bdd71c7eb88dd327a94fa63d8c4f088bd2daefbf84f16c5b46c0d8",
+          "inspected_ranges": [
+            [
+              36,
+              50
+            ]
+          ],
+          "context_quotes": [
+            "\n/** Framework-neutral reminder: backend production code changed without any backend test change. */\nfunction testReminder(changes) {\n  const isBackendCs = p => p.startsWith('backend/') && p.endsWith('.cs');\n  const isTest = p => /^backend\\/[^/]*Tests?\\//.test(p);\n  const production = changes.filter(c => isBackendCs(c.path) && !isTest(c.path) && !c.status.includes('D'));\n  if (!production.length || changes.some(c => isTest(c.path))) return [];\n  return [{\n    id: 'tests',\n    message: `backend production code changed (${production.length} file(s)) with no backend test change; confirm coverage and probe preservation`,\n    owner: 'verify workflow (step 4), development-workflow (bug fixes)',\n    paths: production.map(c => c.path),\n  }];\n}\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "41a9dbde4147ecf501d7301b1e47b4610e0150b57caf1adcd99816998b87edf4",
+          "inspected_ranges": [
+            [
+              42,
+              55
+            ]
+          ],
+          "context_quotes": [
+            "    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/dispatch.cjs\", \"Stop\"],\n            \"timeout\": 60\n          }\n        ]\n      }\n    ]\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "597720aa4c56a6d54054a4a520d45cc5ed23860934c6e6953e16106f45c46ed2",
+          "inspected_ranges": [
+            [
+              75,
+              77
+            ]
+          ],
+          "context_quotes": [
+            "\nA behavioral test or probe used to establish correct behavior follows `verify` step 4: preserve uniquely verified behavior in maintained tests before removing temporary diagnostics.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              73,
+              75
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck that changed behavior has useful maintained automated coverage, focusing on behavior rather than line count. For a bug fix, look for a regression test when recurrence is plausible; behavioral probes used during implementation must be preserved as maintained tests (`verify`, step 4). Do not request duplicate tests when equivalent coverage exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              129,
+              131
+            ],
+            [
+              141,
+              152
+            ]
+          ],
+          "context_quotes": [
+            "\nA regression test reproduces the failure before the fix and passes after it; skip it when the problem cannot realistically recur or is already covered. Convert temporary behavioral checks — ad-hoc HTTP/curl/PowerShell requests, temporary scripts or test methods, manual database checks, regression probes — into maintained tests, e.g. replace an ad-hoc REST request with a `WebApplicationFactory` integration test. When an existing test already covers the behavior, verify that it really exercises it instead of adding a duplicate. Review temporary probes before promoting them to permanent tests.\n",
+            "\n| Scenario | Default approach |\n|---|---|\n| Pure business rule | NUnit unit test with `[TestCase]` table |\n| Application orchestration | Unit test with controlled boundary doubles when useful |\n| Full API pipeline | `WebApplicationFactory<Program>` |\n| Important persistence/provider behavior | Integration test against the actual provider |\n| Time-dependent behavior | `TimeProvider` / `FakeTimeProvider` |\n| External HTTP dependency | Stub handler or local fake server |\n| Reproduced bug | Focused regression test |\n| Temporary behavioral check | Convert to maintained coverage or confirm equivalent coverage |\n| Deployment/basic health | Smoke test |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/swagger/SKILL.md",
+          "sha256": "55a1e6d71911b38dd0d655c817e2e18456cabdf226298e849398dc4557c9f3bd",
+          "inspected_ranges": [
+            [
+              69,
+              71
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen API behavior changes: verify controller behavior and relevant integration tests, verify response metadata, start the API when startup/composition changed, open the Development Swagger UI and confirm it loads, exercise representative endpoints when that is a meaningful check, and preserve newly verified behavior in maintained tests (`verify`).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "00976f54c6b3c9493a45bc1d4ed40e271966e3a5e90c8d9045be69ce18596a33",
+          "inspected_ranges": [
+            [
+              20,
+              26
+            ],
+            [
+              42,
+              44
+            ],
+            [
+              52,
+              54
+            ],
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nReview the final changed-file set and diff before choosing any check. Confirm that:\n\n- changes match the requested scope and no unrelated refactoring slipped in;\n- temporary diagnostics and probes are removed only after any behavior they uniquely verified is preserved as maintained automated test coverage (step 4);\n- no generated/build artifacts were added accidentally, and no secrets or environment-specific credentials were introduced — remove any that were.\n",
+            "\nIf an ad-hoc or manual behavioral probe (curl/PowerShell/HTTP requests, temporary scripts or test methods, manual database checks, regression probes) uniquely demonstrated that the change works, the verified behavior must be represented by maintained automated test coverage before completion, unless equivalent coverage already exists — confirm that existing coverage really exercises the behavior. The temporary mechanism itself need not remain. Builds, compilers, formatters, static analysis, and running existing suites do not themselves require new tests.\n",
+            "- **Architecture** (project references, Api → Application flow, repository abstractions, persistence boundary, Unit of Work behavior): read `.claude/rules/backend/architecture-style.md`, `.claude/rules/backend/persistence.md`, and `.claude/rules/backend/persistence-technology.md`, then run `node \"<root>/.claude/scripts/check-manifests.cjs\"`. When the persistence model changed, confirm that `persistence-change` was completed, including the development seeder for a freshly recreated Development database.\n- **Co-change reminders:** `node \"<root>/.claude/scripts/check-cochange.cjs\"` (seed, migration, and test reminders for the working tree).\n- **Formatting/analyzers:** when configured, e.g. `dotnet format --verify-no-changes`; do not add a formatter or analyzer dependency just to complete verification. Analyzer output is evidence that still needs context.",
+            "\nReview the final diff after all fixes. Check for accidental unrelated edits, commented-out code, temporary logging, unintended TODO/FIXME markers, stale temporary tests or scripts, architecture drift, unapproved drift from `SPECIFICATION.md` or `CUSTOM_SETTINGS.md`, stale code/tests/docs/config after a settings change, and behavior verified manually but never preserved as a test.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-011",
+        "name": "Do not chase coverage percentage",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Coverage"
+        ],
+        "normalized_policy": "Do not generate low-value tests merely to increase coverage percentage.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-011",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "independent/K1/BLIND_FINDINGS.jsonl/BF-K1-0079"
+      ],
+      "boundary_analysis": "No default snapshot library, no excessive fixture machinery, no arbitrary delays and no low-value tests are registered; coverage remains diagnostic.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              27,
+              29
+            ]
+          ],
+          "context_quotes": [
+            "- Default: descriptive test names that communicate scenario/condition and expected behavior, e.g. `MethodOrScenario_Condition_ExpectedBehavior`, unless the project has an established convention.\n- Must not generate low-value tests merely to increase a coverage percentage.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/angular/SKILL.md",
+          "sha256": "db066240e9cc0b10c671d9ff54464f9efccb58ca64ee9ec3c118767d5b7c31ff",
+          "inspected_ranges": [
+            [
+              132,
+              134
+            ]
+          ],
+          "context_quotes": [
+            "\nUse the workspace's configured runner (Vitest for new projects). Test meaningful component behavior, validation, data-access request mapping (`provideHttpClientTesting`, `HttpTestingController`), important route/auth behavior, and complex reactive state; do not test framework internals or duplicate the same behavior at every level. E2E tests (Playwright, when adopted) cover a small number of important user workflows unless broader coverage is required.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/api-versioning/SKILL.md",
+          "sha256": "a627c3b6b349c4996c7b2b0d917e0f8affe6eef35836662b870a409e7b1c1388",
+          "inspected_ranges": [
+            [
+              79,
+              81
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen versions coexist, test meaningful differences: version routing, version-specific response shapes, deprecated versions still operational during the support period, unsupported-version behavior, shared Application behavior consistent where intended. Do not duplicate identical tests per version.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/caching/SKILL.md",
+          "sha256": "67472d53c196a4cc943aeade54326d85f60af9b7debc76f16f864040d0098298",
+          "inspected_ranges": [
+            [
+              76,
+              78
+            ]
+          ],
+          "context_quotes": [
+            "\nTest caching when it affects observable correctness: stale entries invalidated after successful mutation, tenant/user key isolation, cache-miss fallback, outage behavior per the intended failure policy. Do not unit-test framework cache internals.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "ac5781aa16fdc364c2aaf5a509c12c34c3aed01ed672822735f6e426dbd3f1ee",
+          "inspected_ranges": [
+            [
+              73,
+              75
+            ]
+          ],
+          "context_quotes": [
+            "\nCheck that changed behavior has useful maintained automated coverage, focusing on behavior rather than line count. For a bug fix, look for a regression test when recurrence is plausible; behavioral probes used during implementation must be preserved as maintained tests (`verify`, step 4). Do not request duplicate tests when equivalent coverage exists.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ],
+            [
+              121,
+              139
+            ]
+          ],
+          "context_quotes": [
+            "\nDo not build test infrastructure without a concrete testing need; a small project does not need an enterprise-sized harness.\n",
+            "\nKeep test data explicit and minimal. Introduce builders, fixtures, or factories when repeated setup becomes hard to read; do not add a generic test-data framework for a few simple objects.\n\n## Naming\n\n`MethodOrScenario_StateOrCondition_ExpectedBehavior`, for example `CreateOrder_WithValidRequest_ReturnsCreated`, `CreateOrder_WithMissingCustomer_ReturnsValidationError`, `GetOrder_WithUnknownId_ReturnsNotFound`. Follow an established project convention when one exists.\n\n## Regression tests and probe conversion\n\nA regression test reproduces the failure before the fix and passes after it; skip it when the problem cannot realistically recur or is already covered. Convert temporary behavioral checks — ad-hoc HTTP/curl/PowerShell requests, temporary scripts or test methods, manual database checks, regression probes — into maintained tests, e.g. replace an ad-hoc REST request with a `WebApplicationFactory` integration test. When an existing test already covers the behavior, verify that it really exercises it instead of adding a duplicate. Review temporary probes before promoting them to permanent tests.\n\n## Smoke tests, coverage, snapshots\n\n\"Smoke test\" means a small set of fast checks that a built or deployed application is basically operational — not a synonym for every integration test. Coverage is diagnostic, not a target; prioritize meaningful behavior, edge cases, and risky integrations. Snapshot testing can help for large stable outputs, but do not add a snapshot library by default; explicit assertions are clearer for small or important contracts.\n\n## Anti-patterns\n\nAvoid assertions that merely repeat the implementation, assertion-free tests (unless the behavior is \"does not throw\"), arbitrary delays such as `Task.Delay` to make timing-sensitive tests pass, and Testcontainers when no provider fidelity is required.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "a5d5bc1b229c1362de522c9d53ab81c4b1b800f8a080543a855178ebdb889f9a",
+          "inspected_ranges": [
+            [
+              227,
+              229
+            ]
+          ],
+          "context_quotes": [
+            "- Integration tests replace the registered `DbContextOptions<AppDbContext>` in `WebApplicationFactory` with an isolated test database and create the schema from migrations (or `EnsureCreated` for disposable test databases only).\n- Test repository implementations and mappings when there is meaningful persistence behavior: custom mappings, query filters, projections, non-trivial queries, relationships, concurrency, provider-specific behavior — not every trivial `Add`/`Get`.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "0e464d3e4adef166c05a02cfb5e13f1d9712bf7a021fdf7702c2a62595c06dd5",
+          "inspected_ranges": [
+            [
+              36,
+              38
+            ]
+          ],
+          "context_quotes": [
+            "4. **Backend projects and references** — read `references/backend-layout.md`; create the four backend projects and only the references it lists. Never add an outward reference to make compilation easier. Projects and project references change the project reference graph (Reserved): first record the requested scaffold through `architecture-decision` — its accepted decision lists each project reference as `From -> To` — because the dependency and reference hook blocks unrecorded `dotnet add/remove … reference` commands and reports unrecorded reference changes after edits.\n5. **Test projects** — read `references/test-setup.md`; create only useful test projects (placement and references per `references/backend-layout.md`).\n6. **Frontend** — when frontend scope exists, read `references/frontend-setup.md` and create the workspace under `frontend/<Name>.Web/`. Frontend architecture belongs to the frontend standards and knowledge facet; do not duplicate it here."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "dbfac63650a6b2a08f1bcaebc45248495cb45c2475fb58ba3bb90cacfb9bc715",
+          "inspected_ranges": [
+            [
+              72,
+              74
+            ],
+            [
+              82,
+              83
+            ]
+          ],
+          "context_quotes": [
+            "\nTest projects live beside production projects under `backend/`; create only useful ones:\n",
+            "\nA simple Domain of entities and enums needs no dedicated test project. Integration tests reference Api for `WebApplicationFactory<Program>` and exercise the other layers transitively. Test framework setup is the backend-testing facet's scaffolding step in `project-structure`."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K1",
+      "pass_id": 2,
+      "unit": "P0002-K1-P011",
+      "canonical_policy": {
+        "id": "TST-012",
+        "name": "Descriptive test naming",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend-tests",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/testing.md#Naming",
+          "templates/v2-baseline/.claude/skills/testing/SKILL.md#Test Naming"
+        ],
+        "normalized_policy": "Use descriptive test names that communicate scenario/condition and expected behavior.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "TST-012",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K1/constraints.jsonl/RULE-K1-0377"
+      ],
+      "boundary_analysis": "Three-part naming and established-project-convention exception already captured; source example not converted to a universal name grammar.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend-tests/testing.md",
+          "sha256": "ed789af1525207c589966a34327bba21e312dc0c7ceac347e3a45d504136c1e2",
+          "inspected_ranges": [
+            [
+              25,
+              28
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: for small finite input/state spaces, explicit declarative cases instead of loops, branches, LINQ, or generated case machinery inside tests; expected results are stated by the test, not computed.\n- Default: descriptive test names that communicate scenario/condition and expected behavior, e.g. `MethodOrScenario_Condition_ExpectedBehavior`, unless the project has an established convention.\n- Must not generate low-value tests merely to increase a coverage percentage."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dotnet-testing/SKILL.md",
+          "sha256": "7230bfc2d8fed8966f198c1c2903394db5da91adcffc4d1190308ff309756969",
+          "inspected_ranges": [
+            [
+              125,
+              127
+            ]
+          ],
+          "context_quotes": [
+            "\n`MethodOrScenario_StateOrCondition_ExpectedBehavior`, for example `CreateOrder_WithValidRequest_ReturnsCreated`, `CreateOrder_WithMissingCustomer_ReturnsValidationError`, `GetOrder_WithUnknownId_ReturnsNotFound`. Follow an established project convention when one exists.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+# L0 batch 6: regions r366-r440 (protocol v1.2.1)
+# r366-r375 httpclient-factory/SKILL.md
+RD OVERLAP R:RULE-L0-0077 P:RULE-L0-0451 | P: Application defines the outbound abstraction, Infrastructure implements it.
+RD OVERLAP R:RULE-L0-0075 P:RULE-L0-0451 | R: external-service abstractions defined in Application.
+RD EXAMPLE_GENERAL R:RULE-L0-0082 P:RULE-L0-0452 | P: typed client captured in a singleton.
+CX X:BF-L0-0090 | Use DelegatingHandler for genuine HTTP pipeline concerns (access-token acquisition, correlation propagation, request signing), never for business decisions.
+SD P:EXTRA-L0-0131 X:BF-L0-0090 | S: DelegatingHandler usage M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-L0-0135 P:RULE-L0-0453 | P: caller token to every outbound call.
+RD EXAMPLE_GENERAL R:RULE-L0-0035 P:RULE-L0-0454 | P: per-attempt vs total timeouts.
+RD OVERLAP R:RULE-L0-0077 P:EXTRA-L0-0132 | P: no blind EnsureSuccessStatusCode.
+RD COMPOUND_PART R:RULE-L0-0077 P:RULE-L0-0455 | P: the translation element.
+RD OVERLAP R:RULE-L0-0077 P:EXTRA-L0-0133 | P: no pass-through of every upstream status.
+RD OVERLAP R:RULE-L0-0036 P:RULE-L0-0456 | P: retry preconditions; PUT/DELETE not assumed safe.
+SPLIT X:BF-L0-0091 | a@88-88: Configure stable headers on the client; apply per-request values such as dynamic tokens per request or through a handler; never mutate shared DefaultRequestHeaders concurrently. | b@88-88: Prefer System.Net.Http.Json/System.Text.Json with explicit options when the remote contract differs; do not reuse Domain entities as remote contracts.
+SD P:EXTRA-L0-0134 X:BF-L0-0091#a | S: outbound HTTP headers M: P MUST_NOT, X no modality E: none in either T: none
+RD COMPOUND_PART P:EXTRA-L0-0134 R:EXTRA-L0-0022 | P adds configuring stable headers on the client.
+SD P:EXTRA-L0-0135 X:BF-L0-0091#b | S: outbound HTTP serialization and contracts M: P MUST_NOT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:RULE-L0-0458 | P: no resilience pipelines without understanding them.
+# r376-r381 httpclient-factory/references/resilience.md
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:RULE-L0-0460 | P: no resilience mechanisms merely because available.
+RD EXAMPLE_GENERAL R:RULE-L0-0036 P:RULE-L0-0461 | P: review the standard handler for state-changing requests.
+RD OVERLAP R:RULE-L0-0012 P:RULE-L0-0462 | P: Microsoft resilience packages via Microsoft.Extensions APIs.
+RD OVERLAP R:RULE-L0-0035 P:RULE-L0-0463 | P: attempt vs total timeout.
+SPLIT X:BF-L0-0089 | a@38-38: Hedging only for operations safe to execute several times; never hedge state-changing operations. | b@42-42: Do not wrap normal EF Core operations in a generic application-level retry pipeline; prefer the provider's execution strategy.
+SD P:RULE-L0-0467 X:BF-L0-0089#a | S: hedging M: P MUST_NOT, X no modality E: none in either T: none
+SD P:EXTRA-L0-0140 R:EXTRA-L0-0021 X:BF-L0-0089#b | S: EF Core retry M: MUST_NOT in P and R, X no modality E: none in any T: none
+RD OVERLAP R:RULE-L0-0036 P:EXTRA-L0-0137 | P: transient vs non-retryable failures.
+RD OVERLAP R:RULE-L0-0036 P:RULE-L0-0464 | P: no retry of non-idempotent operations without duplicate prevention.
+RD BROADER_NARROWER R:RULE-L0-0036 P:RULE-L0-0465 | P: the lost-response test for writes.
+RD OVERLAP R:RULE-L0-0037 P:RULE-L0-0466 | P: the retry policy honours Retry-After.
+RD EXAMPLE_GENERAL R:RULE-L0-0036 P:RULE-L0-0467 | P: hedging.
+RD OVERLAP R:RULE-L0-0036 P:EXTRA-L0-0141 | P: publish retries and exactly-once.
+RD OVERLAP R:RULE-L0-0036 P:RULE-L0-0469 | P: no retry of every exception/status or hedged writes.
+RD OVERLAP R:RULE-L0-0035 P:RULE-L0-0470 | P (AVOID): stacked overlapping handlers.
+# r382-r390 logging/SKILL.md and references/serilog.md
+RD COMPOUND_PART R:RULE-L0-0143 P:RULE-L0-0471 | P: the stable property names element.
+RD COMPOUND_PART R:RULE-L0-0025 P:RULE-L0-0472 | P: lower levels are not safe for sensitive data.
+RD OVERLAP R:RULE-L0-0027 P:RULE-L0-0474 | P: log at the handling boundary; no log on plain rethrow.
+SPLIT X:BF-L0-0094 | a@55-55: Prefer platform trace identifiers; add an explicit correlation identifier only for an integration or operational requirement; validate or normalize externally accepted identifiers; propagate tracing context across outbound calls. | b@63-63: Normal structured logging is sufficient for most code; use source-generated logging for a measured high-volume path.
+RD COMPOUND_PART X:BF-L0-0094#a P:EXTRA-L0-0145 | P: without the normalization element.
+RD COMPOUND_PART X:BF-L0-0094#a P:RULE-L0-0475 | P: the normalization element only.
+SD P:RULE-L0-0477 X:BF-L0-0094#b | S: source-generated logging M: P DEFAULT, X no modality E: measured high-volume path (both) T: none
+RD EXAMPLE_GENERAL R:RULE-L0-0045 P:RULE-L0-0475 | P: externally supplied identifiers.
+RD OVERLAP R:RULE-L0-0026 P:RULE-L0-0476 | P: log specific properties instead of payloads.
+RD OVERLAP R:RULE-L0-0025 P:RULE-L0-0476 | P: no authorization headers.
+RD EXAMPLE_GENERAL R:RULE-L0-0029 P:RULE-L0-0477 | P: source-generated logging only when measured.
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:EXTRA-L0-0146 | P (AVOID): logs as an audit database.
+RD OVERLAP R:RULE-L0-0142#b P:RULE-L0-0478 | P: extra Serilog sinks are optional.
+RD COMPOUND_PART R:RULE-L0-0144 P:RULE-L0-0479 | P: Log.Logger/LogContext only at composition/provider boundaries.
+RD OVERLAP R:RULE-L0-0026 P:RULE-L0-0480 | P (AVOID): destructuring large graphs.
+CX X:BF-L0-0093@141-141 | Serilog.Sinks.Elasticsearch is deprecated; use the official Elastic.Serilog.Sinks package.
+RD OVERLAP R:EXTRA-L0-0004 X:BF-L0-0093 | R: the deprecated sink is deny-listed.
+RD OVERLAP P:EXTRA-L0-0039 X:BF-L0-0093 | P: the deprecated sink is flagged by the manifest check.
+# r391-r394 modern-csharp/SKILL.md
+RD OVERLAP R:RULE-L0-0154 P:EXTRA-L0-0149 | R: a preview/RC move requires approval.
+RD EXAMPLE_GENERAL R:RULE-L0-0029 P:RULE-L0-0485 | P: raw string literals are no reason for raw SQL.
+SPLIT X:BF-L0-0096 | a@100-100: Use var when the type is obvious or unimportant; keep implementation details non-public; sealed only when deliberately not designed for inheritance. | b@104-104: Standard .NET naming: PascalCase for types and public members, camelCase for parameters and locals, meaningful names. | c@108-108: Prefer immutability when it represents the model naturally; do not force it where controlled mutation is simpler. | d@112-112: Span<T>, stackalloc, pooling and similar are performance tools: ordinary collections by default, introduced only when profiling or a clear hot path justifies them.
+SD P:EXTRA-L0-0153 X:BF-L0-0096#a | S: C# conventions M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-L0-0154 X:BF-L0-0096#b | S: C# naming M: P DEFAULT, X no modality E: none in either T: none
+SD P:EXTRA-L0-0155 X:BF-L0-0096#c | S: immutability M: P PREFER, X no modality E: none in either T: none
+SD P:RULE-L0-0487 X:BF-L0-0096#d | S: allocation-oriented APIs M: P DEFAULT, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-L0-0132 P:RULE-L0-0486 | P: no reorganizing a file for member ordering.
+RD EXAMPLE_GENERAL R:RULE-L0-0029 P:RULE-L0-0487 | P: Span/stackalloc/pooling.
+RD OVERLAP R:RULE-L0-0024 P:RULE-L0-0488 | P: modernization requests preserve behaviour and stay focused.
+RD OVERLAP R:RULE-L0-0131 P:RULE-L0-0488 | P: no mechanical modernization outside requests.
+# r395-r409 project-structure/SKILL.md
+RD EXAMPLE_GENERAL R:RULE-L0-0021#b P:RULE-L0-0489 | P: the rule files project-structure reads first.
+RD OVERLAP R:RULE-L0-0083 P:RULE-L0-0490 | P: no optional infrastructure scaffolded for later.
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:RULE-L0-0490 | P: scaffolding-time application.
+RD DIFFERENT_STRENGTH R:EXTRA-L0-0023 P:EXTRA-L0-0157 | same global.json scaffolding rule; R reports MUST and adds the current-stable/no-preview clause, P reports DEFAULT.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0491 | P: only required top-level directories and files.
+RD OVERLAP R:RULE-L0-0161 P:RULE-L0-0492 | P: dotnet new sln produces .slnx.
+RD OVERLAP R:RULE-L0-0162 P:RULE-L0-0493 | P: remove template-duplicated properties.
+SPLIT X:BF-L0-0099 | a@50-50: Add only the references layout.md maps, as ProjectReference items written into the project files (not through reference commands). | b@50-50: Include the hook's reference-change and outward-reference reports in the scaffolding report.
+RD COMPOUND_PART P:RULE-L0-0494 X:BF-L0-0099#a | P adds never adding an outward reference for compilation.
+SD P:EXTRA-L0-0158 X:BF-L0-0099#b | S: scaffolding report M: P MUST, X no modality E: none in either T: none
+RD OVERLAP X:BF-L0-0099#a R:EXTRA-L0-0001#a | R: reference commands are blocked; approved changes are applied in the project file.
+RD OVERLAP R:RULE-L0-0017 P:RULE-L0-0494 | R: inward references.
+RD OVERLAP R:RULE-L0-0022 P:RULE-L0-0495 | P: baseline packages only for present capabilities.
+RD OVERLAP R:RULE-L0-0006 P:RULE-L0-0495 | P: each package through add-dependency.
+RD OVERLAP R:RULE-L0-0084 P:RULE-L0-0496 | P: narrow references of NUnit test projects.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0496 | P: only useful test projects.
+RD OVERLAP R:RULE-L0-0157 P:RULE-L0-0497 | P: Angular workspace via the current CLI.
+RD OVERLAP R:RULE-L0-0163 P:RULE-L0-0497 | P: workspace under frontend/<Name>.Web/.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0498 | P: only needed directories.
+CX X:BF-L0-0100 | Never add Production credentials or Production migration automation while scaffolding (reported as broader than prohibiting startup migrations by default).
+SD P:RULE-L0-0500 X:BF-L0-0100 | S: scaffolding M: P MUST_NOT, X no modality E: none in either T: while scaffolding
+RD BROADER_NARROWER P:RULE-L0-0500 R:RULE-L0-0183#a | P: no Production migration automation at all while scaffolding; R: no automatic startup migrations.
+RD OVERLAP R:RULE-L0-0152 P:RULE-L0-0499 | P: appsettings per data-lifecycle.md.
+RD OVERLAP R:RULE-L0-0128 P:RULE-L0-0499 | P: Swagger UI for Development.
+RD OVERLAP R:RULE-L0-0197 P:RULE-L0-0501 | P: scaffolding verification then verify.
+RD EXAMPLE_GENERAL R:RULE-L0-0179#b P:RULE-L0-0502 | P: no success report for a non-building scaffold.
+RD OVERLAP R:RULE-L0-0017 P:RULE-L0-0504 | P: minimum references preserving direction.
+RD OVERLAP R:RULE-L0-0024 P:RULE-L0-0506 | P: reorganization only for a concrete problem.
+RD OVERLAP R:RULE-L0-0197 P:RULE-L0-0507 | P: project-structure completion criteria.
+# r410-r422 project-structure references
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0508 | P: only directories with real code.
+RD OVERLAP R:RULE-L0-0073 P:RULE-L0-0509 | P: DDD directories only for an approved design.
+RD OVERLAP R:RULE-L0-0072 P:RULE-L0-0509 | P: business rules alone do not justify DDD directories.
+RD COMPOUND_PART R:RULE-L0-0080 P:RULE-L0-0510 | P: the AddApplication element.
+CX X:BF-L0-0097 | Make supporting-type roles clear by name/directory with established suffixes (Service, Dto, Request/Response, Result/Outcome, Validator, Rules/Policy, Factory, Mapper, Adapter), prefer unambiguous names over TaskWorkflow and avoid generic Models/Helpers/Common/Utils buckets.
+RD COMPOUND_PART X:BF-L0-0097 P:EXTRA-L0-0162 | P: the suffix and naming element.
+RD COMPOUND_PART X:BF-L0-0097 P:RULE-L0-0511 | P (AVOID): the generic-bucket element.
+RD COMPOUND_PART R:RULE-L0-0083 P:RULE-L0-0511 | P: the generic-bucket element.
+RD COMPOUND_PART R:RULE-L0-0080 P:RULE-L0-0512 | P: the AddInfrastructure element.
+RD OVERLAP R:RULE-L0-0088 P:RULE-L0-0513 | P: Api Contracts only for a concrete boundary benefit.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0514 | P: the target tree is not a checklist.
+RD EXAMPLE_GENERAL R:RULE-L0-0083 P:RULE-L0-0516 | P: docs subdirectories only when needed.
+RD OVERLAP R:RULE-L0-0162 P:RULE-L0-0517 | P: typical shared settings.
+RD OVERLAP R:RULE-L0-0162 P:RULE-L0-0518 | P: central package versions.
+CX X:BF-L0-0098 | global.json pins the intended SDK line; select the current stable SDK of the target release at scaffolding time with a roll-forward policy allowing normal servicing (the example version is illustrative).
+SD R:EXTRA-L0-0023 X:BF-L0-0098 | S: global.json scaffolding M: R MUST, X no modality E: preview/RC only with approval (both) T: at scaffolding
+RD COMPOUND_PART X:BF-L0-0098 P:RULE-L0-0519 | P: the current-stable-SDK selection element.
+RD COMPOUND_PART X:BF-L0-0098 P:EXTRA-L0-0157 | P: the pin and roll-forward element.
+RD OVERLAP R:RULE-L0-0154 P:RULE-L0-0519 | R: preview/RC moves need approval.
+RD OVERLAP R:RULE-L0-0152 P:RULE-L0-0520 | P: Development configuration files are not git-ignored.
+RD OVERLAP R:RULE-L0-0129 P:RULE-L0-0521 | P: Docker/deployment infrastructure is not part of the target tree.
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:RULE-L0-0521 | P: additional services only by decision.
+# r423-r440 security-scan/SKILL.md
+SPLIT R:EXTRA-L0-0024 | a: Every security report states the static-analysis limitation. | b: Severity uses the five levels Critical (sparingly), High, Medium, Low, Info. | c: Each confirmed finding gives severity, file and location, title, evidence, why it is a risk, likely impact, smallest remediation and OWASP category when applicable. | d: The report contains scope, limitations, a severity summary, findings and per-layer results.
+CX X:BF-L0-0102 | Every security report states that static review cannot prove the application secure and may miss runtime-only and other vulnerability classes.
+SD P:EXTRA-L0-0167 R:EXTRA-L0-0024#a X:BF-L0-0102 | S: security reports M: MUST in P and R, X no modality E: none in any T: none
+RD DIFFERENT_STRENGTH R:EXTRA-L0-0024#b P:EXTRA-L0-0169 | same severity scale; R reports MUST, P DEFINITION.
+SD P:EXTRA-L0-0170 R:EXTRA-L0-0024#c | S: confirmed security findings M: MUST both E: OWASP category when applicable (both) T: none
+RD DIFFERENT_STRENGTH R:EXTRA-L0-0024#d P:EXTRA-L0-0171 | same report shape; R reports MUST, P DEFAULT.
+SPLIT R:RULE-L0-0208 | a: Security review reports concrete risks in the context of actual exposure. | b: Distinguish confirmed findings from items needing verification and assign severity from exploitability, reachability, impact and context, never mechanically from a pattern, CVSS or OWASP category. | c: Do not suppress a real secret because it sits in a Development file. | d: Name workflows needing threat modeling instead of claiming the scan proves them secure. | e: Never invent exploitability.
+SD P:RULE-L0-0523 R:RULE-L0-0208#a | S: security review M: MUST both E: none in either T: none
+SD P:RULE-L0-0524 R:RULE-L0-0208#b | S: security finding classification and severity M: MUST both E: none in either T: none
+SD P:RULE-L0-0525 R:RULE-L0-0208#c | S: secrets in Development files M: MUST_NOT both E: none in either T: none
+RD COMPOUND_PART R:RULE-L0-0208#b P:RULE-L0-0534 | P: the NEEDS VERIFICATION label.
+RD OVERLAP R:RULE-L0-0208#b P:RULE-L0-0531 | P: the severity factors.
+RD OVERLAP R:RULE-L0-0208#a P:RULE-L0-0532 | P: what is not automatically reported.
+RD OVERLAP R:RULE-L0-0208#c P:RULE-L0-0533 | P: what is not automatically treated as safe.
+RD OVERLAP R:RULE-L0-0043 P:RULE-L0-0525 | R: no committed secrets.
+RD OVERLAP R:RULE-L0-0043 P:RULE-L0-0533 | R: secrets in Development settings.
+RD EXAMPLE_GENERAL R:RULE-L0-0021#b P:RULE-L0-0522 | P: the rule files security-scan reads first.
+RD EXAMPLE_GENERAL R:RULE-L0-0181 P:RULE-L0-0526 | P: no security mechanisms the project does not need.
+RD OVERLAP R:RULE-L0-0049 P:RULE-L0-0527 | P: evaluate effective authorization incl. fallback policies.
+RD COMPOUND_PART R:RULE-L0-0191 P:RULE-L0-0528 | R adds reading code before turning a warning into a finding.
+RD OVERLAP R:RULE-L0-0188#a P:RULE-L0-0529 | P: scope the scan by existing surfaces and affected layers.
+CX X:BF-L0-0103 | Security review uses seven layers (dependencies, secrets/configuration, injection, authentication/access control, browser/HTTP, sensitive data/logging/errors, exceptional conditions) with typical OWASP Top 10:2025 mappings.
+RD OVERLAP X:BF-L0-0103 P:EXTRA-L0-0168 | P: OWASP mapping only when the category genuinely fits.
+RD OVERLAP R:RULE-L0-0191 P:RULE-L0-0530 | P: inspect code before reporting a scanner finding.
+RD EXAMPLE_GENERAL R:RULE-L0-0180 P:RULE-L0-0535 | P: never mark a layer PASS without checking it.
+RD OVERLAP R:RULE-L0-0181 P:RULE-L0-0536 | P: no unneeded security systems or libraries.
+RD OVERLAP R:RULE-L0-0056#a P:RULE-L0-0536 | P: no custom crypto recommendations.
+RD OVERLAP R:RULE-L0-0049 P:RULE-L0-0536 | P: no [Authorize] on every action under a global policy.
+RD OVERLAP R:RULE-L0-0180 P:RULE-L0-0537 | P: no layer PASS unchecked.
+RD OVERLAP R:RULE-L0-0208#b P:RULE-L0-0537 | P: severity reflects actual risk; uncertain findings labelled.
+REVIEWED r366-r440

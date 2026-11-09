@@ -1,0 +1,149 @@
+# L1 / B006 — shared script library, settings, add-dependency, angular, api-versioning, architecture-decision.
+
+C R170 OL ARC-020,GOV-017 | REQUIRES_APPROVAL (Reserved) | Reserved decisions need explicit approval: changing an accepted project/architecture decision; adopting a new architectural style or pattern (Rich Domain Model or DDD tactical patterns, CQRS, mediator-based organization, Vertical Slice Architecture, event sourcing, a project-wide Result model, microservices); adding a production project/layer; changing persistence boundaries (e.g. several persistence contexts) or persistence technology; adding an infrastructure category (messaging, background processing, distributed cache, search, external storage, external identity); adding a major library/framework or replacing approved baseline technology; introducing a project-wide convention or abstraction; changing authentication/authorization architecture; a breaking public API change. | engineering decisions | none stated
+C R171 OL DEP-017 | DEFAULT | Add the Asp.Versioning Controller integration (Asp.Versioning.Mvc, Asp.Versioning.Mvc.ApiExplorer) only once Controller API versioning has actually been adopted. | API versioning packages | none stated
+C R172 OL DEP-004 | MUST | Before installing check whether the exact package/version is deprecated, check known vulnerability information (dotnet package list --vulnerable --include-transitive, the frontend audit command) and verify the exact selected version's license from official registry metadata (and upstream when necessary); permissive licenses (MIT, Apache-2.0, BSD) are acceptable without approval; being free to download does not make a package acceptable. | dependency additions and updates | none stated
+C R173 OL DEP-005 | REQUIRES_APPROVAL | Do not install automatically when a package requires payment or a commercial license, or its license has material obligations or cannot be confidently classified (strong copyleft, dual licensing, source-available/custom terms, unclear or missing); present the concern and reasonable alternatives (say so explicitly when none exists), never substitute silently, and make no legal conclusions beyond published license information. | dependency additions | User approval.
+C R174 OL GOV-014 | MUST | Keep changes focused on the requested scope and preserve existing behavior unless the task or approved specification requires a change; e.g. after a scanner finding do not automatically replace or upgrade unrelated packages, and do not perform unrelated dependency cleanup during a narrow task. | all changes | Task or approved specification requires change.
+C R175 OL GOV-012 | DEFAULT | Prefer simple, maintainable solutions; keep architectural complexity proportional to current requirements; avoid speculative abstractions (e.g. do not wrap every UI-library component in a custom abstraction without a reason). | all code | none stated
+C R176 OL WF-016 | DEFAULT | When generated output is wrong or its source contract changes, fix or update the authoritative source (contract, generator configuration) and regenerate; keep generated code separate from handwritten code and do not hand-edit disposable generated output unless the repository intentionally treats it as maintained source. | generated code (e.g. API clients) | Generated output intentionally maintained as source.
+C R177 OL API-022 | MUST | When deprecating an externally consumed API version, mark the deprecation in versioning metadata, document the replacement, communicate a realistic migration/removal timeline and keep the old version working for the promised support period; never silently remove a deprecated version. | published API versions | none stated
+C R178 OL GOV-017 | MUST | For a Reserved decision send a Decision Request (Context, Options, Recommendation, Blocked, Proceeding with) and continue only with non-Reserved work; do not ask approval for routine choices already constrained by the specification, approved stack, existing code or rules. | Reserved decisions | none stated
+C R179 OL GOV-017 | MUST | In autonomous or headless runs take only a policy-compliant non-Reserved path and list unresolved Decision Requests in the final report instead of deciding. | headless/autonomous runs | none stated
+C R180 OL GOV-007,GOV-008 | MUST | When a new behavioral rule or tunable value is approved, update the durable source of truth: product behavior in SPECIFICATION.md, tunable values in CUSTOM_SETTINGS.md (then custom-settings). | approved product decisions | none stated
+C X16 EX DEP-001,GOV-014 | MUST | Remove dependencies that are no longer used when that is part of the current change and safe to verify; do not leave dead references. | dependency changes | Unrelated dependency cleanup during a narrow task is excluded. | DEP-001 restricts adding dependencies and GOV-014 limits scope; no oracle policy requires removing dependencies made unused by a change. | A refactor that stops using a package must also remove its PackageReference/package.json entry.
+C X17 EX WF-009 | MUST | The add-dependency workflow reports package, version, license, vulnerability/deprecation result, target project and approvals obtained or still pending. | dependency changes | none stated | WF-009 covers verification reporting; no oracle policy prescribes dependency-specific report contents. | A dependency addition reported without its license and vulnerability result does not satisfy the workflow.
+C X18 EX API-013,ARC-020 | REQUIRES_APPROVAL (Reserved) | Adopting API versioning is Reserved and needs explicit approval, even when a concrete compatibility need exists. | HTTP API versioning | none stated | API-013 allows introducing versioning when a real compatibility need exists and does not require approval; the oracle's consequential-change list does not name API versioning adoption. | With published clients needing coexistence, the agent must still send a Decision Request before adding versioning.
+C X19 EX GOV-017,GOV-007 | MUST | Every approved Reserved decision is recorded as an ADR at docs/decisions/NNNN-<kebab-title>.md (Status Accepted with date, Approved by, Context, Decision, Consequences, Alternatives considered; docs/decisions/ created with the first ADR) and summarized as a decision line pointing to the ADR in the decision file of the owning level (frame style rule, decisions.md, frontend stack rule), never in a single cross-level register and without restating rules that live elsewhere. | approved Reserved decisions | Product behavior and tunable values go to SPECIFICATION.md / CUSTOM_SETTINGS.md instead. | GOV-017 requires approval for Reserved changes but no recording artifact; GOV-007 covers product behavior sources only. No oracle policy requires ADR documents or level-stratified decision summaries. | After the user approves adopting Mapster for a new area, the agent must also write an ADR and a decision summary line.
+C X20 EX WF-009 | MUST | The architecture-decision workflow reports the decision, ADR path, decision files updated and follow-up work (structure, dependencies, migrations). | decision recording | none stated | No oracle policy prescribes decision-recording report contents. | A recorded decision reported without its ADR path is incomplete.
+
+FILE .claude/scripts/lib/project.mjs | Shared helper library (no rules of its own).
+1-9 IM | header comment (launcher vs active root)
+10-21 IM | imports, skip list, template marker, error classes
+23-35 IM | path normalization and launcher-root resolution (fails visibly when the template is incomplete)
+37-81 IM | Git helpers, template/active root resolution, hook state directory, repository-relative paths
+83-111 IM | strict text decoding (UTF-8, BOM-tagged UTF-16) with visible errors
+113-134 IM | hook input parsing (empty or malformed input raises an input error)
+136-179 IM | blob ids, file listing (skips nested repositories), glob matching
+181-218 IM | selection-record parsing and facet loading (a selected module missing a facet is a setup error)
+220-270 IM | MSBuild XML reading (project/package references, frameworks, SDKs; properties not evaluated) and package matching
+
+FILE .claude/settings.json | Hook registrations.
+1-6 IM | settings object and PreToolUse matcher
+7 EX X14 | "onFailure": "block"
+8-41 IM | PostToolUse (edits and shell), PostToolUseFailure and Stop registrations in exec form without blocking failure mode
+
+FILE .claude/skills/add-dependency/SKILL.md | Workflow skill; on invocation (also routed by the dependency hook).
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to the rules that govern what may be added
+12 NN | section heading
+14 OL R69,R158,R170 | replacing an approved technology or adding a major library is Reserved
+16 OL R41 | mapping: `Mapster` + `Mapster.DependencyInjection`;
+17 MX R40,X9 | integrations are never added ⟫ Microsoft resilience packages as default with direct Polly as documented exception are oracle-linked (R40); the absolute ban on the deprecated Polly integrations is the extra X9.
+18 OL R171 | only once Controller API versioning has actually been adopted
+19 NN | pointer to module command facets for slot-specific conditional packages
+21 NN | section heading
+23-26 OL R42 | verified from the package registry — never from memory
+28 NN | section heading
+30-32 OL R172 | Check whether the exact package/version is deprecated.
+34 NN | section heading
+36 OL R173 | Do not install automatically when the package requires payment or a commercial license
+38-48 NN | example approval message format
+50 OL R173 | If no reasonable free alternative exists, say so explicitly.
+52 NN | section heading
+54 OL R18 | NuGet and npm placement: as the package-management rule requires
+56-62 NN | XML placement example
+64 OL R43 |
+65 OL R174 | After a scanner finding, do not automatically replace or upgrade unrelated packages.
+67 NN | section heading
+69 MX X16,R174 | do not leave dead references ⟫ Removing unused dependencies and leaving no dead references is extra (X16); not performing unrelated cleanup during a narrow task is scope preservation (R174).
+71 NN | section heading
+73 EX X17 | Package, version, license, vulnerability/deprecation result, target project, and approvals obtained or still pending.
+
+FILE .claude/skills/angular/SKILL.md | Module knowledge skill (frontend.knowledge); on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (trigger cues)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointers to rules and commands; states the skill adds technique only
+12 NN | section heading
+14-23 NN | suggested directory structure (illustrative, EXC-018 class)
+25 OL R72 | Create directories only when they hold meaningful code.
+27 NN | section heading
+29-36 NN | component code example
+38 OL R146 | Do not introduce NgModules for ordinary feature work unless an integration or legacy dependency requires them.
+40 NN | section heading
+42-46 NN | signals code example
+48 OL R147,R150 | `takeUntilDestroyed()` (or the `DestroyRef` it uses) ties lifetime to the owner
+50 NN | section heading
+52-61 NN | data-access service code example
+63 OL R71 | Use frontend API models matching the published HTTP contract.
+65-67 NN | provider configuration example
+69 OL R148,R75 | centralize parsing/mapping
+71 NN | section heading
+73 OL R98 | all UX
+75 NN | section heading
+77 OL R76 | Do not duplicate complex domain rules in TypeScript unless the UI genuinely needs an equivalent user-facing rule.
+79 NN | section heading
+81-88 NN | lazy route configuration example
+90 OL R74,R28 | a state library only when demonstrated complexity needs it
+92 NN | section heading
+94 OL R175 | do not wrap every Material component in a custom abstraction without a reason
+96 NN | section heading
+98 OL R176 | regenerate it when the contract changes
+100 NN | section heading
+102 NN | frontend test targeting guidance (detailed test technique, EXC-018 class)
+104 NN | section heading
+106 NN | security review heuristic for sanitizer bypasses (investigation technique)
+108 NN | section heading
+110 OL R46 | Do not prematurely optimize.
+112 NN | section heading
+114 DU R146,R71,R72,R74,R150,R148,R98,R75,R147 | anti-pattern list restating the frontend rules recorded at their owning rule lines
+
+FILE .claude/skills/api-versioning/SKILL.md | Knowledge skill; on demand.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 MX X18,R171,R139 | adopting versioning is Reserved ⟫ Reserved status of adopting versioning is extra (X18); package only after adoption (R171) and versioning confined to the API contract (R139) are oracle-linked.
+12 NN | section heading
+14 OL R87 | do not add `v1` automatically
+16 NN | section heading
+18 OL R89 | Header or query-string versioning are valid when requirements justify them.
+20 NN | section heading
+22-35 NN | setup code example (technique)
+37 NN | section heading
+39-52 NN | versioned controller code example
+54 NN | technique note on mapping one use-case result into another contract
+56 NN | section heading
+58 OL R88 | Compilation success does not decide compatibility
+60 NN | section heading
+62 OL R141,R177 | deprecated versions still operating during support
+64 NN | section heading
+66 DU R87,R145,R139,R88,R177,R89 | anti-pattern list restating versioning rules recorded at their owning lines
+
+FILE .claude/skills/architecture-decision/SKILL.md | Workflow skill; on invocation.
+1-2 NN | front-matter delimiter and skill name
+3 NN | skill description (routing text)
+4 NN | front-matter delimiter
+6 NN | header metadata
+8 NN | document heading
+10 NN | pointer to decision control in CLAUDE.md
+12 NN | section heading
+14-21 OL R178 | Proceeding with: <non-Reserved work continuing meanwhile>
+23 OL R179 | list unresolved Decision Requests in the final report instead of deciding
+25 NN | section heading
+27-41 EX X19 | Write an ADR at `docs/decisions/NNNN-<kebab-title>.md`
+42 OL R180 | product behavior or tunable value → `SPECIFICATION.md` / `CUSTOM_SETTINGS.md` (then `custom-settings`)
+43 EX X19 | Record the change as a decision summary line pointing to the ADR
+45 NN | section heading
+47 MX X4,X5,X6,R20 | always needs an ADR ⟫ ADR, module replacement/removal procedure and declared-property updates are extras (X4, X5, X6); product approval for observable declared-property changes is oracle-linked (R20).
+49 NN | section heading
+51 EX X20 | Decision, ADR path, decision files updated, follow-up work
+DONE

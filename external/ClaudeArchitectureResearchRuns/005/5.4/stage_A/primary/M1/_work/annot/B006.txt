@@ -1,0 +1,66 @@
+# Batch B006 — scripts/check-instructions.js
+
+@@ output/template/.claude/scripts/check-instructions.js ;; Executable instruction-structure checker; run manually/template-maintenance and automatically by post-tool-use.js after instruction edits (ERROR findings block).
+@scope executable: check-instructions.js (post-tool-use after edits of CLAUDE.md/imports/.claude/**; template maintenance)
+1-11 IM ;; Header: scope of checks and usage.
+13 IM ;; Import.
+15-16 EX [x.ci-four-slots]
+17-24 EX [x.ci-required-skills]
+25 EX [x.ci-user-only] ;; ;; const USER_ONLY_SKILLS = ['template-maintenance'];
+26 EX [x.ci-budget] ;; ;; const BUDGET_TOKENS = 6500;
+27 IM ;; Files exempt from the implementation-name leak scan (capability-selection.md, MAP.md).
+29-30 IM ;; Finding collector.
+32-58 IM ;; Instruction-file discovery, instruction-path predicate (scope of post-edit check), enforcement file list, root config list, code stripping.
+60-70 EX [x.ci-header,x.ci-no-level-kind]
+72-81 EX [x.ci-flat-rules]
+83-87 IM ;; Skill name discovery.
+88-98 EX [x.ci-skill-frontmatter,x.ci-user-only]
+99-102 EX [x.ci-skill-shape]
+103-104 EX [x.ci-required-skills]
+105-109 EX [x.cap-contract-conformance] ;; Facet skills of selected modules must exist.
+110-119 OL [wf010.ci-reviewer]
+120 IM ;; Function close.
+122-125 IM ;; Reads CLAUDE.md imports.
+127-138 EX [x.ci-imports]
+140-167 IM ;; Reference resolution helpers.
+169-193 IM ;; Inactive facet locations of disabled optional slots (exempted from reference checks).
+195-229 EX [x.ci-refs-resolve]
+231-240 EX [x.ci-refs-resolve] ;; Manifest paths and anchors must resolve.
+242-256 IM ;; Token matching helpers.
+258-269 EX [x.ci-four-slots]
+271-283 EX [x.static-composition]
+284-326 EX [x.cap-contract-conformance,x.cap-facet-headers] ;; Module/contract JSON validation, role-named facet locations, facet Capability headers, required properties/enforcement, anchors.
+328-341 EX [x.cap-facet-ownership]
+343-351 EX [x.cap-planning-imports]
+353-382 EX [x.cap-leak-tokens,x.cap-detail-tokens]
+383-390 EX [x.cap-binds-required]
+391-392 IM ;; Returns modules.
+394-405 EX [x.ci-hook-wiring] ;; Expected hook wiring table (events, scripts, tools, fail-closed flag).
+406-420 IM ;; Matcher and script-argument helpers.
+422-438 EX [x.ci-hook-wiring,x.ci-failclosed-policy]
+440-468 EX [x.ci-hook-wiring]
+470-483 EX [x.ci-map-lists]
+485-498 IM ;; Always-loaded token estimate (CLAUDE.md + imports + model-invocable skill/agent descriptions).
+500-510 IM ;; main(): runs all checks.
+511-512 EX [x.ci-budget] ;; ;; always-loaded surface is about
+513-523 IM ;; Return and exports (run() used by post-tool-use).
+525-537 IM ;; CLI entry: exit 1 on errors, 2 when it cannot run.
+
+C x.ci-four-slots EX - ENFORCED ;; Exactly the four capability slots (architecture, persistence, backend-testing required; frontend optional) may exist, each with a contract; the selection record must be readable and list no unknown slot. ;; = ;; none ;; Capability-system invariant (repo/meta).
+C x.ci-required-skills EX - ENFORCED ;; Required workflow skills (project-structure, verify, code-review, build-fix, custom-settings, git-workflow, security-scan, add-dependency, architecture-decision, template-maintenance, development-workflow) and embedded knowledge skills (http-api, aspnet-error-handling, logging, httpclient-factory, configuration, dependency-injection, caching, swagger, api-versioning, health-check, docker, ci-cd, modern-csharp, authentication) must exist. ;; = ;; none ;; Skill-inventory invariant (repo/meta).
+C x.ci-user-only EX - ENFORCED ;; template-maintenance must set disable-model-invocation: true. ;; = ;; none ;; Repo/meta invocation invariant.
+C x.ci-budget EX - ENFORCED_WARNING ;; Warn when the always-loaded surface exceeds about 6500 tokens. ;; = ;; Warning only. ;; Context budget threshold not in the oracle.
+C x.ci-header EX - ENFORCED ;; Every instruction file's first content line must be a '> ' classification/ownership header. ;; = ;; none ;; Repo/meta header convention.
+C x.ci-no-level-kind EX - ENFORCED ;; No Level:/Kind: classification may appear in instruction files. ;; = ;; none ;; Architecture-identity invariant (repo/meta).
+C x.ci-flat-rules EX - ENFORCED ;; .claude/rules/ stays flat and every rule declares a non-empty paths list. ;; = ;; none ;; Rule-layout invariant (repo/meta).
+C x.ci-skill-frontmatter EX - ENFORCED ;; Skill front-matter name equals its directory and has a concrete description (≥20 characters). ;; = ;; none ;; Skill metadata invariant (repo/meta).
+C x.ci-skill-shape EX - ENFORCED ;; Skill-private files live only in the skill's references/ directory. ;; = ;; none ;; Skill-shape invariant (repo/meta).
+C wf010.ci-reviewer OL WF-010 ENFORCED ;; The code-reviewer agent must exist, disallow Write and Edit, and preload the code-review workflow. ;; = ;; none ;;
+C x.ci-imports EX - ENFORCED ;; CLAUDE.md imports must resolve and no other instruction file may contain an @-import (always-loaded files are imported directly from CLAUDE.md). ;; = ;; none ;; Loading invariant (repo/meta).
+C x.ci-refs-resolve EX - ENFORCED ;; Backticked instruction references, workflow/skill/agent references, § section references, routing targets and manifest anchors must resolve (inactive facets of disabled slots exempt). ;; = ;; none ;; Reference-integrity invariant (repo/meta).
+C x.cap-facet-headers EX - ENFORCED ;; Every facet file of a selected module must declare 'Capability: <slot>/<implementation>' in its header. ;; = ;; none ;; Capability-system invariant (repo/meta).
+C x.cap-facet-ownership EX - ENFORCED ;; A file declaring a Capability header must belong to a selected module and be listed in its manifest; unselected implementations must not enter runtime. ;; = ;; none ;; Capability-system invariant (repo/meta).
+C x.cap-planning-imports EX - ENFORCED ;; Planning facets are imported from CLAUDE.md exactly for selected slots; an unselected slot's planning facet must not be imported or present. ;; = ;; none ;; Capability-system invariant (repo/meta).
+C x.ci-hook-wiring EX - ENFORCED ;; settings.json must register pre-tool-use.js (PreToolUse: Bash, PowerShell), post-tool-use.js (PostToolUse: Write, Edit, MultiEdit, Bash, PowerShell; PostToolUseFailure: Bash, PowerShell) and stop.js (Stop), in exec form with only expected events. ;; = ;; none ;; Hook-wiring invariant (repo/meta).
+C x.ci-failclosed-policy EX DEP-025 ENFORCED ;; The PreToolUse handler must set onFailure block; no other hook may set onFailure. ;; = ;; none ;; Fail-closed policy as an instruction-system invariant.
+C x.ci-map-lists EX - ENFORCED ;; MAP.md must list every instruction file, enforcement script/JSON, root config file, SPECIFICATION.md and CUSTOM_SETTINGS.md. ;; = ;; none ;; Map completeness invariant (repo/meta).

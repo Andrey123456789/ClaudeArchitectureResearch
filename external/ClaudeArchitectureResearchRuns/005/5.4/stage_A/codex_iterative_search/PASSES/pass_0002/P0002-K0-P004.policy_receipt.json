@@ -1,0 +1,964 @@
+{
+  "unit": "P0002-K0-P004",
+  "batch_input_sha256": "fae462a617d982a19c247ee6f72dd857fc908c33e80f4eae45aece1ac494c266",
+  "reviews": [
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-001",
+        "name": "Dependencies point inward",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Dependency Direction"
+        ],
+        "normalized_policy": "Domain depends on no application project; Application depends on Domain; Infrastructure depends on Application/Domain; API may reference Infrastructure only for composition; inner layers never depend on outer layers.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-001",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0077",
+        "primary/K0/constraints.jsonl/RULE-K0-0078",
+        "primary/K0/constraints.jsonl/RULE-K0-0203",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0031"
+      ],
+      "boundary_analysis": "Inward reference direction matches. Api-to-Domain allowed checker edge already0203/replica0149 despite layout omission; missing-target error and MSBuild exception EXTRA0031; unknown roles/notices BF0121. Existing malformed-XML findings CIS-K0-0002 retained.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [
+        "CIS-K0-0002"
+      ],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/MAP.md",
+          "sha256": "8c5e45a0b34511d92c46ece2d261df2f2bcabdde611310e5f4a4dec970080db6",
+          "inspected_ranges": [
+            [
+              181,
+              192
+            ]
+          ],
+          "context_quotes": [
+            "\nHooks run in exec form (`node` + `args`, no shell): `${CLAUDE_PROJECT_DIR}` only locates `hook.cjs`; every check runs against the active repository or linked worktree, resolved from the hook input `cwd` (or the edited file) through Git, and keeps its state per worktree in `.claude/.hook-state/` (ignored by Git). Hook input may carry a UTF-8 byte-order mark; manifests may be UTF-8 or BOM-tagged UTF-16, and unreadable content is reported as a finding.\n\n| Mechanism | Trigger | Checks | Points to |\n|---|---|---|---|\n| Pre-command hook (fail-closed: a missing script, crash, timeout or unreadable input blocks the command) | Bash/PowerShell command, before execution | npm/pnpm/yarn/ng/dotnet/NuGet package additions, updates and removals (global options and `--force`/`--legacy-peer-deps` included) are denied without `# add-dependency: reviewed`; `dotnet` project-reference additions and removals are denied without `# project-references: approved`; repository-changing Git commands (table-driven classifier after global options such as `-C`) ask the user to confirm, read-only Git commands run | `add-dependency`, `project-structure`, `architecture-decision`, `CLAUDE.md` § Git |\n| Post-change hook | Edit/Write of a manifest, instruction file or product input | `check-dependencies.cjs` on that manifest (project-reference changes flagged as Reserved), `check-instructions.cjs`, synchronization reminders | dependency and architecture standards, this map, `custom-settings` |\n| Post-change hook | every Bash/PowerShell command, successful or failed | actual worktree state: the first observation of a worktree validates every tracked manifest and the instruction files; later observations validate only paths Git reports as changed (working tree, index, HEAD transitions) — additions, rewrites, removals and moves of `*.csproj`, `Directory.Packages.props` and `package.json`, project-reference changes, instruction files, product inputs; build output, `node_modules` and nested repositories are not observed | as above |\n| Stop hook | end of a turn (once per material state of the changed files, never on its own continuation) | model change without seeder change, migrations to review, code without test changes, changed custom settings | `development-workflow`, `verify`, `custom-settings` |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` | `verify`, `add-dependency`, `project-structure` | repository-wide manifest scan | dependency and architecture standards |\n| `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-instructions.cjs\"` | `template-maintenance`, post-change hook | structural predicates of this system, including the Kind direction and the hook configuration | this map |\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/hooks/hook.cjs",
+          "sha256": "cc6e55c8fdfd5441ce38d48784f713ff4528516a8dc7641ce9a059331420823e",
+          "inspected_ranges": [
+            [
+              1,
+              10
+            ],
+            [
+              167,
+              183
+            ],
+            [
+              237,
+              270
+            ],
+            [
+              282,
+              290
+            ],
+            [
+              471,
+              478
+            ],
+            [
+              584,
+              593
+            ]
+          ],
+          "context_quotes": [
+            "// Kind: ENF | Scope: repo/meta | Owner: Claude Code hook dispatcher — pre-command gates (dependency changes, project-reference graph, repository-changing Git), validation of the actual worktree state after edits and shell commands, product-input reminders, co-change reminders at stop | Loading: hook events configured in .claude/settings.json\n//\n// Launch (exec form, .claude/settings.json): node <launcher root>/.claude/hooks/hook.cjs <event>, hook input JSON on stdin.\n// The launcher root only locates this script. Every check runs against the active repository or worktree, resolved\n// from the hook input `cwd` (or the edited file) through Git; state is kept per worktree in .claude/.hook-state/.\n// Events: pre-tool-use (fail-closed: any error or unreadable input denies the command), post-tool-use,\n// post-tool-use-failure (a failed shell command may still have changed files), stop.\n// Output: Claude Code hook JSON on stdout with exit code 0. Exit code 1 with a message on stderr means a\n// non-critical hook could not run. Messages point to the owning workflow or standard; they do not restate policy.\n'use strict';",
+            "\nconst DOTNET_VALUE_OPTIONS = new Set(['--version', '-v', '--source', '-s', '--framework', '-f', '--package-directory', '--project', '--verbosity']);\n\n// dotnet add/remove [<project>] package|reference …, dotnet package add|remove|update …, dotnet reference add|remove ….\nfunction classifyDotnet(args) {\n  const positionals = positionalsOf(args, DOTNET_VALUE_OPTIONS).map((p) => p.toLowerCase());\n  const [verb, first, second] = positionals;\n  if (verb === 'add' || verb === 'remove') {\n    if (first === 'package' || first === 'reference') return first;\n    if (second === 'package' || second === 'reference') return second;\n    return null;\n  }\n  if (verb === 'package' && ['add', 'remove', 'update'].includes(first)) return 'package';\n  if (verb === 'reference' && ['add', 'remove'].includes(first)) return 'reference';\n  return null;\n}\n",
+            "\nfunction classifyTokens(tokens, found) {\n  for (let i = 0; i < tokens.length; i += 1) {\n    const tool = baseName(tokens[i]);\n    const args = tokens.slice(i + 1);\n    const text = tokens.slice(i).join(' ');\n    const launch = SHELL_LAUNCHERS[tool] ? args.findIndex((a) => SHELL_LAUNCHERS[tool].includes(a.toLowerCase())) : -1;\n    if (launch >= 0 && args.length > launch + 1) {\n      for (const segment of segmentsOf(args.slice(launch + 1).join(' '))) classifyTokens(tokenize(segment), found);\n    } else if (NODE_PM[tool]) {\n      const hit = classifyNodePackageManager(tool, args);\n      if (hit) found.dependency.push({ text, force: hit.force });\n    } else if (tool === 'ng' || (tool === 'npx' && baseName(positionalsOf(args, new Set(['-p', '--package']))[0] ?? '') === 'ng')) {\n      const ngArgs = tool === 'ng' ? args : args.slice(args.findIndex((a) => baseName(a) === 'ng') + 1);\n      const [sub, ...rest] = positionalsOf(ngArgs, new Set());\n      if (sub === 'add' || (sub === 'update' && rest.length > 0)) found.dependency.push({ text, force: ngArgs.some((a) => FORCE_FLAG.test(a)) });\n    } else if (tool === 'dotnet') {\n      const kind = classifyDotnet(args);\n      if (kind === 'package') found.dependency.push({ text, force: false });\n      if (kind === 'reference') found.reference.push(text);\n    } else if (tool === 'nuget' && ['install', 'update'].includes(String(args[0]).toLowerCase())) {\n      found.dependency.push({ text, force: false });\n    } else if (['install-package', 'update-package', 'uninstall-package'].includes(tool)) {\n      found.dependency.push({ text, force: false });\n    } else if (tool === 'git') {\n      const sub = classifyGit(args);\n      if (sub) found.git.push({ sub, text });\n    } else {\n      continue;\n    }\n    break; // the rest of the segment belongs to the recognized command\n  }\n}\n",
+            "  const deny = [];\n  if (found.reference.length > 0 && !REFERENCE_MARKER.test(command)) {\n    deny.push(\n      `Project-reference graph change: ${found.reference.join(' | ')}`,\n      'Changing the project reference graph is Reserved (CLAUDE.md § Decisions) unless an accepted decision already requires the reference, even when the new reference would be legal.',\n      'Follow `project-structure` § Changing project references (Decision Request: `architecture-decision`), then re-run the command with the trailing comment `# project-references: approved`.',\n    );\n  }\n  if (found.dependency.length > 0 && !DEPENDENCY_MARKER.test(command)) {",
+            "      }\n      validate(rel);\n      const refsBefore = type === 'changed' ? change.before.refs : [];\n      const graphChanged = type === 'edited' ? graphHint : !sameList(refsBefore, change.after.refs);\n      if (rel.endsWith('.csproj') && type !== 'baseline' && graphChanged) {\n        messages.push(`[manifest] the project references of ${rel} changed: changing the project reference graph is Reserved (CLAUDE.md § Decisions) — confirm it was approved and recorded (\\`architecture-decision\\`), or revert it.`);\n      }\n    }",
+            "  if (!event) fail(`missing or unknown hook event; expected one of: ${EVENTS.join(', ')}`);\n  if (event === 'pre-tool-use') {\n    try {\n      preToolUse(readInput());\n    } catch (error) {\n      preDecision('deny', [`[hook] the pre-command policy check could not run, so the command was blocked: ${error.message}`]);\n    }\n    process.exit(0);\n  }\n  let input;"
+          ]
+        },
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              16,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "\n- Dependencies must point inward: `Domain` references no other application project; `Application` references `Domain`; `Infrastructure` references `Application` and `Domain`; `Api` references `Application` and may reference `Infrastructure` only for application composition and dependency registration.\n- Inner layers must never depend on outer layers, and Domain and Application must not reference Infrastructure-specific types. If a feature seems to need `Domain → Application`, `Domain → Infrastructure` or `Application → Infrastructure`, reconsider the abstraction boundary instead.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/scripts/check-dependencies.cjs",
+          "sha256": "2a14aa061c2daf224843190038869f58610824a953b362dd8b2ab1aa37be7942",
+          "inspected_ranges": [
+            [
+              30,
+              38
+            ],
+            [
+              76,
+              99
+            ],
+            [
+              132,
+              157
+            ]
+          ],
+          "context_quotes": [
+            "\nconst LAYERS = ['Domain', 'Application', 'Infrastructure', 'Api'];\nconst ALLOWED_PRODUCTION_REFERENCES = {\n  Domain: [],\n  Application: ['Domain'],\n  Infrastructure: ['Application', 'Domain'],\n  Api: ['Application', 'Infrastructure', 'Domain'],\n};\nconst TYPICAL_TEST_REFERENCES = {",
+            "// up to its closing tag, '' when self-closing) or { line, malformed: true }.\nfunction xmlElements(text, name) {\n  const elements = [];\n  for (const open of text.matchAll(new RegExp(`<${name}(?=[\\\\s/>])`, 'g'))) {\n    const line = text.slice(0, open.index).split('\\n').length;\n    const attributes = new Map();\n    let at = open.index + open[0].length;\n    for (;;) {\n      XML_ATTRIBUTE.lastIndex = at;\n      const m = XML_ATTRIBUTE.exec(text);\n      if (!m) break;\n      if (!attributes.has(m[1])) attributes.set(m[1], m[2] ?? m[3]);\n      at = XML_ATTRIBUTE.lastIndex;\n    }\n    XML_TAG_END.lastIndex = at;\n    const end = XML_TAG_END.exec(text);\n    if (!end) {\n      elements.push({ line, malformed: true });\n      continue;\n    }\n    const close = end[1] ? -1 : text.indexOf(`</${name}>`, XML_TAG_END.lastIndex);\n    elements.push({ line, attributes, content: close >= 0 ? text.slice(XML_TAG_END.lastIndex, close) : '' });\n  }\n  return elements;",
+            "\n  const self = classifyProject(projectName);\n  for (const reference of projectReferences(text)) {\n    const target = path.basename(reference, '.csproj');\n    if (!reference.includes('$(') && !fs.existsSync(path.resolve(rootDir, path.dirname(rel), reference))) {\n      result.errors.push(`${rel}: ProjectReference ${reference} points to a project that does not exist (project-structure).`);\n    }\n    const targetLayer = layerOf(target);\n    if (self.kind === 'production') {\n      if (targetLayer === 'test') {\n        result.errors.push(`${rel}: production project references test project ${target} (rules/backend/architecture.md § Dependency direction).`);\n      } else if (targetLayer !== 'unknown' && !ALLOWED_PRODUCTION_REFERENCES[self.role].includes(targetLayer)) {\n        result.errors.push(`${rel}: ${self.role} must not reference ${targetLayer} (${target}); dependencies point inward (rules/backend/architecture.md § Dependency direction, D-01).`);\n      } else if (targetLayer === 'unknown') {\n        result.notices.push(`${rel}: reference to ${target}, which is not a recognized layer project; new production projects are Reserved (CLAUDE.md § Decisions).`);\n      }\n    } else if (self.kind === 'test' && TYPICAL_TEST_REFERENCES[self.role]) {\n      const typical = TYPICAL_TEST_REFERENCES[self.role];\n      if (targetLayer !== 'unknown' && targetLayer !== 'test' && !typical.includes(targetLayer)) {\n        result.notices.push(`${rel}: ${self.role} references ${target}; confirm the test scope requires it (rules/backend-tests/testing.md § Test project references).`);\n      }\n    }\n  }\n  if (self.kind === 'unknown' && rel.startsWith('backend/')) {\n    result.notices.push(`${rel}: project name does not follow backend/<Name>.<Layer> (D-18); new production projects are Reserved (CLAUDE.md § Decisions).`);\n  }"
+          ]
+        },
+        {
+          "path": "output/template/.claude/settings.json",
+          "sha256": "ed7639b7962dc821086a8a6710b7496045338485b199110843dffad81d113720",
+          "inspected_ranges": [
+            [
+              2,
+              17
+            ]
+          ],
+          "context_quotes": [
+            "  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash|PowerShell\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"node\",\n            \"args\": [\"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook.cjs\", \"pre-tool-use\"],\n            \"timeout\": 30,\n            \"onFailure\": \"block\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": ["
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "f72dc4805915821dcbf5f28ce2f962e3b49c1962aae4659f6dbf85a3084dfb8a",
+          "inspected_ranges": [
+            [
+              16,
+              18
+            ],
+            [
+              68,
+              70
+            ],
+            [
+              126,
+              128
+            ]
+          ],
+          "context_quotes": [
+            "- Never weaken, delete, skip or suppress relevant tests, compiler, TypeScript, lint or analyzer failures merely to make verification pass.\n- Preserve architecture and project conventions while fixing; stop when progress has clearly stalled instead of making speculative edits.\n",
+            "\nNever solve a dependency problem with an invalid project reference (for example Application → Infrastructure); follow `rules/backend/architecture.md`.\n",
+            "\nA green build obtained by violating architecture is not a successful repair (for example Application → Infrastructure references, `DbContext` in Application, business logic moved into a Controller, Angular-only authorization, HTTP calls scattered into components).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              22,
+              25
+            ],
+            [
+              33,
+              36
+            ],
+            [
+              39,
+              45
+            ],
+            [
+              63,
+              64
+            ]
+          ],
+          "context_quotes": [
+            "3. **Repository-level structure.** Create only the required top-level directories and repository-wide files (`references/solution-layout.md`): `.slnx`, `Directory.Build.props`, `Directory.Packages.props`, `global.json`, `.editorconfig`, `.gitignore`, `README.md`.\n4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples.",
+            "\n1. Classify the change. The layer references listed in `references/backend-layout.md` § Project references (D-01) are decided; any other added or removed reference changes the project reference graph and is Reserved (CLAUDE.md § Decisions) even when it is architecturally legal — raise a Decision Request with `architecture-decision` and wait for approval.\n2. Run the reference command (`dotnet add <project> reference …`, `dotnet remove <project> reference …`, `dotnet reference add|remove …`) with the trailing comment `# project-references: approved`; the pre-command hook stops reference commands without it.\n3. Build the affected projects and run `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`.",
+            "\n1. Confirm a new assembly is justified (a new production project is Reserved — CLAUDE.md § Decisions).\n2. Identify its architectural or technical responsibility.\n3. Add only the minimum required references, preserving dependency direction.\n4. Update shared build or package configuration when necessary.\n5. Build and test the affected solution.\n",
+            "\nThe physical structure matches the requested scope; project references respect the architecture; the decided stack is used; no unnecessary projects or speculative directories exist; the backend builds; the frontend builds when present; relevant tests pass; the Development configuration is usable; no unrelated code was reorganized."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              34,
+              36
+            ],
+            [
+              103,
+              121
+            ]
+          ],
+          "context_quotes": [
+            "- `Validation` — FluentValidation validators for Application-level input and use-case validation.\n- `DependencyInjection.cs` — registers Application services and Application-level validation infrastructure, never concrete Infrastructure implementations.\n",
+            "\n```text\nProjectName.Domain\n    -> no application project references\n\nProjectName.Application\n    -> ProjectName.Domain\n\nProjectName.Infrastructure\n    -> ProjectName.Application\n    -> ProjectName.Domain\n\nProjectName.Api\n    -> ProjectName.Application\n    -> ProjectName.Infrastructure\n```\n\nNever add `Domain -> Application`, `Domain -> Infrastructure` or `Application -> Infrastructure`; reconsider the abstraction boundary instead. `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` checks these references.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/verify/SKILL.md",
+          "sha256": "2df6184c5971f3797c97f5de8e06b346fb50f91aa64305ed925c1271024a614a",
+          "inspected_ranges": [
+            [
+              55,
+              57
+            ]
+          ],
+          "context_quotes": [
+            "\n- **Architecture** — when boundaries, project references, repositories, the EF Core boundary or Unit of Work behavior changed: `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"`, then review against `rules/backend/architecture.md`. When the model changed, confirm the seeder obligation in `development-workflow` § Persistence or model change.\n- **Formatting and analyzers** — when configured: `dotnet format --verify-no-changes`. Do not add a formatter or analyzer just to complete verification. Analyzer output is evidence that still needs context."
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              38,
+              40
+            ]
+          ],
+          "context_quotes": [
+            "  2. a new architectural style or pattern: Rich Domain Model or DDD tactical patterns, CQRS, mediators (MediatR, Kommand), Vertical Slice Architecture, event sourcing, microservices;\n  3. a new production project, layer or assembly, or a change to the project reference graph;\n  4. persistence boundaries or persistence technology, including multiple `DbContext`s;"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| D-01 | Clean Architecture: `Domain`, `Application`, `Infrastructure` and `Api` production projects with inward dependencies; ASP.NET Core Controllers are the HTTP entry point; Application Services orchestrate use cases; specific repositories with `IUnitOfWork` as the commit boundary; simple Domain entities. | rules/backend/architecture.md | rules/backend-tests/testing.md, rules/backend/api.md, rules/backend/architecture.md, skills/build-fix, skills/code-review, skills/dependency-injection, skills/project-structure, scripts/check-dependencies.cjs |\n| D-02 | Not adopted: CQRS handlers, MediatR, Kommand, Vertical Slice Architecture or similar mediator-based organization; introducing any of them requires explicit approval. Other styles that are not adopted are listed as Reserved in CLAUDE.md § Decisions. | — | rules/backend/architecture.md, skills/code-review, skills/project-structure, scripts/check-dependencies.cjs |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-002",
+        "name": "Domain is infrastructure independent",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Domain"
+        ],
+        "normalized_policy": "Keep Domain independent of EF Core, ASP.NET Core, HTTP, persistence and external-service implementation concerns.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-002",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0079",
+        "primary/K0/constraints.jsonl/RULE-K0-0380"
+      ],
+      "boundary_analysis": "Mapping-library independence beyond canonical list already0079 and replicaEXTRA0007/BF0085. Persistence configuration where-practical wording0380 preserves exception, not unconditional new ban.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ],
+            [
+              21,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "- Dependencies must point inward: `Domain` references no other application project; `Application` references `Domain`; `Infrastructure` references `Application` and `Domain`; `Api` references `Application` and may reference `Infrastructure` only for application composition and dependency registration.\n- Inner layers must never depend on outer layers, and Domain and Application must not reference Infrastructure-specific types. If a feature seems to need `Domain → Application`, `Domain → Infrastructure` or `Application → Infrastructure`, reconsider the abstraction boundary instead.\n",
+            "\n- Domain must stay independent of EF Core, ASP.NET Core, HTTP, persistence and external-service implementation concerns, including mapping-library concerns.\n- Default: simple domain entities; CRUD-oriented and straightforward workflow rules belong in Application Services. Validation rules, immutable fields, status transitions or allowed/forbidden edits do not by themselves justify a Rich Domain Model.\n- Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation independently of a particular use case. Otherwise a Rich Domain Model or DDD tactical pattern requires approval (Reserved, CLAUDE.md § Decisions) unless the approved specification already requires that design.\n- Do not add factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar DDD constructs merely to make a simple model appear domain-driven."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "023a0a3a4ad91b52988903accc724c685be2348c6631f2ce8f348e64216d962d",
+          "inspected_ranges": [
+            [
+              11,
+              13
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthentication establishes who the caller is; authorization decides what an authenticated caller may do. Keep ASP.NET Core transport and authentication types out of Domain.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "fdbc5374a5df9419eaf03a7f3a885b561dda92cc07cd72a53cf2f6603bfabb3b",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\n- Backend: check the change against `rules/backend/architecture.md` — Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Application Services orchestrating use cases, specific repository abstractions, no `DbContext`/`DbSet`/`IQueryable` leaks, repositories not committing independently, `IUnitOfWork` as the commit boundary.\n- Proportionality (CLAUDE.md § Engineering defaults, § Decisions): abstraction count justified by actual complexity; no unapproved Rich Domain Model, DDD tactical patterns, CQRS/MediatR/VSA, extra layers or project-wide Result model."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "c975ff56339201b90745f005eb15d8e9c4cdd44a4655b40bf96b9109dc6bab46",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ]
+          ],
+          "context_quotes": [
+            "\nKeep entity configuration in `IEntityTypeConfiguration<T>` classes and persistence-specific configuration out of Domain entities where practical.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              114,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "\nStable headers (media types) can be configured on the client; per-request values such as dynamic access tokens go on the request or through a handler — mutating shared `DefaultRequestHeaders` concurrently for request-specific values is a race. Prefer `System.Net.Http.Json`/`System.Text.Json`, with explicit serializer options when the remote contract differs from the application's defaults. Internal Domain entities are not remote API contracts.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-003",
+        "name": "Simple domain is default",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Domain"
+        ],
+        "normalized_policy": "Use simple domain entities by default; straightforward CRUD/workflow rules normally belong in Application Services.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-003",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0080"
+      ],
+      "boundary_analysis": "Simple entities/default application CRUD and insufficiency of validation, immutable fields or transitions already explicit. Interceptor business exclusion replica0244/BF0028 separate existing clause.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              22,
+              24
+            ]
+          ],
+          "context_quotes": [
+            "- Domain must stay independent of EF Core, ASP.NET Core, HTTP, persistence and external-service implementation concerns, including mapping-library concerns.\n- Default: simple domain entities; CRUD-oriented and straightforward workflow rules belong in Application Services. Validation rules, immutable fields, status transitions or allowed/forbidden edits do not by themselves justify a Rich Domain Model.\n- Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation independently of a particular use case. Otherwise a Rich Domain Model or DDD tactical pattern requires approval (Reserved, CLAUDE.md § Decisions) unless the approved specification already requires that design."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "c975ff56339201b90745f005eb15d8e9c4cdd44a4655b40bf96b9109dc6bab46",
+          "inspected_ranges": [
+            [
+              223,
+              225
+            ]
+          ],
+          "context_quotes": [
+            "\nInterceptors fit infrastructure-level cross-cutting behavior with a clear benefit, such as auditing; business behavior does not belong in them.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              58,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "\nFor genuine HTTP pipeline concerns — authorization header acquisition, correlation/context propagation, request signing — not business decisions:\n"
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| D-01 | Clean Architecture: `Domain`, `Application`, `Infrastructure` and `Api` production projects with inward dependencies; ASP.NET Core Controllers are the HTTP entry point; Application Services orchestrate use cases; specific repositories with `IUnitOfWork` as the commit boundary; simple Domain entities. | rules/backend/architecture.md | rules/backend-tests/testing.md, rules/backend/api.md, rules/backend/architecture.md, skills/build-fix, skills/code-review, skills/dependency-injection, skills/project-structure, scripts/check-dependencies.cjs |\n| D-02 | Not adopted: CQRS handlers, MediatR, Kommand, Vertical Slice Architecture or similar mediator-based organization; introducing any of them requires explicit approval. Other styles that are not adopted are listed as Reserved in CLAUDE.md § Decisions. | — | rules/backend/architecture.md, skills/code-review, skills/project-structure, scripts/check-dependencies.cjs |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-004",
+        "name": "Rich domain requires real invariants",
+        "related_groups": [
+          "governance-product"
+        ],
+        "origin": "v2",
+        "normative_strength": "REQUIRES_APPROVAL",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Domain"
+        ],
+        "normalized_policy": "Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation; Rich Domain Model/DDD tactical patterns otherwise require approval.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-004",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0081",
+        "primary/K0/constraints.jsonl/EXTRA-K0-0194"
+      ],
+      "boundary_analysis": "Material domain benefit and approved-spec exception match. Independently of a particular use case is explicitly identified by BF0085, so omitted words in primary normalization do not establish novelty. Required-construction versus invariant-validation distinction EXTRA0194 already recorded.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              21,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "\n- Domain must stay independent of EF Core, ASP.NET Core, HTTP, persistence and external-service implementation concerns, including mapping-library concerns.\n- Default: simple domain entities; CRUD-oriented and straightforward workflow rules belong in Application Services. Validation rules, immutable fields, status transitions or allowed/forbidden edits do not by themselves justify a Rich Domain Model.\n- Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation independently of a particular use case. Otherwise a Rich Domain Model or DDD tactical pattern requires approval (Reserved, CLAUDE.md § Decisions) unless the approved specification already requires that design.\n- Do not add factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar DDD constructs merely to make a simple model appear domain-driven."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "fdbc5374a5df9419eaf03a7f3a885b561dda92cc07cd72a53cf2f6603bfabb3b",
+          "inspected_ranges": [
+            [
+              32,
+              34
+            ]
+          ],
+          "context_quotes": [
+            "- Backend: check the change against `rules/backend/architecture.md` — Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Application Services orchestrating use cases, specific repository abstractions, no `DbContext`/`DbSet`/`IQueryable` leaks, repositories not committing independently, `IUnitOfWork` as the commit boundary.\n- Proportionality (CLAUDE.md § Engineering defaults, § Decisions): abstraction count justified by actual complexity; no unapproved Rich Domain Model, DDD tactical patterns, CQRS/MediatR/VSA, extra layers or project-wide Result model.\n- Frontend: check against `rules/frontend/angular.md` — feature boundaries and component responsibility, HTTP behind a data-access boundary, subscription and reactive-state lifetime, frontend error handling, route guards not treated as authorization, unnecessary global state, meaningful frontend tests. Do not apply backend project-boundary rules mechanically to Angular code."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/modern-csharp/SKILL.md",
+          "sha256": "285a7f4df64706f4b18cc9c8b176492709b4a24d6c2767a1135c85a9ea8714d5",
+          "inspected_ranges": [
+            [
+              45,
+              47
+            ]
+          ],
+          "context_quotes": [
+            "\n`required` expresses a construction contract; it does not replace constructor or domain validation where invariants need protection.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\nPossible later additions when an approved design justifies them: `ValueObjects/`, `DomainServices/`, `Events/`, `Exceptions/`. Business rules or workflow behavior alone do not justify DDD-oriented directories.\n"
+          ]
+        },
+        {
+          "path": "output/template/CLAUDE.md",
+          "sha256": "a210661eb34f54fad1d064c9f1f8d86ec342a6be91f92a4e1b2e5e93fce0cc3b",
+          "inspected_ranges": [
+            [
+              37,
+              39
+            ]
+          ],
+          "context_quotes": [
+            "  1. changing an accepted project or architecture decision, or replacing an approved baseline technology;\n  2. a new architectural style or pattern: Rich Domain Model or DDD tactical patterns, CQRS, mediators (MediatR, Kommand), Vertical Slice Architecture, event sourcing, microservices;\n  3. a new production project, layer or assembly, or a change to the project reference graph;"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-005",
+        "name": "No decorative DDD",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Domain"
+        ],
+        "normalized_policy": "Do not add factories, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar DDD constructs merely to appear domain-driven.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-005",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0082",
+        "primary/K0/constraints.jsonl/RULE-K0-0458"
+      ],
+      "boundary_analysis": "No appearance-driven tactical patterns and additional DDD directory approval condition already explicit; no unconditional prohibition inferred.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              24,
+              26
+            ]
+          ],
+          "context_quotes": [
+            "- Move behavior into Domain only when non-trivial domain invariants or behavior materially benefit from domain-level encapsulation independently of a particular use case. Otherwise a Rich Domain Model or DDD tactical pattern requires approval (Reserved, CLAUDE.md § Decisions) unless the approved specification already requires that design.\n- Do not add factory methods, private setters, transition methods, Aggregate Roots, Domain Events, Specifications, Domain Services, systematic Value Objects or similar DDD constructs merely to make a simple model appear domain-driven.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              59,
+              61
+            ]
+          ],
+          "context_quotes": [
+            "\nMediatR, CQRS handler trees, Vertical Slice Architecture, Domain Events, Specifications, SharedKernel, BuildingBlocks, EventBus, messaging, microservices, Kubernetes, cloud-specific projects, state-management frameworks, Docker files and deployment manifests — each needs an actual requirement, and most are Reserved.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              14,
+              16
+            ]
+          ],
+          "context_quotes": [
+            "\nPossible later additions when an approved design justifies them: `ValueObjects/`, `DomainServices/`, `Events/`, `Exceptions/`. Business rules or workflow behavior alone do not justify DDD-oriented directories.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-006",
+        "name": "Application Services are default orchestration",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "DEFAULT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Application"
+        ],
+        "normalized_policy": "Use Application Services as the default orchestration mechanism for use cases.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-006",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0083",
+        "primary/K0/constraints.jsonl/RULE-K0-0461"
+      ],
+      "boundary_analysis": "Application orchestration default and large-service response captured. Handler business exclusion replica0257, interceptor exclusion replica0244 already distinct scopes.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              28,
+              30
+            ]
+          ],
+          "context_quotes": [
+            "\n- Default: Application Services orchestrate use cases; they coordinate Domain objects, repositories, external-service abstractions and the Unit of Work. A service growing too large is a signal to reconsider its responsibilities, not a reason to introduce another architectural pattern.\n- Define persistence and external-service abstractions in Application when use cases require them, and keep infrastructure implementation details out of Application."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "fdbc5374a5df9419eaf03a7f3a885b561dda92cc07cd72a53cf2f6603bfabb3b",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\n- Backend: check the change against `rules/backend/architecture.md` — Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Application Services orchestrating use cases, specific repository abstractions, no `DbContext`/`DbSet`/`IQueryable` leaks, repositories not committing independently, `IUnitOfWork` as the commit boundary.\n- Proportionality (CLAUDE.md § Engineering defaults, § Decisions): abstraction count justified by actual complexity; no unapproved Rich Domain Model, DDD tactical patterns, CQRS/MediatR/VSA, extra layers or project-wide Result model."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/ef-core/SKILL.md",
+          "sha256": "c975ff56339201b90745f005eb15d8e9c4cdd44a4655b40bf96b9109dc6bab46",
+          "inspected_ranges": [
+            [
+              219,
+              225
+            ]
+          ],
+          "context_quotes": [
+            "\nNormal LINQ is the default; EF Core already caches query compilation by query shape. `EF.CompileQuery`/`EF.CompileAsyncQuery` belong to measured hot paths where profiling shows compilation or cache-lookup overhead matters — not to queries that merely run often.\n\n## Interceptors\n\nInterceptors fit infrastructure-level cross-cutting behavior with a clear benefit, such as auditing; business behavior does not belong in them.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              58,
+              60
+            ]
+          ],
+          "context_quotes": [
+            "\nFor genuine HTTP pipeline concerns — authorization header acquisition, correlation/context propagation, request signing — not business decisions:\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "- `Abstractions/ExternalServices` — Application-owned abstractions implemented by outer layers: `IEmailSender.cs`, `ICurrentUser.cs`, `IFileStorage.cs`, `IPaymentGateway.cs`. Create it when such a dependency exists.\n- `Services` — Application Services and useful public service contracts: `ITaskService.cs`, `TaskService.cs`. No handler, CQRS or MediatR structures.\n- `DTOs` — Application-level operation/data models when useful; not a dumping ground."
+          ]
+        },
+        {
+          "path": "output/template/docs/architecture/decision-register.md",
+          "sha256": "79f006ddfb6605c602d434241ebb103192480ac3359ada2efc83061744480ead",
+          "inspected_ranges": [
+            [
+              10,
+              12
+            ]
+          ],
+          "context_quotes": [
+            "|---|---|---|---|\n| D-01 | Clean Architecture: `Domain`, `Application`, `Infrastructure` and `Api` production projects with inward dependencies; ASP.NET Core Controllers are the HTTP entry point; Application Services orchestrate use cases; specific repositories with `IUnitOfWork` as the commit boundary; simple Domain entities. | rules/backend/architecture.md | rules/backend-tests/testing.md, rules/backend/api.md, rules/backend/architecture.md, skills/build-fix, skills/code-review, skills/dependency-injection, skills/project-structure, scripts/check-dependencies.cjs |\n| D-02 | Not adopted: CQRS handlers, MediatR, Kommand, Vertical Slice Architecture or similar mediator-based organization; introducing any of them requires explicit approval. Other styles that are not adopted are listed as Reserved in CLAUDE.md § Decisions. | — | rules/backend/architecture.md, skills/code-review, skills/project-structure, scripts/check-dependencies.cjs |"
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-007",
+        "name": "Application owns use-case abstractions",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Application"
+        ],
+        "normalized_policy": "Define persistence and external-service abstractions in Application when use cases require them; keep infrastructure implementation details out.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-007",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0084",
+        "primary/K0/constraints.jsonl/RULE-K0-0266",
+        "primary/K0/constraints.jsonl/RULE-K0-0346",
+        "primary/K0/constraints.jsonl/RULE-K0-0460"
+      ],
+      "boundary_analysis": "Needed abstractions and hidden infrastructure details match. Identity abstraction only for repeated need with explicit-ID simpler alternative0266; scoped hosted work resolves orchestration rather than internals0346; capability-specific directory conditional0460.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              29,
+              31
+            ],
+            [
+              41,
+              43
+            ]
+          ],
+          "context_quotes": [
+            "- Default: Application Services orchestrate use cases; they coordinate Domain objects, repositories, external-service abstractions and the Unit of Work. A service growing too large is a signal to reconsider its responsibilities, not a reason to introduce another architectural pattern.\n- Define persistence and external-service abstractions in Application when use cases require them, and keep infrastructure implementation details out of Application.\n- Application must not use `DbContext`, `DbSet<T>`, EF Core APIs, provider-specific types or ASP.NET Core transport types.",
+            "\n- Default: specific repository interfaces that represent actual, cohesive Application persistence needs rather than table-mirroring generic CRUD contracts. Define them in Application and implement them in Infrastructure; in an explicitly approved DDD design, Aggregate Roots are natural repository boundaries.\n- Repository interfaces must not expose `IQueryable<T>`, `DbSet<T>`, `DbContext`, EF Core expressions or provider-specific types; LINQ-to-EF query construction stays in Infrastructure. Return materialized entities, collections, projections or explicit result models."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "023a0a3a4ad91b52988903accc724c685be2348c6631f2ce8f348e64216d962d",
+          "inspected_ranges": [
+            [
+              95,
+              97
+            ],
+            [
+              115,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "\nWhen Application use cases repeatedly need caller identity, define a small abstraction implemented by an HTTP-specific adapter at an outer boundary, so Application services do not depend on `HttpContext`, `ClaimsPrincipal` or `IHttpContextAccessor`. Passing an explicit user identifier is simpler when it suffices.\n",
+            "\nCustom password hashing; disabled token validation; hardcoded signing keys; authorization only in Angular; Application depending on `HttpContext`; `401` for an authenticated-but-forbidden user or `403` for missing authentication; logged tokens; scattered role/permission strings; Identity, JWT issuance or OIDC infrastructure without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/dependency-injection/SKILL.md",
+          "sha256": "866d94ad46019256d47ec2f101254a825ab22b435fabf0ff2f06c373a76e8425",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ],
+            [
+              55,
+              57
+            ],
+            [
+              109,
+              111
+            ],
+            [
+              113,
+              115
+            ],
+            [
+              145,
+              147
+            ],
+            [
+              170,
+              181
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication services, repositories and external adapters use interface-to-implementation registration at architectural boundaries; implementation-only helpers can be registered concretely. Prefer explicit registration in small and medium applications — keyed services, factories, decorators and convention scanning solve actual composition problems.\n",
+            "\nFor several implementations of one abstraction selected by a known key — not when a single registration or simple factory is clearer:\n",
+            "\nScrutor is not worth adding for a single decoration when normal composition is simpler.\n",
+            "\nUse assembly scanning when registration volume creates genuine repetitive boilerplate, and scan the assembly that owns the services (not accidentally only the API assembly):\n",
+            "\nA singleton or hosted service that needs scoped work creates a scope per operation and resolves a scoped orchestration service — not Infrastructure internals:\n",
+            "\n| Scenario | Registration |\n|---|---|\n| Application service using repositories/UoW | Scoped |\n| Stateless helper without scoped dependencies | Transient or concrete registration |\n| Immutable shared configuration | Singleton-compatible |\n| `DbContext` | Scoped (via `AddDbContext`) |\n| Several implementations chosen by key | Keyed services |\n| Cross-cutting behavior | Decorator |\n| Convention-based registration | Scrutor |\n| Runtime implementation selection | Factory delegate |\n| Strongly typed configuration | `AddOptions<T>().BindConfiguration()` (`configuration`) |"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/httpclient-factory/SKILL.md",
+          "sha256": "9a21b8c49fd831801bb77501d7bfa812141d6a36d90cb5df494e193e1beb9d39",
+          "inspected_ranges": [
+            [
+              13,
+              15
+            ]
+          ],
+          "context_quotes": [
+            "\nApplication may define an abstraction that Infrastructure implements with `HttpClient`; Application does not need to know the service uses HTTP.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              29,
+              32
+            ],
+            [
+              72,
+              74
+            ]
+          ],
+          "context_quotes": [
+            "\n- `Abstractions/Persistence` — inward-facing persistence contracts: `ITaskRepository.cs`, `IOrderRepository.cs`, `IUnitOfWork.cs`; no EF Core types.\n- `Abstractions/ExternalServices` — Application-owned abstractions implemented by outer layers: `IEmailSender.cs`, `ICurrentUser.cs`, `IFileStorage.cs`, `IPaymentGateway.cs`. Create it when such a dependency exists.\n- `Services` — Application Services and useful public service contracts: `ITaskService.cs`, `TaskService.cs`. No handler, CQRS or MediatR structures.",
+            "- `Configurations` — EF Core entity mappings; `Repositories` — concrete repositories (an Infrastructure-only generic base is allowed when it removes real duplication); `Migrations` — EF Core migrations; `Seeding` — Development database initialization (`ef-core` technique).\n- `Services` — technical/external implementations of Application abstractions (`EmailSender.cs`, `FileStorage.cs`, `PaymentGateway.cs`); capability subdirectories when they improve cohesion.\n- `DependencyInjection.cs` — registers `AppDbContext`, repositories, `IUnitOfWork`, external adapters, the SQL Server provider, HttpClient integrations and resilience handlers when used."
+          ]
+        }
+      ]
+    },
+    {
+      "candidate": "K0",
+      "pass_id": 2,
+      "unit": "P0002-K0-P004",
+      "canonical_policy": {
+        "id": "ARC-008",
+        "name": "No infrastructure/transport types in Application",
+        "related_groups": [],
+        "origin": "v2",
+        "normative_strength": "MUST_NOT",
+        "trigger_class": "path",
+        "scope": "backend",
+        "source_refs": [
+          "templates/v2-baseline/.claude/rules/architecture.md#Application"
+        ],
+        "normalized_policy": "Application must not depend on DbContext, DbSet, EF Core APIs/provider types, or ASP.NET Core transport types.",
+        "status": "accepted_in_frozen_oracle"
+      },
+      "policy_id": "ARC-008",
+      "status": "BOUNDARY_REVIEWED_NO_NEW_CLAIM",
+      "baseline_keys": [
+        "primary/K0/constraints.jsonl/RULE-K0-0085",
+        "primary/K0/constraints.jsonl/RULE-K0-0266",
+        "primary/K0/constraints.jsonl/RULE-K0-0459"
+      ],
+      "boundary_analysis": "No EF/provider/transport types matches; ClaimsPrincipal exclusion and caller adapter captured0266/BF0059. Persistence contracts no EF also0459, not new location novelty.",
+      "new_finding_ids": [],
+      "revisited_existing_findings": [],
+      "retrieved_source_contexts": [
+        {
+          "path": "output/template/.claude/rules/backend/architecture.md",
+          "sha256": "e09b121c3d04289654fd2bffee625966b83d89d1c248393fea8c4d9f7acfd763",
+          "inspected_ranges": [
+            [
+              17,
+              19
+            ],
+            [
+              30,
+              32
+            ]
+          ],
+          "context_quotes": [
+            "- Dependencies must point inward: `Domain` references no other application project; `Application` references `Domain`; `Infrastructure` references `Application` and `Domain`; `Api` references `Application` and may reference `Infrastructure` only for application composition and dependency registration.\n- Inner layers must never depend on outer layers, and Domain and Application must not reference Infrastructure-specific types. If a feature seems to need `Domain → Application`, `Domain → Infrastructure` or `Application → Infrastructure`, reconsider the abstraction boundary instead.\n",
+            "- Define persistence and external-service abstractions in Application when use cases require them, and keep infrastructure implementation details out of Application.\n- Application must not use `DbContext`, `DbSet<T>`, EF Core APIs, provider-specific types or ASP.NET Core transport types.\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/authentication/SKILL.md",
+          "sha256": "023a0a3a4ad91b52988903accc724c685be2348c6631f2ce8f348e64216d962d",
+          "inspected_ranges": [
+            [
+              78,
+              97
+            ],
+            [
+              115,
+              116
+            ]
+          ],
+          "context_quotes": [
+            "\nAuthentication/authorization middleware produces these; controllers do not manufacture them. A deliberate `404` for some forbidden lookups hides existence when that is a consistent policy (`http-api`).\n\n## Current user\n\nControllers may read `User` for purely HTTP/API-specific needs:\n\n```csharp\n[Authorize]\n[HttpGet(\"me\")]\npublic ActionResult<CurrentUserResponse> GetCurrentUser()\n{\n    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);\n\n    return Ok(new CurrentUserResponse(userId));\n}\n```\n\nWhen Application use cases repeatedly need caller identity, define a small abstraction implemented by an HTTP-specific adapter at an outer boundary, so Application services do not depend on `HttpContext`, `ClaimsPrincipal` or `IHttpContextAccessor`. Passing an explicit user identifier is simpler when it suffices.\n",
+            "\nCustom password hashing; disabled token validation; hardcoded signing keys; authorization only in Angular; Application depending on `HttpContext`; `401` for an authenticated-but-forbidden user or `403` for missing authentication; logged tokens; scattered role/permission strings; Identity, JWT issuance or OIDC infrastructure without an actual need."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/build-fix/SKILL.md",
+          "sha256": "f72dc4805915821dcbf5f28ce2f962e3b49c1962aae4659f6dbf85a3084dfb8a",
+          "inspected_ranges": [
+            [
+              126,
+              128
+            ]
+          ],
+          "context_quotes": [
+            "\nA green build obtained by violating architecture is not a successful repair (for example Application → Infrastructure references, `DbContext` in Application, business logic moved into a Controller, Angular-only authorization, HTTP calls scattered into components).\n"
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/code-review/SKILL.md",
+          "sha256": "fdbc5374a5df9419eaf03a7f3a885b561dda92cc07cd72a53cf2f6603bfabb3b",
+          "inspected_ranges": [
+            [
+              31,
+              33
+            ]
+          ],
+          "context_quotes": [
+            "\n- Backend: check the change against `rules/backend/architecture.md` — Domain independence, Application free of Infrastructure/EF Core, thin Controllers, Application Services orchestrating use cases, specific repository abstractions, no `DbContext`/`DbSet`/`IQueryable` leaks, repositories not committing independently, `IUnitOfWork` as the commit boundary.\n- Proportionality (CLAUDE.md § Engineering defaults, § Decisions): abstraction count justified by actual complexity; no unapproved Rich Domain Model, DDD tactical patterns, CQRS/MediatR/VSA, extra layers or project-wide Result model."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/SKILL.md",
+          "sha256": "4e0b785e904db988382b406838c2e8b48f3e652d25fbd6fbee25f08747ed57fb",
+          "inspected_ranges": [
+            [
+              23,
+              25
+            ]
+          ],
+          "context_quotes": [
+            "4. **Backend projects.** Create `Domain`, `Application`, `Infrastructure`, `Api` under `backend/` (`references/backend-layout.md`), targeting the decided platform.\n5. **Project references.** Add only the references in `references/backend-layout.md` § Project references (see § Changing project references); never add an outward reference to make compilation easier.\n6. **Packages.** Add each baseline package through `add-dependency` (`references/baseline-setup.md`); resolve versions at install time and never copy versions from examples."
+          ]
+        },
+        {
+          "path": "output/template/.claude/skills/project-structure/references/backend-layout.md",
+          "sha256": "f03b377d54b55cfa70130fa9186dd30d9679802f4ea886326b3192eddf022097",
+          "inspected_ranges": [
+            [
+              29,
+              31
+            ],
+            [
+              119,
+              121
+            ]
+          ],
+          "context_quotes": [
+            "\n- `Abstractions/Persistence` — inward-facing persistence contracts: `ITaskRepository.cs`, `IOrderRepository.cs`, `IUnitOfWork.cs`; no EF Core types.\n- `Abstractions/ExternalServices` — Application-owned abstractions implemented by outer layers: `IEmailSender.cs`, `ICurrentUser.cs`, `IFileStorage.cs`, `IPaymentGateway.cs`. Create it when such a dependency exists.",
+            "\nNever add `Domain -> Application`, `Domain -> Infrastructure` or `Application -> Infrastructure`; reconsider the abstraction boundary instead. `node \"$(git rev-parse --show-toplevel)/.claude/scripts/check-dependencies.cjs\"` checks these references.\n"
+          ]
+        }
+      ]
+    }
+  ]
+}

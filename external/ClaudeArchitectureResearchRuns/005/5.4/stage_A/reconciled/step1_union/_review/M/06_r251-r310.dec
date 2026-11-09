@@ -1,0 +1,109 @@
+# M batch 6: regions r251-r310 (protocol v1.2)
+# r251-r252 caching SKILL.md
+RD OVERLAP R:RULE-M-0052 P:RULE-M-0326 | R: IUnitOfWork is the commit boundary; P: keep the repository/UoW workflow and coordinate invalidation through an abstraction, never bypass repositories or IUnitOfWork for invalidation.
+RD OVERLAP R:RULE-M-0093 P:RULE-M-0326 | R: invalidation consistent with successful mutations; P: invalidation coordinated through an abstraction within the normal UoW workflow.
+SPLIT X:BF-M-0057 | a@124-125: Decide explicitly whether a cache failure falls back to the source, fails the request or returns stale data. | b@129-132: Test cache behavior when it affects observable correctness (invalidation, isolation, miss fallback, outage policy); do not unit-test framework cache internals. | c@136-137: Avoid caching EF tracked entities across Unit of Work boundaries.
+SD P:EXTRA-M-0088 X:BF-M-0057#a | S: backend caching M: P MUST, X no modality E: none in either T: when designing the cache
+SD P:EXTRA-M-0089 X:BF-M-0057#b | S: tests of correctness-relevant caching M: P DEFAULT, X no modality E: only when caching affects observable correctness (both) T: none
+SD P:EXTRA-M-0090 X:BF-M-0057#c | S: backend caching M: P AVOID, X no modality E: none in either T: none
+RD OVERLAP R:RULE-M-0083 P:EXTRA-M-0088 | R: fallback only when semantically acceptable; P: decide the cache-failure behavior explicitly.
+RD EXAMPLE_GENERAL R:RULE-M-0128 P:EXTRA-M-0089 | R: tests verify observable behavior; P: cache-specific test list.
+RD DIFFERENT_STRENGTH R:RULE-M-0093 P:RULE-M-0327 | R/rule: the cache must not become a second source of truth (MUST); P (skill): avoid using a cache as authoritative persistence (AVOID).
+RD EXAMPLE_GENERAL R:RULE-M-0149 P:RULE-M-0328 | R: no infrastructure without a concrete need (MUST NOT); P: avoid adding Redis merely because the application caches (AVOID).
+# r253-r262 ci-cd SKILL.md: replica bundles the pipeline rules
+SPLIT R:RULE-M-0165 | a: CI pipelines reproduce the repository's supported build and test commands. | b: Inspect the repository before writing a pipeline and do not assume a database, Redis, Docker or frontend tooling. | c: Add pipeline stages for the actual project. | d: Do not hardcode one database provider into a generic pipeline. | e: Do not make an unadopted formatter a mandatory CI gate. | f: Do not depend on developer-machine state. | g: Keep pipeline failures visible.
+SD P:RULE-M-0329 R:RULE-M-0165#c | S: CI pipelines M: MUST both E: none for this clause T: when writing the pipeline
+SD P:RULE-M-0330 R:RULE-M-0165#b | S: CI pipelines M: MUST both E: none for this clause T: before writing the pipeline
+CX X:BF-M-0058 | An optional local formatter must not become a mandatory CI gate unless the project adopts that policy.
+SD P:EXTRA-M-0092 R:RULE-M-0165#e X:BF-M-0058 | S: CI pipelines M: MUST_NOT (P), MUST NOT (R part), X no modality E: the project adopts the policy (P, R 'enforced checks the project adopted', X) T: none | labels: P EXTRA, R ORACLE_LINKED WF-017, X AMBIGUOUS
+RD COMPOUND_PART P:RULE-M-0334 R:RULE-M-0165#d | P bundles 'no hardcoded provider' with 'provide external services only when tests need them' and isolated integration environments.
+RD COMPOUND_PART P:EXTRA-M-0097 R:RULE-M-0165#f | P's pipeline-completion checklist includes 'no developer-machine dependence' among six checks.
+SD P:RULE-M-0332 R:RULE-M-0164#b | S: CI for a project with an Angular frontend M: MUST both E: test/lint only when the project defines them (both) T: in CI
+RD COMPOUND_PART P:RULE-M-0333 R:RULE-M-0164#b | P adds adapting action/runtime versions to the repository's supported versions.
+RD OVERLAP R:RULE-M-0130 P:RULE-M-0334 | R: tests isolated from Production/Development data; P: CI integration environments isolated from Development/Production data.
+RD EXAMPLE_GENERAL R:RULE-M-0147 P:RULE-M-0335 | R: keep changes focused; P: no automatic package upgrades in CI unless automated updates are adopted.
+RD BROADER_NARROWER R:RULE-M-0166 P:RULE-M-0336 | R: no Docker in the pipeline or the project merely because it can be containerized; P: container images from CI only when the project deploys containers.
+SPLIT X:BF-M-0059 | a@148-150: Prefer promoting the same tested artifact or image through environments instead of recompiling per environment. | b@154-156: Prefer workload/federated identity over long-lived deployment credentials when the platform supports it. | c@167-169: Use environment protection or approval appropriate to the hosting platform for deployment. | d@173-176: Before considering a pipeline complete, verify clean-environment restore, builds, configured tests, no developer-machine dependence, no secret exposure and expected artifacts.
+RD COMPOUND_PART P:EXTRA-M-0094 X:BF-M-0059#a | P adds 'avoid rebuilding different source per environment without reason' from lines 180-182, outside X's quote.
+SD P:EXTRA-M-0095 X:BF-M-0059#b | S: deployment credentials M: P PREFER, X no modality E: platform support (both) T: none
+RD COMPOUND_PART P:EXTRA-M-0096 X:BF-M-0059#c | P adds 'separate CI and CD as appropriate (green CI does not imply deployment)'.
+SD P:EXTRA-M-0097 X:BF-M-0059#d | S: CI pipeline completion M: P MUST, X no modality E: none in either T: before considering the pipeline complete
+RD EXAMPLE_GENERAL R:RULE-M-0105 P:RULE-M-0337 | R: never commit secrets; P: use the CI platform's secret/identity mechanism instead of values in pipeline YAML.
+RD OVERLAP R:RULE-M-0106 P:RULE-M-0337 | R: environment-specific secret injection for deployed environments; P: CI secret mechanism.
+RD DETAIL_DIFFERENCE R:RULE-M-0167 P:RULE-M-0338 | same explicit-migration-step duty; R adds 'production migrations are not applied automatically from normal startup' from locations P does not cite.
+# r263-r283 code-review SKILL.md
+SD P:RULE-M-0339 R:RULE-M-0169 | S: code review M: MUST both E: edits when explicitly asked (both) T: none
+SPLIT R:RULE-M-0170 | a: Review prioritizes correctness, security/authorization, data integrity/persistence, architectural boundaries, concurrency/integration, missing meaningful tests, maintainability, then credible evidence-backed performance. | b: Style preferences are not elevated above behavioral defects. | c: Code is not reported as a violation merely for differing from an unadopted pattern.
+SD P:RULE-M-0340 R:RULE-M-0170#a | S: code review M: MUST both E: none in either T: none
+SD P:RULE-M-0341 R:RULE-M-0170#b | S: code review M: MUST_NOT (P) = not elevated (R part) E: none in either T: none | P's 'or bury important findings' is in the shared lines 36-37
+RD COMPOUND_PART P:RULE-M-0350 R:RULE-M-0170#c | P adds that review must not require MediatR, CQRS, VSA, Minimal APIs, Rich Domain Models, Domain Events or generic repositories.
+SPLIT R:RULE-M-0171 | a: Before judging, the review reads the changed code with enough surrounding code (callers, contracts, dependencies); no review of isolated lines. | b: The review identifies the intended behavior and the tests protecting it. | c: The review reads the rules whose paths match the changed files.
+SD P:RULE-M-0342 R:RULE-M-0171#a | S: code review M: MUST both E: none in either T: before judging | P's 'establish what is reviewed' is in the shared lines 41-44
+SD P:RULE-M-0343 R:RULE-M-0171#b | S: code review M: MUST both E: none in either T: before judging | P lists error cases and persistence/external effects as parts of the intended behavior (same lines 48-49)
+RD COMPOUND_PART P:RULE-M-0344 R:RULE-M-0171#c | P adds 'load specialised technique skills only where relevant'.
+RD EXAMPLE_GENERAL R:RULE-M-0140#b P:RULE-M-0344 | R: read owning rules before non-trivial changes; P: in review read the rules matching changed files.
+RD OVERLAP R:RULE-M-0180 P:RULE-M-0345 | R: SPECIFICATION.md is authoritative when non-empty; P (review): non-empty specification is the product contract and approved CUSTOM_SETTINGS values are intended behavior.
+RD OVERLAP R:RULE-M-0172 P:RULE-M-0346 | R: do not weaken or add unapproved product behavior (implementer); P: review checks conformance in both directions (reviewer).
+RD OVERLAP R:RULE-M-0173 P:RULE-M-0347 | R: internal implementation details are not product decisions; P (review): approved synchronized details are not defects; do not confuse internals with product behavior.
+SPLIT R:RULE-M-0174 | a: No hypothetical review findings without a plausible execution path. | b: No findings to populate categories; when no meaningful findings exist say so and state important areas that could not be verified. | c: Tool output is evidence rather than authority. | d: No filler praise.
+RD COMPOUND_PART P:RULE-M-0348 R:RULE-M-0174#a | P adds the positive duty to look for concrete behavioral problems (conditions, edge cases, async, cancellation, lifetimes, races).
+SD P:RULE-M-0358 R:RULE-M-0174#b | S: code review output M: MUST_NOT invent (P) = MUST NOT manufacture (R) E: none in either T: at reporting
+RD COMPOUND_PART P:RULE-M-0357 R:RULE-M-0174#c | P adds 'no MCP server or analyzer is required' and 'read the code before turning a tool warning into a finding'.
+SPLIT X:BF-M-0060 | a@175-184: Report findings ordered by severity, each with severity, file/location, what is wrong, why it matters and the smallest reasonable fix, using the Critical/High/Medium/Low scale. | b@187-188: Do not add filler praise to balance criticism.
+SD P:EXTRA-M-0098 R:EXTRA-M-0016 X:BF-M-0060#a | S: code review output M: MUST in P and R, X no modality E: none in any T: at reporting
+SD P:EXTRA-M-0099 R:RULE-M-0174#d X:BF-M-0060#b | S: code review output M: MUST_NOT (P), MUST NOT (R), X no modality E: none in any T: at reporting | labels: P EXTRA, R ORACLE_LINKED WF-012, X POTENTIAL_EXTRA
+SD P:RULE-M-0353 R:RULE-M-0175 | S: code review security depth M: MUST both E: full security-scan only on request, materially security-sensitive change or concrete finding (both) T: none
+RD COMPOUND_PART P:RULE-M-0355 R:RULE-M-0176 | P (review) covers useful coverage, regression tests and preserved probes; R: regression test for plausible-recurrence bugs unless equivalent coverage (DEFAULT).
+RD OVERLAP R:RULE-M-0170 P:RULE-M-0359 | P lists review don'ts (no rewrites unless asked, no tooling-formatting defects, no personal style, not every warning a bug, no unadopted patterns), overlapping R's priority/style/unadopted-pattern clauses.
+# r284-r286 configuration SKILL.md
+CX X:BF-M-0061 | Ordinary application services receive typed options; direct IConfiguration access belongs to the composition root, configuration-provider setup and infrastructure registration.
+SD P:RULE-M-0371 X:BF-M-0061 | S: backend configuration access M: P DEFAULT, X no modality (AMBIGUOUS) E: none in either T: none
+RD OVERLAP R:RULE-M-0059 P:RULE-M-0371 | R: prefer typed options and avoid scattered string IConfiguration lookups (rule); P (skill): ordinary services receive typed options, direct access only in composition/provider setup/registration.
+RD OVERLAP X:BF-M-0036 P:RULE-M-0371 | X (rule text): direct IConfiguration confined to composition/registration; P (skill): the same with provider setup and typed options for ordinary services.
+RD OVERLAP R:RULE-M-0080 P:EXTRA-M-0101 | R: bounded execution time appropriate to the operation; P: example numeric values are not approved defaults, choose from actual requirements.
+RD OVERLAP R:RULE-M-0106 P:RULE-M-0372 | R: managed secret store for deployed environments; P: provider matching the hosting environment, Azure dependencies only for Azure.
+RD EXAMPLE_GENERAL R:RULE-M-0069 P:RULE-M-0372 | R: add a dependency only for a concrete requirement; P: Azure-specific dependencies only when the project uses Azure.
+# r287-r294 custom-settings SKILL.md
+# [revised before M checkpoint: superseded by a SPLIT + SD in 11_r562-r602.dec] RD COMPOUND_PART R:RULE-M-0181 P:RULE-M-0360 | R adds 'the two sources must not contradict; on apparent conflict stop and ask which one to correct' to 'resolve before changing implementation'.
+SPLIT R:RULE-M-0182 | a: Never store secrets, environment-specific connection details, package versions, HTTP status codes, ports, migration identifiers or incidental implementation constants in CUSTOM_SETTINGS.md. | b: Framework defaults the project has not intentionally overridden are not settings.
+SD P:RULE-M-0361 R:RULE-M-0182#b | S: CUSTOM_SETTINGS.md content M: MUST_NOT record (P) = are not settings (R) E: intentionally overridden defaults (both by wording) T: none
+RD EXAMPLE_GENERAL R:RULE-M-0140#b P:RULE-M-0362 | R: read owning rules before non-trivial changes; P: read the rules matching each surface before editing it in the settings workflow.
+SPLIT R:RULE-M-0177 | a: Record an approved CUSTOM_SETTINGS.md value under a stable name with its value and purpose. | b: When an approved value is added, changed or removed, identify and update every affected implementation, validation, configuration, test, documentation and mirrored frontend/backend surface; one changed literal does not establish synchronization. | c: Search for stale references to the old value and setting name (validators and DTO constraints, Domain/Application checks, database mapping, frontend validation and UI hints, tests and test data, documentation, mirrored configuration). | d: Update only affected behavior. | e: After a settings change build, test and run verify.
+SD P:RULE-M-0363 R:RULE-M-0177#a | S: approved CUSTOM_SETTINGS.md values M: MUST both E: none in either T: after approval
+SD P:RULE-M-0365 R:RULE-M-0177#b | S: approved CUSTOM_SETTINGS.md value changes M: MUST both E: none in either T: when a value is added, changed or removed
+SD P:RULE-M-0366 R:RULE-M-0177#c | S: settings changes M: MUST both E: none in either T: during the change
+SD P:RULE-M-0367 R:RULE-M-0177#d | S: settings changes M: MUST both E: none in either T: during the change | P adds 'separate occurrences from numeric coincidences', the same lines 49-50
+RD COMPOUND_PART P:RULE-M-0370 R:RULE-M-0177#e | P's verification list adds persistence verification and a SPECIFICATION.md conflict check.
+RD OVERLAP P:RULE-M-0364 R:RULE-M-0177#b | P: for a new setting update owning code, validation, configuration, tests and externally relevant docs; R part b: update every affected surface for add/change/remove.
+RD OVERLAP R:RULE-M-0183 P:RULE-M-0363 | R: approved tunable limits and defaults are recorded in CUSTOM_SETTINGS.md (SPECIFICATION owns intent); P: record an approved setting with name, value and purpose.
+RD OVERLAP R:RULE-M-0021 P:RULE-M-0369 | R: frontend validation never replaces backend validation; P: when both expose a constraint, backend stays authoritative and frontend messages stay synchronized.
+RD EXAMPLE_GENERAL R:RULE-M-0168 P:RULE-M-0370 | R: run verify before declaring work complete; P: settings-change verification ending with verify.
+# r295-r300 dependency-injection SKILL.md
+SPLIT X:BF-M-0062 | a@19-22: Register Application services, repositories and external adapters at architectural boundaries interface-to-implementation; concrete registration only for implementation-only helpers. | b@23-25: Prefer explicit registration in small and medium applications; add scanning, keyed services, factories or decorators only for an actual composition problem.
+SD P:EXTRA-M-0102 X:BF-M-0062#a | S: backend DI registration M: P DEFAULT, X no modality E: implementation-only helpers (both) T: none
+SD P:RULE-M-0373 X:BF-M-0062#b | S: backend DI registration M: P PREFER, X no modality E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0148 P:RULE-M-0373 | R: avoid speculative abstractions (general); P: explicit registration before scanning/keyed services/decorators.
+SD P:RULE-M-0374 R:RULE-M-0058 | S: backend DI registration placement (P via skill, R via rule and skill; F8) M: DEFAULT both E: none in either T: none
+RD EXAMPLE_GENERAL R:RULE-M-0069 P:RULE-M-0375 | R: add a dependency only for a concrete requirement; P: do not add Scrutor solely for one decoration.
+CX X:BF-M-0063 | When a singleton or hosted service needs scoped work, create a scope per operation and resolve a scoped orchestration service, not Infrastructure internals.
+SD P:RULE-M-0376 X:BF-M-0063 | S: singleton/hosted services needing scoped work M: P MUST, X no modality E: none in either T: per operation
+RD OVERLAP R:RULE-M-0057 P:RULE-M-0376 | R: never capture shorter-lived dependencies in longer-lived services; P: create a scope per operation and resolve an orchestration service.
+# r301-r310 development-workflow SKILL.md
+SD P:RULE-M-0377 R:RULE-M-0184 | S: new application or substantial feature M: MUST both E: none in either T: before planning or implementing
+SPLIT X:BF-M-0064 | a@19-20: For a new application or substantial feature read SPECIFICATION.md and CUSTOM_SETTINGS.md before planning or implementing. | b@22-26: Read every path rule matching the areas to be created or changed (explicitly for new files and greenfield work) and load the relevant knowledge skills.
+SD P:RULE-M-0377 X:BF-M-0064#a | S: new application or substantial feature M: P MUST, X no modality E: none in either T: before planning or implementing
+SD P:RULE-M-0379 X:BF-M-0064#b | S: implementation changes M: P MUST, X no modality E: none in either T: before creating or changing files
+SPLIT R:RULE-M-0140 | a: Inspect the relevant existing code before a non-trivial change. | b: Read the owning rules before a non-trivial change; rules that have not loaded yet are read explicitly.
+SD P:RULE-M-0378 R:RULE-M-0140#a | S: non-trivial changes M: MUST both E: none in either T: before the change
+RD COMPOUND_PART P:RULE-M-0379 R:RULE-M-0140#b | P adds 'load the knowledge skills for the technologies involved'.
+RD OVERLAP R:RULE-M-0153 P:RULE-M-0380 | R: classify decisions; P: classify open decisions and route Reserved ones to architecture-decision before implementing.
+RD DETAIL_DIFFERENCE R:RULE-M-0185 P:RULE-M-0381 | same duty to raise concerns with an alternative; R adds 'never permits silently rewriting or ignoring the requirement' from a location P does not cite.
+RD DETAIL_DIFFERENCE R:RULE-M-0156 P:RULE-M-0383 | same durable-source update; R adds 'in the same change'.
+SPLIT R:RULE-M-0186 | a: Whenever a Domain or persistence change affects seeded entities, update DbSeeder in the same change so recreating the Development database yields valid representative data; existing rows are not patched. | b: Review DbSeeder together with migrations that change seeded entities.
+SD P:RULE-M-0384 R:RULE-M-0186#a | S: Domain/persistence changes affecting seeded entities M: MUST both E: existing databases are not patched by the seeder (both) T: in the same change (both)
+RD COMPOUND_PART P:RULE-M-0385 R:RULE-M-0186#b | P bundles migration review with reviewing DbSeeder alongside seeded-entity migrations.
+RD COMPOUND_PART P:RULE-M-0385 R:RULE-M-0187 | P adds the DbSeeder review to 'review every generated migration before committing'.
+RD OVERLAP R:RULE-M-0176 P:RULE-M-0386 | R: expect a regression test for plausible-recurrence bug fixes and no duplicate tests (review + implementation); P: add a regression test that fails before and passes after the fix.
+SD P:RULE-M-0387 R:RULE-M-0188 | S: performance-motivated changes M: MUST both E: none in either T: none
+RD OVERLAP R:RULE-M-0150 P:RULE-M-0388 | R: generated code separate and regenerated; P: fix the authoritative source and regenerate, do not patch disposable output, Angular contract sequence.
+REVIEWED r251-r310
